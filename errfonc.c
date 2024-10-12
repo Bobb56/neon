@@ -6,6 +6,7 @@
 
 #include "headers.c"
 
+
 extern void* PTRERROR;
 extern char* EXCEPTION;
 
@@ -48,7 +49,6 @@ extern intlist TYPESBUILTINSFONC;
 
 extern NeObject* (*OPFONC[NBOPERATEURS])(NeObject*,NeObject*);
 extern NeObject* (*BUILTINSFONC[NBBUILTINFONC])(NeList*);
-
 
 
 
@@ -145,5 +145,6 @@ void b(double balise)
     // printf("b%lf ", balise);
     return;
 }
+
 
 

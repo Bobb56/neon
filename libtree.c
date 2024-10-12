@@ -147,6 +147,7 @@ void tree_destroy(Tree* tree)
     {
         UserFunc* fun = tree->data->data;
         err_free(fun->args);
+        tree_destroy(fun->opt_args);
         err_free(fun);
         err_free(tree->data);
     }
@@ -202,7 +203,7 @@ Tree* tree_copy(Tree* tree)
 
     tree2->type = tree->type;
     tree2->label1 = (tree->label1 == NULL) ? NULL : strdup(tree->label1);
-    tree2->label2 = tree->label2;
+    tree2->label2 = (tree->label2 == NULL) ? NULL : number_copy(tree->label2);
     
     if (tree->data == NULL)
         tree2->data = NULL;
@@ -224,8 +225,6 @@ Tree* tree_copy(Tree* tree)
 
     return tree2;
 }
-
-
 
 
 
@@ -254,7 +253,7 @@ char* fonctionArgs(char* fonction, char* set)
 
             if (isalpha(fonction[i]) || fonction[i] == '_' || precId && isalnum(fonction[i]))
                 precId = true;
-            else
+            else if (fonction[i] != '\'')
                 precId = false;
 
             if (!precId && fonction[i] == '\'')
@@ -338,7 +337,7 @@ char* fonctionName(char* fonction, char* set)
 
             if (isalpha(fonction[i]) || fonction[i] == '_' || precId && isalnum(fonction[i]))
                 precId = true;
-            else
+            else if (fonction[i] != '\'')
                 precId = false;
 
             if (!precId && fonction[i] == '\'')
@@ -394,6 +393,7 @@ char* fonctionName(char* fonction, char* set)
 
     return sub(fonction, 0, sov);
 }
+
 
 
 
@@ -518,9 +518,6 @@ void calcPriorites(strlist* lexemes, intlist* nature, intlist* ordre)
 
 void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlist* ordre)
 {
-
-    //strlist_aff(tokens);
-
     
     if (tokens->len == 1) // traitement des cas de base de la fonction récursive
     {
@@ -549,13 +546,13 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
 
         }
 
-        if (types->tab[0] == TYPE_BOOL)
+        else if (types->tab[0] == TYPE_BOOL)
         {
             tree->data = neo_bool_create(strToBool(tokens->tab[0]));// création d'un NeObject correspondant à la valeur contenue dans la feuille
             tree->type = TYPE_BOOL;
         }
 
-        if (types->tab[0] == TYPE_EXCEPTION)
+        else if (types->tab[0] == TYPE_EXCEPTION)
         {
             // créer une exception
             int index = strlist_index(&exceptions, tokens->tab[0]);
@@ -564,20 +561,20 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
         }
 
 
-        if (types->tab[0] == TYPE_CONST)
+        else if (types->tab[0] == TYPE_CONST)
         {
             tree->data = neo_const_create(strdup(tokens->tab[0]));// création d'un NeObject correspondant à la valeur contenue dans la feuille
             tree->type = TYPE_CONST;
         }
 
 
-        if (types->tab[0] == TYPE_NONE)
+        else if (types->tab[0] == TYPE_NONE)
         {
             tree->data = neo_none_create();// création d'un NeObject correspondant à la valeur contenue dans la feuille
             tree->type = TYPE_NONE;
         }
         
-        if (types->tab[0] == TYPE_FONCTION)
+        else if (types->tab[0] == TYPE_FONCTION)
         {
             
             // ou alors on a un seul argument et il faut l'ajouter en tant que fils, ou alors on a deux arguments et il faut juste changer les caractéristiques de l'arbre à virgule
@@ -791,28 +788,12 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
             }
             else
             {
-
-                if (args != NULL)
-                {
-                    strlist_destroy(tok, true);
-                    err_free(typ.tab);
-                }
-
-                // c'est bel et bien une fonction
             
                 if (args != NULL)
                 {
-                    strlist* tokens2 = strlist_create(0);
-                    intlist types2;
-                    cut(tokens2, &types2, args, false);
+                    strlist* tokens2 = tok;
+                    intlist types2 = (intlist) {.tab = typ.tab, .len = typ.len};
                     
-                    if (CODE_ERROR != 0)
-                    {
-                        strlist_destroy(tokens2, true);
-                        err_free(types2.tab);
-                        err_free(args);
-                        return;
-                    }
                     
                     intlist ordre2;
                     calcPriorites(tokens2, &types2, &ordre2);
@@ -825,6 +806,9 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                         {
                             strlist_destroy(tokens2, true);
                             err_free(args);
+                            err_free(nomFonc);
+                            err_free(ordre2.tab);
+                            err_free(types2.tab);
                             return;
                         }
                         
@@ -837,6 +821,9 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                         {
                             strlist_destroy(tokens2, true);
                             err_free(args);
+                            err_free(nomFonc);
+                            err_free(ordre2.tab);
+                            err_free(types2.tab);
                             return;
                         }
                         createExpressionTreeAux(fils, tokens2, &types2, &ordre2);
@@ -845,6 +832,9 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                             tree_destroy(fils);
                             strlist_destroy(tokens2, true);
                             err_free(args);
+                            err_free(nomFonc);
+                            err_free(ordre2.tab);
+                            err_free(types2.tab);
                             return;
                         }
                         tree_appendSon(tree, fils);
@@ -857,6 +847,7 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
 
                 // importation du pointeur de la fonction
 
+                /*
                 //il faut au préalable évaluer le nom de la fonction : en effet, ça peut être un index de liste, une autre fonction, ...
                 strlist* tok = strlist_create(0);
                 intlist typ;
@@ -899,34 +890,38 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                 
                 // on stocke le nom de la fonction
                 // grâce au fait qu'on a calculé l'arbre avec le nom de la variable dedans, la variable a été créée
-                tree->data = evalAux(tree_aux, false); // on sous entend que la fonction portant ce nom existe déjà, car elle a été créée lorsque l'on a appellé createExpressionTreeAux sur le nom de la variable
+                */
+                
 
-                if (CODE_ERROR != 0)
-                {
-                    tree_destroy(tree_aux);
+                int index = strlist_index(NOMS, nomFonc);
+
+                if (index == -1) { // la fonction/variable n'existe pas
+                    CODE_ERROR = 0;
+
+                    NeObject* var = neobject_create(TYPE_EMPTY);
+                    tree->data = var;
+                    strlist_append(NOMS, nomFonc);
+                    nelist_append(ADRESSES, var);
+                }
+                else {
+                    tree->data = ADRESSES->tab[index];
                     err_free(nomFonc);
-                    strlist_destroy(tok, true);
-                    return;
                 }
 
-                err_free(nomFonc);
-                tree_destroy(tree_aux);
-                strlist_destroy(tok, true);
-                err_free(typ.tab);
-                
+
 
                 tree->label1 = NULL;
                 tree->type = TYPE_FONCTION;
             }
         }
         
-        if (types->tab[0] == TYPE_NUMBER)
+        else if (types->tab[0] == TYPE_NUMBER)
         {
             tree->data = neo_nb_create(number_fromStr(tokens->tab[0]));// création d'un NeObject correspondant à la valeur contenue dans la feuille
             tree->type = TYPE_NUMBER;
         }
         
-        if (types->tab[0] == TYPE_LISTINDEX) // un arbre listindex a deux fils : le fils gauche contient l'arbre correspondant à la liste et le fils droit l'arbre de l'index
+        else if (types->tab[0] == TYPE_LISTINDEX) // un arbre listindex a deux fils : le fils gauche contient l'arbre correspondant à la liste et le fils droit l'arbre de l'index
         {
             char* name = fonctionName(tokens->tab[0], "[]");
             
@@ -982,7 +977,7 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
 
         }
         
-        if (types->tab[0] == TYPE_STRING)
+        else if (types->tab[0] == TYPE_STRING)
         {
             char* intermediaire = sub(tokens->tab[0],1,strlen(tokens->tab[0])-1); // on enlève les guillemets
             tree->data = neo_str_create(traitementString(intermediaire));
@@ -990,7 +985,7 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
             err_free(intermediaire);
         }
         
-        if (types->tab[0] == TYPE_LIST)
+        else if (types->tab[0] == TYPE_LIST)
         {
             char* l2 = sub(tokens->tab[0], 1, strlen(tokens->tab[0])-1);
 
@@ -1045,9 +1040,17 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
             tree->data = NULL;
             
         }
+        else {
+            if (strcmp("...", tokens->tab[0]) == 0)
+                CODE_ERROR = 97;
+            else
+                CODE_ERROR = 32;
+
+            return ;
+        }
         
     }
-    else
+    else if (tokens->len > 1)
     {
         
         int nbVirgules = intlist_count(types, TYPE_VIRGULE);
@@ -1160,6 +1163,8 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                 tree->label2 = number_fromDouble((double)placeOp);
 
                 tree->type = TYPE_OPERATOR;
+
+
                 
                 if (typeOperande == RIGHT_LEFT)
                 {
@@ -1329,7 +1334,7 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                     
                 }
                 
-                if (typeOperande == VARLEFT) // variable à gauche comme -- ou ++
+                else if (typeOperande == VARLEFT) // variable à gauche comme -- ou ++
                 {
                     
                     Tree* fils = tree_create(NULL, number_default(), 0);
@@ -1355,7 +1360,7 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                     
                 }
                 
-                if (typeOperande == VAR_RIGHT) // cas où il y a potentiellement un opérateur point : '.'
+                else if (typeOperande == VAR_RIGHT) // cas où il y a potentiellement un opérateur point : '.'
                 {
               
                     Tree* filsg = tree_create(NULL, number_default(), 0);
@@ -1417,7 +1422,69 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
 
 
 
-                if (typeOperande == LEFT_VAR) // cas où il y a potentiellement un opérateur point : '.'
+                else if (typeOperande == LEFT_VAR) // cas où il y a potentiellement un opérateur point : '.'
+                {
+              
+                    Tree* filsg = tree_create(NULL, number_default(), 0);
+                    if (CODE_ERROR != 0)
+                    {
+                        number_destroy(tree->label2);
+                        err_free(tree->label1);
+                        tree->label1 = NULL;
+                        return;
+                    }
+
+                    Tree* filsd = tree_create(NULL, number_default(), 0);
+                    
+                    if (CODE_ERROR != 0)
+                    {
+                        tree_destroy(filsg);
+                        number_destroy(tree->label2);
+                        err_free(tree->label1);
+                        tree->label1 = NULL;
+                        return;
+                    }
+                    // il va falloir séparer en deux l'expression, et recalculer l'arbre des expressions sous jacentes
+                    
+                    strlist tokensGauche = (strlist){.tab = tokens->tab, .len = index};
+                    intlist typesGauche = (intlist){.tab = types->tab, .len = index};
+                    intlist ordreGauche = (intlist){.tab = ordre->tab, .len = index};
+                    
+                    strlist tokensDroite = (strlist){.tab = tokens->tab+index+1, .len = tokens->len-index-1};
+                    intlist typesDroite = (intlist){.tab = types->tab+index+1, .len = types->len-index-1};
+                    intlist ordreDroite = (intlist){.tab = ordre->tab+index+1, .len = ordre->len-index-1};
+                    
+                    createExpressionTreeAux(filsd, &tokensDroite, &typesDroite, &ordreDroite);
+                    
+                    if (CODE_ERROR != 0)
+                    {
+                        number_destroy(tree->label2);
+                        err_free(tree->label1);
+                        tree->label1 = NULL;
+                        tree_destroy(filsg);
+                        tree_destroy(filsd);
+                        return;
+                    }
+                    createExpressionTreeAux(filsg, &tokensGauche, &typesGauche, &ordreGauche);
+                    
+                    if (CODE_ERROR != 0)
+                    {
+                        number_destroy(tree->label2);
+                        err_free(tree->label1);
+                        tree->label1 = NULL;
+                        tree_destroy(filsg);
+                        tree_destroy(filsd);
+                        return;
+                    }
+
+                    
+                    tree_appendSon(tree, filsg);
+                    tree_appendSon(tree, filsd);
+                    
+                }
+
+
+                else if (typeOperande == VAR_VAR) // cas où il y a potentiellement un opérateur point : '.'
                 {
               
                     Tree* filsg = tree_create(NULL, number_default(), 0);
@@ -1480,7 +1547,7 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
 
 
                 
-                if (typeOperande == VARRIGHT || typeOperande == RIGHT)
+                else if (typeOperande == VARRIGHT || typeOperande == RIGHT)
                 {
                     
                     Tree* fils = tree_create(NULL, number_default(), 0);
@@ -1500,6 +1567,13 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                         return;
                     }
                     tree_appendSon(tree, fils);
+                    
+                }
+
+                else if (typeOperande == 0) {
+                    // cas des opérateurs inertes comme ... : il ne doit pas être en dehors d'une définition de fonction
+                    CODE_ERROR = 97;
+                    return;
                     
                 }
             }
@@ -1798,9 +1872,10 @@ void createFunctionTree(Tree* tree, char* string, _Bool isMethod)
     
     err_free(args);
 
-    NeObject** tab = NULL; // tableau qui va contenir toutes les variables à affecter
-
-    int nbArgs = 0;
+    NeList* liste = nelist_create(0); // tableau qui va contenir toutes les variables à affecter
+    int nbOptArgs = 0;
+    _Bool unlimited_arguments = false;
+    Tree* opt_args = tree_create(NULL, number_default(), 0); // même si la fonction n'a pas d'arguments elle a un arbre
 
     if (args2 != NULL) // si la fonction a des arguments
     {
@@ -1811,53 +1886,135 @@ void createFunctionTree(Tree* tree, char* string, _Bool isMethod)
         {
             strlist_destroy(tokens, true);
             err_free(types.tab);
-            tree_destroy(syntaxTree);
             err_free(args2);
             err_free(name);
+            tree_destroy(opt_args);
+            err_free(liste->tab);
+            err_free(liste);
             return;
         }
 
-        // suppression des virgules
-        i=0;
-        while (i < tokens->len)
-        {
-            if (strcmp(tokens->tab[i], ",") == 0)
-                strlist_remove(tokens, i, true);
-            else
-                i++;
-        }
-        err_free(types.tab);
-        err_free(args2);
 
         // il faut maintenant définir chaque variable dont le nom est dans tokens
-        tab = err_malloc(sizeof(NeObject*) * tokens->len);
-        nbArgs = tokens->len;
-        
         
         for (i = 0 ; i < tokens -> len ; i++)
         {
-            if (strlist_inList(NOMS,tokens->tab[i]))
+            if (strcmp(tokens->tab[i], ",") != 0) // si ce n'est pas une virgule, c'est une variable (enfin on vérifie)
             {
-                tab[i] = ADRESSES->tab[strlist_index(NOMS,tokens->tab[i])];
-            }
-            else
-            {
-                strlist_append(NOMS,strdup(tokens->tab[i])); // on ajoute le nom à la liste des noms
-                tab[i] = neobject_create(TYPE_EMPTY); // création de l'adresse du NeObject, mais celui-ci est symbolique pour l'instant : on ne sait pas encore ce qu'on va mettre dedans
-                nelist_append(ADRESSES,tab[i]); // on ajoute l'objet à la liste des variables
+
+                if (types.tab[i] == TYPE_VARIABLE)
+                {
+
+                    // d'abord, vu qu'on est après une virgule, on sait que c'est un nom de variable
+                    if (strlist_inList(NOMS,tokens->tab[i]))
+                    {
+                        nelist_append(liste, ADRESSES->tab[strlist_index(NOMS,tokens->tab[i])]);
+                    }
+                    else
+                    {
+                        strlist_append(NOMS,strdup(tokens->tab[i])); // on ajoute le nom à la liste des noms
+                        nelist_append(liste, neobject_create(TYPE_EMPTY)); // création de l'adresse du NeObject, mais celui-ci est symbolique pour l'instant : on ne sait pas encore ce qu'on va mettre dedans
+                        nelist_append(ADRESSES,liste->tab[liste->len-1]); // on ajoute l'objet à la liste des variables
+                    }
+
+                    // il faut vérifier si c'est un argument optionnel ou pas
+
+                    if (i < tokens->len - 2 && strcmp(tokens->tab[i+1], ":=") == 0) // argument optionnel
+                    {
+                        if (unlimited_arguments)
+                            nbOptArgs++;
+
+                        // dans ce cas, on évalue l'expression et on l'ajoute à l'arbre opt_args
+                        int j = i;
+                        while (j < tokens->len && strcmp(tokens->tab[j], ",") != 0) j++; // va à la fin de l'expression
+
+                        // création d'une sous liste, puis calcul de l'arbre de cette sous liste
+                        strlist tokensarg = (strlist) {.tab = tokens->tab + i+2, .len = j-i-2};
+                        intlist typesarg = (intlist) {.tab = types.tab + i+2, .len = j-i-2};
+                        intlist ordrearg;
+                        
+                        calcPriorites(&tokensarg, &typesarg, &ordrearg);
+
+                        Tree* exp = tree_create(NULL, number_default(), 0);
+                        createExpressionTreeAux(exp, &tokensarg, &typesarg, &ordrearg);
+
+                        err_free(ordrearg.tab);
+
+                        if (CODE_ERROR != 0) {
+                            strlist_destroy(tokens, true);
+                            err_free(types.tab);
+                            err_free(args2);
+                            err_free(name);
+                            tree_destroy(opt_args);
+                            err_free(liste->tab);
+                            err_free(liste);
+                            return ;
+                        }
+
+                        tree_appendSon(opt_args, exp); // on ajoute l'expression aux arguments optionnels
+
+                        i = j-1;
+                    }
+                    else if (i < tokens->len - 1 && strcmp(tokens->tab[i+1], ",") != 0) {
+                        // erreur de syntaxe
+                        CODE_ERROR = 96;
+                        strlist_destroy(tokens, true);
+                        err_free(types.tab);
+                        err_free(args2);
+                        err_free(name);
+                        tree_destroy(opt_args);
+                        err_free(liste->tab);
+                        err_free(liste);
+                        return ;
+                    }
+                    else { // argument non optionnel
+                        if (unlimited_arguments) {
+                            // erreur : on ne peut pas mettre d'arguments obligatoires après ...
+                            CODE_ERROR = 96;
+                            strlist_destroy(tokens, true);
+                            err_free(types.tab);
+                            err_free(args2);
+                            err_free(name);
+                            tree_destroy(opt_args);
+                            err_free(liste->tab);
+                            err_free(liste);
+                            return ;
+                        }
+                        tree_appendSon(opt_args, tree_create(NULL, number_default(), 0));
+                    }
+                }
+                else if (strcmp(tokens->tab[i], "...") == 0) {
+                    // nombre infini de paramètres
+                    // s'il y a encore des choses après, c'est une erreur de syntaxe
+                    
+                    // la fonction prend un nombre illimité de paramètres
+                    unlimited_arguments = true;
+                }
+                else {
+                    CODE_ERROR = 96;
+                    strlist_destroy(tokens, true);
+                    err_free(types.tab);
+                    err_free(args2);
+                    err_free(name);
+                    tree_destroy(opt_args);
+                    err_free(liste->tab);
+                    err_free(liste);
+                    return ;
+                }
             }
         }
 
         strlist_destroy(tokens, true);
-        
+        err_free(args2);
+        err_free(types.tab);
     }
 
     // on dispose maintenant du tableau de variables et de l'arbre de code
-    NeObject* neo = userFuncCreate(tab, syntaxTree, nbArgs); // objet destiné à être dans l'arbre
+    NeObject* neo = userFuncCreate(liste->tab, syntaxTree, liste->len, unlimited_arguments, nbOptArgs, opt_args); // objet destiné à être dans l'arbre
     if (isMethod)
         neo->type = TYPE_USERMETHOD;
 
-    
+    err_free(liste); // libération de la nelist utilisée
     
     if (strlist_inList(NOMS,name))
     {

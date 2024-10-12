@@ -149,6 +149,11 @@ long int hexToDec(char* chaine, int debut, int longueur)
 }
 
 
+_Bool isidentifier(char c) {
+    return isalnum(c) || c == '_';
+}
+
+
 
 _Bool isString(char* string, char* test, int size)
 {
@@ -161,7 +166,7 @@ _Bool isString(char* string, char* test, int size)
             break;
         }
     }
-    return bo && !isalnum(string[size]);
+    return bo && !isidentifier(string[size]);
 }
 
 
@@ -224,17 +229,17 @@ void cut(strlist* tokens, intlist* types, char* str, _Bool traiterStatements)
     for (int k = 0 ; k < len_string ; k++)
     {
 
-        if (isalnum(string[k]) || string[k] == '_' || string[k] == '\'' && !str1 && !str2)
+        if (isidentifier(string[k]) || string[k] == '_' || string[k] == '\'' && !str1 && !str2)
             isPotentiallyWord = true;
         
-        if (isPotentiallyWord && string[k] != '_' && string[k] != '\'' && !isalnum(string[k]))
+        if (isPotentiallyWord && string[k] != '_' && string[k] != '\'' && !isidentifier(string[k]))
             isPotentiallyWord = false;
 
 
         if (string[k] == '\'' && !isPotentiallyWord) str1 = !str1;
         if (string[k] == '"') str2 = !str2;
 
-        if (!str1 && !str2 && !isalnum(string[k])) // pas dans les chaines de caractères, ni dans les noms de variable
+        if (!str1 && !str2 && !isidentifier(string[k])) // pas dans les chaines de caractères, ni dans les noms de variable
         {
             if (k < len_string - longueur_ouvrant - 1) // pour le 'do'
             {
@@ -406,7 +411,7 @@ void cut(strlist* tokens, intlist* types, char* str, _Bool traiterStatements)
 
         
         //fins tokens simples
-        finTokensSimples(string, &isPotentiallyNumber, &isPotentiallyString, &isPotentiallyWord, &isPotentiallyOp, &isPotentiallyLongComm, &isPotentiallyString2, &isPotentiallyComm, &isPotentiallyHexBin, &char2, &char1, &nouvTok, tokenAdd, &typeTok, &debTok, i, &stepNumber, &stepHexBin);
+        finTokensSimples(string, &isPotentiallyNumber, &isPotentiallyString, &isPotentiallyWord, &isPotentiallyOp, &isPotentiallyLongComm, &isPotentiallyString2, &isPotentiallyComm, &isPotentiallyHexBin, &char2, &char1, &nouvTok, tokenAdd, &typeTok, &debTok, i, &stepNumber, &stepHexBin, len_string);
 
         if (CODE_ERROR != 0)
         {
@@ -625,8 +630,6 @@ void cut(strlist* tokens, intlist* types, char* str, _Bool traiterStatements)
         
         
         char2=char1;
-
-        
     }
     
     err_free(typeTok.tab);
@@ -683,7 +686,6 @@ void cut(strlist* tokens, intlist* types, char* str, _Bool traiterStatements)
     strlist_destroy(tokenAdd, true);
     err_free(string);
 
-
     return ;
 }
 
@@ -713,7 +715,7 @@ char* nomBlockLine(char* blockline)
 
 
 
-void finTokensSimples(char* string, _Bool* isPotentiallyNumber, _Bool* isPotentiallyString, _Bool* isPotentiallyWord, _Bool* isPotentiallyOp, _Bool* isPotentiallyLongComm, _Bool* isPotentiallyString2, _Bool* isPotentiallyComm, _Bool* isPotentiallyHexBin, char * char2, char* char1, _Bool* nouvTok, strlist* tokenAdd, intlist* typeTok, int* debTok, int i, int* stepNumber, int* stepHexBin)
+void finTokensSimples(char* string, _Bool* isPotentiallyNumber, _Bool* isPotentiallyString, _Bool* isPotentiallyWord, _Bool* isPotentiallyOp, _Bool* isPotentiallyLongComm, _Bool* isPotentiallyString2, _Bool* isPotentiallyComm, _Bool* isPotentiallyHexBin, char * char2, char* char1, _Bool* nouvTok, strlist* tokenAdd, intlist* typeTok, int* debTok, int i, int* stepNumber, int* stepHexBin, int len_string)
 {
     /*
     fonction interne à cut permettant de mettre fin à la détection des tokens simples
@@ -806,8 +808,9 @@ void finTokensSimples(char* string, _Bool* isPotentiallyNumber, _Bool* isPotenti
     }
     
     
-    char* sousch = sub(string, (*debTok), i+1);
-    if ((*isPotentiallyOp) && !strlist_inList(&operateurs1, sousch)) // fin operateur
+    char* sousch1 = sub(string, (*debTok), i+1);
+    char* sousch2 = (i < len_string - 1) ? sub(string, (*debTok), i+2) : strdup(sousch1);
+    if ((*isPotentiallyOp) && !strlist_inList(&operateurs1, sousch1) && !strlist_inList(&operateurs1, sousch2)) // fin operateur
     {
         strlist_append(tokenAdd,sub(string, (*debTok), i));
         (*nouvTok)=true;
@@ -815,7 +818,7 @@ void finTokensSimples(char* string, _Bool* isPotentiallyNumber, _Bool* isPotenti
         (*isPotentiallyOp)=false;
     }
     
-    err_free(sousch);
+    err_free(sousch1);err_free(sousch2);
     
     // elements d’un caractere
     
@@ -1515,7 +1518,7 @@ void verificationGrammaire(strlist* tokens, intlist* types, _Bool* isPotentially
                         
                         
                         // on verifie que le token peut effectivement etre apres l’operateur
-                        if ((gramm==VARLEFT && typeact != TYPE_ENDOFLINE && typeact != TYPE_VIRGULE && typeact != TYPE_PARENTHESE2 && !(typeact==TYPE_OPERATOR && grammact==RIGHT_LEFT)) || ((gramm==VARRIGHT || gramm == LEFT_VAR) && !(typeact==TYPE_LISTINDEX || typeact==TYPE_VARIABLE)) || ((gramm==RIGHT_LEFT || gramm==VAR_RIGHT || gramm==RIGHT) && (typeact==TYPE_ENDOFLINE || typeact==TYPE_VIRGULE || typeact==TYPE_PARENTHESE2)) || (gramm==VARRIGHT && typeact != TYPE_VARIABLE))
+                        if ((gramm==VARLEFT && typeact != TYPE_ENDOFLINE && typeact != TYPE_VIRGULE && typeact != TYPE_PARENTHESE2 && !(typeact==TYPE_OPERATOR && grammact==RIGHT_LEFT)) || ((gramm==VARRIGHT || gramm == LEFT_VAR || gramm==VAR_VAR) && !(typeact==TYPE_LISTINDEX || typeact==TYPE_VARIABLE)) || ((gramm==RIGHT_LEFT || gramm==VAR_RIGHT || gramm==RIGHT || gramm==VAR_VAR) && (typeact==TYPE_ENDOFLINE || typeact==TYPE_VIRGULE || typeact==TYPE_PARENTHESE2)) || (gramm==VARRIGHT && typeact != TYPE_VARIABLE))
                         {
                             // Mauvaise utilisation d'un opérateur, deux types à la suite non compatibles, ou utilisation d'un type inconnu/incompatible (2)
                             CODE_ERROR = 31;
@@ -1532,7 +1535,7 @@ void verificationGrammaire(strlist* tokens, intlist* types, _Bool* isPotentially
                             grammanc=gramm1.tab[strlist_index(&operateurs3, tokens->tab[j-1])];
 
 
-                        if (((gramm==VARLEFT || gramm==VAR_RIGHT) && typeanc != TYPE_VARIABLE && typeanc != TYPE_LISTINDEX) || ((gramm==RIGHT || gramm==VARRIGHT)  && (typeanc==TYPE_NUMBER || typeanc==TYPE_STRING || typeanc==TYPE_LIST ||  typeanc==TYPE_VARIABLE ||  typeanc==TYPE_FONCTION ||  typeanc==TYPE_BOOL || typeanc==TYPE_CONST || typeanc==TYPE_NONE || typeanc==TYPE_EXCEPTION || typeanc==TYPE_LISTINDEX)) || ((gramm==LEFT_VAR || gramm==RIGHT_LEFT) && !(typeanc==TYPE_NUMBER || typeanc==TYPE_STRING || typeanc==TYPE_LIST ||  typeanc==TYPE_VARIABLE ||  typeanc==TYPE_FONCTION ||  typeanc==TYPE_BOOL ||  typeanc==TYPE_LISTINDEX || typeanc==TYPE_CONST || typeanc==TYPE_NONE || typeanc==TYPE_EXCEPTION || typeanc==TYPE_PARENTHESE2 || (typeanc==TYPE_OPERATOR && grammanc==VARLEFT))))
+                        if (((gramm==VARLEFT || gramm==VAR_RIGHT || gramm==VAR_VAR) && typeanc != TYPE_VARIABLE && typeanc != TYPE_LISTINDEX) || ((gramm==RIGHT || gramm==VARRIGHT)  && (typeanc==TYPE_NUMBER || typeanc==TYPE_STRING || typeanc==TYPE_LIST ||  typeanc==TYPE_VARIABLE ||  typeanc==TYPE_FONCTION ||  typeanc==TYPE_BOOL || typeanc==TYPE_CONST || typeanc==TYPE_NONE || typeanc==TYPE_EXCEPTION || typeanc==TYPE_LISTINDEX)) || ((gramm==LEFT_VAR || gramm==RIGHT_LEFT || gramm==VAR_VAR) && !(typeanc==TYPE_NUMBER || typeanc==TYPE_STRING || typeanc==TYPE_LIST ||  typeanc==TYPE_VARIABLE ||  typeanc==TYPE_FONCTION ||  typeanc==TYPE_BOOL ||  typeanc==TYPE_LISTINDEX || typeanc==TYPE_CONST || typeanc==TYPE_NONE || typeanc==TYPE_EXCEPTION || typeanc==TYPE_PARENTHESE2 || (typeanc==TYPE_OPERATOR && grammanc==VARLEFT))))
                         {
                             // Mauvaise utilisation d'un opérateur, deux types à la suite non compatibles, ou utilisation d'un type inconnu/incompatible (2)
                             CODE_ERROR = 32;

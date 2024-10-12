@@ -78,7 +78,7 @@ extern int CODE_ERROR;
             
             int err = scanf("%4000[^\n]",var);
             
-            flush();
+            cleanStdin();
             
             if (err!=1)
             {
@@ -108,7 +108,8 @@ extern int CODE_ERROR;
         {
             char* str = linenoise(text);
             // Ajout de la ligne à l'historique
-            linenoiseHistoryAdd(str);
+            if (str != NULL)
+                linenoiseHistoryAdd(str);
 
             return str;
         }

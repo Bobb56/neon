@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#define VERSION "2.12.38.2-beta"
+#define VERSION "2.15.40.3-beta"
 /*
 Numérotation de versions :
 Ajout d'opérateur ou de fonction ou modification d'un élément de syntaxe : +0.0.1
@@ -13,10 +13,10 @@ Ajout d'un type de données NeObject : +0.0.1
 #define INVITATION "https://discord.gg/wkBdK35w2a"
 
 // à définir en fonction des destinations de compilation
-//#define LINUX
+#define LINUX
 //#define WINDOWS10
 //#define WINDOWS11
-#define WASM
+//#define WASM
 //#define TI83PCE
 
 
@@ -32,12 +32,13 @@ Ajout d'un type de données NeObject : +0.0.1
 #endif
 
 
+
 // si la version actuelle n'est pas stable mais est en distribution
-//#define EXPERIMENTAL
+#define EXPERIMENTAL
 
 #define SEQUENCE_ENTREE ">> "
 
-#define NB_ERRORS 93
+#define NB_ERRORS 100
 
 /*constantes de couleur*/
 #define BLUE 0
@@ -46,6 +47,8 @@ Ajout d'un type de données NeObject : +0.0.1
 #define GREEN 3
 
 #define PI 3.141592653589793
+
+#define NBLOCALVARS 20 // nombre de variables locales à empiler pour la fonction execval
 
 //fin de fichier
 #define EOF (-1)
@@ -56,8 +59,8 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 // pour builtinfonc et opfonc
-#define NBOPERATEURS 36
-#define NBBUILTINFONC 48
+#define NBOPERATEURS 39
+#define NBBUILTINFONC 49
 
 
 //definition des types d’arguments pris par les operateurs
@@ -67,6 +70,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #define VAR_RIGHT 4 // une variable a gauche et une operande a droite
 #define LEFT_VAR 6 // une variable à doite et n'importe quoi à gauche
 #define VARRIGHT 5 // une variable a droite
+#define VAR_VAR 7 // une variable à droite et une variable à gauche
 
 // valeurs de retour
 #define CONTINUE 1
@@ -251,7 +255,11 @@ typedef struct UserFunc
 {
     NeObject** args;
     int nbArgs;
+    _Bool unlimited_arguments;
+    int nbOptArgs; // nombre d'arguments vraiment, vraiment optionnels (par définition, ceux qui sont après ...)
     Tree * code;
+    Tree* opt_args;// expressions pour calculer les arguments optionnels
+    char* doc;
 } UserFunc;
 
 
@@ -277,8 +285,8 @@ typedef struct Container
 
 
 /*MAIN.C*/
-NeObject* eval(Tree* tree);
-NeObject* evalAux(Tree* tree, _Bool calcListIndex);
+_Bool neoIsTrue(NeObject* neo);
+NeObject* execval(Tree* tree);
 int indexListIndex(char* listindex);
 void printRes(NeObject* res);
 void local(NeObject* var);
@@ -379,6 +387,7 @@ char* neo_to_none(NeObject* neo);
 NeObject* neo_copy(NeObject* neo);
 int neo_list_len(NeObject* neo);
 int nelist_index(NeList* liste, NeObject* neo);
+int nelist_index2(NeList* l, NeObject* neo);
 void nelist_insert(NeList* list,NeObject* neo, int index);
 void neo_list_insert(NeObject* neo, NeObject* ptr, int index);
 void neo_list_remove(NeObject* neo, int index);
@@ -391,7 +400,7 @@ void compFunc(const int* typesbuiltinsfonc, const char** helpbuiltinsfonc, const
 _Bool funcArgsCheck(Function* fun, NeList* args);
 NeObject* functionCall(NeObject* fun, NeList* args);
 char* type(NeObject* neo);
-NeObject* userFuncCreate(NeObject** args, Tree* code, int nbArgs);
+NeObject* userFuncCreate(NeObject** args, Tree* code, int nbArgs, _Bool unlimited_arguments, int nbOptArgs, Tree* opt_args);
 NeObject* neo_exception_create(int index);
 _Bool neo_equal(NeObject* _op1, NeObject* _op2);
 _Bool nelist_inList(NeList* list, NeObject* neo);
@@ -429,7 +438,7 @@ void createFunctionTree(Tree* tree, char* string, _Bool isMethod);
 
 _Bool isFull(char* code);
 char* nomBlockLine(char* blockline);//a liberer apres
-void finTokensSimples(char* string, _Bool* isPotentiallyNumber, _Bool* isPotentiallyString, _Bool* isPotentiallyWord, _Bool* isPotentiallyOp, _Bool* isPotentiallyLongComm, _Bool* isPotentiallyString2, _Bool* isPotentiallyComm, _Bool* isPotentiallyHexBin, char * char2, char* char1, _Bool* nouvTok, strlist* tokenAdd, intlist* typeTok, int* debTok, int i, int* stepNumber, int* stepHexBin);
+void finTokensSimples(char* string, _Bool* isPotentiallyNumber, _Bool* isPotentiallyString, _Bool* isPotentiallyWord, _Bool* isPotentiallyOp, _Bool* isPotentiallyLongComm, _Bool* isPotentiallyString2, _Bool* isPotentiallyComm, _Bool* isPotentiallyHexBin, char * char2, char* char1, _Bool* nouvTok, strlist* tokenAdd, intlist* typeTok, int* debTok, int i, int* stepNumber, int* stepHexBin, int len_string);
 void debutTokensSimples(int i, int* debTok, char* char1, _Bool* isPotentiallyString, _Bool* isPotentiallyNumber, _Bool* isPotentiallyWord, _Bool* isPotentiallyOp, _Bool* isPotentiallyString2, _Bool* isPotentiallyComm, _Bool* isPotentiallyLongComm, _Bool* isPotentiallyHexBin);
 void annulerOuPoursuivre(_Bool* isPotentiallyFonc, int* foncStep, _Bool* isPotentiallyInst, int* instStep, _Bool* isPotentiallyListIndex, int* listIndexStep, strlist* tokenAdd, intlist* typeTok, int k, int *foncParDeb, int *listeParDeb, int *indexParDeb, int* nbCro);
 void debutTokensComposes(int k, intlist* typeTok, strlist* tokenAdd, int* debTok2, int* debTok3, strlist* tokens, intlist *types, _Bool* nouvTokComp, _Bool* isPotentiallyList, _Bool* isPotentiallyFonc, _Bool* isPotentiallyListIndex, _Bool* isPotentiallyComm, _Bool* isPotentiallyBlock, _Bool* isPotentiallyInst, _Bool* isPotentiallyLongComm, int* listIndexStep, int *foncStep, int *instStep, int *foncParDeb, int *listeParDeb, int *indexParDeb, int* nbPar, int* nbCro);
@@ -484,7 +493,8 @@ void ptrlist_aff(ptrlist* l);
 int ptrlist_len(ptrlist* l);
 int ptrlist_destroy(ptrlist* l, _Bool freeElements, _Bool freeTab);
 void ptrlist_replace(ptrlist* liste, void* aRemplacer, void* nvlleValeur);
-
+_Bool ptrlist_isEmpty(ptrlist* l);
+void* ptrlist_pop(ptrlist* list);
 
 
 /**************************intlist**********************/
@@ -571,6 +581,7 @@ NeObject* _del(NeObject* op1, NeObject* op2);
 NeObject* _exponent(NeObject* op1, NeObject* op2);
 NeObject* _implique(NeObject* op1, NeObject* op2);
 NeObject* _in(NeObject* op1, NeObject* op2);
+NeObject* _swap(NeObject* op1, NeObject* op2);
 
 /*BUILTINSFONC.C*/
 NeObject* _print_(NeList* args);
@@ -621,12 +632,12 @@ NeObject* _ceil_(NeList* args);
 NeObject* _floor_(NeList* args);
 NeObject* _writeFile_(NeList* args);
 NeObject* _readFile_(NeList* args);
-
+NeObject* _setFunctionDoc_(NeList* args);
 
 
 
 void affProgram(Tree* tree);
-
+void affExpr(Tree* tree);
 
 
 

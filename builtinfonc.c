@@ -126,7 +126,6 @@ NeObject* _input_(NeList* args)
 
         #else
             // à cause de linenoise, il faut mettre tout le texte dans une seule chaine de caractères
-
             char* chaine = strdup("");
 
             for (int i=0 ; i< args->len ; i++)
@@ -145,13 +144,10 @@ NeObject* _input_(NeList* args)
             err_free(chaine);
 
         #endif
-        
-        return neo_str_create(entree);
     
     #endif
     
-    return NULL;
-    
+    return neo_str_create(entree);
 }
 
 
@@ -285,7 +281,7 @@ NeObject* _eval_(NeList* args)
     char* exp = neo_to_string(args->tab[0]);
     
     createExpressionTree(tree, exp);
-    NeObject* res = eval(tree);
+    NeObject* res = execval(tree);
     
     
     tree_destroy(tree);
@@ -304,12 +300,55 @@ NeObject* _clear_(NeList* args)
 
 NeObject* _help_(NeList* args)
 {
-    if (args->tab[0]->type != TYPE_FONCTION)
+    if (args->tab[0]->type == TYPE_USERFUNC || args->tab[0]->type == TYPE_USERMETHOD)
     {
-        CODE_ERROR = 63;//erreur : ceci n'est pas une fonction
-        return NULL;
+        // type userfunc
+        UserFunc* fun = args->tab[0]->data;
+
+        if (args->tab[0]->type == TYPE_USERMETHOD)
+            printString("method ");
+        else
+            printString("function ");
+
+
+        printString(NOMS->tab[nelist_index2(ADRESSES,args->tab[0])]);
+
+        printString("(");
+
+        _Bool bo = false;
+
+        for (int i = 0 ; i < fun->nbArgs ; i++)
+        {
+            if (fun->unlimited_arguments && i == fun->nbArgs - fun->nbOptArgs && !bo) {
+                printString("...");
+                i --;
+                bo = true;
+            }
+            else {
+                // affichage de la variable fun->args[i]
+                char* nom = NOMS->tab[nelist_index(ADRESSES, fun->args[i])];
+                printString(nom);
+
+                if (fun->opt_args->sons[i]->nbSons != 0 || fun->opt_args->sons[i]->type != 0) // expression non vide
+                {
+                    printString(" := ");
+                    affExpr(fun->opt_args->sons[i]);
+                }
+            }
+
+            if (i < fun->nbArgs - 1)
+                printString(", ");
+        }
+        printString(")");
+        newLine();
+
+        if (fun->doc != NULL)
+            printString(fun->doc);
+        else
+            printString("No documentation available for this function.");
+        newLine();
     }
-    else
+    else if (args->tab[0]->type == TYPE_FONCTION)
     {
         Function* fun = args->tab[0]->data;
         if (fun->nbArgsMeth == 0 && fun->type == TYPE_BUILTINFUNC)
@@ -321,7 +360,7 @@ NeObject* _help_(NeList* args)
         else if (fun->type == TYPE_USERMETHOD)
             printString("Method ");
 
-        printString(NOMS->tab[nelist_index(ADRESSES,args->tab[0])]);
+        printString(NOMS->tab[nelist_index2(ADRESSES,args->tab[0])]);
         newLine();
         
         if (fun->nbArgs == -1)
@@ -369,6 +408,11 @@ NeObject* _help_(NeList* args)
             newLine();
         }
     }
+    else {
+        CODE_ERROR = 63;//erreur : ceci n'est pas une fonction
+        return NULL;
+    }
+
     return neo_none_create();
 }
 
@@ -504,8 +548,11 @@ NeObject* _list_comp_(NeList* args)
 
     while (number_inf(neo_to_nb(i), neo_to_nb(args->tab[2])))
     {
-        if (isTrue(cond))
-            neo_list_append(liste, eval(val));
+        NeObject* bo = execval(cond);
+        if (neoIsTrue(bo))
+            neo_list_append(liste, execval(val));
+
+        neobject_destroy(bo, true);
 
         // incrémentation de la variable d'indice
         x = _add(i, args->tab[3]);
@@ -525,7 +572,20 @@ NeObject *_create_exception_(NeList* args)
 {
     strlist_append(&exceptions, strdup(neo_to_string(args->tab[0])));
     NeObject* e = neo_exception_create(exceptions.len - 1);
-    return e;
+
+    if (strlist_inList(NOMS,neo_to_string(args->tab[0])))
+    {
+        int index = strlist_index(NOMS,neo_to_string(args->tab[0]));
+        _affect2(ADRESSES->tab[index], e);
+        neobject_destroy(e, true);
+    }
+    else
+    {
+        strlist_append(NOMS,strdup(neo_to_string(args->tab[0]))); // on ajoute le nom à la liste des noms
+        nelist_append(ADRESSES,e); // on ajoute l'objet à la liste des variables
+    }
+
+    return neo_none_create();
 }
 
 
@@ -547,13 +607,11 @@ NeObject * _int_(NeList* args)
 
 NeObject* _index_(NeList* args)
 {
-    NeList* l = args->tab[0]->data;
-    for (int i = 0; i < l->len ; i++)
-    {
-        if (neo_equal(args->tab[1], l->tab[i]))
-            return neo_nb_create(number_fromDouble((double)i));
-    }
-    CODE_ERROR = 88;
+    int i = nelist_index2((NeList*)args->tab[0]->data, args->tab[1]);
+
+    if (i >= 0)
+        return neo_nb_create(number_fromDouble((double)i));
+    
     return NULL;
 }
 
@@ -780,5 +838,20 @@ NeObject* _writeFile_(NeList* args)
     if (CODE_ERROR != 0)
         return NULL;
     
+    return neo_none_create();
+}
+
+
+NeObject* _setFunctionDoc_(NeList* args) {
+    if (args->tab[0]->type != TYPE_USERFUNC && args->tab[0]->type != TYPE_USERMETHOD) {
+        CODE_ERROR = 98;
+        return NULL;
+    }
+    UserFunc* fun = args->tab[0]->data;
+
+    if (fun->doc != NULL)
+        free(fun->doc);
+
+    fun->doc = strdup(neo_to_string(args->tab[1]));
     return neo_none_create();
 }

@@ -188,18 +188,18 @@ NeObject* _mul(NeObject* _op1, NeObject* _op2)
     if (_op1->type==TYPE_STRING)
     {
       sousch=neo_to_string(_op1);
-      multip=strdup(sousch);
+      multip=strdup("");
       times=(long int)number_toDouble(neo_to_nb(_op2));
     }
     else
     {
       sousch=neo_to_string(_op2);
-      multip=strdup(sousch);
+      multip=strdup("");
       times=(long int)number_toDouble(neo_to_nb(_op1));
     }
     
 
-    for (int i=1;i<times;i++)
+    for (int i=0;i<times;i++)
     {
       tmp=addStr(multip,sousch);
       err_free(multip);
@@ -579,11 +579,8 @@ NeObject* _goIn(NeObject* op2, NeObject* op1)
         }
         else
         {
-            Tree* tree = tree_create(NULL,0,0);
-            createExpressionTree(tree, nomVar);
-            var = evalAux(tree,false); // var contient désormais le pointeur vers le NeObject à modifier
-            tree_destroy(tree);
-            
+            int index = strlist_index(NOMS, nomVar);
+            var = ADRESSES->tab[index];            
         }
     
         // ADRESSES->tab[index] contient donc le NeObject dans lequel on doit mettre la valeur
@@ -816,4 +813,19 @@ NeObject* _in(NeObject* op1, NeObject* op2)
     {
         return neo_bool_create(nelist_inList((NeList*)op2->data, op1));
     }
+}
+
+NeObject* _swap(NeObject* op1, NeObject* op2)
+{
+    NeObject temp;
+    temp.data = op1->data;
+    temp.type = op1->type;
+
+    op1->data = op2->data;
+    op1->type = op2->type;
+
+    op2->data = temp.data;
+    op2->type = temp.type;
+
+    return neo_none_create();
 }

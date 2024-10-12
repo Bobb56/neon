@@ -50,13 +50,13 @@ extern int CODE_ERROR;
 
 
 
-/*
-void cleanStdin(void)// vide le buffer
-{
-    int c = 0;
-    while ((c = getchar()) != '\n' && c != EOF);
-}
-*/
+#ifndef LINUX
+    void cleanStdin(void)// vide le buffer
+    {
+        int c = 0;
+        while ((c = getchar()) != '\n' && c != EOF);
+    }
+#endif
 
 
 
@@ -474,8 +474,9 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
         char temp = string[i+len_aremplacer];
         string[i+len_aremplacer] = '\0';
         
-        if (strcmp(aRemplacer, string + i) == 0)
+        if (strcmp(aRemplacer, string + i) == 0 && (l.len == 0 || l.tab[l.len-1] + len_aremplacer < i)) {
             intlist_append(&l, i);
+        }
 
         string[i+len_aremplacer] = temp;
     }

@@ -232,12 +232,16 @@ _Bool funcArgsCheck(Function* fun, NeList* args)
 
 
 
-NeObject* userFuncCreate(NeObject** args, Tree* code, int nbArgs)
+NeObject* userFuncCreate(NeObject** args, Tree* code, int nbArgs, _Bool unlimited_arguments, int nbOptArgs, Tree* opt_args)
 {
     UserFunc* fun = err_malloc(sizeof(UserFunc));
     fun->args = args;
     fun->code = code;
     fun->nbArgs = nbArgs;
+    fun->opt_args = opt_args;
+    fun->nbOptArgs = nbOptArgs;
+    fun -> unlimited_arguments = unlimited_arguments;
+    fun->doc = NULL;
 
     NeObject* neo = neobject_create(TYPE_USERFUNC);
     neo->data = (void*)fun;
@@ -346,7 +350,12 @@ NeObject* neo_copy(NeObject* neo)
         for (int i = 0 ; i < fun->nbArgs ; i++)
             args[i] = fun->args[i];
 
-        NeObject* ret = userFuncCreate(args, fun->code, fun->nbArgs);
+        Tree* opt_args2 = tree_copy(fun->opt_args);
+
+        NeObject* ret = userFuncCreate(args, fun->code, fun->nbArgs, fun->unlimited_arguments, fun->nbOptArgs, opt_args2);
+
+        ((UserFunc*)ret->data)->doc = (fun->doc == NULL) ? NULL : strdup(fun->doc);
+
         ret->type = neo->type;
         
         return ret;
@@ -449,8 +458,10 @@ void neobject_destroy(NeObject* neo, _Bool bo)
             else if (neo->type == TYPE_USERFUNC || neo->type == TYPE_USERMETHOD)
             {
                 UserFunc* fun = neo->data;
-                
+                if (fun->doc != NULL)
+                    err_free(fun->doc);
                 err_free(fun->args);
+                tree_destroy(fun->opt_args);
                 err_free(fun);
             }
 
@@ -944,10 +955,24 @@ int nelist_index(NeList* liste, NeObject* neo)
     }
     CODE_ERROR = 39; // cet objet n'existe pas
     
-    return 0;
+    return -1;
 }
 
 
+
+
+
+
+int nelist_index2(NeList* l, NeObject* neo)
+{
+    for (int i = 0; i < l->len ; i++)
+    {
+        if (neo_equal(neo, l->tab[i]))
+            return i;
+    }
+    CODE_ERROR = 88;
+    return -1;
+}
 
 
 

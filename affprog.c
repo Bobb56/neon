@@ -200,7 +200,7 @@ void affExpr(Tree* tree)
             printString(tree->label1);
         else
         {
-            NeObject* neo = eval(tree->sons[0]);
+            NeObject* neo = execval(tree->sons[0]);
             Container* c = neo->data;
             int index = (long int)number_toDouble(tree->label2);
             NeList* list = ATTRIBUTES->tab[c->type]->data;
@@ -377,15 +377,15 @@ void affProgram(Tree* tree)
     }
     else if (tree->type == TYPE_TRYEXCEPT)
     {
-        printString("try ... ");
-        /*newLine();
+        printString("\ntry");
+        newLine();
 
         indent ++;
         for (int i = 0 ; i < tree->sons[0]->nbSons ; i++)
         {
             affProgram(tree->sons[0]->sons[i]);
         }
-        indent --;*/
+        indent --;
 
         printString("except (");
         for (int i = 0 ; i < tree->sons[1]->sons[0]->nbSons ; i++)
@@ -426,6 +426,12 @@ void affProgram(Tree* tree)
             // affichage de la variable fun->args[i]
             char* nom = NOMS->tab[nelist_index(ADRESSES, fun->args[i])];
             printString(nom);
+
+            if (fun->opt_args->sons[i]->nbSons != 0 || fun->opt_args->sons[i]->type != 0) // expression non vide
+            {
+                printString(" := ");
+                affExpr(fun->opt_args->sons[i]);
+            }
 
             if (i < fun->nbArgs - 1)
                 printString(", ");

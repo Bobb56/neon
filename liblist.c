@@ -431,6 +431,25 @@ void ptrlist_remove(ptrlist* list, void* l, _Bool error)
 
 
 
+void* ptrlist_pop(ptrlist* list)
+{
+    void* val = list->tete;
+    void* sov_chainon = list->queue;
+
+    if (sov_chainon == NULL) {
+      list->tete = NULL;
+    }
+    else {
+      list->tete = list->queue->tete;
+      list->queue = list->queue->queue;
+      err_free(sov_chainon);
+    }
+    return val;
+}
+
+
+
+
 
 int ptrlist_len(ptrlist* l)
 {
@@ -442,6 +461,10 @@ int ptrlist_len(ptrlist* l)
     for (i = 0; ptr != NULL; i++)
         ptr = ptr->queue;
     return i;
+}
+
+_Bool ptrlist_isEmpty(ptrlist* l) {
+  return l->queue == NULL && l->tete == NULL;
 }
 
 
