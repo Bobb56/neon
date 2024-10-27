@@ -1,6 +1,6 @@
 // bibliothèque générale de structures des données Neon
 
-
+#include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -8,6 +8,9 @@
 
 #include "headers.c"
 
+
+extern NeList* PROMISES;
+extern intlist PROMISES_CNT;
 
 extern int CODE_ERROR;
 
@@ -113,6 +116,16 @@ NeObject* neo_nb_create(Number number)
     neo->data = err_malloc(sizeof(Number));
     neo->type = TYPE_NUMBER;
     *((Number*)neo->data) = number;
+    return neo;
+}
+
+
+
+NeObject* neo_promise_create(intptr_t id) {
+    // une promesse contient un identifiant correspondant au processus dont elle dépend
+    NeObject* neo = err_malloc(sizeof(NeObject));
+    neo->data = (void*)id;
+    neo->type = TYPE_PROMISE;
     return neo;
 }
 
@@ -367,6 +380,35 @@ NeObject* neo_copy(NeObject* neo)
         
         return neo_container_create(c->type, data);
     }
+    else if (neo->type == TYPE_PROMISE)
+    {
+        intptr_t id = (intptr_t)neo->data;
+
+        if (PROMISES->tab[(int)id] != NULL) { // la promesse a été résolue
+            // il n'y a pas besoin de spécialement soustraire un au compteur car comme on détruit neo, neobject_destroy le fait tout seul
+
+            if (PROMISES_CNT.tab[(int)id] == 1) // on s'apprête à renvoyer la dernière valeur associée à cette promesse
+            {
+                PROMISES_CNT.tab[(int)id]++; // pour être sur que l'objet PROMISES[id] soit pas supprimé
+                neobject_destroy(neo, false);
+                neo->type = PROMISES->tab[(int)id]->type;
+                neo->data = PROMISES->tab[(int)id]->data;
+                err_free(PROMISES->tab[(int)id]);
+                PROMISES->tab[(int)id] = NULL;
+                PROMISES_CNT.tab[(int)id] = 0;
+            }
+            else
+            {
+                _affect2(neo, PROMISES->tab[(int)id]);
+            }
+
+            return neo_copy(neo);
+        }
+        else {
+            PROMISES_CNT.tab[(int)id]++; // une nouvelle promesse de ce type
+            return neo_promise_create((intptr_t)neo->data);
+        }
+    }
     else if (neo->type == TYPE_EMPTY)
     {
         return neobject_create(TYPE_EMPTY);
@@ -374,6 +416,10 @@ NeObject* neo_copy(NeObject* neo)
     
     return NULL;
 }
+
+
+
+
 
 
 
@@ -435,7 +481,7 @@ void neobject_destroy(NeObject* neo, _Bool bo)
 {
     if (neo != NULL)
     {
-        if (neo->data != NULL) // on supprime neo->data
+        if (neo->data != NULL || neo->type == TYPE_PROMISE) // on supprime neo->data
         {
             if (neo->type == TYPE_NUMBER)
             {
@@ -470,6 +516,16 @@ void neobject_destroy(NeObject* neo, _Bool bo)
                 Container* c = (Container*)neo->data;
                 nelist_destroy(c->data, true);
                 err_free(c);
+            }
+            else if (neo->type == TYPE_PROMISE)
+            {
+                intptr_t id = (intptr_t)neo->data;
+                PROMISES_CNT.tab[(int)id]--; // une promesse de moins qui pointe dessus
+
+                if (PROMISES_CNT.tab[(int)id] == 0) { // il n'y a plus d'objets de cette 'famille' de promise, donc on peut autoriser la libération de la case associée
+                    neobject_destroy(PROMISES->tab[(int)id], true);
+                    PROMISES->tab[(int)id] = NULL;
+                }
             }
             else if (neo->data != NULL)
             {
@@ -561,6 +617,13 @@ void neobject_aff(NeObject* neo)
         }
         printString(")");
     }
+    else if (neo->type == TYPE_PROMISE) {
+        printString("<promise from process ");
+        Number nb = number_fromDouble((double)(intptr_t)neo->data);
+        number_aff(nb);
+        number_destroy(nb);
+        printString(">");
+    }
 
 }
 
@@ -644,6 +707,18 @@ char* neobject_str(NeObject* neo)
         }
 
         return addStr2(str1, ")");;
+    }
+    else if (neo->type == TYPE_PROMISE) {
+        char* s1 = strdup("<promise from process ");
+        Number nb = number_fromDouble((double)(intptr_t)neo->data);
+        char* s2 = number_toStr(nb);
+        number_destroy(nb);
+        s1 = addStr2(s1, s2);
+        err_free(s2);
+        s2 = strdup(">");
+        s1 = addStr2(s1, s2);
+        err_free(s2);
+        return s1;
     }
 
     return NULL;
@@ -763,6 +838,9 @@ _Bool neo_equal(NeObject* _op1, NeObject* _op2)
         else
             return false;
     }
+    else if (_op1->type == TYPE_PROMISE)
+        return _op2->type == TYPE_PROMISE && _op1->data == _op2->data;
+
     return false; // dans tous les autres cas
   
 }
@@ -1075,6 +1153,10 @@ char* type(NeObject* neo)
     {
         Container* c = (Container*)neo->data;
         return CONTAINERS->tab[c->type];
+    }
+    if (neo->type == TYPE_PROMISE)
+    {
+        return "Promise";
     }
 
     if (neo->type == -1)

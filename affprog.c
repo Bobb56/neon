@@ -46,8 +46,7 @@ extern NeObject* (*BUILTINSFONC[NBBUILTINFONC])(NeList*);
 extern strlist* CONTAINERS;
 extern NeList* ATTRIBUTES;
 
-extern int error;
-
+extern int CODE_ERROR;
 
 
 void printIndent(void)
@@ -196,15 +195,14 @@ void affExpr(Tree* tree)
         printString(">>");
 
 
+        // normalement dans tous les cas on est censé vérifier la conditino
+        // en effet, l'arbre garde toujours le nom de l'attribut, sinon c'est trop risqué de le récupérer par évaluation arrivé ici
+        // par exemple le container peut être une variable locale qui a disparu lors de l'affichage de l'erreur
         if (tree->label1 != NULL) // si ça se trouve le neobject a pas été initialisé, auquel cas on peut directement lire la chaine de caractères
             printString(tree->label1);
         else
         {
-            NeObject* neo = execval(tree->sons[0]);
-            Container* c = neo->data;
-            int index = (long int)number_toDouble(tree->label2);
-            NeList* list = ATTRIBUTES->tab[c->type]->data;
-            printString(neo_to_string(list->tab[index]));
+            printString("unknown_attribute");
         }
 
     }
@@ -486,6 +484,10 @@ void affProgram(Tree* tree)
         if ((int)number_toDouble(tree->label2) == LOCAL)
         {
             printString("local (");
+        }
+        if ((int)number_toDouble(tree->label2) == AWAIT)
+        {
+            printString("await (");
         }
         for (int i = 0 ; i + 1 < tree->nbSons ; i++)
         {

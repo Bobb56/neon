@@ -493,6 +493,7 @@ NeObject* _affect(NeObject* op2, NeObject* op1)
         NeObject* affect = neo_copy(op2);
         op1->type = affect->type;
         op1->data = affect->data;
+
         err_free(affect);
         return neo_copy(op1);
     }
@@ -523,6 +524,7 @@ NeObject* _affectNone(NeObject* op1, NeObject* op2)
         op1->type = affect->type;
         op1->data = affect->data;
         
+
         err_free(affect);
         return neo_none_create();
     }
@@ -553,6 +555,7 @@ void _affect2(NeObject* op1, NeObject* op2)
         NeObject* affect = neo_copy(op2);
         op1->type = affect->type;
         op1->data = affect->data;
+        
         err_free(affect);
         return;
     }
@@ -723,25 +726,6 @@ NeObject* _ref(NeObject* op1, NeObject* op2)
 
 
 
-NeObject* _deref(NeObject* op1, NeObject* op2)
-{
-  if (op1->type != TYPE_STRING)
-  {
-        CODE_ERROR = 60; // ceci n'est pas une chaine de caractères
-        return NULL;
-  }
-  char* nom=neo_to_string(op1);
-
-  if(!strlist_inList(NOMS, nom))
-  {
-      CODE_ERROR = 5;
-      return NULL;
-  }
-    
-  int index = strlist_index(NOMS,nom);
-  
-  return neo_copy(ADRESSES->tab[index]);
-}
 
 
 

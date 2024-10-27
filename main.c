@@ -22,11 +22,20 @@
 
 
 /*
-Bugs détectés :
-_____
+Liste des choses qui marchent pas :
+le pb que je viens de régler permet d'appeler des méthodes sur des @. C'est cool prcq sinon ça craint, mais il faut faire
+gaffe qu'on puisse pas appeler des méthodes sur des trucs invalides
+
+Lignes 1398 et 1434 commentées : double deleteContext()
+
+_____________________
+
+
+
+
 Avancement et choses à faire :
 > vérifier les priorités de tous les opérateurs
-> Fonction pour voir le code d'une fonction non built-ins ?
+> Fonction show_code pour voir le code d'une fonction non built-ins ?
 
 Procédure pour ajouter une fonction built-in :
 1) Programmer cette fonction selon le prototype NeObject* _maFonction_ (NeList* args)
@@ -47,24 +56,17 @@ pas de sens de définir des arguments obligatoires après ...
 ou de na pas avoir de soucis sur des appels récursifs qui font des boucles for, et où le programmeur aurait oublié de mettre
 l'indice en local
 - On peut, par la même occasion nous-même rendre des variables locales dans les if
-
-
-LISTE DES CHOSES A PENSER :
-
--> Pour les processus, il faudra dupliquer les variables locales (VAR_LOC).
-Il ne sera pas nécessaire de sauvegarder RETURN_VALUE car on ne change de processus qu'à un nouvel appel
-
-Les processus sont stockés dans une liste chaînée cyclique. Chaque chaînon contient varstack, retstack et valstack + VAR_LOC, et un
-pointeur vers la variable 'promesse' à affecter dès que l'on a le résultat
---> Il faut voir comment changer la valeur des variables d'un processus à l'autre
-
-Il va falloir ajouter un nouvel opérateur 'parallel' pour lancer des fonctions en parallèle.
-Il faudra également ajouter un nouveau type "promesse" qui ne contient rien (un peu comme les none)
-
-De plus il y aura besoin d'une fonction wait_result(promesse) qui attend tant que la promesse est une promesse
-Faire un système d'attente passive pour ne pas pomper la puissance du processeur
+- Possibilité de lancer des fonctions en parallèle avec le mot-clé parallel
+- Attente passive dans un processus avec await(condition)
+- Execution de blocs d'instructions atomiques
 */
 
+// promises associe aux identifiants des processus leur valeur tandis que promises_cnt compte le nombre de promises d'un même processus non transformées en valeur
+int ATOMIC_TIME = 1; // le nombre d'instructions exécuté sur chaque processus avant de passer au suivant
+
+NeList* PROMISES = NULL;
+intlist PROMISES_CNT;
+intlist PROCESS_FINISH; // une liste de booléens qui indique si un processus a fini pour savoir si on peut lui piquer sa place
 
 void* PTRERROR = NULL; // pointeur qui contient soit un pointeur d'arbre soit une chaine de caractères à propos de l'endroit où est apparue une erreur
 
@@ -137,10 +139,10 @@ strlist NOMSBUILTINSFONC;
 
 
 //créer le tableau de fonctions
-NeObject* (*OPFONC[NBOPERATEURS])(NeObject*,NeObject*)={_and,_or,_xor,_add,_mul,_sub,_div,_pow,_equal,_notEq,_infEqual,_supEqual,_inf,_sup,_affectNone,_addEqual,_subEqual,_mulEqual,_divEqual,_incr,_decr,_not,_mod,_eucl,_ref,_goIn,_deref, _minus, _del, _affect, NULL, _exponent, _implique, _in, NULL, NULL, _swap, NULL, NULL};
+NeObject* (*OPFONC[NBOPERATEURS])(NeObject*,NeObject*)={_and,_or,_xor,_add,_mul,_sub,_div,_pow,_equal,_notEq,_infEqual,_supEqual,_inf,_sup,_affectNone,_addEqual,_subEqual,_mulEqual,_divEqual,_incr,_decr,_not,_mod,_eucl,_ref,_goIn,NULL, _minus, _del, _affect, NULL, _exponent, _implique, _in, NULL, NULL, _swap, NULL, NULL};
 
 
-NeObject* (*BUILTINSFONC[NBBUILTINFONC])(NeList*)={_print_,_input_,_nbr_,_str_,_len_,_substring_,_exit_,_append_,_remove_,_insert_,_type_, _reverse_, _eval_,_clear_,_help_, _randint_,_quitError_, _time_, _assert_, _output_, _chr_, _ord_, _list_comp_, _create_exception_, _exception_, _int_, _index_, _replace_, _count_, _list_, _sort_asc_, _sort_desc_, _sin_, _cos_, _tan_, _deg_, _rad_, _sqrt_, _ln_, _exp_, _log_, _log2_, _round_, _abs_, _ceil_, _floor_, _readFile_, _writeFile_, _setFunctionDoc_};
+NeObject* (*BUILTINSFONC[NBBUILTINFONC])(NeList*)={_print_,_input_,_nbr_,_str_,_len_,_substring_,_exit_,_append_,_remove_,_insert_,_type_, _reverse_, _eval_,_clear_,_help_, _randint_,_quitError_, _time_, _assert_, _output_, _chr_, _ord_, _list_comp_, _create_exception_, _exception_, _int_, _index_, _replace_, _count_, _list_, _sort_asc_, _sort_desc_, _sin_, _cos_, _tan_, _deg_, _rad_, _sqrt_, _ln_, _exp_, _log_, _log2_, _round_, _abs_, _ceil_, _floor_, _readFile_, _writeFile_, _setFunctionDoc_, _setAtomicTime};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -202,41 +204,29 @@ void deleteContext(void)
     ptrlist* ctxt2 = (ptrlist*)VAR_LOC->tete;
 
     
-        if (ctxt2->tete == NULL) // aucun élément
-        {
-            err_free(ctxt2);
-        }
-    
-        else if (ctxt2->queue == NULL) // un seul élément
-        {
-            //-------------
-            NeSave* ns = ctxt2->tete;
-            neobject_destroy(ns->object, false);
-            ns->object->data = ns->data;
-            ns->object->type = ns->type;
-            err_free(ns);
-            //-------------
+    if (ctxt2->tete == NULL) // aucun élément
+    {
+        err_free(ctxt2);
+    }
 
-            err_free(ctxt2);
-        }
-        else // plusieurs éléments
+    else if (ctxt2->queue == NULL) // un seul élément
+    {
+        //-------------
+        NeSave* ns = ctxt2->tete;
+        neobject_destroy(ns->object, false);
+        ns->object->data = ns->data;
+        ns->object->type = ns->type;
+        err_free(ns);
+        //-------------
+
+        err_free(ctxt2);
+    }
+    else // plusieurs éléments
+    {
+        ptrlist* temp = NULL;
+        ptrlist* ptr = ctxt2;
+        while (ptr->queue != NULL)
         {
-            ptrlist* temp = NULL;
-            ptrlist* ptr = ctxt2;
-            while (ptr->queue != NULL)
-            {
-                //-------------
-                NeSave* ns = ptr->tete;
-                neobject_destroy(ns->object, false);
-                ns->object->data = ns->data;
-                ns->object->type = ns->type;
-                err_free(ns);
-                //-------------
-                
-                temp = ptr->queue;
-                err_free(ptr);
-                ptr = temp;
-            }
             //-------------
             NeSave* ns = ptr->tete;
             neobject_destroy(ns->object, false);
@@ -245,10 +235,22 @@ void deleteContext(void)
             err_free(ns);
             //-------------
             
+            temp = ptr->queue;
             err_free(ptr);
+            ptr = temp;
         }
+        //-------------
+        NeSave* ns = ptr->tete;
+        neobject_destroy(ns->object, false);
+        ns->object->data = ns->data;
+        ns->object->type = ns->type;
+        err_free(ns);
+        //-------------
+        
+        err_free(ptr);
+    }
 
-        ptrlist_remove(VAR_LOC, ctxt2, true); // enlève le pointeur
+    ptrlist_remove(VAR_LOC, ctxt2, true); // enlève le pointeur
 
     return ;
 }
@@ -309,11 +311,6 @@ void local(NeObject* var)
 
 
 
-
-
-
-
-
 _Bool isExpression(Tree* tree) {
     return (tree->type == TYPE_STRING || tree->type == TYPE_OPERATOR || tree->type == TYPE_NUMBER || tree->type == TYPE_VARIABLE || tree->type == TYPE_LIST || tree->type == TYPE_FONCTION || tree->type == TYPE_LISTINDEX || tree->type == TYPE_CONTAINER || tree->type == TYPE_ATTRIBUTE || tree->type == TYPE_BOOL || tree->type == TYPE_EXCEPTION || tree->type == TYPE_NONE);
 }
@@ -362,6 +359,194 @@ void stack_ret_zone(intptr_t retzone, ptrlist* retstack) {
 
 
 
+ProcessCycle* processCycle_create(void) {
+    ProcessCycle* pc = err_malloc(sizeof(ProcessCycle));
+    pc->process = NULL;
+    pc->next = NULL;
+    pc->prev = NULL;
+    return pc;
+}
+
+
+
+
+
+
+
+
+void save_later(ptrlist* variables_a_sauvegarder, NeObject* neo) {
+    // on regarde si cette variable faisait déjà partie de nos variables privatisées ou pas
+    _Bool bo = false;
+    for (ptrlist* ptr = variables_a_sauvegarder ; ptr != NULL && ptr->tete != NULL && !bo ; ptr = ptr->queue) {
+        NeSave* ns = (NeSave*)ptr->tete;
+        bo = bo || ns->object == neo;
+    }
+
+    if (!bo) { // alors il faut ajouter cette variable à nos variables privatisées
+        NeSave* ns = err_malloc(sizeof(NeSave));
+        ns->object = neo;
+        ns->data = neo->data;
+        ns->type = neo->type;
+        ptrlist_append(variables_a_sauvegarder, (void*)ns);
+    }
+}
+
+
+
+
+void switchGlobalLocalVariables(ptrlist* varsToSave) {
+    /*
+    Cette fonction sauvegarde la valeur des variables locales au moment où on arrive et restaure la valeur locale des variables locales
+    */
+    for (ptrlist* ptr = varsToSave ; ptr != NULL && ptr->tete != NULL ; ptr = ptr->queue) {
+        NeSave* ns = (NeSave*)ptr->tete;
+
+        // on va switcher entre la valeur stockée dans le nesave et la valeur actuelle
+        void* data_temp = ns->data; // on garde une copie de la sauvegarde de notre variable
+        char type_temp = ns->type;
+
+        ns->data = ns->object->data; // on sauvegarde la valeur actuelle
+        ns->type = ns->object->type;
+
+        ns->object->data = data_temp; // on restaure la copie de notre variable
+        ns->object->type = type_temp;
+    }
+}
+
+
+
+
+ProcessCycle* nextProcess(ProcessCycle* pc, ptrlist** varstack, ptrlist** valstack, ptrlist** retstack, ptrlist** variables_a_sauvegarder) {
+    
+    if (pc->next != NULL) {
+        // on ne sauvegarde que si on change de processus
+        // on garde en mémoire la valeur des ces objets
+
+        pc->process->varsToSave = *variables_a_sauvegarder;
+        switchGlobalLocalVariables(pc->process->varsToSave);
+
+        Process* p = pc->next->process; // le nouveau processus que l'on va exécuter
+        VAR_LOC = p->var_loc;
+        *varstack = p->varstack;
+        *valstack = p->valstack;
+        *retstack = p->retstack;
+
+        // on va maintenant restaurer les anciennes variables
+        switchGlobalLocalVariables(pc->next->process->varsToSave);
+        *variables_a_sauvegarder = pc->next->process->varsToSave;
+
+        return pc->next;
+    }
+
+    return pc;
+}
+
+
+
+
+
+
+Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id) { // renvoie un pointeur vers le processus créé
+
+    // on crée le nouveau processus
+    Process* p = err_malloc(sizeof(Process));
+    p->varstack = ptrlist_create();
+    p->valstack = ptrlist_create();
+    p->retstack = ptrlist_create();
+    p->var_loc = ptrlist_create();
+    p->id = id;
+    p->wait_expr = NULL;
+    p->varsToSave = ptrlist_create();
+
+    // on envoie évidemment les arguments
+    stack_args_expr(tree, 1, p->varstack);
+
+    // et maintenant on chaîne le processus au cycle des processus
+    // trois cas de figure possibles
+    if (pc->process == NULL && pc->next == NULL && pc->prev == NULL) {
+        pc->process = p;
+    }
+    else if (pc->next == NULL && pc->prev == NULL) { // vu que c'est un cycle, la seule possibilité est qu'il n'y ait qu'un seul élément
+        ProcessCycle* npc = processCycle_create();
+        npc->process = p;
+
+        pc->next = npc; npc->prev = pc;
+        npc->next = pc; ; pc->prev = npc;
+        // ça y est on a un cycle
+    }
+    else { // aucun des deux n'est nul, donc on s'insère entre les deux
+        ProcessCycle* npc = processCycle_create();
+        npc->process = p;
+
+        npc->next = pc->next;
+        pc->next->prev = npc;
+        pc->next = npc;
+        npc->prev = pc;
+    }
+
+    // du coup le prochain processus à exécuter dans la chaîne est le nouveau processus
+
+    return p;
+
+}
+
+
+ProcessCycle* processCycle_remove(ProcessCycle* pc, ptrlist** varstack, ptrlist** valstack, ptrlist** retstack, ptrlist** variables_a_sauvegarder) {
+    Process* p = pc->process;
+
+    
+    if (p->id != -1) { // c'est pas thread principal
+        err_free(p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés
+    }
+
+
+    ptrlist_destroy(p->valstack, false, true);
+    ptrlist_destroy(p->varstack, false, true);
+    ptrlist_destroy(p->retstack, false, true);
+
+    ptrlist_destroy(*variables_a_sauvegarder, true, true);
+
+    err_free(p);
+
+    ProcessCycle* next = pc->next;
+
+    if (pc->next == NULL && pc->prev == NULL) {
+        err_free(pc);
+    }
+    else if (pc->next == pc->prev) {// il y a uniquement deux processus
+        err_free(pc);
+        next->next = NULL;
+        next->prev = NULL;
+    }
+    else {
+        pc->prev->next = pc->next;
+        pc->next->prev = pc->prev;
+        err_free(pc);
+    }
+
+    if (next == NULL)
+        return NULL;
+
+
+    p = next->process;
+
+    VAR_LOC = p->var_loc;
+    *varstack = p->varstack;
+    *valstack = p->valstack;
+    *retstack = p->retstack;
+
+    // on restaure les variables
+    switchGlobalLocalVariables(p->varsToSave);
+    *variables_a_sauvegarder = p->varsToSave;
+
+    return next;
+
+}
+
+
+
+
+
 NeObject* execval(Tree* tree) {
     /*
     Cette fonction combine les deux fonction exec et eval. Elle détecte le type de l'arbre et évalue l'expression si c'est une expression
@@ -394,48 +579,80 @@ NeObject* execval(Tree* tree) {
     Pour l'entrelacement, il suffit de stocker les trois piles associées à chaque processus dans une liste ou un tableau,
     puis d'affecter les trois piles aux piles qu'il faut aux variables de piles. En effet, toute l'information (variables
     locales, arguments, retour...) est stockée dans ces piles. La boucle ne fait qu'interpréter la valeur des piles
+    Chaque processus possède une NeList des NeObject à affecter une fois le résultat calculé
     
     */
 
     // les variables utilisées avant et après des appels récursifs sont déclarées ici pour exister même après les goto
-    NeObject * op1, * op2, *neo_liste, *expr, *var, *valeur, *nom, *args;
+    NeObject * op1, * op2, *neo_liste, *expr, *var, *valeur, *nom, *args, *mainThreadReturnValue;
     NeObject* un = neo_nb_create(number_fromDouble(1));
     NeList* l, *liste, *val;
     Function* fun;
     intptr_t ext_index = 0, int_ret = 0, bloc = 0, inst = 0; // pour les boucles for qui contiennent des goto
     Tree* maintree = NULL, *arguments;
     _Bool cond = false, elif = false;
-    Number* max;
+    intptr_t max;
+    void** cadre;
 
     intptr_t calcListIndex = 1;
     intptr_t zone_retour;
 
-    ptrlist* varstack = ptrlist_create();
-    ptrlist* valstack = ptrlist_create();
-    ptrlist* retstack = ptrlist_create();
+    ptrlist* var_loc_sov = VAR_LOC;
 
-    // on empile tree sur varstack
-    // on crée un nouveau cadre de pile
-    void** cadre = err_malloc(NBLOCALVARS * sizeof(void*));
-    cadre[0] = (void*)tree;
-    cadre[1] = (void*)1;
-    ptrlist_append(varstack, (void*)cadre);
+
+    // création de la chaîne de processus
+    ProcessCycle* process_cycle = processCycle_create();
+
+    // ajout du processus principal, reconnaissable car il n'a pas de promesses
+    processCycle_add(process_cycle, tree, -1); // le processus principal a pour id : -1
+
+    ptrlist* variables_a_sauvegarder = process_cycle->process->varsToSave;
+
+    ptrlist* varstack = process_cycle->process->varstack;
+    ptrlist* valstack = process_cycle->process->valstack;
+    ptrlist* retstack = process_cycle->process->retstack;
+    err_free(process_cycle->process->var_loc); // on utilise directelent VAR_LOC de base pour le thread principal
+    process_cycle->process->var_loc = VAR_LOC;
+    
+    intptr_t atomic_counter = ATOMIC_TIME;
 
     tree = NULL;
 
     while (!ptrlist_isEmpty(varstack)) { // boucle principale. On reste dedans tant que l'arbre entier n'a pas été exécuté (ou évalué)
         debut_boucle:
 
+        
+        // on est sûr que l'endroit où l'on reprend le processus est l'endroit où il avait été mis en pause
+        if (atomic_counter == 0) { // c'est le moment où l'on change de processus, juste après un appel récursif
+            process_cycle = nextProcess(process_cycle, &varstack, &valstack, &retstack, &variables_a_sauvegarder);
+
+            atomic_counter = ATOMIC_TIME;
+
+            if (process_cycle->process->wait_expr != NULL) // le processus est actuellement en attente passive
+            {
+                goto check_condition;
+            }
+        }
+        
+        atomic_counter--;
+
+
+        if (CODE_ERROR != 0) // il y a déjà une erreur, donc on retourne en arrière
+        {
+            return_int_execval(valstack, 0);
+            goto fin_boucle;
+        }
+
         zone_retour = 0;
-
-        label_return: // pour revenir après un appel
-
 
         // on dépile l'arbre à traiter
         cadre = varstack->tete; // cadre existe, on récupère la valeur de tree et éventuellement calcListIndex
         // mais après un appel récursif il faut les re-récupérer
 
         get_tree(&tree, cadre);
+
+
+        label_return: // pour revenir après un appel
 
 
         switch (zone_retour) {
@@ -451,9 +668,111 @@ NeObject* execval(Tree* tree) {
                 if (tree->type == TYPE_OPERATOR) // traité
                 {
 
+                    if (!calcListIndex && (long int)number_toDouble(tree->label2) != 26)
+                    {
+                        CODE_ERROR = 103;
+                        return_neo_execval(valstack, NULL);
+                        goto fin_boucle;
+                    }
+
                     // il faut envoyer les opérandes calculées à la fonction opérateur
                     if (tree->nbSons == 1) // operateur unaire
                     {
+
+                        if ((long int)number_toDouble(tree->label2) == 39) { // opérateur parallel
+                            // C'est un appel de fonction déguisé. On va appeler la fonction mais dans un nouveau thread
+                            
+                            maintree = tree->sons[0];
+
+                            if (maintree->data->type != TYPE_USERFUNC) {
+                                CODE_ERROR = 100;
+                                return_neo_execval(valstack, NULL);
+                                goto fin_boucle;
+                            }
+
+                            // calcul de l'identifiant du processus
+                            int id = 0;
+
+                            for (; id < PROMISES->len && (PROCESS_FINISH.tab[id] != 1 || PROMISES_CNT.tab[id] > 0) ; id++);
+                            
+                            if (id >= PROMISES->len) { // l'identifiant est un nouvel identifiant
+                                nelist_append(PROMISES, NULL);
+                                intlist_append(&PROMISES_CNT, 0);
+                                intlist_append(&PROCESS_FINISH, 0);
+                            }
+
+                            
+                            PROMISES->tab[id] = NULL;
+                            PROMISES_CNT.tab[id] = 1;
+                            PROCESS_FINISH.tab[id] = 0;
+                            
+
+                            // création de trois toutes nouvelles varstack, valstack et retstack
+
+                            Process* p = processCycle_add(process_cycle, maintree, id);
+                            stack_ret_zone(36, p->retstack);
+                            //stack_args(maintree, p->varstack);
+
+                            // on a ajouté le processus à la liste de processus, donc maintenant y a plus qu'à attendre qu'un jour on revienne en case 36
+
+                            return_neo_execval(valstack, neo_promise_create((intptr_t)id)); // plus tard, ce sera une promesse renvoyée par le parallel
+                            
+                            goto fin_boucle;
+                            
+
+                            case 36: // quand le processus sera fini on sera ici
+
+                            // peut etre faire quelque chose si CODE_ERROR != 0
+
+                            // ici, on recommence complètement le processus suivant, ce qui n'est pas du tout normal
+
+                            id = process_cycle->process->id; // on a fait plein de trucs donc il faut reprendre le bon id
+
+                            //err_free(ptrlist_pop(varstack)); // on supprime le NULL avec lequel on est arrivé
+
+                            // si on se retrouve ici c'est que le processus actuellement exécuté est notre processus, donc
+                            // process_cycle->process est notre processus
+                            // maintenant on supprime le processus, et on affecte les variables à affecter
+                            NeObject* result = (NeObject*)ptrlist_pop(valstack);
+
+                            // le résultat est mis ici en attente, et neo_copy se chargera de vérifier si la valeur a changé ou pas
+                            if (PROMISES_CNT.tab[id] != 0) { // si c'est zéro, je sais que toutes les promesses ont été détruites avant même de les utiliser
+                                PROMISES->tab[id] = result;
+                            }
+                            else {
+                                neobject_destroy(result, true);
+                            }
+                            PROCESS_FINISH.tab[id] = 1; // on a fini le processus, on libère la place
+
+
+
+                            // maintenant, suppression du processus
+                            process_cycle = processCycle_remove(process_cycle, &varstack, &valstack, &retstack, &variables_a_sauvegarder);
+                            
+                            atomic_counter = ATOMIC_TIME; // on donne du temps au nouveau processus, évidemment
+
+                            if (process_cycle == NULL) // on vient de finir le dernier processus
+                            {
+                                neobject_destroy(un, true);
+                                VAR_LOC = var_loc_sov;
+
+                                return mainThreadReturnValue;
+                            }
+
+                            if (process_cycle->process->wait_expr != NULL) // le processus est actuellement en attente passive
+                            {
+                                goto check_condition;
+                            }
+                            else
+                            {
+                                // cette fonction a également chargé le nouveau processus dans les variables et a renvoyé le nouveau processus
+                                goto debut_boucle; // on continue l'exécution sur le processus d'après
+                            }
+
+
+                        }
+
+
                         // récupération de la grammaire de l'opérateur
                         if (OPERANDES.tab[(int)number_toDouble(tree->label2)] == VARRIGHT || OPERANDES.tab[(int)number_toDouble(tree->label2)] == VARLEFT)
                         {
@@ -464,6 +783,9 @@ NeObject* execval(Tree* tree) {
                             // on peut lancer l'appel récursif
                             goto debut_boucle;
                             case 1: // on revient ici après le calcul
+
+                            cadre = varstack->tete;
+                            get_tree(&tree, cadre);
 
                             op1 = (NeObject*)ptrlist_pop(valstack);
 
@@ -482,6 +804,10 @@ NeObject* execval(Tree* tree) {
                             stack_ret_zone(2, retstack);
                             goto debut_boucle;
                             case 2:
+
+                            cadre = varstack->tete;
+                            get_tree(&tree, cadre);
+
                             op1 = (NeObject*)ptrlist_pop(valstack);
 
                             cadre = varstack->tete;
@@ -493,13 +819,47 @@ NeObject* execval(Tree* tree) {
                             }
                         }
 
-                        NeObject* un = neo_nb_create(number_fromDouble(1));
-                        NeObject* retour = OPFONC[(int)number_toDouble(tree->label2)](op1,un);
+                        NeObject* retour;
+
+
+                        // l'opérateur @ a le droit à un traitement spécial car suivant calcListIndex, il renvoie l'objet ou une copie de l'objet
+                        if ((long int)number_toDouble(tree->label2) == 26) { // opérateur @
+
+                            if (op1->type != TYPE_STRING) {
+                                CODE_ERROR = 60; // ceci n'est pas une chaine de caractères
+                                neobject_destroy(op1, true);
+                                return_neo_execval(valstack, NULL);
+                                goto fin_boucle;
+                            }
+                            char* nom=neo_to_string(op1);
+
+                            if(!strlist_inList(NOMS, nom))
+                            {
+                                CODE_ERROR = 5;
+                                neobject_destroy(op1, true);
+                                return_neo_execval(valstack, NULL);
+                                goto fin_boucle;
+                            }
+                                
+                            int index = strlist_index(NOMS,nom);
+                            
+                            if (calcListIndex)
+                                return_neo_execval(valstack, neo_copy(ADRESSES->tab[index]));
+                            else
+                                return_neo_execval(valstack, ADRESSES->tab[index]);
+                            
+                            neobject_destroy(op1, true);
+                            goto fin_boucle;
+                        }
+                        else {
+                            retour = OPFONC[(int)number_toDouble(tree->label2)](op1,un);
+                        }
 
 
                         if (CODE_ERROR != 0)
                         {
-                            neobject_destroy(un, true);
+                            PTRERROR = tree;
+
                             if (OPERANDES.tab[(int)number_toDouble(tree->label2)] != VARRIGHT && OPERANDES.tab[(int)number_toDouble(tree->label2)] != VARLEFT)
                                 neobject_destroy(op1, true);
                             
@@ -511,9 +871,7 @@ NeObject* execval(Tree* tree) {
                         if (OPERANDES.tab[(int)number_toDouble(tree->label2)] != VARRIGHT && OPERANDES.tab[(int)number_toDouble(tree->label2)] != VARLEFT)  // on ne libère op1 que si op1 n'est pas directement d'adresse d'une variable
                             neobject_destroy(op1,true);
 
-                        
-                        neobject_destroy(un,true);
-                        
+                                                
                         
                         return_neo_execval(valstack, retour);
                         goto fin_boucle;
@@ -542,6 +900,9 @@ NeObject* execval(Tree* tree) {
                             goto debut_boucle;
                             case 3:
 
+                            cadre = varstack->tete;
+                            get_tree(&tree, cadre);
+
                             if (CODE_ERROR != 0) {
                                 // comme on ne fait pas de pop (on ne récupère pas la valeur, c'est comme si on récupérait la valeur et qu'on la renvoyait direct)
                                 goto fin_boucle;
@@ -566,6 +927,9 @@ NeObject* execval(Tree* tree) {
                             goto debut_boucle;
                             case 5:
 
+                            cadre = varstack->tete;
+                            get_tree(&tree, cadre);
+
                             if (CODE_ERROR != 0) {
                                 goto fin_boucle;
                             }
@@ -588,6 +952,9 @@ NeObject* execval(Tree* tree) {
                             goto debut_boucle;
                             case 7:
 
+                            cadre = varstack->tete;
+                            get_tree(&tree, cadre);
+
                             if (CODE_ERROR != 0) {
                                 return_neo_execval(valstack, NULL);
                                 goto fin_boucle;
@@ -609,6 +976,9 @@ NeObject* execval(Tree* tree) {
                             goto debut_boucle;
                             case 9:
 
+                            cadre = varstack->tete;
+                            get_tree(&tree, cadre);
+
                             if (CODE_ERROR != 0)
                             {
                                 op1 = (NeObject*)ptrlist_pop(valstack);
@@ -626,6 +996,9 @@ NeObject* execval(Tree* tree) {
                             case 10:
                         }
 
+                        cadre = varstack->tete;
+                        get_tree(&tree, cadre);
+
                         op2 = (NeObject*)ptrlist_pop(valstack);
                         op1 = (NeObject*)ptrlist_pop(valstack);
 
@@ -638,11 +1011,13 @@ NeObject* execval(Tree* tree) {
                             goto fin_boucle;
                         }
 
+                        
                         NeObject* retour = OPFONC[(long int)number_toDouble(tree->label2)](op1, op2);
-
-
+                        
                         if (CODE_ERROR != 0)
                         {
+                            PTRERROR = tree;
+
                             if (OPERANDES.tab[(int)number_toDouble(tree->label2)] != VAR_RIGHT && OPERANDES.tab[(int)number_toDouble(tree->label2)] != VAR_VAR)
                                 neobject_destroy(op1, true);
                             neobject_destroy(op2, true);
@@ -650,11 +1025,13 @@ NeObject* execval(Tree* tree) {
                             goto fin_boucle;
                         }
 
+
                         if (OPERANDES.tab[(int)number_toDouble(tree->label2)] != VAR_RIGHT && OPERANDES.tab[(int)number_toDouble(tree->label2)] != VAR_VAR) // on ne libère op1 que si op1 n'est pas directement d'adresse d'une variable
                             neobject_destroy(op1,true);
                         
                         if (OPERANDES.tab[(int)number_toDouble(tree->label2)] != LEFT_VAR && OPERANDES.tab[(int)number_toDouble(tree->label2)] != VAR_VAR)
                             neobject_destroy(op2,true);
+
                         
                         return_neo_execval(valstack, retour);
                         goto fin_boucle;
@@ -680,22 +1057,53 @@ NeObject* execval(Tree* tree) {
                 
                 
                 if (tree->type == TYPE_VARIABLE) // traité
-                {                    
+                {
                     if (calcListIndex)
                     {
                         if (tree->data->type == TYPE_EMPTY)
                         {
                             CODE_ERROR = 5;
                             return_neo_execval(valstack, NULL);
-                            goto fin_boucle;
                         }
                         else {
+
                             return_neo_execval(valstack, neo_copy(tree->data));
-                            goto fin_boucle;
                         }
+                        goto fin_boucle;
                     }
                     else
                     {
+                        
+                        NeObject* neo = tree->data;
+
+                        if (neo->type == TYPE_PROMISE) {
+                            
+                            intptr_t id = (intptr_t)neo->data;
+                            if (PROMISES->tab[(int)id] != NULL) { // la promesse a été résolue
+                                
+                                if (PROMISES_CNT.tab[(int)id] == 1) // on s'apprête à renvoyer la dernière valeur associée à cette promesse
+                                {
+                                    // quand on supprime neo, on passe le compteur à zéro, donc neobject_destroy va libérer PROMISES->tab[id]
+                                    // pour cette raison on ajoute un au compteur
+                                    PROMISES_CNT.tab[(int)id]++;
+
+                                    neobject_destroy(neo, false); // du coup on est sûr que le PROMISES n'est pas supprimé
+
+                                    // la libération de neon en false supprime PROMISES[id]
+                                    neo->type = PROMISES->tab[(int)id]->type;
+                                    neo->data = PROMISES->tab[(int)id]->data;
+                                    err_free(PROMISES->tab[(int)id]);
+                                    PROMISES->tab[(int)id] = NULL;
+                                    PROMISES_CNT.tab[(int)id] = 0;
+                                }
+                                else
+                                {
+                                    _affect2(neo, PROMISES->tab[(int)id]);
+                                }
+
+                            }
+                        }
+
                         return_neo_execval(valstack, tree->data);
                         goto fin_boucle;
                     }
@@ -728,6 +1136,7 @@ NeObject* execval(Tree* tree) {
                         case 11:
 
                         cadre = varstack->tete; // on récupère nos variables locales
+                        get_tree(&tree, cadre);
                         l = ((NeList*)cadre[2]);
                         ext_index = (intptr_t)cadre[3];
 
@@ -747,8 +1156,15 @@ NeObject* execval(Tree* tree) {
                     goto fin_boucle;
                 }
                 
-                if (tree->type == TYPE_FONCTION) // à traiter
+                if (tree->type == TYPE_FONCTION)
                 {
+
+                    if (!calcListIndex)
+                    {
+                        CODE_ERROR = 103;
+                        return_neo_execval(valstack, NULL);
+                        goto fin_boucle;
+                    }
 
                     PTRERROR = tree;
                     
@@ -784,6 +1200,8 @@ NeObject* execval(Tree* tree) {
 
 
                             if (CODE_ERROR != 0) {
+                                err_free(l->tab);
+                                err_free(l);
                                 return_neo_execval(valstack, NULL);
                                 goto fin_boucle;
                             }
@@ -818,6 +1236,9 @@ NeObject* execval(Tree* tree) {
                                 // si y a eu un problème dans l'évaluation d'un argument, on doit libérer toute la liste créée jusqu'alors
                                 for (int j = fun->nbArgsMeth ; j <= ext_index ; j++) // on ne détruit que les éléments que l'on a copiés
                                     neobject_destroy(l->tab[j],true);
+                                
+                                err_free(l->tab);
+                                err_free(l);
                                 
                                 return_neo_execval(valstack, NULL);
                                 goto fin_boucle;
@@ -874,6 +1295,8 @@ NeObject* execval(Tree* tree) {
                             err_free(((NeList*)(args->data))->tab);
                             err_free(args->data);
                             err_free(args);
+
+                            neobject_destroy(retour, true);
                             
                             return_neo_execval(valstack, NULL);
                             goto fin_boucle;
@@ -899,7 +1322,6 @@ NeObject* execval(Tree* tree) {
 
                     else if (tree->data->type == TYPE_USERFUNC || tree->data->type == TYPE_USERMETHOD)
                     {
-
                         UserFunc* fun = tree->data->data;
 
                         if (tree->nbSons > fun->nbArgs && ! fun->unlimited_arguments)
@@ -1068,7 +1490,6 @@ NeObject* execval(Tree* tree) {
 
                         }
                         
-
                         err_free(arguments->sons);
                         err_free(arguments);
 
@@ -1083,7 +1504,6 @@ NeObject* execval(Tree* tree) {
                             return_neo_execval(valstack, NULL);
                             goto fin_boucle;
                         }
-
 
 
                         // ouvre un nouveau contexte pour sauvegarder les variables locales de cet appel
@@ -1107,7 +1527,11 @@ NeObject* execval(Tree* tree) {
                                 nelist_append(ADRESSES, neo_local_args);
                             }
                             else {
+
+                                save_later(variables_a_sauvegarder, ADRESSES->tab[index]);
                                 local(ADRESSES->tab[index]);
+                                // on lui dit de  sauvegarder cette variable avant de switcher de processus
+
                                 ADRESSES->tab[index]->data = neo_local_args->data;
                                 ADRESSES->tab[index]->type = neo_local_args->type;
                                 err_free(neo_local_args);
@@ -1127,6 +1551,7 @@ NeObject* execval(Tree* tree) {
                                 NeObject* c = neo_copy(neo_list_nth(args, 0)); // on crée une copie de l'argument
                                 // on empile la valeur actuelle de l'argument pour avoir champ libre dans cette fonction
                                 
+                                save_later(variables_a_sauvegarder, fun->args[0]);
                                 local(fun->args[0]);
 
                                 fun->args[0]->data = c->data;
@@ -1138,10 +1563,12 @@ NeObject* execval(Tree* tree) {
                             {
                                 NeObject* temp = neo_copy(neo_list_nth(args, i));
                                 
+                                save_later(variables_a_sauvegarder, fun->args[i]);
                                 local(fun->args[i]);
                                 
                                 fun->args[i]->data = temp->data;
                                 fun->args[i]->type = temp->type;
+
 
                                 err_free(temp);
                                 
@@ -1149,7 +1576,7 @@ NeObject* execval(Tree* tree) {
                                 {
                                     
                                     // libérer la sauvegarde des variables
-                                    deleteContext();
+                                    //deleteContext();
                                     
                                     ((NeList*)args->data)->tab[0] = neo_none_create();
                                     neobject_destroy(args, true);
@@ -1170,6 +1597,7 @@ NeObject* execval(Tree* tree) {
                             {
                                 NeObject* temp = neo_copy(neo_list_nth(args, i));
                                 
+                                save_later(variables_a_sauvegarder, fun->args[i]);
                                 local(fun->args[i]);
                                 
                                 fun->args[i]->data = temp->data;
@@ -1180,7 +1608,7 @@ NeObject* execval(Tree* tree) {
                                 if (CODE_ERROR != 0) // erreur : libération des arguments affectés
                                 {
                                     // libération des sauvegardes de variables
-                                    deleteContext();
+                                    //deleteContext();
                                     
                                     neobject_destroy(args, true);
                                     // libération des arguments
@@ -1203,6 +1631,7 @@ NeObject* execval(Tree* tree) {
                         stack_ret_zone(34, retstack);
                         goto debut_boucle; // exécute le corps de la fonction
                         case 34:
+
 
                         cadre = varstack->tete;
                         get_tree(&tree, cadre);
@@ -1365,14 +1794,36 @@ NeObject* execval(Tree* tree) {
                     }
                     else
                     {
+                        NeObject* neo = neo_list_nth(obj,index2);
+
+                        if (neo->type == TYPE_PROMISE) {
+                            intptr_t id = (intptr_t)neo->data;
+                            if (PROMISES->tab[(int)id] != NULL) { // la promesse a été résolue
+                                if (PROMISES_CNT.tab[(int)id] == 1) // on s'apprête à renvoyer la dernière valeur associée à cette promesse
+                                {
+                                    PROMISES_CNT.tab[(int)id]++;
+                                    neobject_destroy(neo, false);
+                                    neo->type = PROMISES->tab[(int)id]->type;
+                                    neo->data = PROMISES->tab[(int)id]->data;
+                                    err_free(PROMISES->tab[(int)id]);
+                                    PROMISES->tab[(int)id] = NULL;
+                                    PROMISES_CNT.tab[(int)id] = 0;
+                                }
+                                else
+                                {
+                                    _affect2(neo, PROMISES->tab[(int)id]);
+                                }
+
+                            }
+                        }
                         // dans ce cas-là, on va devoir retourner directement le pointeur de l'élément
-                        return_neo_execval(valstack, neo_list_nth(obj,index2)); // au lieu de faire une copie, on renvoie directement le bon pointeur
+                        return_neo_execval(valstack, neo); // au lieu de faire une copie, on renvoie directement le bon pointeur
                         goto fin_boucle;
                     }
 
                 }
 
-                if (tree->type == TYPE_CONTAINER) // traité
+                if (tree->type == TYPE_CONTAINER)
                 {
 
                     if (!calcListIndex)
@@ -1424,7 +1875,7 @@ NeObject* execval(Tree* tree) {
                     goto fin_boucle;
                 }
                 
-                if (tree->type == TYPE_ATTRIBUTE) // à traiter
+                if (tree->type == TYPE_ATTRIBUTE)
                 {
                     stack_args_expr(tree->sons[0], calcListIndex, varstack);
                     stack_ret_zone(17, retstack);
@@ -1456,18 +1907,19 @@ NeObject* execval(Tree* tree) {
 
                     Container* c = (Container*)neo->data;
 
-                    if (tree->label1 == NULL) // ça veut dire qu'on sait exactement où chercher la valeur
+                    int index = 0;
+
+                    if (!number_isDefault(tree->label2)) // ça veut dire qu'on sait exactement où chercher la valeur
                     {
-                        //printf("passage optimisé\n");
-                        int index = (long int)number_toDouble(tree->label2);
-                        ret = (calcListIndex) ? neo_copy(c->data->tab[index]) : c->data->tab[index];
+                        // passage optimisé
+                        index = (long int)number_toDouble(tree->label2);
                     }
                     else
                     {
-                        //printf("passage complexe\n");
+                        // passage complexe
                         // il faut au préalable calculer l'index de où est la valeur dans le tableau
                         NeList* list = (NeList*)(ATTRIBUTES->tab[c->type]->data);
-                        int index = 0;
+                        
                         for (; index < list->len && strcmp(neo_to_string(list->tab[index]), tree->label1) != 0 ; index++)
 
                         if (index == list->len - 1 && strcmp(neo_to_string(list->tab[index]), tree->label1) != 0)
@@ -1479,14 +1931,51 @@ NeObject* execval(Tree* tree) {
                         }
 
                         tree->label2 = number_fromDouble((double)index);
-                        err_free(tree->label1) ; tree->label1 = NULL;
-                        ret = (calcListIndex) ? neo_copy(c->data->tab[index]) : c->data->tab[index];
+
+                        // pour l'affichage de l'erreur on garde ça
+                        //err_free(tree->label1) ; tree->label1 = NULL;
                     }
 
-                    if (calcListIndex)
-                    {
+
+                    if (calcListIndex) {
+                        ret = neo_copy(c->data->tab[index]);
                         neobject_destroy(neo, true);
                     }
+                    else {
+                        NeObject* neo2 = c->data->tab[index];
+
+                        if (neo2->type == TYPE_PROMISE) {
+                            
+                            intptr_t id = (intptr_t)neo2->data;
+                            if (PROMISES->tab[(int)id] != NULL) { // la promesse a été résolue
+                                
+                                if (PROMISES_CNT.tab[(int)id] == 1) // on s'apprête à renvoyer la dernière valeur associée à cette promesse
+                                {
+                                    // quand on supprime neo2, on passe le compteur à zéro, donc neobject_destroy va libérer PROMISES->tab[id]
+                                    // pour cette raison on ajoute un au compteur
+                                    PROMISES_CNT.tab[(int)id]++;
+
+                                    neobject_destroy(neo2, false); // du coup on est sûr que le PROMISES n'est pas supprimé
+
+                                    // la libération de neon en false supprime PROMISES[id]
+                                    neo2->type = PROMISES->tab[(int)id]->type;
+                                    neo2->data = PROMISES->tab[(int)id]->data;
+                                    err_free(PROMISES->tab[(int)id]);
+                                    PROMISES->tab[(int)id] = NULL;
+                                    PROMISES_CNT.tab[(int)id] = 0;
+                                }
+                                else
+                                {
+                                    _affect2(neo2, PROMISES->tab[(int)id]);
+                                }
+
+                            }
+                        }
+
+                        ret = neo2;
+                    }
+
+                    
                     
                     return_neo_execval(valstack, ret);
                     goto fin_boucle;
@@ -1494,7 +1983,8 @@ NeObject* execval(Tree* tree) {
                 
                 if (tree->type == TYPE_STRING) // traité
                 {
-                    if (calcListIndex) {
+                    if (calcListIndex)
+                    {
                         return_neo_execval(valstack, neo_copy(tree->data));
                     }
                     else
@@ -1558,6 +2048,7 @@ NeObject* execval(Tree* tree) {
                 {
                     PTRERROR = tree->sons[inst];
 
+
                     if (tree->sons[inst]->type == TYPE_TRYEXCEPT)
                     {
 
@@ -1591,7 +2082,6 @@ NeObject* execval(Tree* tree) {
                                 Tree* obj = maintree->sons[1]->sons[0]->sons[i];
 
                                 if (!(obj->type == TYPE_EXCEPTION || (obj->type == TYPE_VARIABLE && ((NeObject*)obj->data)->type == TYPE_EXCEPTION)))
-                    
                                 */
 
 
@@ -1621,7 +2111,6 @@ NeObject* execval(Tree* tree) {
 
                             if (bo) // exécution du except
                             {
-
                                 CODE_ERROR = 0; // du coup c'est bon on repart (la police a arrêté le programme, a vérifié ses papiers, et le programme est reparti)
                                 
                                 cadre[2] = (void*)inst;
@@ -1645,7 +2134,35 @@ NeObject* execval(Tree* tree) {
 
                     }
 
-                    
+                    else if (tree->sons[inst]->type == TYPE_ATOMICBLOCK)
+                    {
+                        // on va exécuter le bloc de code d'une traite, sans changer de processus
+                        cadre[2] = (void*)inst;
+                        cadre[3] = (void*)atomic_counter;
+                        atomic_counter = -1; // tant qu'on n'a pas remis une valeur positive, on ne passera pas à un autre processus
+                        
+                        stack_args(tree->sons[inst], varstack);
+                        stack_ret_zone(38, retstack);
+                        goto debut_boucle;
+                        case 38:
+
+                        cadre = varstack->tete;
+                        get_tree(&tree, cadre);
+                        inst = (intptr_t)cadre[2];
+
+                        // s'il reste des crédits à ce processus, on les lui rend, sinon on passe au suivant
+                        atomic_counter = (atomic_counter + (intptr_t)cadre[3] > 0) ? atomic_counter + (intptr_t)cadre[3] : 0;
+
+
+                        int_ret = (intptr_t)ptrlist_pop(valstack);
+
+
+                        if (CODE_ERROR != 0 || int_ret != 0) {
+                            return_int_execval(valstack, int_ret);
+                            goto fin_boucle;
+                        }
+
+                    }
                     
                     else if (tree->sons[inst]->type == TYPE_BLOCKWORD1LINE)
                     {
@@ -1725,21 +2242,26 @@ NeObject* execval(Tree* tree) {
 
                                     updateFileName(strdup(neo_to_string(nom)));
 
-                                    execFile(nomFichier);
+                                    importFile(nomFichier);
                                     err_free(nomFichier);
                                 #else
                                     updateFileName(strdup(nom));
-                                    execFile(neo_to_string(nom));
+                                    importFile(neo_to_string(nom));
                                 #endif
 
                                 updateFileName(nomAct);
 
                                 neobject_destroy(nom, true);
 
+                                if (CODE_ERROR != 0) {
+                                    return_int_execval(valstack, 0);
+                                    goto fin_boucle;
+                                }
+
                             }
                         }
 
-                        if ((int)number_toDouble(tree->sons[inst]->label2) == LOCAL)
+                        else if ((int)number_toDouble(tree->sons[inst]->label2) == LOCAL)
                         {
                             if (tree->sons[inst]->nbSons == 0) // il faut au moins un argument
                             {
@@ -1757,9 +2279,74 @@ NeObject* execval(Tree* tree) {
                             for (int i = 0 ; i < tree->sons[inst]->nbSons ; i++) // pour toutes les variables
                             {
                                 // va traiter la variable comme étant locale
+                                save_later(variables_a_sauvegarder, tree->sons[inst]->sons[i]->data);
                                 local(tree->sons[inst]->sons[i]->data);
                             }
                             
+                        }
+                        else if ((int)number_toDouble(tree->sons[inst]->label2) == AWAIT) { // attend tant qu'une condition soit vérifiée
+                            if (tree->sons[inst]->nbSons > 1)
+                            {
+                                CODE_ERROR = 101;
+                                return_int_execval(valstack, 0);
+                                goto fin_boucle;
+                            }
+
+                            cadre[2] = (void*)inst; // on sauvegarde inst maintenant
+
+                            process_cycle->process->wait_expr = tree->sons[inst]->sons[0];
+
+                            PTRERROR = tree->sons[inst]; // s'il y a une erreur dans le await
+
+                            check_condition: // on vient du haut de la boucle, donc on charge les paramètres actuels
+
+                            cadre = varstack->tete; // on récupère un cadre qui n'est pas le bon. PK ?
+                            get_tree(&tree, cadre);
+                            cadre[3] = (void*)process_cycle->process->wait_expr;
+
+                            // évaluation de la condition
+                            stack_args_expr(process_cycle->process->wait_expr, 1, varstack);
+                            stack_ret_zone(37, retstack);
+
+                            process_cycle->process->wait_expr = NULL; // le temps de l'évaluation de l'expression, on lui fait croire qu'il n'est plus en pause
+                            
+                            goto debut_boucle;
+                            // si l'évaluation consomme plus que ATOMIC_TIME instructions, on passe qd même au processus suivant
+                            // en revanche si on revient avant et que la condition est fausse , on passe direct au suivant
+
+                            case 37:
+
+                            cadre = varstack->tete;
+
+
+                            get_tree(&tree, cadre);
+                            inst = (intptr_t)cadre[2];
+
+
+                            if (CODE_ERROR != 0)
+                            {
+                                goto fin_boucle;
+                            }
+
+
+                            process_cycle->process->wait_expr = (Tree*)cadre[3];
+
+
+                            NeObject* neo = (NeObject*)ptrlist_pop(valstack);
+
+                            if (neoIsTrue(neo)) // fin de l'attente passive
+                            {
+                                neobject_destroy(neo, true);
+                                process_cycle->process->wait_expr = NULL;
+                                // on continue normalement, car on a bien conservé le inst du tout début
+                            }
+                            else
+                            {
+                                neobject_destroy(neo, true);
+                                atomic_counter = 0;
+                                goto debut_boucle;
+                            }
+
                         }
                     }
 
@@ -2114,7 +2701,10 @@ NeObject* execval(Tree* tree) {
 
                         newContext(); // nouveau contexte pour rendre des variables locales à la boucle for
 
+                        save_later(variables_a_sauvegarder, var);
                         local(var); // on localise l'indice de la boucle
+
+                        neobject_destroy(var, false); // on va mettre des nouveaux trucs dedans
 
                         
                         if (CODE_ERROR != 0)
@@ -2133,13 +2723,16 @@ NeObject* execval(Tree* tree) {
                             return_int_execval(valstack, 0);
                             goto fin_boucle;
                         }
-                        
-                        _affect2(var, valeur);
+
+
+                        // le vrai indice de la boucle sera un entier
+                        ext_index = (intptr_t)number_toDouble(neo_to_nb(valeur));
+                        neobject_destroy(valeur,true);
 
 
                         cadre[2] = (void*)inst;
                         cadre[3] = (void*)var;
-                        cadre[4] = (void*)valeur;
+                        cadre[4] = (void*)ext_index;
                         stack_args_expr(tree->sons[inst]->sons[0]->sons[2], 1, varstack);
                         stack_ret_zone(28, retstack);
                         goto debut_boucle;
@@ -2149,8 +2742,7 @@ NeObject* execval(Tree* tree) {
                         get_tree(&tree, cadre);
                         inst = (intptr_t)cadre[2];
                         var = (NeObject*)cadre[3];
-                        valeur = (NeObject*)cadre[4];
-
+                        ext_index = (intptr_t)cadre[4];
 
                         NeObject* tempMax = (NeObject*)ptrlist_pop(valstack);
 
@@ -2158,25 +2750,37 @@ NeObject* execval(Tree* tree) {
                         if (CODE_ERROR != 0)
                         {
                             neobject_destroy(tempMax, true);
-                            neobject_destroy(valeur, true);
+                            deleteContext();
+                            return_int_execval(valstack, 0);
+                            goto fin_boucle;
+                        }
+
+                        if (tempMax -> type != TYPE_NUMBER) {
+                            CODE_ERROR = 10;
+                            neobject_destroy(tempMax, true);
                             deleteContext();
                             return_int_execval(valstack, 0);
                             goto fin_boucle;
                         }
                         
-                        max = tempMax->data; // borne supérieure des valeurs atteintes par la variable
+                        max = (intptr_t)number_toDouble(neo_to_nb(tempMax)); // borne supérieure des valeurs atteintes par la variable
 
-                        err_free(tempMax); // du coup le data, on le garde donc on libère que l'enveloppe
-                        neobject_destroy(valeur,true);
+                        neobject_destroy(tempMax, true); // du coup le data, on le garde donc on libère que l'enveloppe
 
                         int_ret = 0;
                         
-                        while (number_inf(neo_to_nb(var), *max))
+                        while (ext_index < max)
                         {
+                            // on restaure la valeur de l'indice au début du corps de la boucle
+                            NeObject* tempnb = neo_nb_create(number_fromDouble((double)ext_index));
+                            var->data = tempnb->data;
+                            var->type = tempnb->type;
+                            err_free(tempnb);
+
 
                             cadre[2] = (void*)inst;
                             cadre[3] = (void*)var;
-                            cadre[4] = (void*)valeur;
+                            cadre[4] = (void*)ext_index;
                             cadre[5] = (void*)max;
                             cadre[6] = (void*)int_ret;
                             stack_args(tree->sons[inst]->sons[1], varstack);
@@ -2188,19 +2792,18 @@ NeObject* execval(Tree* tree) {
                             get_tree(&tree, cadre);
                             inst = (intptr_t)cadre[2];
                             var = (NeObject*)cadre[3];
-                            valeur = (NeObject*)cadre[4];
-                            max = (Number*)cadre[5];
+                            ext_index = (intptr_t)cadre[4];
+                            max = (intptr_t)cadre[5];
                             int_ret = (intptr_t)cadre[6];
 
 
                             int_ret = (intptr_t)ptrlist_pop(valstack);
 
+                            neobject_destroy(var, false);
+
 
                             if (CODE_ERROR != 0)
                             {
-                                neobject_destroy(un, true);
-                                number_destroy(*max);
-                                err_free(max);
                                 deleteContext();
                                 return_int_execval(valstack, 0);
                                 goto fin_boucle;
@@ -2209,14 +2812,11 @@ NeObject* execval(Tree* tree) {
                             if (int_ret != 0)
                                 break;
                             
-                            neobject_destroy(_addEqual(var, un),true); // incrémentation de la variable
+                            ext_index++;
                         }
 
                         deleteContext();
                         
-                        number_destroy(*max);
-                        err_free(max);
-
                         if (int_ret == EXIT_RETURN) {
                             return_int_execval(valstack, int_ret);
                             goto fin_boucle;
@@ -2236,20 +2836,30 @@ NeObject* execval(Tree* tree) {
                     
                     else // expression
                     {
+                        cadre[2] = (void*)inst;
+
                         stack_args_expr(tree->sons[inst], 1, varstack);
                         stack_ret_zone(18, retstack);
                         goto debut_boucle;
                         case 18:
 
+                        // on récupère les valeurs
+                        cadre = varstack->tete;
+                        inst = (intptr_t)cadre[2];
+                        
                         neobject_destroy((NeObject*)ptrlist_pop(valstack), true); // sinon, évaluation de l'expression, en la libérant juste après
                     }
+
 
                     if (CODE_ERROR != 0) { // ben oui sinon les erreurs ne seront pas captées au bon endroit
                         return_int_execval(valstack, 0);
                         goto fin_boucle;
                     }
-                    
 
+                    cadre = varstack->tete;
+                    get_tree(&tree, cadre);
+
+                    
                     
                 }
                 return_int_execval(valstack, 0);
@@ -2266,22 +2876,46 @@ NeObject* execval(Tree* tree) {
         // si on arrive ici c'est qu'il n'y avait pas d'appel récursif à lancer donc on peut supprimer le cadre de pile actuel
         err_free(ptrlist_pop(varstack)); // on n'aura plus besoin de ce cadre de pile
 
-        if (ptrlist_isEmpty(varstack)) {
+        // par construction, si retstack est vide c'est forcément le processus principal
+
+        if (ptrlist_isEmpty(retstack) && process_cycle->next == NULL && process_cycle->prev == NULL && process_cycle->process->wait_expr == NULL) { // on vient de finir le processus principal et il ne reste plus aucun processus
             NeObject* ret = ptrlist_pop(valstack);
+
+            // supprime le dernier processus
             ptrlist_destroy(valstack, false, true);
-            err_free(varstack);
+            ptrlist_destroy(varstack, false, true);
             ptrlist_destroy(retstack, false, true);
 
             neobject_destroy(un,true);
 
+            err_free(process_cycle->process);
+            err_free(process_cycle);
+
+            ptrlist_destroy(variables_a_sauvegarder, true, true);
+
+            VAR_LOC = var_loc_sov;
+
             return ret;
         }
+        else if (ptrlist_isEmpty(retstack) && process_cycle->process->wait_expr == NULL) // il reste des processus annexes à exécuter
+        {
+            /////////// on vient de finir un thread, donc on catch l'erreurprocessCycle_remove maintenant
+
+            // on est donc forcément sur le processus principal
+            mainThreadReturnValue = ptrlist_pop(valstack);
+
+            // on supprime le processus, on passe au suivant
+            process_cycle = processCycle_remove(process_cycle, &varstack, &valstack, &retstack, &variables_a_sauvegarder);
+
+            goto debut_boucle;
+
+        }
+
 
         // on dépile la valeur qui nous dit où revenir
         zone_retour = (intptr_t)ptrlist_pop(retstack);
         goto label_return; // et on retourne au bon endroit
         // s'il n'y avait pas d'endroit particulier à revenir, on revient en zéro
-            
 
 
     }
@@ -2450,9 +3084,6 @@ void terminal (void)
         while (true)
         {
 
-            // printf("Nombre de pointeurs alloués : %d\n", ptrlist_len(&allocptr));
-            // printf("pointeurs alloués : ");ptrlist_aff(&allocptr);
-
             CODE_ERROR = 0; // réinitialise les erreurs
             PTRERROR = NULL; // réinitialise le pointeur d'erreur
 
@@ -2549,14 +3180,13 @@ void terminal (void)
             strlist_destroy(tokens, true);
             err_free(types.tab);
             */
+
             
         }
 
 
     return ;
 }
-
-
 
 
 
@@ -2597,7 +3227,41 @@ void execFile(char* filename)
 
     tree_destroy(tree);
     
-    CODE_ERROR=0;
+    CODE_ERROR = 0;
+    return ;
+}
+
+
+
+
+
+void importFile(char* filename)
+{
+    char* program = openFile(filename); // fonction dépendant du système cible
+    
+    if (CODE_ERROR != 0)
+        return;
+
+    if (program == NULL) {
+        CODE_ERROR = 67;
+        return ;
+    }
+    
+    // exécution du fichier
+    Tree* tree = tree_create(NULL, 0, 0);
+    createSyntaxTree(tree, program);
+    err_free(program);
+
+    if (CODE_ERROR != 0)
+    {
+        tree_destroy(tree);
+        return;
+    }
+
+    
+    execval(tree);
+
+    tree_destroy(tree);
     return ;
 }
 
@@ -2724,13 +3388,13 @@ void neonInit(void)
 
 
     // liste qui contient les opérandes prises par les opérateurs, correspond a operateurs3
-    int gramm1_temp[NBOPERATEURS] = {RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, 0};
+    int gramm1_temp[NBOPERATEURS] = {RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, 0, RIGHT};
     intlist_copy(&gramm1, gramm1_temp, NBOPERATEURS);
 
 
 
     //définition de operateurs3
-    const char* operateurs3_temp[NBOPERATEURS] = {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "..."};
+    const char* operateurs3_temp[NBOPERATEURS] = {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "...", "parallel"};
     strlist_copy(&operateurs3, operateurs3_temp, NBOPERATEURS);
 
 
@@ -2741,19 +3405,19 @@ void neonInit(void)
 
 
     // opérateurs mots
-    const char* operateurs2_temp[] = {"and","or","xor","not", "del", "EE", "in"};
-    strlist_copy(&operateurs2, operateurs2_temp, 7);
+    const char* operateurs2_temp[] = {"and","or","xor","not", "del", "EE", "in", "parallel"};
+    strlist_copy(&operateurs2, operateurs2_temp, 8);
 
 
 
-    const char* OPERATEURS_temp[NBOPERATEURS] = {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "..."};
+    const char* OPERATEURS_temp[NBOPERATEURS] = {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "...", "parallel"};
     strlist_copy(&OPERATEURS, OPERATEURS_temp, NBOPERATEURS);
 
 
-    const int PRIORITE_temp[NBOPERATEURS] = {8, 8, 8, 5, 4, 5, 4, 3, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 3, 3, 7, 4, 4, 2, 9, 2, 4, 9, 9, 2, 4, 8, 6, 1, 9, 9, 9, 9};
+    const int PRIORITE_temp[NBOPERATEURS] = {8, 8, 8, 5, 4, 5, 4, 3, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 3, 3, 7, 4, 4, 2, 9, 2, 4, 9, 9, 2, 4, 8, 6, 1, 9, 9, 9, 9, 8};
     intlist_copy(&PRIORITE, PRIORITE_temp, NBOPERATEURS);
 
-    const int OPERANDES_temp[NBOPERATEURS] = {RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, 0};
+    const int OPERANDES_temp[NBOPERATEURS] = {RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, 0, RIGHT};
     intlist_copy(&OPERANDES, OPERANDES_temp, NBOPERATEURS);
 
 
@@ -2762,17 +3426,17 @@ void neonInit(void)
     // défnit les tokens de délimitation de blocks
 
     //mots de blocs d'instructions
-    const char* blockwords_temp[] = {"if","while","for", "ei", "return", "import", "local", "tr", "expt"};
-    strlist_copy(&blockwords, blockwords_temp, 9);
+    const char* blockwords_temp[] = {"if","while","for", "ei", "return", "import", "local", "tr", "expt", "await", "atomic"};
+    strlist_copy(&blockwords, blockwords_temp, 11);
 
-    const char* blockwords1Line_temp[] = {"return", "import", "local"};
-    strlist_copy(&blockwords1Line, blockwords1Line_temp, 3);
+    const char* blockwords1Line_temp[] = {"return", "import", "local", "await"};
+    strlist_copy(&blockwords1Line, blockwords1Line_temp, 4);
 
     const char* keywordFunction_temp[] = {"function", "method"};
     strlist_copy(&keywordFunction, keywordFunction_temp, 2);
 
-    const char* keywords_temp[] = {"es", "continue", "break", "pass", "tr"};
-    strlist_copy(&keywords, keywords_temp, 5);
+    const char* keywords_temp[] = {"es", "continue", "break", "pass", "tr", "atomic"};
+    strlist_copy(&keywords, keywords_temp, 6);
 
     const char* lkeywords_temp[] = {"continue", "break", "pass"};
     strlist_copy(&lkeywords, lkeywords_temp, 3);
@@ -2812,10 +3476,10 @@ void neonInit(void)
 
 
     /*----- Préparation des fonctions ------*/
-    const char* NOMSBUILTINSFONC_temp[NBBUILTINFONC] = {"print","input","nbr","str","len","sub","exit","append","remove","insert","type", "reverse", "eval","clear","help", "randint", "failwith", "time", "assert", "output", "chr", "ord", "list_comp", "createException", "exception", "int", "index", "replace", "count", "list", "sort_asc", "sort_desc", "sin", "cos", "tan", "deg", "rad", "sqrt", "ln", "exp", "log", "log2", "round", "abs", "ceil", "floor", "readFile", "writeFile", "setFunctionDoc"};
+    const char* NOMSBUILTINSFONC_temp[NBBUILTINFONC] = {"print","input","nbr","str","len","sub","exit","append","remove","insert","type", "reverse", "eval","clear","help", "randint", "failwith", "time", "assert", "output", "chr", "ord", "list_comp", "createException", "exception", "int", "index", "replace", "count", "list", "sort_asc", "sort_desc", "sin", "cos", "tan", "deg", "rad", "sqrt", "ln", "exp", "log", "log2", "round", "abs", "ceil", "floor", "readFile", "writeFile", "setFunctionDoc", "setAtomicTime"};
     strlist_copy(&NOMSBUILTINSFONC, NOMSBUILTINSFONC_temp, NBBUILTINFONC);
 
-    const int typesRetour[NBBUILTINFONC] = {TYPE_NONE, TYPE_STRING, TYPE_NUMBER, TYPE_STRING, TYPE_NUMBER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_STRING, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NUMBER, TYPE_NONE, TYPE_NUMBER, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_NUMBER, TYPE_LIST, TYPE_EXCEPTION, TYPE_NONE, TYPE_NUMBER, TYPE_NUMBER, TYPE_STRING, TYPE_NUMBER, TYPE_LIST, TYPE_NONE, TYPE_NONE, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_STRING, TYPE_NONE, TYPE_NONE};
+    const int typesRetour[NBBUILTINFONC] = {TYPE_NONE, TYPE_STRING, TYPE_NUMBER, TYPE_STRING, TYPE_NUMBER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_STRING, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NUMBER, TYPE_NONE, TYPE_NUMBER, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_NUMBER, TYPE_LIST, TYPE_EXCEPTION, TYPE_NONE, TYPE_NUMBER, TYPE_NUMBER, TYPE_STRING, TYPE_NUMBER, TYPE_LIST, TYPE_NONE, TYPE_NONE, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE};
 
     const char* helpbuiltinsfonc[NBBUILTINFONC] = {
         "Displays arguments in the terminal",
@@ -2866,15 +3530,16 @@ void neonInit(void)
         "floor: Floor function (largest integer less than or equal to)",
         "Returns the content of the file whose name was given",
         "Writes the given string in the file whose name was given. The syntax is writeFile(name, content)",
-        "Sets a string documentation for a user-defined function or method"
+        "Sets a string documentation for a user-defined function or method",
+        "Time to allow for each process before switching"
     };
 
 
     //indique le nombre de premiers arguments à ne pas copier
-    const int typesbuiltinsfonc[NBBUILTINFONC] = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}; // le nombre d'arguments "méthode"
+    const int typesbuiltinsfonc[NBBUILTINFONC] = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}; // le nombre d'arguments "méthode"
 
 
-    const int nbargs[NBBUILTINFONC] = {-1,-1,1,1,1,3,0,2,2,3,1,1,1,0,1,2,1,0,-1,-1,1,1,6,1,1,1,2,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,2,2}; // nombre d'arguments en tout
+    const int nbargs[NBBUILTINFONC] = {-1,-1,1,1,1,3,0,2,2,3,1,1,1,0,1,2,1,0,-1,-1,1,1,6,1,1,1,2,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,2,2,1}; // nombre d'arguments en tout
 
     // les fonctions ayant un nombre illimité d'arguments ne doivent avoir qu'un seul élément dans typeArgs
     const int* typesArgs[NBBUILTINFONC] = {
@@ -2926,7 +3591,8 @@ void neonInit(void)
         (int[]){TYPE_NUMBER},
         (int[]){TYPE_STRING},
         (int[]){TYPE_STRING, TYPE_STRING},
-        (int[]){-1, TYPE_STRING}
+        (int[]){-1, TYPE_STRING},
+        (int[]){TYPE_NUMBER}
     };
 
     /* ----- fin préparation des fonctions ------*/
@@ -3034,7 +3700,11 @@ void neonInit(void)
         "Bad arguments definition in function definition",
         "Use of '...' outside function definition",
         "Can only set a documentation for a user-defined function or method",
-        "Use of return outside function"
+        "Use of return outside function",
+        "Can only call a user-defined function in parallel",
+        "await takes exactly one argument",
+        "Atomic time must be a positive integer, greater or equal to 1",
+        "Methods cannot be applied to volatile objects such as function or operators"
     };
 
     strlist_copy(&ERRORS_MESSAGES, ERRORS_MESSAGES_temp, NB_ERRORS);
@@ -3129,7 +3799,7 @@ void neonInit(void)
         13,
         0,
         8,
-        5,
+        4,
         9,
         0,
         0,
@@ -3139,7 +3809,11 @@ void neonInit(void)
         0,
         0,
         9,
-        0
+        0,
+        0,
+        0,
+        8,
+        4
     };
 
     intlist_copy(&exceptions_err, exceptions_err_temp, NB_ERRORS);
@@ -3150,7 +3824,12 @@ void neonInit(void)
 
     CONTAINERS = strlist_create(0);
     ATTRIBUTES = nelist_create(0);
-    
+
+
+    PROMISES = nelist_create(0);
+    PROMISES_CNT = intlist_create(0);
+    PROCESS_FINISH = intlist_create(0);
+
 
     VAR_LOC = ptrlist_create();
 
@@ -3210,6 +3889,10 @@ void neonExit(void)
     strlist_destroy(NOMS, true);
     nelist_destroy(ADRESSES,true);
 
+    nelist_destroy(PROMISES, true);
+    err_free(PROMISES_CNT.tab);
+    err_free(PROCESS_FINISH.tab);
+
 }
 
 
@@ -3250,6 +3933,7 @@ void neonExit(void)
             execFile(filename);
             err_free(filename);
         }
+        neonExit();
     #else
         #ifndef WASM
 

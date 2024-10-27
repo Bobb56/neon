@@ -429,6 +429,11 @@ void ptrlist_remove(ptrlist* list, void* l, _Bool error)
 }
 
 
+_Bool ptrlist_inList(ptrlist* l, void* el) {
+  return ptrlist_index(l, el) != -1;
+}
+
+
 
 
 void* ptrlist_pop(ptrlist* list)

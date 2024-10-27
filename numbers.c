@@ -28,6 +28,10 @@ extern int CODE_ERROR;
         //*ptr = (double)0;
         return NULL;
     }
+
+    _Bool number_isDefault(Number n) {
+        return n == NULL;
+    }
     
     
     Number number_fromStr(char *string)//convertit une chaîne de caractère en nombre
@@ -318,6 +322,10 @@ extern int CODE_ERROR;
         //double* ptr = err_malloc(sizeof(double));
         //*ptr = (double)0;
         return NULL;
+    }
+
+    _Bool number_isDefault(Number n) {
+        return n == NULL;
     }
     
     

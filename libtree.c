@@ -71,7 +71,7 @@ Tree* tree_create(char* label1, Number label2, char type)
     // création de la liste de fils
     newTree->capacity = 0;
 
-    Tree** tmp = err_malloc(0);
+    Tree** tmp = err_malloc(sizeof(Tree*));
     
     if (tmp == NULL)
     {
@@ -100,6 +100,11 @@ void tree_appendSon(Tree* tree, Tree* son)
     
     //réallocation
     tmp = err_malloc(pow(2, tree->capacity)*sizeof(Tree*));
+
+    if (tmp == NULL) {
+        CODE_ERROR = 12;
+        return;
+    }
     
     
     for (int i=0 ; i<tree->nbSons ; i++)
@@ -1550,6 +1555,7 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                 else if (typeOperande == VARRIGHT || typeOperande == RIGHT)
                 {
                     
+                    
                     Tree* fils = tree_create(NULL, number_default(), 0);
                     if (CODE_ERROR != 0)
                         return;
@@ -1566,6 +1572,14 @@ void createExpressionTreeAux(Tree* tree, strlist* tokens, intlist* types, intlis
                         tree_destroy(fils);
                         return;
                     }
+
+                    if ((long int)number_toDouble(tree->label2) == 39 && fils->type != TYPE_FONCTION) {
+                        tree_destroy(fils);
+                        CODE_ERROR = 100;
+                        return;
+                    }
+
+
                     tree_appendSon(tree, fils);
                     
                 }
@@ -1877,6 +1891,14 @@ void createFunctionTree(Tree* tree, char* string, _Bool isMethod)
     _Bool unlimited_arguments = false;
     Tree* opt_args = tree_create(NULL, number_default(), 0); // même si la fonction n'a pas d'arguments elle a un arbre
 
+    if (CODE_ERROR != 0) {
+        err_free(args2);
+        err_free(name);
+        err_free(liste->tab);
+        err_free(liste);
+        return;
+    }
+
     if (args2 != NULL) // si la fonction a des arguments
     {
         strlist* tokens = strlist_create(0);
@@ -2146,6 +2168,22 @@ void createSyntaxTree(Tree* tree, char* program)
 
             strlist_destroy(tokens2, true);
             err_free(types2.tab);
+        }
+
+        if (types.tab[index] == TYPE_ATOMICBLOCK) {
+            char* stat = blockFromStatement(tokens->tab[index]);
+            Tree* corps = tree_create(NULL, number_default(), 0);
+            createSyntaxTree(corps, stat);
+
+            err_free(stat);
+
+            if (CODE_ERROR != 0) {
+                tree_destroy(corps);
+                return ;
+            }
+
+            corps->type = TYPE_ATOMICBLOCK;
+            tree_appendSon(tree, corps);
         }
 
         if (types.tab[index] == TYPE_BLOCKWORD1LINE)

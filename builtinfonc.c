@@ -56,10 +56,9 @@ extern intlist TYPESBUILTINSFONC;
 extern NeObject* (*OPFONC[NBOPERATEURS])(NeObject*,NeObject*);
 extern NeObject* (*BUILTINSFONC[NBBUILTINFONC])(NeList*);
 
-
-
 extern int error;
 
+extern int ATOMIC_TIME;
 
 
 
@@ -853,5 +852,16 @@ NeObject* _setFunctionDoc_(NeList* args) {
         free(fun->doc);
 
     fun->doc = strdup(neo_to_string(args->tab[1]));
+    return neo_none_create();
+}
+
+
+NeObject* _setAtomicTime(NeList* args) {
+    ATOMIC_TIME = (int)number_toDouble(neo_to_nb(args->tab[0]));
+    if (ATOMIC_TIME < 1)
+    {
+        CODE_ERROR = 102;
+        return NULL;
+    }
     return neo_none_create();
 }

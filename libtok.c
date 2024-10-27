@@ -682,6 +682,8 @@ void cut(strlist* tokens, intlist* types, char* str, _Bool traiterStatements)
             return;
         }
     }
+
+    //strlist_aff(tokens);printf("\n");
     
     strlist_destroy(tokenAdd, true);
     err_free(string);
@@ -1104,6 +1106,13 @@ void finsTypesComposes(int *debTok2, int *debTok3, int k, _Bool *nouvTokComp, _B
             if (types->tab[(*debTok2)] == TYPE_OPERATOR)
             {
                 char* tmp1 = sandwich(tokens->tab[(*debTok2)], ' ');
+                char* tmp2 = addStr(sommeTokens, tmp1);
+                err_free(sommeTokens);err_free(tmp1);
+                sommeTokens = tmp2;
+            }
+            else if (i+1 < len - *debTok2 && types->tab[(*debTok2)] == TYPE_VARIABLE && types->tab[(*debTok2) + 1] == TYPE_VARIABLE)
+            {
+                char* tmp1 = addStr(tokens->tab[(*debTok2)], " ");
                 char* tmp2 = addStr(sommeTokens, tmp1);
                 err_free(sommeTokens);err_free(tmp1);
                 sommeTokens = tmp2;
@@ -1663,7 +1672,7 @@ void statements(intlist* types, strlist* tokens, _Bool *isPotentiallyStat, int *
     
     
     while (i < tokens->len)
-    {
+    {   
 
 
         // empaquetage bloc de fonction
@@ -1757,6 +1766,9 @@ void statements(intlist* types, strlist* tokens, _Bool *isPotentiallyStat, int *
             
             if (strcmp(nom, "expt")==0)
                 types->tab[i] = TYPE_BLOCKEXCEPT;
+
+            if (strcmp(nom, "atomic") == 0)
+                types->tab[i] = TYPE_ATOMICLINE;
             
             err_free(nom);
         }
@@ -1810,6 +1822,9 @@ void statements(intlist* types, strlist* tokens, _Bool *isPotentiallyStat, int *
                 case 'Y':
                     types->tab[*debStat] = 'y';
                     break;
+                case 'j':
+                    types->tab[*debStat] = 'h';
+                    break;
             }
             
              // on transforme un block en statement par une soustraction par 5;
@@ -1852,6 +1867,9 @@ void statements(intlist* types, strlist* tokens, _Bool *isPotentiallyStat, int *
 
                     if (strcmp(nom, "tr")==0)
                         types->tab[i] = TYPE_BLOCKTRY;
+
+                    if (strcmp(nom, "atomic") == 0)
+                        types->tab[i] = TYPE_ATOMICLINE;
                     
                     err_free(nom);
                     
@@ -1969,9 +1987,10 @@ void statements(intlist* types, strlist* tokens, _Bool *isPotentiallyStat, int *
             CODE_ERROR = 77;
             return;
         }
+
         
         
-        if (typeact==TYPE_BLOCKTRY || typeact == TYPE_BLOCKEXCEPT || typeact==TYPE_BLOCKFOR || typeact==TYPE_BLOCKWHILE || typeact==TYPE_BLOCKIF || typeact==TYPE_BLOCKELSE || typeact==TYPE_BLOCKELIF) // debut statement
+        if (typeact==TYPE_ATOMICLINE || typeact==TYPE_BLOCKTRY || typeact == TYPE_BLOCKEXCEPT || typeact==TYPE_BLOCKFOR || typeact==TYPE_BLOCKWHILE || typeact==TYPE_BLOCKIF || typeact==TYPE_BLOCKELSE || typeact==TYPE_BLOCKELIF) // debut statement
         {
             if (i==tokens->len-1)
             {
@@ -1981,7 +2000,7 @@ void statements(intlist* types, strlist* tokens, _Bool *isPotentiallyStat, int *
             (*isPotentiallyStat)=true;
             (*debStat)=i;
         }
-            
+        
         
         i++;
         

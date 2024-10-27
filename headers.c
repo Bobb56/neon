@@ -1,6 +1,7 @@
 #include <stdlib.h>
+#include <stdint.h>
 
-#define VERSION "2.15.40.3-beta"
+#define VERSION "2.99-beta"
 /*
 Numérotation de versions :
 Ajout d'opérateur ou de fonction ou modification d'un élément de syntaxe : +0.0.1
@@ -38,7 +39,7 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #define SEQUENCE_ENTREE ">> "
 
-#define NB_ERRORS 100
+#define NB_ERRORS 104
 
 /*constantes de couleur*/
 #define BLUE 0
@@ -48,7 +49,8 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #define PI 3.141592653589793
 
-#define NBLOCALVARS 20 // nombre de variables locales à empiler pour la fonction execval
+#define NBLOCALVARS 7 // nombre maximal de variables locales à empiler pour la fonction execval
+
 
 //fin de fichier
 #define EOF (-1)
@@ -59,8 +61,8 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 // pour builtinfonc et opfonc
-#define NBOPERATEURS 39
-#define NBBUILTINFONC 49
+#define NBOPERATEURS 40
+#define NBBUILTINFONC 50
 
 
 //definition des types d’arguments pris par les operateurs
@@ -82,6 +84,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #define RETURN 1
 #define IMPORT 2
 #define LOCAL 3
+#define AWAIT 4
 
 // ces types servent à la fois de type d'objet dans l'arbre de syntaxe que de type d'élément de syntaxe utilisé par cut
 
@@ -133,6 +136,8 @@ Ajout d'un type de données NeObject : +0.0.1
 #define TYPE_BLOCKTRY 'Y'
 #define TYPE_BLOCKEXCEPT 'X'
 #define TYPE_TRYEXCEPT 'W'
+#define TYPE_ATOMICLINE 'j'
+#define TYPE_ATOMICBLOCK 'h'
 
 #define TYPE_SYNTAXTREE 'T'
 
@@ -141,6 +146,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #define TYPE_USERFUNC 'u'
 #define TYPE_CONTAINER 't'
 #define TYPE_ATTRIBUTE 'A'
+#define TYPE_PROMISE 'q'
 
 
 
@@ -279,7 +285,23 @@ typedef struct Container
 } Container;
 
 
+typedef struct Process
+{
+    ptrlist* valstack;
+    ptrlist* varstack;
+    ptrlist* retstack;
+    ptrlist* var_loc; // les variables locales créés depuis le lancement du processus
+    int id;
+    Tree* wait_expr;
+    ptrlist* varsToSave;
+} Process;
 
+typedef struct ProcessCycle
+{
+    Process* process;
+    struct ProcessCycle* next;
+    struct ProcessCycle* prev;
+} ProcessCycle;
 
 
 
@@ -296,6 +318,7 @@ int exec(Tree* tree);
 _Bool isTrue(Tree* tree);
 int execConditionBlock(Tree* tree);
 void execFile(char* filename);
+void importFile(char* filename);
 void treeToList(Tree* tree, NeObject* list, int nbArgsMeth);
 void startMessage(void);
 void terminal (void);
@@ -359,10 +382,12 @@ Number number_abs(Number a);
 Number number_ceil(Number a);
 Number number_floor(Number a);
 Number number_randint(Number a, Number b);
+_Bool number_isDefault(Number n);
 
 /*VARLIB*/
 NeObject* neobject_create(char type);
 NeObject* neo_container_create(int type, NeList* data);
+NeObject* neo_promise_create(intptr_t);
 void neobject_destroy(NeObject* neo,_Bool bo);
 void neobject_aff(NeObject* neo);
 NeList* nelist_create(int len);
@@ -495,6 +520,7 @@ int ptrlist_destroy(ptrlist* l, _Bool freeElements, _Bool freeTab);
 void ptrlist_replace(ptrlist* liste, void* aRemplacer, void* nvlleValeur);
 _Bool ptrlist_isEmpty(ptrlist* l);
 void* ptrlist_pop(ptrlist* list);
+_Bool ptrlist_inList(ptrlist* l, void* el);
 
 
 /**************************intlist**********************/
@@ -575,7 +601,6 @@ NeObject* _mod(NeObject* op1, NeObject* op2);
 NeObject* _eucl(NeObject* op1, NeObject* op2);
 NeObject* _ref(NeObject* op1, NeObject* op2);
 NeObject* _goIn(NeObject* op1, NeObject* op2);
-NeObject* _deref(NeObject* op1, NeObject* op2);
 NeObject* _minus(NeObject* op1, NeObject* op2);
 NeObject* _del(NeObject* op1, NeObject* op2);
 NeObject* _exponent(NeObject* op1, NeObject* op2);
@@ -633,7 +658,7 @@ NeObject* _floor_(NeList* args);
 NeObject* _writeFile_(NeList* args);
 NeObject* _readFile_(NeList* args);
 NeObject* _setFunctionDoc_(NeList* args);
-
+NeObject* _setAtomicTime(NeList* args);
 
 
 void affProgram(Tree* tree);

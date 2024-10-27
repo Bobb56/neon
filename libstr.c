@@ -392,11 +392,10 @@ char* sandwich(char* string, char car)
 
 char* addStr(char* str1, char* str2)// concatène deux chaines de caractères
 {
-
-  char* newStr = err_malloc(strlen( str1 ) + strlen( str2 ) + 1);
+  char* newStr = err_malloc(strlen(str1) + strlen(str2) + 1);
   
-  strcpy(newStr,str1 );
-  strcat(newStr,str2 );
+  strcpy(newStr,str1);
+  strcat(newStr,str2);
 
   return newStr;
 }
