@@ -581,6 +581,8 @@ NeObject* execval(Tree* tree) {
     locales, arguments, retour...) est stockée dans ces piles. La boucle ne fait qu'interpréter la valeur des piles
     Chaque processus possède une NeList des NeObject à affecter une fois le résultat calculé
     
+    
+    Les case vont jusqu'à 35
     */
 
     // les variables utilisées avant et après des appels récursifs sont déclarées ici pour exister même après les goto
@@ -710,17 +712,17 @@ NeObject* execval(Tree* tree) {
                             // création de trois toutes nouvelles varstack, valstack et retstack
 
                             Process* p = processCycle_add(process_cycle, maintree, id);
-                            stack_ret_zone(36, p->retstack);
+                            stack_ret_zone(6, p->retstack);
                             //stack_args(maintree, p->varstack);
 
-                            // on a ajouté le processus à la liste de processus, donc maintenant y a plus qu'à attendre qu'un jour on revienne en case 36
+                            // on a ajouté le processus à la liste de processus, donc maintenant y a plus qu'à attendre qu'un jour on revienne en case 6
 
                             return_neo_execval(valstack, neo_promise_create((intptr_t)id)); // plus tard, ce sera une promesse renvoyée par le parallel
                             
                             goto fin_boucle;
                             
 
-                            case 36: // quand le processus sera fini on sera ici
+                            case 6: // quand le processus sera fini on sera ici
 
                             // peut etre faire quelque chose si CODE_ERROR != 0
 
@@ -914,7 +916,6 @@ NeObject* execval(Tree* tree) {
                             stack_args_expr(tree->sons[1], 1, varstack);
                             stack_ret_zone(4, retstack);
                             goto debut_boucle;
-                            case 4:
                         }
                         else if (OPERANDES.tab[(int)number_toDouble(tree->label2)] == LEFT_VAR)
                         {
@@ -938,9 +939,8 @@ NeObject* execval(Tree* tree) {
                             get_arguments_expr(&tree, &calcListIndex, cadre);
                             
                             stack_args_expr(tree->sons[1], 0, varstack);
-                            stack_ret_zone(6, retstack);
+                            stack_ret_zone(4, retstack);
                             goto debut_boucle;
-                            case 6:
                         }
                         else if (OPERANDES.tab[(int)number_toDouble(tree->label2)] == VAR_VAR)
                         {
@@ -964,9 +964,8 @@ NeObject* execval(Tree* tree) {
                             get_arguments_expr(&tree, &calcListIndex, cadre);
                             
                             stack_args_expr(tree->sons[1], 0, varstack);
-                            stack_ret_zone(8, retstack);
+                            stack_ret_zone(4, retstack);
                             goto debut_boucle;
-                            case 8:
                         }
                         else
                         {
@@ -991,10 +990,11 @@ NeObject* execval(Tree* tree) {
                             get_arguments_expr(&tree, &calcListIndex, cadre);
 
                             stack_args_expr(tree->sons[1], 1, varstack);
-                            stack_ret_zone(10, retstack);
+                            stack_ret_zone(4, retstack);
                             goto debut_boucle;
-                            case 10:
                         }
+                        
+                        case 4:
 
                         cadre = varstack->tete;
                         get_tree(&tree, cadre);
@@ -2142,9 +2142,9 @@ NeObject* execval(Tree* tree) {
                         atomic_counter = -1; // tant qu'on n'a pas remis une valeur positive, on ne passera pas à un autre processus
                         
                         stack_args(tree->sons[inst], varstack);
-                        stack_ret_zone(38, retstack);
+                        stack_ret_zone(10, retstack);
                         goto debut_boucle;
-                        case 38:
+                        case 10:
 
                         cadre = varstack->tete;
                         get_tree(&tree, cadre);
@@ -2306,7 +2306,7 @@ NeObject* execval(Tree* tree) {
 
                             // évaluation de la condition
                             stack_args_expr(process_cycle->process->wait_expr, 1, varstack);
-                            stack_ret_zone(37, retstack);
+                            stack_ret_zone(8, retstack);
 
                             process_cycle->process->wait_expr = NULL; // le temps de l'évaluation de l'expression, on lui fait croire qu'il n'est plus en pause
                             
@@ -2314,7 +2314,7 @@ NeObject* execval(Tree* tree) {
                             // si l'évaluation consomme plus que ATOMIC_TIME instructions, on passe qd même au processus suivant
                             // en revanche si on revient avant et que la condition est fausse , on passe direct au suivant
 
-                            case 37:
+                            case 8:
 
                             cadre = varstack->tete;
 
