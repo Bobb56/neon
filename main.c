@@ -3088,6 +3088,15 @@ void terminal (void)
             PTRERROR = NULL; // réinitialise le pointeur d'erreur
 
             exp = inputCode(SEQUENCE_ENTREE);
+
+            if (exp == NULL)
+                return;
+            else if (strcmp(exp,"")==0) // si l'utilisateur n'a rien ecrit
+            {
+                err_free(exp);
+                continue;
+            }
+            
             
             if (CODE_ERROR > 1)
             {
@@ -3098,13 +3107,6 @@ void terminal (void)
             else if (CODE_ERROR == 1)
             {
                 return;
-            }
-
-            
-            if (strcmp(exp,"")==0) // si l'utilisateur n'a rien ecrit
-            {
-                err_free(exp);
-                continue;
             }
 
             

@@ -273,7 +273,7 @@ char* inputCode(char* text)
     
     
 
-    if (CODE_ERROR != 0)
+    if (CODE_ERROR != 0 || str == NULL)
         return NULL;
     
     while (!isFull(str))
