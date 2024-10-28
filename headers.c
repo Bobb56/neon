@@ -39,7 +39,7 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #define SEQUENCE_ENTREE ">> "
 
-#define NB_ERRORS 104
+#define NB_ERRORS 105
 
 /*constantes de couleur*/
 #define BLUE 0

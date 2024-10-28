@@ -21,6 +21,18 @@
 #endif
 
 
+
+int CODE_ERROR = 0; // contient le code de l'erreur survenue lors d'un appel de fonction
+
+#if defined(LINUX) || defined(WINDOWS11) || defined(WINDOWS10)
+    #include <signal.h>
+
+    void handle_sigint(int sig) {
+        CODE_ERROR = 104;
+    }
+#endif
+
+
 /*
 Liste des choses qui marchent pas :
 le pb que je viens de régler permet d'appeler des méthodes sur des @. C'est cool prcq sinon ça craint, mais il faut faire
@@ -74,7 +86,7 @@ char* EXCEPTION = NULL; // exception levée par l'utilisateur, à afficher par p
 
 int NAME = 0; // adresse du NeObject représentant le nom actuel de fichier. A ne pas utiliser, il y a à la place la fonction updateFileName
 
-int CODE_ERROR = 0; // contient le code de l'erreur survenue lors d'un appel de fonction
+
 strlist ERRORS_MESSAGES;
 
 ptrlist* VAR_LOC; // c'est une pile de pile qui contiendra dans chaque contexte les variables à supprimer
@@ -3089,15 +3101,11 @@ void terminal (void)
 
             exp = inputCode(SEQUENCE_ENTREE);
 
-            if (exp == NULL)
-                return;
-            else if (strcmp(exp,"")==0) // si l'utilisateur n'a rien ecrit
-            {
-                err_free(exp);
-                continue;
-            }
-            
-            
+
+            if (exp == NULL) // pour afficher le keyboardInterrupt
+                CODE_ERROR = 104;
+
+
             if (CODE_ERROR > 1)
             {
                 printError(CODE_ERROR);
@@ -3105,8 +3113,13 @@ void terminal (void)
                 continue;
             }
             else if (CODE_ERROR == 1)
-            {
                 return;
+
+
+            if (strcmp(exp,"")==0) // si l'utilisateur n'a rien ecrit
+            {
+                err_free(exp);
+                continue;
             }
 
             
@@ -3337,6 +3350,11 @@ void defineVariables(void)
 void neonInit(void)
 {
 
+    #if defined(LINUX) || defined(WINDOWS11) || defined(WINDOWS10)
+        signal(SIGINT, handle_sigint);
+    #endif
+
+
     //définition de acceptedChars
     const char* acceptedChars_tab[31] = {"\"", "'", "+","*","-","/","<",">","=","%","&","@","!", ",", ";", "\n", "#", "$", "[", "]", "(", ")", "{", "}", "\\", ".", "_", " ", "\t", ".", ":"};
     strlist_copy(&acceptedChars, acceptedChars_tab, 31);
@@ -3461,13 +3479,14 @@ void neonInit(void)
         "DivisionByZero",
         "UnknownError",
         "AssertionFailed",
-        "DefinitionError"
+        "DefinitionError",
+        "KeyboardInterrupt"
     };
     // ici il faut s'assurer que capacity a la bonne valeur
     exceptions.tab = err_malloc(sizeof(char*)*16);
-    exceptions.len = 14;
+    exceptions.len = 15;
     exceptions.capacity = 4;
-    for (int i = 0 ; i < 14 ; i++)
+    for (int i = 0 ; i < 15 ; i++)
         exceptions.tab[i] = strdup(exceptions_temp[i]);
     
 
@@ -3478,7 +3497,7 @@ void neonInit(void)
 
 
     /*----- Préparation des fonctions ------*/
-    const char* NOMSBUILTINSFONC_temp[NBBUILTINFONC] = {"print","input","nbr","str","len","sub","exit","append","remove","insert","type", "reverse", "eval","clear","help", "randint", "failwith", "time", "assert", "output", "chr", "ord", "list_comp", "createException", "exception", "int", "index", "replace", "count", "list", "sort_asc", "sort_desc", "sin", "cos", "tan", "deg", "rad", "sqrt", "ln", "exp", "log", "log2", "round", "abs", "ceil", "floor", "readFile", "writeFile", "setFunctionDoc", "setAtomicTime"};
+    const char* NOMSBUILTINSFONC_temp[NBBUILTINFONC] = {"print","input","nbr","str","len","sub","exit","append","remove","insert","type", "reverse", "eval","clear","help", "randint", "failwith", "time", "assert", "output", "chr", "ord", "list_comp", "createException", "exception", "int", "index", "replace", "count", "list", "sortAsc", "sortDesc", "sin", "cos", "tan", "deg", "rad", "sqrt", "ln", "exp", "log", "log2", "round", "abs", "ceil", "floor", "readFile", "writeFile", "setFunctionDoc", "setAtomicTime"};
     strlist_copy(&NOMSBUILTINSFONC, NOMSBUILTINSFONC_temp, NBBUILTINFONC);
 
     const int typesRetour[NBBUILTINFONC] = {TYPE_NONE, TYPE_STRING, TYPE_NUMBER, TYPE_STRING, TYPE_NUMBER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_STRING, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NUMBER, TYPE_NONE, TYPE_NUMBER, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_NUMBER, TYPE_LIST, TYPE_EXCEPTION, TYPE_NONE, TYPE_NUMBER, TYPE_NUMBER, TYPE_STRING, TYPE_NUMBER, TYPE_LIST, TYPE_NONE, TYPE_NONE, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE};
@@ -3706,7 +3725,8 @@ void neonInit(void)
         "Can only call a user-defined function in parallel",
         "await takes exactly one argument",
         "Atomic time must be a positive integer, greater or equal to 1",
-        "Methods cannot be applied to volatile objects such as function or operators"
+        "Methods cannot be applied to volatile objects such as function or operators",
+        "Program interrupted" // code 104 spécial pour intercepter un CTRL-C
     };
 
     strlist_copy(&ERRORS_MESSAGES, ERRORS_MESSAGES_temp, NB_ERRORS);
@@ -3815,7 +3835,8 @@ void neonInit(void)
         0,
         0,
         8,
-        4
+        4,
+        14
     };
 
     intlist_copy(&exceptions_err, exceptions_err_temp, NB_ERRORS);
