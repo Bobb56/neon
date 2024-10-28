@@ -295,8 +295,10 @@ char* inputCode(char* text)
 
         err_free(text);
 
-        if (CODE_ERROR != 0)
+        if (CODE_ERROR != 0 || newStr == NULL) {
+            err_free(str);
             return NULL;
+        }
             
         char* temp = addStr("\n", newStr);
         char* temp2 = addStr(str, temp);
