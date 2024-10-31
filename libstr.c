@@ -272,7 +272,6 @@ char* inputCode(char* text)
     #endif
     
     
-
     if (CODE_ERROR != 0 || str == NULL)
         return NULL;
     

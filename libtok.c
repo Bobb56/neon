@@ -362,8 +362,6 @@ void cut(strlist* tokens, intlist* types, char* str, _Bool traiterStatements)
     
     for (int i=0 ; i<len_string ; i++)
     {
-
-        
         
         char1 = string[i];
         

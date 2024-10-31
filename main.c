@@ -66,7 +66,7 @@ pas de sens de définir des arguments obligatoires après ...
 - Ajout de la fonction setFunctionDoc, et extension de la fonction help pour les fonctions définies par l'utilisateur
 - Les boucles for rendent automatiquement leur indice local. Ca permet de faire des boucles for imbriquées avec la même variable,
 ou de na pas avoir de soucis sur des appels récursifs qui font des boucles for, et où le programmeur aurait oublié de mettre
-l'indice en local
+l'indice en local. On ne peut également pas modifier l'indice d'une boucle for
 - On peut, par la même occasion nous-même rendre des variables locales dans les if
 - Possibilité de lancer des fonctions en parallèle avec le mot-clé parallel
 - Attente passive dans un processus avec await(condition)
@@ -598,7 +598,7 @@ NeObject* execval(Tree* tree) {
     */
 
     // les variables utilisées avant et après des appels récursifs sont déclarées ici pour exister même après les goto
-    NeObject * op1, * op2, *neo_liste, *expr, *var, *valeur, *nom, *args, *mainThreadReturnValue;
+    NeObject * op1, * op2, *neo_liste, *expr, *var, *valeur, *nom, *args, *mainThreadReturnValue = NULL;
     NeObject* un = neo_nb_create(number_fromDouble(1));
     NeList* l, *liste, *val;
     Function* fun;
@@ -1765,7 +1765,7 @@ NeObject* execval(Tree* tree) {
                     }
 
 
-                    if (obj->type != TYPE_LIST)
+                    if (obj->type != TYPE_LIST && obj->type != TYPE_STRING)
                     {
                         CODE_ERROR = 15;
                         return_neo_execval(valstack, NULL);
@@ -1791,20 +1791,29 @@ NeObject* execval(Tree* tree) {
                         return_neo_execval(valstack, NULL);
                         goto fin_boucle;
                     }
-                    else if (index2 >= neo_list_len(obj) || index2 < 0)
+                    else if (obj->type == TYPE_LIST && index2 >= neo_list_len(obj) || index2 < 0 || obj->type == TYPE_STRING && index2 >= strlen(neo_to_string(obj)))
                     {
                         CODE_ERROR = 18;
                         return_neo_execval(valstack, NULL);
                         goto fin_boucle;
                     }
                     
+                    
                     if (calcListIndex)
                     {
-                        NeObject* retour = neo_copy(neo_list_nth(obj,index2));
+                        NeObject* retour = NULL;
+
+                        if (obj->type == TYPE_LIST) {
+                            retour = neo_copy(neo_list_nth(obj,index2));
+                        }
+                        else {
+                            retour = neo_str_create(charToString(neo_to_string(obj)[index2]));
+                        }
+
                         return_neo_execval(valstack, retour);
                         goto fin_boucle;
                     }
-                    else
+                    else if (obj->type == TYPE_LIST)
                     {
                         NeObject* neo = neo_list_nth(obj,index2);
 
@@ -1830,6 +1839,11 @@ NeObject* execval(Tree* tree) {
                         }
                         // dans ce cas-là, on va devoir retourner directement le pointeur de l'élément
                         return_neo_execval(valstack, neo); // au lieu de faire une copie, on renvoie directement le bon pointeur
+                        goto fin_boucle;
+                    }
+                    else {
+                        CODE_ERROR = 105;
+                        return_neo_execval(valstack, NULL);
                         goto fin_boucle;
                     }
 
@@ -2933,7 +2947,7 @@ NeObject* execval(Tree* tree) {
     }
     
 
-
+    return mainThreadReturnValue;
 
 }
 
@@ -2971,8 +2985,17 @@ void printRes(NeObject* res)
 
 void startMessage(void)
 {
-    setColor(GREEN);
-    printString("Welcome to Neon");
+    #ifndef TI83PCE
+        setColor(BLUE);
+        printString("        ,   .                   ,--. ,--."); newLine();
+        printString("        |\\  |,---.,---.,---.      -| |  |"); newLine();
+        printString("        | \\ ||---'|   ||   |       | |  |"); newLine();
+        printString("        `  `'`---'`---'`   '    `--'o`--'"); newLine();
+    #else
+        setColor(GREEN);
+        printString("Welcome to Neon");
+    #endif
+
     setColor(WHITE);
     newLine();
     
@@ -3102,10 +3125,10 @@ void terminal (void)
             exp = inputCode(SEQUENCE_ENTREE);
 
 
-            if (exp == NULL) // pour afficher le keyboardInterrupt
+            if (exp == NULL && CODE_ERROR == 0) // pour afficher le keyboardInterrupt
                 CODE_ERROR = 104;
-
-
+            
+            // quand l'utilisateur appuie sur CTRL-D, ça met CODE_ERROR à 1
             if (CODE_ERROR > 1)
             {
                 printError(CODE_ERROR);
@@ -3114,6 +3137,7 @@ void terminal (void)
             }
             else if (CODE_ERROR == 1)
                 return;
+
 
 
             if (strcmp(exp,"")==0) // si l'utilisateur n'a rien ecrit
@@ -3189,11 +3213,31 @@ void terminal (void)
             /*
             strlist* tokens = strlist_create(0);
             intlist types = intlist_create(0);
+            Ast** ast;
+
             cut(tokens, &types, exp, true);
-            strlist_aff(tokens);
-            intlist_aff(&types);
+
+            if (CODE_ERROR == 0) {
+                ast = ast_create(&types);
+                
+                parse(tokens, types, ast, 0);
+
+                if (CODE_ERROR == 0)
+                    statements(&types, tokens, ast, 0);
+                
+                strlist_aff(tokens);
+                ast_aff(ast, tokens->len);
+
+                ast_destroy(ast, tokens->len);
+            }
+
             strlist_destroy(tokens, true);
             err_free(types.tab);
+
+            if (CODE_ERROR != 0)
+                printError(CODE_ERROR);
+
+            err_free(exp);
             */
 
             
@@ -3219,6 +3263,8 @@ void execFile(char* filename)
     if (program == NULL)
         return ;
     
+
+    
     // exécution du fichier
     Tree* tree = tree_create(NULL, 0, 0);
     createSyntaxTree(tree, program);
@@ -3241,8 +3287,24 @@ void execFile(char* filename)
     }
 
     tree_destroy(tree);
+
+    /*strlist* tokens = strlist_create(0);
+    intlist types = intlist_create(0);
+    cut(tokens, &types, program, false);
+
+    Ast** ast = ast_create(&types);
+    parse(tokens, types, ast, 0);
+
+    statements(&types, tokens, ast, 0);
+
+    printf("Parsing terminé\n");
+
+    ast_destroy(ast, tokens->len);
+    strlist_destroy(tokens, true);
+    err_free(types.tab);
+    err_free(program);
     
-    CODE_ERROR = 0;
+    CODE_ERROR = 0;*/
     return ;
 }
 
@@ -3352,6 +3414,10 @@ void neonInit(void)
 
     #if defined(LINUX) || defined(WINDOWS11) || defined(WINDOWS10)
         signal(SIGINT, handle_sigint);
+    #endif
+
+    #ifdef LINUX
+        linenoiseSetMultiLine(1); // spécial pour linenoise
     #endif
 
 
@@ -3497,7 +3563,7 @@ void neonInit(void)
 
 
     /*----- Préparation des fonctions ------*/
-    const char* NOMSBUILTINSFONC_temp[NBBUILTINFONC] = {"print","input","nbr","str","len","sub","exit","append","remove","insert","type", "reverse", "eval","clear","help", "randint", "failwith", "time", "assert", "output", "chr", "ord", "list_comp", "createException", "exception", "int", "index", "replace", "count", "list", "sortAsc", "sortDesc", "sin", "cos", "tan", "deg", "rad", "sqrt", "ln", "exp", "log", "log2", "round", "abs", "ceil", "floor", "readFile", "writeFile", "setFunctionDoc", "setAtomicTime"};
+    const char* NOMSBUILTINSFONC_temp[NBBUILTINFONC] = {"print","input","nbr","str","len","sub","exit","append","remove","insert","type", "reverse", "eval","clear","help", "randint", "failwith", "time", "assert", "output", "chr", "ord", "listComp", "createException", "exception", "int", "index", "replace", "count", "list", "sortAsc", "sortDesc", "sin", "cos", "tan", "deg", "rad", "sqrt", "ln", "exp", "log", "log2", "round", "abs", "ceil", "floor", "readFile", "writeFile", "setFunctionDoc", "setAtomicTime"};
     strlist_copy(&NOMSBUILTINSFONC, NOMSBUILTINSFONC_temp, NBBUILTINFONC);
 
     const int typesRetour[NBBUILTINFONC] = {TYPE_NONE, TYPE_STRING, TYPE_NUMBER, TYPE_STRING, TYPE_NUMBER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_STRING, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NUMBER, TYPE_NONE, TYPE_NUMBER, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_NUMBER, TYPE_LIST, TYPE_EXCEPTION, TYPE_NONE, TYPE_NUMBER, TYPE_NUMBER, TYPE_STRING, TYPE_NUMBER, TYPE_LIST, TYPE_NONE, TYPE_NONE, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_NUMBER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE};
@@ -3657,7 +3723,7 @@ void neonInit(void)
         "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
         "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
         "Lone block of instructions",
-        "Incorrect arrangement of if/elif/else blocks",
+        "Incorrect statement definition",
         "Incorrect number of arguments when calling a built-in function",
         "Index out of range for inserting into a NeList",
         "Index out of range for deleting from a NeList",
@@ -3726,7 +3792,8 @@ void neonInit(void)
         "await takes exactly one argument",
         "Atomic time must be a positive integer, greater or equal to 1",
         "Methods cannot be applied to volatile objects such as function or operators",
-        "Program interrupted" // code 104 spécial pour intercepter un CTRL-C
+        "Program interrupted", // code 104 spécial pour intercepter un CTRL-C
+        "Cannot assign a value to a string index"
     };
 
     strlist_copy(&ERRORS_MESSAGES, ERRORS_MESSAGES_temp, NB_ERRORS);
@@ -3836,7 +3903,8 @@ void neonInit(void)
         0,
         8,
         4,
-        14
+        14,
+        9
     };
 
     intlist_copy(&exceptions_err, exceptions_err_temp, NB_ERRORS);

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define VERSION "2.99-beta"
+#define VERSION "3.0-beta"
 /*
 Numérotation de versions :
 Ajout d'opérateur ou de fonction ou modification d'un élément de syntaxe : +0.0.1
@@ -35,11 +35,11 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 // si la version actuelle n'est pas stable mais est en distribution
-#define EXPERIMENTAL
+//#define EXPERIMENTAL
 
 #define SEQUENCE_ENTREE ">> "
 
-#define NB_ERRORS 105
+#define NB_ERRORS 106
 
 /*constantes de couleur*/
 #define BLUE 0

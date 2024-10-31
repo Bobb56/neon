@@ -322,7 +322,7 @@ NeObject* _eucl(NeObject* _op1, NeObject* _op2)
 NeObject* _and(NeObject* op1, NeObject* op2)
 {
   if ((op1->type != TYPE_BOOL && op1->type != TYPE_NUMBER) || (op2->type != TYPE_BOOL && op2->type != TYPE_NUMBER))
-  {
+  {     
         CODE_ERROR = 47;
         return NULL;
   }

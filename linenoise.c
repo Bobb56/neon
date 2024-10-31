@@ -1,6 +1,8 @@
 /*
 Modifié par Raphaël Le Puillandre pour Neon afin de rendre compatible la bibliothèque avec l'utilisation de couleurs
--> lignes 575 à 582 et 921 à 934
+-> lignes 575 à 582, 921 à 934 et 657 à 665
+
+-> CTRL-D : 1217 et 1024
 
 linenoise.c -- guerrilla line editing library against the idea that a
  * line editing lib needs to be 20,000 lines of C code.
@@ -108,7 +110,7 @@ linenoise.c -- guerrilla line editing library against the idea that a
  */
 
 #include "headers.c"
-
+extern int CODE_ERROR;
 
 #ifdef LINUX
 
@@ -124,7 +126,6 @@ linenoise.c -- guerrilla line editing library against the idea that a
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
 
 
 
@@ -653,7 +654,20 @@ static void refreshMultiLine(struct linenoiseState *l, int flags) {
 
     if (flags & REFRESH_WRITE) {
         /* Write the prompt and the current buffer content */
-        abAppend(&ab,l->prompt,strlen(l->prompt));
+
+
+        /*Si le texte à afficher en début de ligne est la séquence d'entrée, on le met en bleu, sinon, non*/
+        /* Write the prompt and the current buffer content */
+        if (strcmp(l->prompt, SEQUENCE_ENTREE) != 0)
+            abAppend(&ab,l->prompt,strlen(l->prompt)); // affiche le texte demandé
+        else {
+            abAppend(&ab,"\033[1;34m",7); // affiche le bleu
+            abAppend(&ab,l->prompt,strlen(l->prompt)); // affiche la séquence d'entrée
+            abAppend(&ab,"\033[0;00m",7); // remet le blanc
+        }
+
+
+
         if (maskmode == 1) {
             unsigned int i;
             for (i = 0; i < l->len; i++) abAppend(&ab,"*",1);
@@ -1009,6 +1023,7 @@ char *linenoiseEditFeed(struct linenoiseState *l) {
             history_len--;
             free(history[history_len]);
             errno = ENOENT;
+            CODE_ERROR = 1;
             return NULL;
         }
         break;
@@ -1200,6 +1215,10 @@ static char *linenoiseNoTTY(void) {
         }
         int c = fgetc(stdin);
         if (c == EOF || c == '\n') {
+
+            if (c == EOF)
+                CODE_ERROR = 1; // quand on lit EOF, c'est qu'on a appuyé sur CTRL-D
+
             if (c == EOF && len == 0) {
                 free(line);
                 return NULL;
