@@ -22,7 +22,7 @@ extern strlist operateurs1;
 extern strlist operateurs2;
 extern strlist blockwords;
 extern strlist blockwords1Line;
-extern strlist boolean;
+extern strlist neon_boolean;
 extern strlist exceptions;
 extern strlist keywords;
 extern strlist lkeywords;

@@ -14,9 +14,9 @@ Ajout d'un type de données NeObject : +0.0.1
 #define INVITATION "https://discord.gg/wkBdK35w2a"
 
 // à définir en fonction des destinations de compilation
-#define LINUX
+//#define LINUX
 //#define WINDOWS10
-//#define WINDOWS11
+#define WINDOWS11
 //#define WASM
 //#define TI83PCE
 
@@ -396,7 +396,7 @@ void nelist_remove(NeList* list,int index);
 void nelist_aff(NeList* liste);
 void nelist_destroy(NeList* list,_Bool bo);
 NeObject* neo_nb_create(Number number);
-NeObject* neo_bool_create(_Bool boolean);
+NeObject* neo_bool_create(_Bool neon_boolean);
 _Bool neo_is_true(NeObject* neo);
 NeObject* neo_str_create(char* string);
 NeObject* neo_list_create(int len);

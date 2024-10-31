@@ -49,7 +49,7 @@ extern strlist operateurs2;
 extern strlist blockwords;
 extern strlist blockwords1Line;
 extern strlist keywordFunction;
-extern strlist boolean;
+extern strlist neon_boolean;
 extern strlist exceptions;
 extern strlist keywords;
 extern strlist lkeywords;
@@ -445,7 +445,7 @@ void cut(strlist* tokens, intlist* types, char* str, _Bool traiterStatements)
                     {
                         typeTok.tab[k] = TYPE_OPERATOR;
                     }
-                    else if (strlist_inList(&boolean, tokenAdd->tab[k]))
+                    else if (strlist_inList(&neon_boolean, tokenAdd->tab[k]))
                     {
                         typeTok.tab[k] = TYPE_BOOL;
                     }

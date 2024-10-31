@@ -24,7 +24,7 @@
 
 int CODE_ERROR = 0; // contient le code de l'erreur survenue lors d'un appel de fonction
 
-#if defined(LINUX) || defined(WINDOWS11) || defined(WINDOWS10)
+#if defined(LINUX)
     #include <signal.h>
 
     void handle_sigint(int sig) {
@@ -32,6 +32,19 @@ int CODE_ERROR = 0; // contient le code de l'erreur survenue lors d'un appel de 
     }
 #endif
 
+
+#if defined(WINDOWS11) || defined(WINDOWS10)
+    #include <windows.h>
+
+    // Fonction de gestion du signal
+    BOOL WINAPI ctrlHandler(DWORD signal) {
+        if (signal == CTRL_C_EVENT) {
+            CODE_ERROR = 104;
+            return TRUE;  // Retourner TRUE pour indiquer que l'événement a été traité
+        }
+        return FALSE;
+    }
+#endif
 
 /*
 Liste des choses qui marchent pas :
@@ -136,7 +149,7 @@ strlist blockwords1Line;
 strlist keywordFunction;
 strlist keywords;
 strlist lkeywords;
-strlist boolean;
+strlist neon_boolean;
 strlist exceptions;
 strlist constant;
 strlist OPERATEURS;
@@ -3412,12 +3425,13 @@ void defineVariables(void)
 void neonInit(void)
 {
 
-    #if defined(LINUX) || defined(WINDOWS11) || defined(WINDOWS10)
+    #if defined(LINUX)
+        linenoiseSetMultiLine(1); // spécial pour linenoise
         signal(SIGINT, handle_sigint);
     #endif
-
-    #ifdef LINUX
-        linenoiseSetMultiLine(1); // spécial pour linenoise
+    
+    #if defined(WINDOWS10) || defined(WINDOWS11)
+        SetConsoleCtrlHandler(ctrlHandler, TRUE);
     #endif
 
 
@@ -3528,8 +3542,8 @@ void neonInit(void)
     strlist_copy(&lkeywords, lkeywords_temp, 3);
 
 
-    const char* boolean_temp[] = {"True","False"};
-    strlist_copy(&boolean, boolean_temp, 2);
+    const char* neon_boolean_temp[] = {"True","False"};
+    strlist_copy(&neon_boolean, neon_boolean_temp, 2);
 
     const char* exceptions_temp[] = {
         "SyntaxError",
@@ -3962,7 +3976,7 @@ void neonExit(void)
     strlist_destroy(&keywords, false);
     strlist_destroy(&lkeywords, false);
     strlist_destroy(&keywordFunction, false);
-    strlist_destroy(&boolean, false);
+    strlist_destroy(&neon_boolean, false);
     strlist_destroy(&exceptions, false);
     strlist_destroy(&constant, false);
     strlist_destroy(&OPERATEURS, false);

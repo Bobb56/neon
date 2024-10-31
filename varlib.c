@@ -131,12 +131,12 @@ NeObject* neo_promise_create(intptr_t id) {
 
 
 
-NeObject* neo_bool_create(_Bool boolean)
+NeObject* neo_bool_create(_Bool neon_boolean)
 {
     NeObject* neo = err_malloc(sizeof(NeObject));
     neo->data = err_malloc(sizeof(_Bool*));
     neo->type = TYPE_BOOL;
-    *((_Bool*)neo->data) = boolean;
+    *((_Bool*)neo->data) = neon_boolean;
     return neo;
 }
 

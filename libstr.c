@@ -22,7 +22,7 @@ extern strlist operateurs3;
 extern strlist operateurs1;
 extern strlist operateurs2;
 extern strlist blockwords;
-extern strlist boolean;
+extern strlist neon_boolean;
 extern strlist keywords;
 extern strlist lkeywords;
 extern strlist constant;
@@ -44,7 +44,7 @@ extern intlist TYPESBUILTINSFONC;
 extern NeObject* (*OPFONC[NBOPERATEURS])(NeObject*,NeObject*);
 extern NeObject* (*BUILTINSFONC[NBBUILTINFONC])(NeList*);
 
-extern strlist boolean;
+extern strlist neon_boolean;
 
 extern int CODE_ERROR;
 
@@ -423,7 +423,7 @@ char* addStr2(char* str1, char* str2)
 
 _Bool strToBool(char* string)
 {
-    return strcmp(string, boolean.tab[0])==0;
+    return strcmp(string, neon_boolean.tab[0])==0;
 }
 
 
