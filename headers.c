@@ -14,9 +14,9 @@ Ajout d'un type de données NeObject : +0.0.1
 #define INVITATION "https://discord.gg/wkBdK35w2a"
 
 // à définir en fonction des destinations de compilation
-//#define LINUX
+#define LINUX
 //#define WINDOWS10
-#define WINDOWS11
+//define WINDOWS11
 //#define WASM
 //#define TI83PCE
 
