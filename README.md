@@ -115,19 +115,6 @@ Parmi les nouveautés récentes de la version 3.0-beta :
 
 Plus de détails : [Nouveautés](https://langage-neon.raphaael.fr/nouveaut%C3%A9s)
 
-## 🤝 Contribuer
-
-Le projet est open-source. Retrouvez-le sur [Replit](https://replit.com/@raphaael/Neon)
-
-Pour toute question ou suggestion :
-- Discord : [https://discord.gg/wkBdK35w2a](https://discord.gg/wkBdK35w2a)
-- Email : `raphael@langage-neon.org`
-
----
-
-_Ce fichier README a été généré à partir des informations disponibles sur le site officiel de Neon._
-
-
 https://langage-neon.raphaael.fr
 
 Doc et plus : http://ti-pla.net/a3236802
