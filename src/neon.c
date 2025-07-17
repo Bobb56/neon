@@ -36,7 +36,7 @@ int CODE_ERROR = 0;
 #if defined(LINUX)
     #include <signal.h>
 
-    void handle_sigint(int sig) {
+    void handle_signal(int sig) {
         CODE_ERROR = 104;
     }
 #endif
@@ -706,15 +706,14 @@ void defineVariables(void)
 
 
 
-
-
-
-
 void neonInit(void)
 {
     #if defined(LINUX)
         linenoiseSetMultiLine(1); // spécial pour linenoise
-        signal(SIGINT, handle_sigint);
+        signal(SIGINT, handle_signal);
+        signal(SIGTERM, handle_signal);
+        signal(SIGKILL, handle_signal);
+        signal(SIGSTOP, handle_signal);
     #endif
     
     #if defined(WINDOWS10) || defined(WINDOWS11)
