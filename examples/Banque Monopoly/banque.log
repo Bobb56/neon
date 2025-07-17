@@ -1,0 +1,23 @@
+-> addplayer raphael
+-> addplayer lucas
+-> give raphael 999999
+-> see raphael
+-> exit
+-> see lucas
+-> give lucas 1000000
+-> move lucas raphael 500000
+-> see raphael
+-> see lucas
+-> deleteplayer raphael
+-> deleteplayer lucas
+-> addplayer raphael
+-> see raphael
+-> give raphael 150000
+-> see raphael
+-> exit
+-> see raphael
+-> addplayer lucas
+-> see lucas
+-> give lucas 1000000
+-> see lucas
+-> see lucas

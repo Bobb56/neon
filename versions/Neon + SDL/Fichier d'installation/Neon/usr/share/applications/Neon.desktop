@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Neon
+Comment=Neon programming language
+GenericName=Programming language
+Exec=/usr/bin/neon
+Icon=/usr/share/pixmaps/Neon.png
+Type=Application
+Categories=Development;
+Keywords=neon;
+Terminal=true
+MimeType=text/plain;text/x-neon;

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Lire la version actuelle depuis le fichier version
+if [[ ! -f backup/version ]]; then
+    echo "0" > backup/version
+fi
+
+version=$(cat backup/version)
+
+
+# Compresse tout le dossier src et en fait une archive tar
+tar -cf $version.tar src/*
+mv $version.tar backup/
+
+
+# Incrémenter la version et l'écrire dans .version
+new_version=$((version + 1))
+echo "$new_version" > backup/version

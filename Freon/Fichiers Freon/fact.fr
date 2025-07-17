@@ -1,0 +1,9 @@
+Fonction Factorielle(n) faire
+|  Si (n = 0) alors
+|  |  Renvoyer (1)
+|  Sinon
+|  |  Renvoyer ( Factorielle(n-1) * n )
+|  Fin
+Fin
+
+Afficher (Factorielle(5))

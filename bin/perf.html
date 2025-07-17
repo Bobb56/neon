@@ -1,0 +1,23 @@
+<pre>Performance counter stats for &apos;./neon premiers.ne&apos;:
+
+         22 965,53 msec task-clock                       #    1,000 CPUs utilized             
+               137      context-switches                 #    5,965 /sec                      
+                63      cpu-migrations                   #    2,743 /sec                      
+               157      page-faults                      #    6,836 /sec                      
+    26 969 702 783      cpu_atom/cycles/                 #    1,174 GHz                         (1,65%)
+    32 702 780 481      cpu_core/cycles/                 #    1,424 GHz                         (97,80%)
+    96 156 541 007      cpu_atom/instructions/           #    3,57  insn per cycle              (1,92%)
+   160 213 437 121      cpu_core/instructions/           #    5,94  insn per cycle              (97,80%)
+    19 943 379 271      cpu_atom/branches/               #  868,405 M/sec                       (1,92%)
+    33 317 450 571      cpu_core/branches/               #    1,451 G/sec                       (97,80%)
+         1 481 728      cpu_atom/branch-misses/          #    0,01% of all branches             (1,93%)
+           446 425      cpu_core/branch-misses/          #    0,00% of all branches             (97,80%)
+             TopdownL1 (cpu_core)                 # <font color="#C01C28">     3,5</font> %  tma_backend_bound      
+                                                  # <font color="#C01C28">     0,8</font> %  tma_bad_speculation    
+                                                  # <font color="#C01C28">    18,7</font> %  tma_frontend_bound     
+                                                  # <font color="#C01C28">    77,0</font> %  tma_retiring             (97,80%)
+             TopdownL1 (cpu_atom)                 # <font color="#C01C28">     0,1</font> %  tma_bad_speculation    
+                                                  # <font color="#C01C28">    73,8</font> %  tma_retiring             (1,92%)
+                                                  # <font color="#C01C28">     3,9</font> %  tma_backend_bound      
+                                                  # <font color="#C01C28">     3,9</font> %  tma_backend_bound_aux  
+                                                  # <font color="#C01C28">    22,3</font> %  tma_frontend_bound       (1,92%)</pre>

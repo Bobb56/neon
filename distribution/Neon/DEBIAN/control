@@ -1,0 +1,9 @@
+Package: Neon
+Version: 3.0-beta
+Section: base
+Priority: optional
+Architecture: all
+Depends: bash
+Maintainer: Raphaël <raphael@langage-neon.org>
+Description: Langage de programmation interprété
+Homepage: https://www.langage-neon.org

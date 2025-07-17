@@ -1,0 +1,3 @@
+fonctions readFile et writeFile
+Ajout de la fonctionnalité déplacement et commande précédente dans le terminal sur Linux
+Correction de bugs de l'indentation automatique et amélioration

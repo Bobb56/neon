@@ -1,0 +1,47 @@
+{
+  "scopeName": "source.neon",
+  "patterns": [
+    {
+      "name": "keyword.control.neon",
+      "match": "\\b(if|elif|else|while|return|function|method|atomic|for|foreach|try|except|parallel)\\b"
+    },
+    {
+      "name": "string.quoted.double.neon",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.neon"
+        }
+      ]
+    },
+    {
+      "name": "string.quoted.single.neon",
+      "begin": "'",
+      "end": "'"
+    },
+    {
+      "name": "constant.numeric.neon",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    },
+    {
+      "name": "variable.neon",
+      "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+    },
+    {
+      "name": "keyword.operator.neon",
+      "match": "==|=|\\+|\\-|\\*|/|<|>|<=|>=|!=|>>|~"
+    },
+    {
+      "name": "comment.line.double-slash.neon",
+      "match": "//.*$"
+    }
+  ],
+  "repository": {},
+  "fileTypes": ["ne"],
+  "name": "neon",
+  "injectionSelector": "L:source.neon",
+  "uuid": "b0b6e5a0-d23e-11ee-8c99-0242ac120002"
+}
+

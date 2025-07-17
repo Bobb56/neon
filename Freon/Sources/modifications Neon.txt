@@ -1,0 +1,10 @@
+Noms d'opérateurs
+Noms de fonctions
+Messages d'erreurs
+Noms d'exceptions
+Noms de types
+mots clés
+mots clés do, end, then
+noms des variables spéciales (__mains__, __platform__, infini, NaN...)
+interface/apparence
+affprog

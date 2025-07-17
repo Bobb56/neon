@@ -1,0 +1,814 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 45.45      0.20     0.20        1   200.00   360.00  execval
+ 18.18      0.28     0.08                             _init
+ 15.91      0.35     0.07 48208673     0.00     0.00  neobject_destroy
+  4.55      0.37     0.02 24132686     0.00     0.00  neo_copy
+  4.55      0.39     0.02  7994001     0.00     0.00  _mod
+  2.27      0.40     0.01 24068524     0.00     0.00  number_copy
+  2.27      0.41     0.01 24045617     0.00     0.00  neo_to_nb
+  2.27      0.42     0.01 16017819     0.00     0.00  neo_nb_create
+  2.27      0.43     0.01  8002005     0.00     0.00  number_fromDouble
+  2.27      0.44     0.01  7994001     0.00     0.00  number_mod
+  0.00      0.44     0.00 40090343     0.00     0.00  number_destroy
+  0.00      0.44     0.00  8002001     0.00     0.00  number_toDouble
+  0.00      0.44     0.00  7998000     0.00     0.00  neo_to_bool
+  0.00      0.44     0.00  7994004     0.00     0.00  neo_bool_create
+  0.00      0.44     0.00  7994001     0.00     0.00  _equal
+  0.00      0.44     0.00  7994001     0.00     0.00  neo_equal
+  0.00      0.44     0.00  7994001     0.00     0.00  number_equal
+  0.00      0.44     0.00    96456     0.00     0.00  stack_check_for
+  0.00      0.44     0.00    56164     0.00     0.00  neo_none_create
+  0.00      0.44     0.00    55614     0.00     0.00  _affectNone
+  0.00      0.44     0.00    38356     0.00     0.00  ptrlist_append
+  0.00      0.44     0.00    32152     0.00     0.00  nextProcess
+  0.00      0.44     0.00    30359     0.00     0.00  ptrlist_create
+  0.00      0.44     0.00    30356     0.00     0.00  deleteContext
+  0.00      0.44     0.00    30356     0.00     0.00  ptrlist_remove
+  0.00      0.44     0.00    26356     0.00     0.00  newContext
+  0.00      0.44     0.00    25806     0.00     0.00  _sub
+  0.00      0.44     0.00    25806     0.00     0.00  number_sub
+  0.00      0.44     0.00     8000     0.00     0.00  number_isInf
+  0.00      0.44     0.00     4000     0.00     0.00  ptrlist_pop
+  0.00      0.44     0.00     1573     0.00     0.00  err_memset
+  0.00      0.44     0.00     1171     0.00     0.00  isidentifier
+  0.00      0.44     0.00     1100     0.00     0.00  neo_list_len
+  0.00      0.44     0.00     1010     0.00     0.00  charToString
+  0.00      0.44     0.00     1010     0.00     0.00  sub
+  0.00      0.44     0.00      833     0.00     0.00  strlist_inList
+  0.00      0.44     0.00      554     0.00     0.00  nelist_create
+  0.00      0.44     0.00      551     0.00     0.00  neo_list_convert
+  0.00      0.44     0.00      550     0.00     0.00  _append_
+  0.00      0.44     0.00      550     0.00     0.00  funcArgsCheck
+  0.00      0.44     0.00      550     0.00     0.00  functionCall
+  0.00      0.44     0.00      550     0.00     0.00  neo_list_append
+  0.00      0.44     0.00      550     0.00     0.00  neo_list_nth
+  0.00      0.44     0.00      485     0.00     0.00  debutTokensSimples
+  0.00      0.44     0.00      485     0.00     0.00  finTokensSimples
+  0.00      0.44     0.00      196     0.00     0.00  finsTypesComposes
+  0.00      0.44     0.00      162     0.00     0.00  intlist_append
+  0.00      0.44     0.00      144     0.00     0.00  strlist_append
+  0.00      0.44     0.00       58     0.00     0.00  strlist_index
+  0.00      0.44     0.00       56     0.00     0.00  isAccepted
+  0.00      0.44     0.00       54     0.00     0.00  ast_typeCountAst
+  0.00      0.44     0.00       51     0.00     0.00  tree_appendSon
+  0.00      0.44     0.00       41     0.00     0.00  ast_length
+  0.00      0.44     0.00       21     0.00     0.00  isFull
+  0.00      0.44     0.00       19     0.00     0.00  strlist_destroy
+  0.00      0.44     0.00       18     0.00     0.00  intlist_inList
+  0.00      0.44     0.00       15     0.00     0.00  strlist_copy
+  0.00      0.44     0.00       13     0.00     0.00  nelist_append
+  0.00      0.44     0.00       11     0.00     0.00  ast_minOp
+  0.00      0.44     0.00       11     0.00     0.00  createExpressionTreeAux
+  0.00      0.44     0.00       11     0.00     0.00  parse
+  0.00      0.44     0.00        8     0.00     0.00  ast_pop
+  0.00      0.44     0.00        6     0.00     0.00  intlist_copy
+  0.00      0.44     0.00        6     0.00     0.00  number_fromStr
+  0.00      0.44     0.00        5     0.00     0.00  createSyntaxTreeAux
+  0.00      0.44     0.00        5     0.00     0.00  neobject_create
+  0.00      0.44     0.00        4     0.00     0.00  createStatementIEWFTree
+  0.00      0.44     0.00        4     0.00     0.00  get_type
+  0.00      0.44     0.00        4     0.00     0.00  intlist_create
+  0.00      0.44     0.00        4     0.00     0.00  neo_str_create
+  0.00      0.44     0.00        3     0.00     0.00  nelist_destroy
+  0.00      0.44     0.00        3     0.00     0.00  stack_create
+  0.00      0.44     0.00        3     0.00     0.00  stack_destroy
+  0.00      0.44     0.00        3     0.00     0.00  strToBool
+  0.00      0.44     0.00        3     0.00     0.00  strlist_create
+  0.00      0.44     0.00        2     0.00     0.00  createConditionBlockTree
+  0.00      0.44     0.00        2     0.00     0.00  tree_create
+  0.00      0.44     0.00        2     0.00     0.00  tree_destroy
+  0.00      0.44     0.00        2     0.00     0.00  updateFileName
+  0.00      0.44     0.00        1     0.00     0.00  _add
+  0.00      0.44     0.00        1     0.00     0.00  ast_create
+  0.00      0.44     0.00        1     0.00     0.00  ast_destroy
+  0.00      0.44     0.00        1     0.00     0.00  ast_typeInAst
+  0.00      0.44     0.00        1     0.00     0.00  compFunc
+  0.00      0.44     0.00        1     0.00     0.00  createSyntaxTree
+  0.00      0.44     0.00        1     0.00     0.00  cut
+  0.00      0.44     0.00        1     0.00     0.00  defineVariables
+  0.00      0.44     0.00        1     0.00   360.00  execFile
+  0.00      0.44     0.00        1     0.00     0.00  linenoiseSetMultiLine
+  0.00      0.44     0.00        1     0.00     0.00  listlist_copy
+  0.00      0.44     0.00        1     0.00     0.00  listlist_destroy
+  0.00      0.44     0.00        1     0.00     0.00  nelist_copy
+  0.00      0.44     0.00        1     0.00     0.00  neo_list_create
+  0.00      0.44     0.00        1     0.00     0.00  neonExit
+  0.00      0.44     0.00        1     0.00     0.00  neonInit
+  0.00      0.44     0.00        1     0.00     0.00  number_add
+  0.00      0.44     0.00        1     0.00     0.00  openFile
+  0.00      0.44     0.00        1     0.00     0.00  processCycle_add
+  0.00      0.44     0.00        1     0.00     0.00  ptrlist_destroy
+  0.00      0.44     0.00        1     0.00     0.00  sandwich
+  0.00      0.44     0.00        1     0.00     0.00  statements
+  0.00      0.44     0.00        1     0.00     0.00  strlist_ast_inList
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 2.27% of 0.44 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     81.8    0.00    0.36                 main [1]
+                0.00    0.36       1/1           execFile [2]
+                0.00    0.00       1/1           neonExit [16]
+                0.00    0.00       1/1           neonInit [21]
+                0.00    0.00       1/2           tree_destroy [19]
+                0.00    0.00       2/2           updateFileName [25]
+                0.00    0.00       1/1           neo_list_create [97]
+                0.00    0.00       1/13          nelist_append [72]
+                0.00    0.00       1/144         strlist_append [62]
+-----------------------------------------------
+                0.00    0.36       1/1           main [1]
+[2]     81.8    0.00    0.36       1         execFile [2]
+                0.20    0.16       1/1           execval [3]
+                0.00    0.00       1/1           createSyntaxTree [24]
+                0.00    0.00       1/1           openFile [99]
+                0.00    0.00       1/2           tree_create [87]
+-----------------------------------------------
+                0.20    0.16       1/1           execFile [2]
+[3]     81.8    0.20    0.16       1         execval [3]
+                0.07    0.00 48148497/48208673     neobject_destroy [5]
+                0.02    0.02 7994001/7994001     _mod [6]
+                0.02    0.01 24076522/24132686     neo_copy [7]
+                0.01    0.00 8002001/8002005     number_fromDouble [11]
+                0.01    0.00 16017809/16017819     neo_nb_create [10]
+                0.00    0.00   55614/55614       _affectNone [13]
+                0.00    0.00   25806/25806       _sub [14]
+                0.00    0.00   30356/30356       deleteContext [15]
+                0.00    0.00   12000/24045617     neo_to_nb [9]
+                0.00    0.00     550/550         _append_ [18]
+                0.00    0.00       1/1           _add [28]
+                0.00    0.00 7998000/7998000     neo_to_bool [32]
+                0.00    0.00 7994001/7994004     neo_bool_create [33]
+                0.00    0.00 7994001/7994001     _equal [287]
+                0.00    0.00   96456/96456       stack_check_for [36]
+                0.00    0.00   56164/56164       neo_none_create [37]
+                0.00    0.00   38356/38356       ptrlist_append [38]
+                0.00    0.00   32152/32152       nextProcess [39]
+                0.00    0.00   30356/30356       ptrlist_remove [41]
+                0.00    0.00   26356/26356       newContext [42]
+                0.00    0.00    8000/8000        number_isInf [44]
+                0.00    0.00    8000/8002001     number_toDouble [31]
+                0.00    0.00    4000/4000        ptrlist_pop [45]
+                0.00    0.00    4000/30359       ptrlist_create [40]
+                0.00    0.00    4000/40090343     number_destroy [30]
+                0.00    0.00    1100/1100        neo_list_len [48]
+                0.00    0.00     551/554         nelist_create [52]
+                0.00    0.00     551/551         neo_list_convert [53]
+                0.00    0.00     550/550         funcArgsCheck [54]
+                0.00    0.00     550/550         functionCall [55]
+                0.00    0.00     550/550         neo_list_nth [57]
+                0.00    0.00       3/3           stack_destroy [83]
+                0.00    0.00       1/1           processCycle_add [100]
+                0.00    0.00       1/1           ptrlist_destroy [101]
+-----------------------------------------------
+                                                 <spontaneous>
+[4]     18.2    0.08    0.00                 _init [4]
+-----------------------------------------------
+                0.00    0.00       1/48208673     neonExit [16]
+                0.00    0.00       2/48208673     updateFileName [25]
+                0.00    0.00       9/48208673     tree_destroy [19]
+                0.00    0.00     550/48208673     nelist_destroy [17]
+                0.00    0.00    4000/48208673     deleteContext [15]
+                0.00    0.00   55614/48208673     _affectNone [13]
+                0.07    0.00 48148497/48208673     execval [3]
+[5]     15.9    0.07    0.00 48208673         neobject_destroy [5]
+                0.00    0.00 40086338/40090343     number_destroy [30]
+-----------------------------------------------
+                0.02    0.02 7994001/7994001     execval [3]
+[6]      9.1    0.02    0.02 7994001         _mod [6]
+                0.01    0.00 7994001/7994001     number_mod [12]
+                0.01    0.00 23982003/24045617     neo_to_nb [9]
+                0.00    0.00 7994001/8002001     number_toDouble [31]
+-----------------------------------------------
+                0.00    0.00     550/24132686     _append_ [18]
+                0.00    0.00   55614/24132686     _affectNone [13]
+                0.02    0.01 24076522/24132686     execval [3]
+[7]      6.8    0.02    0.01 24132686         neo_copy [7]
+                0.01    0.00 24068524/24068524     number_copy [8]
+                0.00    0.00       1/1           nelist_copy [96]
+-----------------------------------------------
+                0.01    0.00 24068524/24068524     neo_copy [7]
+[8]      2.3    0.01    0.00 24068524         number_copy [8]
+-----------------------------------------------
+                0.00    0.00       2/24045617     _add [28]
+                0.00    0.00   12000/24045617     execval [3]
+                0.00    0.00   51612/24045617     _sub [14]
+                0.01    0.00 23982003/24045617     _mod [6]
+[9]      2.3    0.01    0.00 24045617         neo_to_nb [9]
+-----------------------------------------------
+                0.00    0.00       4/16017819     defineVariables [20]
+                0.00    0.00       6/16017819     createExpressionTreeAux [23]
+                0.01    0.00 16017809/16017819     execval [3]
+[10]     2.3    0.01    0.00 16017819         neo_nb_create [10]
+-----------------------------------------------
+                0.00    0.00       4/8002005     defineVariables [20]
+                0.01    0.00 8002001/8002005     execval [3]
+[11]     2.3    0.01    0.00 8002005         number_fromDouble [11]
+-----------------------------------------------
+                0.01    0.00 7994001/7994001     _mod [6]
+[12]     2.3    0.01    0.00 7994001         number_mod [12]
+-----------------------------------------------
+                0.00    0.00   55614/55614       execval [3]
+[13]     0.0    0.00    0.00   55614         _affectNone [13]
+                0.00    0.00   55614/48208673     neobject_destroy [5]
+                0.00    0.00   55614/24132686     neo_copy [7]
+-----------------------------------------------
+                0.00    0.00   25806/25806       execval [3]
+[14]     0.0    0.00    0.00   25806         _sub [14]
+                0.00    0.00   51612/24045617     neo_to_nb [9]
+                0.00    0.00   25806/25806       number_sub [43]
+-----------------------------------------------
+                0.00    0.00   30356/30356       execval [3]
+[15]     0.0    0.00    0.00   30356         deleteContext [15]
+                0.00    0.00    4000/48208673     neobject_destroy [5]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[16]     0.0    0.00    0.00       1         neonExit [16]
+                0.00    0.00       3/3           nelist_destroy [17]
+                0.00    0.00       1/2           tree_destroy [19]
+                0.00    0.00       1/48208673     neobject_destroy [5]
+                0.00    0.00      18/19          strlist_destroy [69]
+                0.00    0.00       1/1           listlist_destroy [95]
+-----------------------------------------------
+                0.00    0.00       3/3           neonExit [16]
+[17]     0.0    0.00    0.00       3         nelist_destroy [17]
+                0.00    0.00     550/48208673     neobject_destroy [5]
+                0.00    0.00       5/40090343     number_destroy [30]
+-----------------------------------------------
+                0.00    0.00     550/550         execval [3]
+[18]     0.0    0.00    0.00     550         _append_ [18]
+                0.00    0.00     550/24132686     neo_copy [7]
+                0.00    0.00     550/550         neo_list_append [56]
+-----------------------------------------------
+                                  51             tree_destroy [19]
+                0.00    0.00       1/2           main [1]
+                0.00    0.00       1/2           neonExit [16]
+[19]     0.0    0.00    0.00       2+51      tree_destroy [19]
+                0.00    0.00       9/48208673     neobject_destroy [5]
+                                  51             tree_destroy [19]
+-----------------------------------------------
+                0.00    0.00       1/1           neonInit [21]
+[20]     0.0    0.00    0.00       1         defineVariables [20]
+                0.00    0.00       4/8002005     number_fromDouble [11]
+                0.00    0.00       4/16017819     neo_nb_create [10]
+                0.00    0.00       7/13          nelist_append [72]
+                0.00    0.00       6/144         strlist_append [62]
+                0.00    0.00       2/4           neo_str_create [81]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[21]     0.0    0.00    0.00       1         neonInit [21]
+                0.00    0.00       1/1           defineVariables [20]
+                0.00    0.00      15/15          strlist_copy [71]
+                0.00    0.00       6/6           intlist_copy [76]
+                0.00    0.00       3/554         nelist_create [52]
+                0.00    0.00       2/3           strlist_create [85]
+                0.00    0.00       2/4           intlist_create [80]
+                0.00    0.00       1/1           linenoiseSetMultiLine [93]
+                0.00    0.00       1/1           listlist_copy [94]
+                0.00    0.00       1/30359       ptrlist_create [40]
+                0.00    0.00       1/2           tree_create [87]
+                0.00    0.00       1/1           compFunc [91]
+                0.00    0.00       1/144         strlist_append [62]
+-----------------------------------------------
+[22]     0.0    0.00    0.00       1+10      <cycle 2 as a whole> [22]
+                0.00    0.00       5             createSyntaxTreeAux <cycle 2> [26]
+                0.00    0.00       4             createStatementIEWFTree <cycle 2> [27]
+                0.00    0.00       2             createConditionBlockTree <cycle 2> [86]
+-----------------------------------------------
+                                  30             createExpressionTreeAux [23]
+                0.00    0.00       4/11          createStatementIEWFTree <cycle 2> [27]
+                0.00    0.00       7/11          createSyntaxTreeAux <cycle 2> [26]
+[23]     0.0    0.00    0.00      11+30      createExpressionTreeAux [23]
+                0.00    0.00       6/16017819     neo_nb_create [10]
+                0.00    0.00      54/54          ast_typeCountAst [65]
+                0.00    0.00      41/41          ast_length [67]
+                0.00    0.00      30/51          tree_appendSon [66]
+                0.00    0.00      23/58          strlist_index [63]
+                0.00    0.00      21/21          isFull [68]
+                0.00    0.00      17/833         strlist_inList [51]
+                0.00    0.00      11/11          ast_minOp [73]
+                0.00    0.00       6/6           number_fromStr [77]
+                0.00    0.00       5/144         strlist_append [62]
+                0.00    0.00       5/5           neobject_create [78]
+                0.00    0.00       5/13          nelist_append [72]
+                0.00    0.00       3/3           strToBool [84]
+                0.00    0.00       3/7994004     neo_bool_create [33]
+                0.00    0.00       2/8           ast_pop [75]
+                0.00    0.00       1/1           ast_typeInAst [90]
+                0.00    0.00       1/1           strlist_ast_inList [104]
+                                  30             createExpressionTreeAux [23]
+-----------------------------------------------
+                0.00    0.00       1/1           execFile [2]
+[24]     0.0    0.00    0.00       1         createSyntaxTree [24]
+                0.00    0.00       1/1           createSyntaxTreeAux <cycle 2> [26]
+                0.00    0.00       2/4           intlist_create [80]
+                0.00    0.00       1/3           strlist_create [85]
+                0.00    0.00       1/1           cut [92]
+                0.00    0.00       1/1           ast_create [88]
+                0.00    0.00       1/1           parse <cycle 1> [74]
+                0.00    0.00       1/1           statements [103]
+                0.00    0.00       1/19          strlist_destroy [69]
+                0.00    0.00       1/1           ast_destroy [89]
+-----------------------------------------------
+                0.00    0.00       2/2           main [1]
+[25]     0.0    0.00    0.00       2         updateFileName [25]
+                0.00    0.00       2/48208673     neobject_destroy [5]
+                0.00    0.00       2/4           neo_str_create [81]
+-----------------------------------------------
+                                   4             createStatementIEWFTree <cycle 2> [27]
+                0.00    0.00       1/1           createSyntaxTree [24]
+[26]     0.0    0.00    0.00       5         createSyntaxTreeAux <cycle 2> [26]
+                0.00    0.00       7/11          createExpressionTreeAux [23]
+                0.00    0.00      11/51          tree_appendSon [66]
+                                   2             createStatementIEWFTree <cycle 2> [27]
+                                   2             createConditionBlockTree <cycle 2> [86]
+-----------------------------------------------
+                                   2             createSyntaxTreeAux <cycle 2> [26]
+                                   2             createConditionBlockTree <cycle 2> [86]
+[27]     0.0    0.00    0.00       4         createStatementIEWFTree <cycle 2> [27]
+                0.00    0.00       4/11          createExpressionTreeAux [23]
+                0.00    0.00       8/51          tree_appendSon [66]
+                0.00    0.00       4/8           ast_pop [75]
+                                   4             createSyntaxTreeAux <cycle 2> [26]
+-----------------------------------------------
+                0.00    0.00       1/1           execval [3]
+[28]     0.0    0.00    0.00       1         _add [28]
+                0.00    0.00       2/24045617     neo_to_nb [9]
+                0.00    0.00       1/1           number_add [98]
+-----------------------------------------------
+[29]     0.0    0.00    0.00       1+206     <cycle 1 as a whole> [29]
+                0.00    0.00     196             finsTypesComposes <cycle 1> [60]
+                0.00    0.00      11             parse <cycle 1> [74]
+-----------------------------------------------
+                0.00    0.00       5/40090343     nelist_destroy [17]
+                0.00    0.00    4000/40090343     execval [3]
+                0.00    0.00 40086338/40090343     neobject_destroy [5]
+[30]     0.0    0.00    0.00 40090343         number_destroy [30]
+-----------------------------------------------
+                0.00    0.00    8000/8002001     execval [3]
+                0.00    0.00 7994001/8002001     _mod [6]
+[31]     0.0    0.00    0.00 8002001         number_toDouble [31]
+-----------------------------------------------
+                0.00    0.00 7998000/7998000     execval [3]
+[32]     0.0    0.00    0.00 7998000         neo_to_bool [32]
+-----------------------------------------------
+                0.00    0.00       3/7994004     createExpressionTreeAux [23]
+                0.00    0.00 7994001/7994004     execval [3]
+[33]     0.0    0.00    0.00 7994004         neo_bool_create [33]
+-----------------------------------------------
+                0.00    0.00 7994001/7994001     _equal [287]
+[34]     0.0    0.00    0.00 7994001         neo_equal [34]
+-----------------------------------------------
+                0.00    0.00 7994001/7994001     _equal [287]
+[35]     0.0    0.00    0.00 7994001         number_equal [35]
+-----------------------------------------------
+                0.00    0.00   96456/96456       execval [3]
+[36]     0.0    0.00    0.00   96456         stack_check_for [36]
+-----------------------------------------------
+                0.00    0.00   56164/56164       execval [3]
+[37]     0.0    0.00    0.00   56164         neo_none_create [37]
+-----------------------------------------------
+                0.00    0.00   38356/38356       execval [3]
+[38]     0.0    0.00    0.00   38356         ptrlist_append [38]
+-----------------------------------------------
+                0.00    0.00   32152/32152       execval [3]
+[39]     0.0    0.00    0.00   32152         nextProcess [39]
+-----------------------------------------------
+                0.00    0.00       1/30359       neonInit [21]
+                0.00    0.00       2/30359       processCycle_add [100]
+                0.00    0.00    4000/30359       execval [3]
+                0.00    0.00   26356/30359       newContext [42]
+[40]     0.0    0.00    0.00   30359         ptrlist_create [40]
+-----------------------------------------------
+                0.00    0.00   30356/30356       execval [3]
+[41]     0.0    0.00    0.00   30356         ptrlist_remove [41]
+-----------------------------------------------
+                0.00    0.00   26356/26356       execval [3]
+[42]     0.0    0.00    0.00   26356         newContext [42]
+                0.00    0.00   26356/30359       ptrlist_create [40]
+-----------------------------------------------
+                0.00    0.00   25806/25806       _sub [14]
+[43]     0.0    0.00    0.00   25806         number_sub [43]
+-----------------------------------------------
+                0.00    0.00    8000/8000        execval [3]
+[44]     0.0    0.00    0.00    8000         number_isInf [44]
+-----------------------------------------------
+                0.00    0.00    4000/4000        execval [3]
+[45]     0.0    0.00    0.00    4000         ptrlist_pop [45]
+-----------------------------------------------
+                0.00    0.00       1/1573        neo_list_create [97]
+                0.00    0.00       1/1573        nelist_copy [96]
+                0.00    0.00       3/1573        strlist_create [85]
+                0.00    0.00       4/1573        intlist_create [80]
+                0.00    0.00     554/1573        nelist_create [52]
+                0.00    0.00    1010/1573        sub [50]
+[46]     0.0    0.00    0.00    1573         err_memset [46]
+-----------------------------------------------
+                0.00    0.00    1171/1171        cut [92]
+[47]     0.0    0.00    0.00    1171         isidentifier [47]
+-----------------------------------------------
+                0.00    0.00    1100/1100        execval [3]
+[48]     0.0    0.00    0.00    1100         neo_list_len [48]
+-----------------------------------------------
+                0.00    0.00      40/1010        finTokensSimples [59]
+                0.00    0.00     485/1010        debutTokensSimples [58]
+                0.00    0.00     485/1010        cut [92]
+[49]     0.0    0.00    0.00    1010         charToString [49]
+-----------------------------------------------
+                0.00    0.00    1010/1010        finTokensSimples [59]
+[50]     0.0    0.00    0.00    1010         sub [50]
+                0.00    0.00    1010/1573        err_memset [46]
+-----------------------------------------------
+                0.00    0.00      17/833         createExpressionTreeAux [23]
+                0.00    0.00      23/833         finTokensSimples [59]
+                0.00    0.00      52/833         finsTypesComposes <cycle 1> [60]
+                0.00    0.00      73/833         cut [92]
+                0.00    0.00     183/833         parse <cycle 1> [74]
+                0.00    0.00     485/833         debutTokensSimples [58]
+[51]     0.0    0.00    0.00     833         strlist_inList [51]
+-----------------------------------------------
+                0.00    0.00       3/554         neonInit [21]
+                0.00    0.00     551/554         execval [3]
+[52]     0.0    0.00    0.00     554         nelist_create [52]
+                0.00    0.00     554/1573        err_memset [46]
+-----------------------------------------------
+                0.00    0.00     551/551         execval [3]
+[53]     0.0    0.00    0.00     551         neo_list_convert [53]
+-----------------------------------------------
+                0.00    0.00     550/550         execval [3]
+[54]     0.0    0.00    0.00     550         funcArgsCheck [54]
+-----------------------------------------------
+                0.00    0.00     550/550         execval [3]
+[55]     0.0    0.00    0.00     550         functionCall [55]
+-----------------------------------------------
+                0.00    0.00     550/550         _append_ [18]
+[56]     0.0    0.00    0.00     550         neo_list_append [56]
+-----------------------------------------------
+                0.00    0.00     550/550         execval [3]
+[57]     0.0    0.00    0.00     550         neo_list_nth [57]
+-----------------------------------------------
+                0.00    0.00     485/485         cut [92]
+[58]     0.0    0.00    0.00     485         debutTokensSimples [58]
+                0.00    0.00     485/1010        charToString [49]
+                0.00    0.00     485/833         strlist_inList [51]
+-----------------------------------------------
+                0.00    0.00     485/485         cut [92]
+[59]     0.0    0.00    0.00     485         finTokensSimples [59]
+                0.00    0.00    1010/1010        sub [50]
+                0.00    0.00     162/162         intlist_append [61]
+                0.00    0.00      81/144         strlist_append [62]
+                0.00    0.00      40/1010        charToString [49]
+                0.00    0.00      23/833         strlist_inList [51]
+-----------------------------------------------
+                                 196             parse <cycle 1> [74]
+[60]     0.0    0.00    0.00     196         finsTypesComposes <cycle 1> [60]
+                0.00    0.00      52/833         strlist_inList [51]
+                                  10             parse <cycle 1> [74]
+-----------------------------------------------
+                0.00    0.00     162/162         finTokensSimples [59]
+[61]     0.0    0.00    0.00     162         intlist_append [61]
+-----------------------------------------------
+                0.00    0.00       1/144         main [1]
+                0.00    0.00       1/144         neonInit [21]
+                0.00    0.00       5/144         createExpressionTreeAux [23]
+                0.00    0.00       6/144         defineVariables [20]
+                0.00    0.00      50/144         compFunc [91]
+                0.00    0.00      81/144         finTokensSimples [59]
+[62]     0.0    0.00    0.00     144         strlist_append [62]
+-----------------------------------------------
+                0.00    0.00      13/58          ast_minOp [73]
+                0.00    0.00      22/58          isAccepted [64]
+                0.00    0.00      23/58          createExpressionTreeAux [23]
+[63]     0.0    0.00    0.00      58         strlist_index [63]
+-----------------------------------------------
+                0.00    0.00      56/56          parse <cycle 1> [74]
+[64]     0.0    0.00    0.00      56         isAccepted [64]
+                0.00    0.00      22/58          strlist_index [63]
+-----------------------------------------------
+                0.00    0.00      54/54          createExpressionTreeAux [23]
+[65]     0.0    0.00    0.00      54         ast_typeCountAst [65]
+-----------------------------------------------
+                0.00    0.00       2/51          createConditionBlockTree <cycle 2> [86]
+                0.00    0.00       8/51          createStatementIEWFTree <cycle 2> [27]
+                0.00    0.00      11/51          createSyntaxTreeAux <cycle 2> [26]
+                0.00    0.00      30/51          createExpressionTreeAux [23]
+[66]     0.0    0.00    0.00      51         tree_appendSon [66]
+-----------------------------------------------
+                0.00    0.00      41/41          createExpressionTreeAux [23]
+[67]     0.0    0.00    0.00      41         ast_length [67]
+-----------------------------------------------
+                0.00    0.00      21/21          createExpressionTreeAux [23]
+[68]     0.0    0.00    0.00      21         isFull [68]
+-----------------------------------------------
+                0.00    0.00       1/19          createSyntaxTree [24]
+                0.00    0.00      18/19          neonExit [16]
+[69]     0.0    0.00    0.00      19         strlist_destroy [69]
+-----------------------------------------------
+                0.00    0.00      18/18          parse <cycle 1> [74]
+[70]     0.0    0.00    0.00      18         intlist_inList [70]
+-----------------------------------------------
+                0.00    0.00      15/15          neonInit [21]
+[71]     0.0    0.00    0.00      15         strlist_copy [71]
+-----------------------------------------------
+                0.00    0.00       1/13          main [1]
+                0.00    0.00       5/13          createExpressionTreeAux [23]
+                0.00    0.00       7/13          defineVariables [20]
+[72]     0.0    0.00    0.00      13         nelist_append [72]
+-----------------------------------------------
+                0.00    0.00      11/11          createExpressionTreeAux [23]
+[73]     0.0    0.00    0.00      11         ast_minOp [73]
+                0.00    0.00      13/58          strlist_index [63]
+-----------------------------------------------
+                                  10             finsTypesComposes <cycle 1> [60]
+                0.00    0.00       1/1           createSyntaxTree [24]
+[74]     0.0    0.00    0.00      11         parse <cycle 1> [74]
+                0.00    0.00     183/833         strlist_inList [51]
+                0.00    0.00      56/56          isAccepted [64]
+                0.00    0.00      18/18          intlist_inList [70]
+                                 196             finsTypesComposes <cycle 1> [60]
+-----------------------------------------------
+                0.00    0.00       2/8           createExpressionTreeAux [23]
+                0.00    0.00       2/8           createConditionBlockTree <cycle 2> [86]
+                0.00    0.00       4/8           createStatementIEWFTree <cycle 2> [27]
+[75]     0.0    0.00    0.00       8         ast_pop [75]
+-----------------------------------------------
+                0.00    0.00       6/6           neonInit [21]
+[76]     0.0    0.00    0.00       6         intlist_copy [76]
+-----------------------------------------------
+                0.00    0.00       6/6           createExpressionTreeAux [23]
+[77]     0.0    0.00    0.00       6         number_fromStr [77]
+-----------------------------------------------
+                0.00    0.00       5/5           createExpressionTreeAux [23]
+[78]     0.0    0.00    0.00       5         neobject_create [78]
+-----------------------------------------------
+                0.00    0.00       4/4           statements [103]
+[79]     0.0    0.00    0.00       4         get_type [79]
+-----------------------------------------------
+                0.00    0.00       2/4           neonInit [21]
+                0.00    0.00       2/4           createSyntaxTree [24]
+[80]     0.0    0.00    0.00       4         intlist_create [80]
+                0.00    0.00       4/1573        err_memset [46]
+-----------------------------------------------
+                0.00    0.00       2/4           updateFileName [25]
+                0.00    0.00       2/4           defineVariables [20]
+[81]     0.0    0.00    0.00       4         neo_str_create [81]
+-----------------------------------------------
+                0.00    0.00       3/3           processCycle_add [100]
+[82]     0.0    0.00    0.00       3         stack_create [82]
+-----------------------------------------------
+                0.00    0.00       3/3           execval [3]
+[83]     0.0    0.00    0.00       3         stack_destroy [83]
+-----------------------------------------------
+                0.00    0.00       3/3           createExpressionTreeAux [23]
+[84]     0.0    0.00    0.00       3         strToBool [84]
+-----------------------------------------------
+                0.00    0.00       1/3           createSyntaxTree [24]
+                0.00    0.00       2/3           neonInit [21]
+[85]     0.0    0.00    0.00       3         strlist_create [85]
+                0.00    0.00       3/1573        err_memset [46]
+-----------------------------------------------
+                                   2             createSyntaxTreeAux <cycle 2> [26]
+[86]     0.0    0.00    0.00       2         createConditionBlockTree <cycle 2> [86]
+                0.00    0.00       2/8           ast_pop [75]
+                0.00    0.00       2/51          tree_appendSon [66]
+                                   2             createStatementIEWFTree <cycle 2> [27]
+-----------------------------------------------
+                0.00    0.00       1/2           execFile [2]
+                0.00    0.00       1/2           neonInit [21]
+[87]     0.0    0.00    0.00       2         tree_create [87]
+-----------------------------------------------
+                0.00    0.00       1/1           createSyntaxTree [24]
+[88]     0.0    0.00    0.00       1         ast_create [88]
+-----------------------------------------------
+                0.00    0.00       1/1           createSyntaxTree [24]
+[89]     0.0    0.00    0.00       1         ast_destroy [89]
+-----------------------------------------------
+                0.00    0.00       1/1           createExpressionTreeAux [23]
+[90]     0.0    0.00    0.00       1         ast_typeInAst [90]
+-----------------------------------------------
+                0.00    0.00       1/1           neonInit [21]
+[91]     0.0    0.00    0.00       1         compFunc [91]
+                0.00    0.00      50/144         strlist_append [62]
+-----------------------------------------------
+                0.00    0.00       1/1           createSyntaxTree [24]
+[92]     0.0    0.00    0.00       1         cut [92]
+                0.00    0.00    1171/1171        isidentifier [47]
+                0.00    0.00     485/485         finTokensSimples [59]
+                0.00    0.00     485/485         debutTokensSimples [58]
+                0.00    0.00     485/1010        charToString [49]
+                0.00    0.00      73/833         strlist_inList [51]
+                0.00    0.00       1/1           sandwich [102]
+-----------------------------------------------
+                0.00    0.00       1/1           neonInit [21]
+[93]     0.0    0.00    0.00       1         linenoiseSetMultiLine [93]
+-----------------------------------------------
+                0.00    0.00       1/1           neonInit [21]
+[94]     0.0    0.00    0.00       1         listlist_copy [94]
+-----------------------------------------------
+                0.00    0.00       1/1           neonExit [16]
+[95]     0.0    0.00    0.00       1         listlist_destroy [95]
+-----------------------------------------------
+                0.00    0.00       1/1           neo_copy [7]
+[96]     0.0    0.00    0.00       1         nelist_copy [96]
+                0.00    0.00       1/1573        err_memset [46]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[97]     0.0    0.00    0.00       1         neo_list_create [97]
+                0.00    0.00       1/1573        err_memset [46]
+-----------------------------------------------
+                0.00    0.00       1/1           _add [28]
+[98]     0.0    0.00    0.00       1         number_add [98]
+-----------------------------------------------
+                0.00    0.00       1/1           execFile [2]
+[99]     0.0    0.00    0.00       1         openFile [99]
+-----------------------------------------------
+                0.00    0.00       1/1           execval [3]
+[100]    0.0    0.00    0.00       1         processCycle_add [100]
+                0.00    0.00       3/3           stack_create [82]
+                0.00    0.00       2/30359       ptrlist_create [40]
+-----------------------------------------------
+                0.00    0.00       1/1           execval [3]
+[101]    0.0    0.00    0.00       1         ptrlist_destroy [101]
+-----------------------------------------------
+                0.00    0.00       1/1           cut [92]
+[102]    0.0    0.00    0.00       1         sandwich [102]
+-----------------------------------------------
+                                   4             statements [103]
+                0.00    0.00       1/1           createSyntaxTree [24]
+[103]    0.0    0.00    0.00       1+4       statements [103]
+                0.00    0.00       4/4           get_type [79]
+                                   4             statements [103]
+-----------------------------------------------
+                0.00    0.00       1/1           createExpressionTreeAux [23]
+[104]    0.0    0.00    0.00       1         strlist_ast_inList [104]
+-----------------------------------------------
+                0.00    0.00 7994001/7994001     execval [3]
+[287]    0.0    0.00    0.00 7994001         _equal [287]
+                0.00    0.00 7994001/7994001     number_equal [35]
+                0.00    0.00 7994001/7994001     neo_equal [34]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [28] _add                   [80] intlist_create         [11] number_fromDouble
+  [13] _affectNone            [70] intlist_inList         [77] number_fromStr
+  [18] _append_               [64] isAccepted             [44] number_isInf
+ [287] _equal                 [68] isFull                 [12] number_mod
+   [4] _init                  [47] isidentifier           [43] number_sub
+   [6] _mod                   [93] linenoiseSetMultiLine  [31] number_toDouble
+  [14] _sub                   [94] listlist_copy          [99] openFile
+  [88] ast_create             [95] listlist_destroy       [74] parse
+  [89] ast_destroy            [72] nelist_append         [100] processCycle_add
+  [67] ast_length             [96] nelist_copy            [38] ptrlist_append
+  [73] ast_minOp              [52] nelist_create          [40] ptrlist_create
+  [75] ast_pop                [17] nelist_destroy        [101] ptrlist_destroy
+  [65] ast_typeCountAst       [33] neo_bool_create        [45] ptrlist_pop
+  [90] ast_typeInAst           [7] neo_copy               [41] ptrlist_remove
+  [49] charToString           [34] neo_equal             [102] sandwich
+  [91] compFunc               [56] neo_list_append        [36] stack_check_for
+  [86] createConditionBlockTree [53] neo_list_convert     [82] stack_create
+  [23] createExpressionTreeAux [97] neo_list_create       [83] stack_destroy
+  [27] createStatementIEWFTree [48] neo_list_len         [103] statements
+  [24] createSyntaxTree       [57] neo_list_nth           [84] strToBool
+  [26] createSyntaxTreeAux    [10] neo_nb_create          [62] strlist_append
+  [92] cut                    [37] neo_none_create       [104] strlist_ast_inList
+  [58] debutTokensSimples     [81] neo_str_create         [71] strlist_copy
+  [20] defineVariables        [32] neo_to_bool            [85] strlist_create
+  [15] deleteContext           [9] neo_to_nb              [69] strlist_destroy
+  [46] err_memset             [78] neobject_create        [51] strlist_inList
+   [2] execFile                [5] neobject_destroy       [63] strlist_index
+   [3] execval                [16] neonExit               [50] sub
+  [59] finTokensSimples       [21] neonInit               [66] tree_appendSon
+  [60] finsTypesComposes      [42] newContext             [87] tree_create
+  [54] funcArgsCheck          [39] nextProcess            [19] tree_destroy
+  [55] functionCall           [98] number_add             [25] updateFileName
+  [79] get_type                [8] number_copy            [29] <cycle 1>
+  [61] intlist_append         [30] number_destroy         [22] <cycle 2>
+  [76] intlist_copy           [35] number_equal

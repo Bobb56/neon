@@ -1,0 +1,1 @@
+- Correction du bug des exceptions lancées par l'utilisateur dans les blocs try/except

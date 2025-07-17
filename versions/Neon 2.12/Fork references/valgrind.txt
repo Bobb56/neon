@@ -1,0 +1,54 @@
+l2
+autoref : 0
+ (List) = [[1, 2, 3, 4, 5, 6]]
+>> l = l2[0]
+autoref : 0
+activation de la suppression
+activation de la suppression
+>> l2[0][0] = 18
+activation de la suppression
+autoref : 0
+activation de la suppression
+activation de la suppression
+activation de la suppression
+>> l
+autoref : 0
+ (List) = [18, 2, 3, 4, 5, 6]
+>> l2[0][2] = l
+activation de la suppression
+autoref : 0
+activation de la suppression
+activation de la suppression
+activation de la suppression
+>> l
+autoref : 1
+ (List) = [18, 2,  * , 4, 5, 6]
+>> l2
+==5833== Stack overflow in thread #1: can't grow stack to 0x1ffe801000
+==5833== 
+==5833== Process terminating with default action of signal 11 (SIGSEGV)
+==5833==  Access not within mapped region at address 0x1FFE801FF8
+==5833== Stack overflow in thread #1: can't grow stack to 0x1ffe801000
+==5833==    at 0x125042: neobject_autoref_aux (varlib.c:1187)
+==5833==  If you believe this happened as a result of a stack
+==5833==  overflow in your program's main thread (unlikely but
+==5833==  possible), you can try to increase the size of the
+==5833==  main thread stack using the --main-stacksize= flag.
+==5833==  The main thread stack size used in this run was 8388608.
+==5833== 
+==5833== HEAP SUMMARY:
+==5833==     in use at exit: 18,118 bytes in 727 blocks
+==5833==   total heap usage: 8,070 allocs, 7,343 frees, 93,220 bytes allocated
+==5833== 
+==5833== LEAK SUMMARY:
+==5833==    definitely lost: 0 bytes in 0 blocks
+==5833==    indirectly lost: 0 bytes in 0 blocks
+==5833==      possibly lost: 0 bytes in 0 blocks
+==5833==    still reachable: 18,118 bytes in 727 blocks
+==5833==         suppressed: 0 bytes in 0 blocks
+==5833== Reachable blocks (those to which a pointer was found) are not shown.
+==5833== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==5833== 
+==5833== For lists of detected and suppressed errors, rerun with: -s
+==5833== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+Erreur de segmentation

@@ -1,0 +1,1 @@
+gcc Sources/main.c Sources/opfonc.c Sources/builtinfonc.c Sources/errfonc.c Sources/libstr.c Sources/liblist.c Sources/libtok.c Sources/libtree.c Sources/headers.c Sources/neonio.c Sources/numbers.c Sources/varlib.c Sources/linenoise.c Sources/affprog.c -lm -o Compilés/Freon

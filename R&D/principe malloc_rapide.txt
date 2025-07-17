@@ -1,0 +1,26 @@
+La technique décrite ci dessous permet de mettre en place une gestion mémoire des NeObject en O(1). Ce système implémente des fonction free et malloc en O(1) qui permettent de gérer des unités de mémoire de la taille d'un NeObject. Cette technique est destinée à être utilisée conjointement avec un compteur de références pour les objets "inertes", qui ne peuvent pas pointer vers d'autres NeObjects
+Trois tableaux :
+
+Un tableau T1 de type NeObject* et de longueur SIZE
+
+Un tableau T2 de type int* de longueur SIZE
+
+Un tableau T3 de type NeObject** de longeur SIZE
+Le tableau T3 dispose d'un pointeur PTR se déplacant sur ses éléments
+
+T1 correspond aux zones mémoire utilisées (contigues dans la memoire)
+T3 gère les zones de T1 : Un élément de T1 est à droite de PTR si et seulement si il est libre
+T2[element de T1] = indice de cet element dans T3
+
+Voir code python pour implémentation exacte.
+
+Comment déterminer la taille de ces trois tableaux ?
+Réponse : en direct, pendant l'exécution du programme
+
+Il faut calculer des sortes de dérivées de la mémoire utilisée par rapport au temps
+
+malloc : +1
+free : -1
+Une unité de temps = un appel à eval
+
+Ce calcul permettra de déterminer la tendance de la consommation mémoire, afin de savoir quand utiliser le malloc en O(1) -> sur des plateaux de la fonction mem(eval)

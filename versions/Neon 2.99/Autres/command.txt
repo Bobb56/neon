@@ -1,0 +1,3 @@
+clear;valgrind --leak-check=full --show-leak-kinds=all ./main
+
+gcc *.c *.h -o neon -Wall -Wextra -Werror -pedantic -pedantic-errors - lm
