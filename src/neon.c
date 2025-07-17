@@ -90,7 +90,6 @@ Choses à modifier pour la refonte du système d'objets :
 
 Avancement et choses à faire :
 -------------------------------
-> Si ça se trouve, on peut appeler update_if_promise seulement lorsque l'on lit une variable ou un index de liste
 > Mettre à jour la documentation sur les integer et les flottants
 > Changer les prototypes des fonctions en utilisant le unspecified type
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement

@@ -35,19 +35,6 @@ extern int LINENUMBER;
 
 
 
-/*
-Fonctionnement du compteur de références :
-Les NeObject sont des structures contenant :
--> Un type
--> Un pointeur sur un NeObjDat (data), qui est une structure qui contient :
---> Un void* (ptr)
---> Un int* (refc)
-
-Un objet dont le data.ptr est NULL doit aussi avoir le refc de NULL. C'est pour ça que l'on n'alloue pas refc
-dans neobject_create directement
-*/
-
-
 /////////////// MANIPULATION DES VARIABLES ///////////////////
 
 
