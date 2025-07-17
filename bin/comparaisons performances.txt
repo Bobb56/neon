@@ -1,3 +1,0 @@
-Neon 2.12.38.3-beta O3 premiers.ne 20000 : 13 s
-Neon 2.12.38.3-beta normal premiers.ne 20000 : 16 s
-Neon fork references normal premiers.ne 20000 : 33 s
