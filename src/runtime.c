@@ -799,677 +799,657 @@ NeObj eval_aux(Tree* tree) {
 
     LINENUMBER = tree->line;
 
-    // disjonction de cas suivant si c'est une expression ou des instructions
-    // on calcule en O(1) si notre type est une expression ou pas
+    switch (tree->type) {
 
-    if (tree->type == TYPE_OPERATOR)
-    {
-        // il faut envoyer les opérandes calculées à la fonction opérateur
-        if (tree->nbSons == 1) // operateur unaire
+        case TYPE_OPERATOR:
         {
-
-            if (tree->label2 == 39) // opérateur parallel
+            // il faut envoyer les opérandes calculées à la fonction opérateur
+            if (tree->nbSons == 1) // operateur unaire
             {
 
-                Tree* maintree = tree->sons[0];
-                
-                // crée une copie de l'arbre avec une version figée de la fonction
-                Tree* maintree_copy = (Tree*) malloc(sizeof(Tree));
-                maintree_copy->type = maintree->type;
-                maintree_copy->label1 = maintree->label1;
-                maintree_copy->label2 = maintree->label2;
-                maintree_copy->sons = maintree->sons;
-                maintree_copy->nbSons = maintree->nbSons;
-                maintree_copy->capacity = maintree->capacity;
-                maintree_copy->data = eval_prolog(maintree->sons[0]);
-
-                if (CODE_ERROR != 0) {
-                    free(maintree_copy);
-                    return NEO_VOID;
-                }
-                if (NEO_TYPE(maintree_copy->data) != TYPE_USERFUNC) {
-                    CODE_ERROR = 100;
-                    neobject_destroy(maintree_copy->data);
-                    free(maintree_copy);
-                    return NEO_VOID;
-                }
-
-                // on ajoute le processus, et il va se faire exécuter dans la chaine de processus
-                int id = create_new_process(maintree_copy, true);
-
-                return neo_promise_create(id);
-            }
-
-
-            // opérateur paresseux
-            else if (OPERANDES.tab[tree->label2] & LAZY) {
-                NeObj (*func)(Tree*) = OPFONC[tree->label2];
-                return func(tree->sons[0]);
-            }
-            else {
-                // opérateur qui prend directement des objets/adresses en argument
-
-                if (OPERANDES.tab[tree->label2] & VARRIGHT || OPERANDES.tab[tree->label2] & VARLEFT)
+                if (tree->label2 == 39) // opérateur parallel
                 {
-                    NeObj* op1 = get_address(tree->sons[0]); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
+
+                    Tree* maintree = tree->sons[0];
                     
+                    // crée une copie de l'arbre avec une version figée de la fonction
+                    Tree* maintree_copy = (Tree*) malloc(sizeof(Tree));
+                    maintree_copy->type = maintree->type;
+                    maintree_copy->label1 = maintree->label1;
+                    maintree_copy->label2 = maintree->label2;
+                    maintree_copy->sons = maintree->sons;
+                    maintree_copy->nbSons = maintree->nbSons;
+                    maintree_copy->capacity = maintree->capacity;
+                    maintree_copy->data = eval_prolog(maintree->sons[0]);
+
                     if (CODE_ERROR != 0) {
+                        free(maintree_copy);
+                        return NEO_VOID;
+                    }
+                    if (NEO_TYPE(maintree_copy->data) != TYPE_USERFUNC) {
+                        CODE_ERROR = 100;
+                        neobject_destroy(maintree_copy->data);
+                        free(maintree_copy);
                         return NEO_VOID;
                     }
 
-                    NeObj (*func) (NeObj*) = OPFONC[tree->label2];
-                    return func(op1);
+                    // on ajoute le processus, et il va se faire exécuter dans la chaine de processus
+                    int id = create_new_process(maintree_copy, true);
+
+                    return neo_promise_create(id);
                 }
-                else
-                {
-                    NeObj op1 = eval_prolog(tree->sons[0]);
 
-                    if (CODE_ERROR != 0) {
-                        return NEO_VOID;
-                    }
 
-                    NeObj (*func) (NeObj) = OPFONC[tree->label2];
-                    NeObj retour = func(op1);
-                    neobject_destroy(op1);
-                    return retour;
-
+                // opérateur paresseux
+                else if (OPERANDES.tab[tree->label2] & LAZY) {
+                    NeObj (*func)(Tree*) = OPFONC[tree->label2];
+                    return func(tree->sons[0]);
                 }
-            }
-        }
-        else if (tree->nbSons == 2) // operateur binaire
-        {
-            // opérateur paresseux
-            if (OPERANDES.tab[tree->label2] & LAZY) {
-                NeObj (*func) (Tree*, Tree*) = OPFONC[tree->label2];
-                return func(tree->sons[0], tree->sons[1]);
-            }
-            else {
-                // opérateur normal qui prend des objets en arguments
+                else {
+                    // opérateur qui prend directement des objets/adresses en argument
 
-                if (tree->label2 == 37) { // opérateur :=
-                    CODE_ERROR = 95;
-                    return NEO_VOID;
-                } else if (tree->label2 == 35) { // opérateur :
-                    CODE_ERROR = 92;
-                    return NEO_VOID;
-                }
-                                    
-                if (OPERANDES.tab[tree->label2] & VAR_RIGHT)
-                {
-                    NeObj* op1 = get_address(tree->sons[0]);
-
-                    if (CODE_ERROR != 0)
-                        return NEO_VOID;
-                    
-                    NeObj op2 = eval_prolog(tree->sons[1]);
-
-                    if (CODE_ERROR != 0)
-                        return NEO_VOID;
-
-                    NeObj (*func)(NeObj*, NeObj) = OPFONC[tree->label2];
-                    NeObj result = func(op1, op2);
-                    neobject_destroy(op2);
-                    return result;
-                }
-                else if (OPERANDES.tab[tree->label2] & LEFT_VAR)
-                {                    
-                    NeObj op1 = eval_prolog(tree->sons[0]);
-                    
-                    if (CODE_ERROR != 0)
-                        return NEO_VOID;
-                
-                    NeObj* op2 = get_address(tree->sons[1]);
-
-                    if (CODE_ERROR != 0)
-                        return NEO_VOID;
-
-                    NeObj (*func)(NeObj, NeObj*) = OPFONC[tree->label2];
-                    NeObj result = func(op1, op2);
-                    neobject_destroy(op1);
-                    return result;
-                }
-                else if (OPERANDES.tab[tree->label2] & VAR_VAR)
-                {
-                    NeObj* op1 = get_address(tree->sons[0]);
-
-                    if (CODE_ERROR != 0)
-                        return NEO_VOID;
-                    
-                    NeObj* op2 = get_address(tree->sons[1]);
-
-                    if (CODE_ERROR != 0)
-                        return NEO_VOID;
-
-                    NeObj (*func)(NeObj*, NeObj*) = OPFONC[tree->label2];
-                    NeObj result = func(op1, op2);
-                    return result;
-                }
-                else
-                {
-                    NeObj op1 = eval_prolog(tree->sons[0]);
-
-                    if (CODE_ERROR != 0)
+                    if (OPERANDES.tab[tree->label2] & VARRIGHT || OPERANDES.tab[tree->label2] & VARLEFT)
                     {
+                        NeObj* op1 = get_address(tree->sons[0]); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
+                        
+                        if (CODE_ERROR != 0) {
+                            return NEO_VOID;
+                        }
+
+                        NeObj (*func) (NeObj*) = OPFONC[tree->label2];
+                        return func(op1);
+                    }
+                    else
+                    {
+                        NeObj op1 = eval_prolog(tree->sons[0]);
+
+                        if (CODE_ERROR != 0) {
+                            return NEO_VOID;
+                        }
+
+                        NeObj (*func) (NeObj) = OPFONC[tree->label2];
+                        NeObj retour = func(op1);
                         neobject_destroy(op1);
+                        return retour;
+
+                    }
+                }
+            }
+            else if (tree->nbSons == 2) // operateur binaire
+            {
+                // opérateur paresseux
+                if (OPERANDES.tab[tree->label2] & LAZY) {
+                    NeObj (*func) (Tree*, Tree*) = OPFONC[tree->label2];
+                    return func(tree->sons[0], tree->sons[1]);
+                }
+                else {
+                    // opérateur normal qui prend des objets en arguments
+
+                    if (tree->label2 == 37) { // opérateur :=
+                        CODE_ERROR = 95;
+                        return NEO_VOID;
+                    } else if (tree->label2 == 35) { // opérateur :
+                        CODE_ERROR = 92;
                         return NEO_VOID;
                     }
-
-                    NeObj op2 = eval_prolog(tree->sons[1]);
-
-                    if (CODE_ERROR != 0)
+                                        
+                    if (OPERANDES.tab[tree->label2] & VAR_RIGHT)
                     {
+                        NeObj* op1 = get_address(tree->sons[0]);
+
+                        if (CODE_ERROR != 0)
+                            return NEO_VOID;
+                        
+                        NeObj op2 = eval_prolog(tree->sons[1]);
+
+                        if (CODE_ERROR != 0)
+                            return NEO_VOID;
+
+                        NeObj (*func)(NeObj*, NeObj) = OPFONC[tree->label2];
+                        NeObj result = func(op1, op2);
+                        neobject_destroy(op2);
+                        return result;
+                    }
+                    else if (OPERANDES.tab[tree->label2] & LEFT_VAR)
+                    {                    
+                        NeObj op1 = eval_prolog(tree->sons[0]);
+                        
+                        if (CODE_ERROR != 0)
+                            return NEO_VOID;
+                    
+                        NeObj* op2 = get_address(tree->sons[1]);
+
+                        if (CODE_ERROR != 0)
+                            return NEO_VOID;
+
+                        NeObj (*func)(NeObj, NeObj*) = OPFONC[tree->label2];
+                        NeObj result = func(op1, op2);
+                        neobject_destroy(op1);
+                        return result;
+                    }
+                    else if (OPERANDES.tab[tree->label2] & VAR_VAR)
+                    {
+                        NeObj* op1 = get_address(tree->sons[0]);
+
+                        if (CODE_ERROR != 0)
+                            return NEO_VOID;
+                        
+                        NeObj* op2 = get_address(tree->sons[1]);
+
+                        if (CODE_ERROR != 0)
+                            return NEO_VOID;
+
+                        NeObj (*func)(NeObj*, NeObj*) = OPFONC[tree->label2];
+                        NeObj result = func(op1, op2);
+                        return result;
+                    }
+                    else
+                    {
+                        NeObj op1 = eval_prolog(tree->sons[0]);
+
+                        if (CODE_ERROR != 0)
+                        {
+                            neobject_destroy(op1);
+                            return NEO_VOID;
+                        }
+
+                        NeObj op2 = eval_prolog(tree->sons[1]);
+
+                        if (CODE_ERROR != 0)
+                        {
+                            neobject_destroy(op1);
+                            neobject_destroy(op2);
+                            return NEO_VOID;
+                        }
+                        NeObj (*func)(NeObj, NeObj) = OPFONC[tree->label2];
+                        NeObj result = func(op1, op2);
+
                         neobject_destroy(op1);
                         neobject_destroy(op2);
-                        return NEO_VOID;
+
+                        return result;
+
                     }
-                    NeObj (*func)(NeObj, NeObj) = OPFONC[tree->label2];
-                    NeObj result = func(op1, op2);
-
-                    neobject_destroy(op1);
-                    neobject_destroy(op2);
-
-                    return result;
-
                 }
             }
         }
-    }
-    
-    else if (tree->type == TYPE_LIST)
-    {
-        // donc les enfants de tree sont les éléments de la liste
-        NeList* l = treeToList(tree);
-
-
-        if (CODE_ERROR != 0) {                   
-            return NEO_VOID;
-        }
-
-        return neo_list_convert(l);
-    }
-    
-    else if (tree->type == TYPE_FONCTION)
-    {
-
-        // ici, appel récursif pour évaluer la fonction (1er fils), et on la met dans ->data de l'arbre
-
-
-        // si le champ data de la fonction est déjà occuppé, on n'a pas besoin d'évaluer la fonction
-        if (neo_is_void(tree->data)) {
-            tree->data = eval_prolog(tree->sons[0]);
-
-            if (CODE_ERROR != 0) { // erreur lors de l'évaluation de la fonction
-                return NEO_VOID;
-            }
-        }
-
-        // ensuite, pour évaluer les arguments, on fait bien la boucle sur tree->sons[1]
         
-        if (NEO_TYPE(tree->data) == TYPE_FONCTION)
+        case TYPE_LIST:
         {
-            NeObj tree_data_sov = tree->data;
-            Function* fun = neo_to_function(tree->data);
+            // donc les enfants de tree sont les éléments de la liste
+            NeList* l = treeToList(tree);
 
-            tree->data = NEO_VOID;
-            NeList* args = treeToList(tree->sons[1]);
-            tree->data = tree_data_sov;
 
-            if (CODE_ERROR != 0) {
-                neobject_destroy(tree->data);
-                tree->data = NEO_VOID;
-                return NEO_VOID;
-            }            
-            
-    
-            if (!funcArgsCheck(fun, args))
-            {
-                CODE_ERROR = 14;
-                nelist_destroy(args);
-                neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
-                tree->data = NEO_VOID;
-                return NEO_VOID;
-            }
-                
-            NeObj retour = functionCall(tree->data, args);
-
-            nelist_destroy(args);
-            neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
-            tree->data = NEO_VOID;
-            
-            if (CODE_ERROR != 0) {
-                neobject_destroy(retour);
+            if (CODE_ERROR != 0) {                   
                 return NEO_VOID;
             }
 
-            LINENUMBER = tree->line; // certaines fonctions modifient le numéro de ligne
-
-            return retour;
+            return neo_list_convert(l);
         }
-
-        else if (NEO_TYPE(tree->data) == TYPE_USERFUNC || NEO_TYPE(tree->data) == TYPE_USERMETHOD)
+        
+        case TYPE_FONCTION:
         {
-            UserFunc* fun = neo_to_userfunc(tree->data);
 
-            NeObj tree_data_sov = tree->data;
+            // ici, appel récursif pour évaluer la fonction (1er fils), et on la met dans ->data de l'arbre
 
-            if (tree->sons[1]->nbSons > fun->nbArgs && ! fun->unlimited_arguments)
-            {
-                CODE_ERROR = 6;
-                neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
-                tree->data = NEO_VOID;
-                return NEO_VOID;
-            }
 
-            
+            // si le champ data de la fonction est déjà occuppé, on n'a pas besoin d'évaluer la fonction
+            if (neo_is_void(tree->data)) {
+                tree->data = eval_prolog(tree->sons[0]);
 
-            // on compte le nombre d'arguments très facultatifs
-            int given_nbOptArgs = 0;
-
-            for (int i = 0 ; i < tree->sons[1]->nbSons ; i++) {
-                if (tree->sons[1]->sons[i]->type == TYPE_OPERATOR && tree->sons[1]->sons[i]->label2 == 37) { // on est sur du :=
-                    int index = 0;
-                    while (index < fun->nbArgs && fun->args[index] != tree->sons[1]->sons[i]->sons[0]->variable) index++;
-
-                    if (index >= fun->nbArgs - fun->nbOptArgs && index < fun->nbArgs)
-                        given_nbOptArgs ++;
+                if (CODE_ERROR != 0) { // erreur lors de l'évaluation de la fonction
+                    return NEO_VOID;
                 }
             }
 
+            // ensuite, pour évaluer les arguments, on fait bien la boucle sur tree->sons[1]
             
-            // on sait maintenant que le nombre d'arguments réel final est :
-            // -> Si tree->nbSons > fun->nbArgs : tree->nbSons - given_nbOptArgs
-            // -> Sinon, fun->nbArgs
+            if (NEO_TYPE(tree->data) == TYPE_FONCTION)
+            {
+                NeObj tree_data_sov = tree->data;
+                Function* fun = neo_to_function(tree->data);
 
+                tree->data = NEO_VOID;
+                NeList* args = treeToList(tree->sons[1]);
+                tree->data = tree_data_sov;
 
-
-            // calcule le nombre d'arguments de cet appel de fonction
-            int nb_arguments = (fun->unlimited_arguments && tree->sons[1]->nbSons > fun->nbArgs - fun->nbOptArgs) ? tree->sons[1]->nbSons + fun->nbOptArgs - given_nbOptArgs : fun->nbArgs;
-            
-            // et on crée la liste qui va contenir ces arguments
-            NeList* arguments = nelist_create(nb_arguments);
-
-            // initialise la liste avec des NEO_VOID pour savoir facilement si une case est encore vierge
-            for (int i = 0 ; i < arguments->len ; i++)
-                arguments->tab[i] = NEO_VOID;
-
-            
-            // pour les méthodes, on leur envoie l'adresse de l'objet à modifier
-            NeObj* self = NULL;
-
-
-            // on peut commencer par mettre à leur valeur par défaut les variables définies après ...
-            // Ainsi elles ne seront pas remplacés sauf si on l'indique explicitement
-            for (int i = fun->nbArgs - fun->nbOptArgs ; i < fun -> nbArgs ; i++) {
-                if (i == 0 && NEO_TYPE(tree->data) == TYPE_USERMETHOD) {
-                    CODE_ERROR = 110;
-                    nelist_destroy(arguments);
+                if (CODE_ERROR != 0) {
                     neobject_destroy(tree->data);
                     tree->data = NEO_VOID;
                     return NEO_VOID;
-                }
-                arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
-            }
-
-
-            // 1ère boucle pour placer les arguments à des endroits où ils ne bougeront pas
-            for (int i = 0 ; i < tree->sons[1]->nbSons ; i++) {
-                // on commence par remplir les éléments donnés dans le mauvais ordre (avec :=)
-                if (tree->sons[1]->sons[i]->type == TYPE_OPERATOR && tree->sons[1]->sons[i]->label2 == 37) { // on est sur du :=
-                    // on regarde la variable de gauche, et on met le truc au bon endroit
-                    // on récupère l'index du vrai argument dans fun->args, et on le met au bon endroit dans arguments
-                    int index = 0;
-
-                    if (tree->sons[1]->sons[i]->sons[0]->type != TYPE_VARIABLE) {
-                        nelist_destroy(arguments);
-                        neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
-                        tree->data = NEO_VOID;
-                        CODE_ERROR = 93;
-                        return NEO_VOID;
-                    }
-
-                    while (index < fun->nbArgs && fun->args[index] != tree->sons[1]->sons[i]->sons[0]->variable) index++;
-
-                    if (index == fun->nbArgs) {
-                        nelist_destroy(arguments);
-                        neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
-                        tree->data = NEO_VOID;
-                        CODE_ERROR = 93;
-                        return NEO_VOID;
-                    }
-                    
-                    if (index < fun->nbArgs - fun->nbOptArgs && !neo_is_void(arguments->tab[index])) {
-                        nelist_destroy(arguments);
-                        neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
-                        tree->data = NEO_VOID;
-                        CODE_ERROR = 94;
-                        return NEO_VOID;
-                    }
-                    // et on évalue l'argument envoyé
-                    tree->data = NEO_VOID;
-                    arguments->tab[index] = eval_prolog(tree->sons[1]->sons[i]->sons[1]);
-                    tree->data = tree_data_sov;
-
-                    if (CODE_ERROR != 0) {
-                        nelist_destroy(arguments);
-                        neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
-                        tree->data = NEO_VOID;
-                        return NEO_VOID;
-                    }
-                    else if (index == 0 && NEO_TYPE(tree->data) == TYPE_USERMETHOD) {
-                        self = get_address(tree->sons[1]->sons[i]->sons[1]); // on vient d'évaluer le premier argument
-                    }
-                }
-            }
-
-            // deuxième boucle pour insérer dans l'ordre et en évitant les := les arguments restants
-            int index = 0; // on remplit petit à petit arguments avec les arguments restants
-            while (index < arguments->len && !neo_is_void(arguments->tab[index])) index++;
-
-            for (int i = 0 ; index < arguments->len && i < tree->sons[1]->nbSons ; i++) {
+                }            
                 
-                if (tree->sons[1]->sons[i]->type != TYPE_OPERATOR || tree->sons[1]->sons[i]->label2 != 37) {
+        
+                if (!funcArgsCheck(fun, args))
+                {
+                    CODE_ERROR = 14;
+                    nelist_destroy(args);
+                    neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                     tree->data = NEO_VOID;
-                    arguments->tab[index] = eval_prolog(tree->sons[1]->sons[i]);
-                    tree->data = tree_data_sov;
+                    return NEO_VOID;
+                }
+                    
+                NeObj retour = functionCall(tree->data, args);
 
-                    if (CODE_ERROR != 0) {
+                nelist_destroy(args);
+                neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
+                tree->data = NEO_VOID;
+                
+                if (CODE_ERROR != 0) {
+                    neobject_destroy(retour);
+                    return NEO_VOID;
+                }
+
+                LINENUMBER = tree->line; // certaines fonctions modifient le numéro de ligne
+
+                return retour;
+            }
+
+            else if (NEO_TYPE(tree->data) == TYPE_USERFUNC || NEO_TYPE(tree->data) == TYPE_USERMETHOD)
+            {
+                UserFunc* fun = neo_to_userfunc(tree->data);
+
+                NeObj tree_data_sov = tree->data;
+
+                if (tree->sons[1]->nbSons > fun->nbArgs && ! fun->unlimited_arguments)
+                {
+                    CODE_ERROR = 6;
+                    neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
+                    tree->data = NEO_VOID;
+                    return NEO_VOID;
+                }
+
+                
+
+                // on compte le nombre d'arguments très facultatifs
+                int given_nbOptArgs = 0;
+
+                for (int i = 0 ; i < tree->sons[1]->nbSons ; i++) {
+                    if (tree->sons[1]->sons[i]->type == TYPE_OPERATOR && tree->sons[1]->sons[i]->label2 == 37) { // on est sur du :=
+                        int index = 0;
+                        while (index < fun->nbArgs && fun->args[index] != tree->sons[1]->sons[i]->sons[0]->variable) index++;
+
+                        if (index >= fun->nbArgs - fun->nbOptArgs && index < fun->nbArgs)
+                            given_nbOptArgs ++;
+                    }
+                }
+
+                
+                // on sait maintenant que le nombre d'arguments réel final est :
+                // -> Si tree->nbSons > fun->nbArgs : tree->nbSons - given_nbOptArgs
+                // -> Sinon, fun->nbArgs
+
+
+
+                // calcule le nombre d'arguments de cet appel de fonction
+                int nb_arguments = (fun->unlimited_arguments && tree->sons[1]->nbSons > fun->nbArgs - fun->nbOptArgs) ? tree->sons[1]->nbSons + fun->nbOptArgs - given_nbOptArgs : fun->nbArgs;
+                
+                // et on crée la liste qui va contenir ces arguments
+                NeList* arguments = nelist_create(nb_arguments);
+
+                // initialise la liste avec des NEO_VOID pour savoir facilement si une case est encore vierge
+                for (int i = 0 ; i < arguments->len ; i++)
+                    arguments->tab[i] = NEO_VOID;
+
+                
+                // pour les méthodes, on leur envoie l'adresse de l'objet à modifier
+                NeObj* self = NULL;
+
+
+                // on peut commencer par mettre à leur valeur par défaut les variables définies après ...
+                // Ainsi elles ne seront pas remplacés sauf si on l'indique explicitement
+                for (int i = fun->nbArgs - fun->nbOptArgs ; i < fun -> nbArgs ; i++) {
+                    if (i == 0 && NEO_TYPE(tree->data) == TYPE_USERMETHOD) {
+                        CODE_ERROR = 110;
                         nelist_destroy(arguments);
-                        neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
+                        neobject_destroy(tree->data);
                         tree->data = NEO_VOID;
                         return NEO_VOID;
                     }
-                    else if (index == 0 && NEO_TYPE(tree->data) == TYPE_USERMETHOD) { // on vient d'évaluer le premier argument
-                        self = get_address(tree->sons[1]->sons[i]);
-                    }
-
-                    while (index < arguments->len && !neo_is_void(arguments->tab[index])) index++;
+                    arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
                 }
-            }
-            // c'est un choix philosophique : si f attend x, y facultatif et z, alors f(1,2) ne fonctionnera pas car il manque z
-            // pour mettre uniquement le x et le z, il y a une syntaxe pour le faire
 
-            if (tree->sons[1]->nbSons < fun->nbArgs) {
-                // à ce stade-là, certains champs de arguments sont encore vides, on va donc parcourir une dernière fois afin de lui associer les expressions définies lors de la définition de la fonction
-                for (int i = 0 ; i < fun->nbArgs ; i++) {
-                    if (neo_is_void(arguments->tab[i])) { // c'est précisément le cas où l'utilisateur n'a rien mis
-                        arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
 
-                        if (neo_is_void(arguments->tab[i])) {
-                            CODE_ERROR = 7;
+                // 1ère boucle pour placer les arguments à des endroits où ils ne bougeront pas
+                for (int i = 0 ; i < tree->sons[1]->nbSons ; i++) {
+                    // on commence par remplir les éléments donnés dans le mauvais ordre (avec :=)
+                    if (tree->sons[1]->sons[i]->type == TYPE_OPERATOR && tree->sons[1]->sons[i]->label2 == 37) { // on est sur du :=
+                        // on regarde la variable de gauche, et on met le truc au bon endroit
+                        // on récupère l'index du vrai argument dans fun->args, et on le met au bon endroit dans arguments
+                        int index = 0;
+
+                        if (tree->sons[1]->sons[i]->sons[0]->type != TYPE_VARIABLE) {
+                            nelist_destroy(arguments);
                             neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                             tree->data = NEO_VOID;
-                            nelist_destroy(arguments);
+                            CODE_ERROR = 93;
                             return NEO_VOID;
                         }
 
-                        if (i == 0) { // le premier argument d'une méthode ne peut pas être un argument optionnel
-                            CODE_ERROR = 110;
+                        while (index < fun->nbArgs && fun->args[index] != tree->sons[1]->sons[i]->sons[0]->variable) index++;
+
+                        if (index == fun->nbArgs) {
                             nelist_destroy(arguments);
-                            neobject_destroy(tree->data);
+                            neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
+                            tree->data = NEO_VOID;
+                            CODE_ERROR = 93;
+                            return NEO_VOID;
+                        }
+                        
+                        if (index < fun->nbArgs - fun->nbOptArgs && !neo_is_void(arguments->tab[index])) {
+                            nelist_destroy(arguments);
+                            neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
+                            tree->data = NEO_VOID;
+                            CODE_ERROR = 94;
+                            return NEO_VOID;
+                        }
+                        // et on évalue l'argument envoyé
+                        tree->data = NEO_VOID;
+                        arguments->tab[index] = eval_prolog(tree->sons[1]->sons[i]->sons[1]);
+                        tree->data = tree_data_sov;
+
+                        if (CODE_ERROR != 0) {
+                            nelist_destroy(arguments);
+                            neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                             tree->data = NEO_VOID;
                             return NEO_VOID;
                         }
+                        else if (index == 0 && NEO_TYPE(tree->data) == TYPE_USERMETHOD) {
+                            self = get_address(tree->sons[1]->sons[i]->sons[1]); // on vient d'évaluer le premier argument
+                        }
                     }
                 }
+
+                // deuxième boucle pour insérer dans l'ordre et en évitant les := les arguments restants
+                int index = 0; // on remplit petit à petit arguments avec les arguments restants
+                while (index < arguments->len && !neo_is_void(arguments->tab[index])) index++;
+
+                for (int i = 0 ; index < arguments->len && i < tree->sons[1]->nbSons ; i++) {
+                    
+                    if (tree->sons[1]->sons[i]->type != TYPE_OPERATOR || tree->sons[1]->sons[i]->label2 != 37) {
+                        tree->data = NEO_VOID;
+                        arguments->tab[index] = eval_prolog(tree->sons[1]->sons[i]);
+                        tree->data = tree_data_sov;
+
+                        if (CODE_ERROR != 0) {
+                            nelist_destroy(arguments);
+                            neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
+                            tree->data = NEO_VOID;
+                            return NEO_VOID;
+                        }
+                        else if (index == 0 && NEO_TYPE(tree->data) == TYPE_USERMETHOD) { // on vient d'évaluer le premier argument
+                            self = get_address(tree->sons[1]->sons[i]);
+                        }
+
+                        while (index < arguments->len && !neo_is_void(arguments->tab[index])) index++;
+                    }
+                }
+                // c'est un choix philosophique : si f attend x, y facultatif et z, alors f(1,2) ne fonctionnera pas car il manque z
+                // pour mettre uniquement le x et le z, il y a une syntaxe pour le faire
+
+                if (tree->sons[1]->nbSons < fun->nbArgs) {
+                    // à ce stade-là, certains champs de arguments sont encore vides, on va donc parcourir une dernière fois afin de lui associer les expressions définies lors de la définition de la fonction
+                    for (int i = 0 ; i < fun->nbArgs ; i++) {
+                        if (neo_is_void(arguments->tab[i])) { // c'est précisément le cas où l'utilisateur n'a rien mis
+                            arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
+
+                            if (neo_is_void(arguments->tab[i])) {
+                                CODE_ERROR = 7;
+                                neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
+                                tree->data = NEO_VOID;
+                                nelist_destroy(arguments);
+                                return NEO_VOID;
+                            }
+
+                            if (i == 0) { // le premier argument d'une méthode ne peut pas être un argument optionnel
+                                CODE_ERROR = 110;
+                                nelist_destroy(arguments);
+                                neobject_destroy(tree->data);
+                                tree->data = NEO_VOID;
+                                return NEO_VOID;
+                            }
+                        }
+                    }
+                }
+
+
+                // création de la liste local_args
+                NeObj neo_local_args = NEO_VOID;
+                if (fun->unlimited_arguments) {
+                    // on raccourcit args, et on crée la liste locale
+                    int len = (arguments->len - given_nbOptArgs > fun->nbArgs - fun->nbOptArgs) ? arguments->len - fun->nbArgs : 0;
+
+                    NeList* local_args = nelist_create(len);
+                    for (int i = 0 ; i < len ; i++) {
+                        local_args->tab[i] = nelist_nth(arguments, fun->nbArgs + i);
+                    }
+                    neo_local_args = neo_list_convert(local_args);
+                }
+                
+
+                // exécution de la fonction
+
+                tree->data = NEO_VOID;
+
+                NeObj ret;
+                if (NEO_TYPE(tree_data_sov) == TYPE_USERMETHOD)
+                    ret = callUserMethod(fun, self, arguments, neo_local_args);
+                else
+                    ret = callUserFunc(fun, arguments, neo_local_args);
+
+                tree->data = tree_data_sov;
+                neobject_destroy(tree->data);
+                tree->data = NEO_VOID;
+
+                nelist_destroy(arguments);
+
+                if (CODE_ERROR != 0) {
+                    return NEO_VOID;
+                }
+
+                // ainsi si une return_value n'est pas à NULL c'est que forcément la valeur n'a pas été récupérée
+                return ret;
+                
             }
 
-
-            // création de la liste local_args
-            NeObj neo_local_args = NEO_VOID;
-            if (fun->unlimited_arguments) {
-                // on raccourcit args, et on crée la liste locale
-                int len = (arguments->len - given_nbOptArgs > fun->nbArgs - fun->nbOptArgs) ? arguments->len - fun->nbArgs : 0;
-
-                NeList* local_args = nelist_create(len);
-                for (int i = 0 ; i < len ; i++) {
-                    local_args->tab[i] = nelist_nth(arguments, fun->nbArgs + i);
-                }
-                neo_local_args = neo_list_convert(local_args);
+            else if (NEO_TYPE(tree->data) == TYPE_EMPTY)
+            {
+                CODE_ERROR = 8;
+                neobject_destroy(tree->data);
+                tree->data = NEO_VOID;
+                return NEO_VOID;
+            }
+            else
+            {
+                CODE_ERROR = 9;
+                neobject_destroy(tree->data);
+                tree->data = NEO_VOID;
+                return NEO_VOID;
             }
             
+        }
+        
+        case TYPE_LISTINDEX:
+        {
+            NeObj obj = *get_address(tree->sons[0]);
 
-            // exécution de la fonction
+            if (CODE_ERROR != 0)
+                return NEO_VOID;
 
-            tree->data = NEO_VOID;
+            NeObj index = eval_prolog(tree->sons[1]);
 
-            NeObj ret;
-            if (NEO_TYPE(tree_data_sov) == TYPE_USERMETHOD)
-                ret = callUserMethod(fun, self, arguments, neo_local_args);
-            else
-                ret = callUserFunc(fun, arguments, neo_local_args);
+            if (CODE_ERROR != 0)
+                return NEO_VOID;
 
-            tree->data = tree_data_sov;
-            neobject_destroy(tree->data);
-            tree->data = NEO_VOID;
 
-            nelist_destroy(arguments);
+            // on vérifie que nos objets ont bien les types attendus
+            if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
+            {
+                CODE_ERROR = 15;
+                return NEO_VOID;
+            }
+
+            if (NEO_TYPE(index) != TYPE_INTEGER)
+            {
+                neobject_destroy(index);
+                CODE_ERROR = 16;
+                return NEO_VOID;
+            }
+            
+            // on récupère le véritable index
+            long int index2 = neo_to_integer(index);
+            neobject_destroy(index);
+            
+            // vérifications supplémentaires
+            if (NEO_TYPE(obj) == TYPE_EMPTY)
+            {
+                CODE_ERROR = 17;
+                return NEO_VOID;
+            }
+            else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
+            {
+                CODE_ERROR = 18;
+                return NEO_VOID;
+            }
+            
+            
+            NeObj retour = NEO_VOID;
+
+            if (NEO_TYPE(obj) == TYPE_LIST) {
+                retour = neo_copy(neo_list_nth(obj,index2));
+            }
+            else {
+                retour = neo_str_create(charToString(neo_to_string(obj)[index2]));
+            }
+
+            return retour;
+
+        }
+
+        case TYPE_CONTAINER:
+        {
+
+            NeList* val = nelist_create(tree->nbSons);
+
+            for (int ext_index = 0 ; ext_index < tree->nbSons ; ext_index++)
+            {
+                //stack_check_for(varstack, 4);
+
+                val->tab[ext_index] = eval_prolog(tree->sons[ext_index]->sons[0]);
+
+                if (CODE_ERROR != 0)
+                {
+                    nelist_destroy_until(val, ext_index - 1);
+                    return NEO_VOID;
+                }
+            }
+            NeObj ret = neo_container_create(tree->label2, val);
+            
+            return ret;
+        }
+        
+        case TYPE_ATTRIBUTE:
+        {
+
+            NeObj neo = eval_prolog(tree->sons[0]);
 
             if (CODE_ERROR != 0) {
                 return NEO_VOID;
             }
 
-            // ainsi si une return_value n'est pas à NULL c'est que forcément la valeur n'a pas été récupérée
-            return ret;
-            
-        }
-
-        else if (NEO_TYPE(tree->data) == TYPE_EMPTY)
-        {
-            CODE_ERROR = 8;
-            neobject_destroy(tree->data);
-            tree->data = NEO_VOID;
-            return NEO_VOID;
-        }
-        else
-        {
-            CODE_ERROR = 9;
-            neobject_destroy(tree->data);
-            tree->data = NEO_VOID;
-            return NEO_VOID;
-        }
-        
-    }
-    
-    else if (tree->type == TYPE_LISTINDEX)
-    {
-        NeObj obj = *get_address(tree->sons[0]);
-
-        if (CODE_ERROR != 0)
-            return NEO_VOID;
-
-        NeObj index = eval_prolog(tree->sons[1]);
-
-        if (CODE_ERROR != 0)
-            return NEO_VOID;
-
-
-        // on vérifie que nos objets ont bien les types attendus
-        if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
-        {
-            CODE_ERROR = 15;
-            return NEO_VOID;
-        }
-
-        if (NEO_TYPE(index) != TYPE_INTEGER)
-        {
-            neobject_destroy(index);
-            CODE_ERROR = 16;
-            return NEO_VOID;
-        }
-        
-        // on récupère le véritable index
-        long int index2 = neo_to_integer(index);
-        neobject_destroy(index);
-        
-        // vérifications supplémentaires
-        if (NEO_TYPE(obj) == TYPE_EMPTY)
-        {
-            CODE_ERROR = 17;
-            return NEO_VOID;
-        }
-        else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
-        {
-            CODE_ERROR = 18;
-            return NEO_VOID;
-        }
-        
-        
-        NeObj retour = NEO_VOID;
-
-        if (NEO_TYPE(obj) == TYPE_LIST) {
-            retour = neo_copy(neo_list_nth(obj,index2));
-        }
-        else {
-            retour = neo_str_create(charToString(neo_to_string(obj)[index2]));
-        }
-
-        return retour;
-
-    }
-
-    else if (tree->type == TYPE_CONTAINER)
-    {
-
-        NeList* val = nelist_create(tree->nbSons);
-
-        for (int ext_index = 0 ; ext_index < tree->nbSons ; ext_index++)
-        {
-            //stack_check_for(varstack, 4);
-
-            val->tab[ext_index] = eval_prolog(tree->sons[ext_index]->sons[0]);
-
-            if (CODE_ERROR != 0)
+            if (NEO_TYPE(neo) != TYPE_CONTAINER)
             {
-                nelist_destroy_until(val, ext_index - 1);
+                // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
+                neobject_destroy(neo);
+                CODE_ERROR = 80;
                 return NEO_VOID;
             }
-        }
-        NeObj ret = neo_container_create(tree->label2, val);
-        
-        return ret;
-    }
-    
-    else if (tree->type == TYPE_ATTRIBUTE)
-    {
 
-        NeObj neo = eval_prolog(tree->sons[0]);
 
-        if (CODE_ERROR != 0) {
-            return NEO_VOID;
-        }
+            // va chercher la valeur
+            NeObj ret;
 
-        if (NEO_TYPE(neo) != TYPE_CONTAINER)
-        {
-            // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
+            Container* c = neo_to_container(neo);
+
+            int index = 0;
+
+            if (tree->label2 == -1) // ça veut dire qu'on sait exactement où chercher la valeur
+            {
+                tree->label2 = get_field_index(c, tree->label1);
+                free(tree->label1);
+                tree->label1 = NULL;
+            }
+
+
+            ret = neo_copy(get_container_field(c, tree->label2));
             neobject_destroy(neo);
-            CODE_ERROR = 80;
-            return NEO_VOID;
+            return ret;
         }
 
-
-        // va chercher la valeur
-        NeObj ret;
-
-        Container* c = neo_to_container(neo);
-
-        int index = 0;
-
-        if (tree->label2 == -1) // ça veut dire qu'on sait exactement où chercher la valeur
+        case TYPE_AWAIT:
         {
-            tree->label2 = get_field_index(c, tree->label1);
-            free(tree->label1);
-            tree->label1 = NULL;
-        }
 
-
-        ret = neo_copy(get_container_field(c, tree->label2));
-        neobject_destroy(neo);
-        return ret;
-    }
-
-    else if (tree->type == TYPE_AWAIT)
-    {
-
-        if (tree->nbSons > 1)
-        {
-            CODE_ERROR = 101;
-            return NEO_VOID;
-        }
-
-
-        NeObj condition = eval_prolog(tree->sons[0]);
-
-        if (CODE_ERROR != 0) {
-            neobject_destroy(condition);
-            return NEO_VOID;
-        }
-
-        if (neoIsTrue(condition)) { // fin de l'attente passive
-            neobject_destroy(condition);
-        }
-        else
-        {
-            neobject_destroy(condition);
-            
-            if (atomic_counter < 0) {
-                // on est dans un bloc atomique donc on peut pas passer au processus suivant
-                // à cause du -1, on va retourner exécuter l'arbre d'avant cet appel, donc on restaure les arguments
-                process_cycle->process->arg_tree = tree;
-                return NEO_SPECIAL(-1);
+            if (tree->nbSons > 1)
+            {
+                CODE_ERROR = 101;
+                return NEO_VOID;
             }
-            else {
-                atomic_counter = 0;
-                // à cause du -1, on va retourner exécuter l'arbre d'avant cet appel, donc on restaure les arguments
-                process_cycle->process->arg_tree = tree;
-                return NEO_SPECIAL(-1); // on passe au processus suivant, et eval va enregistrer
-                // tree donc la prochaine fois que ça sera notre tour, on
-                // va revenir à AWAIT comme si de rien n'était
+
+
+            NeObj condition = eval_prolog(tree->sons[0]);
+
+            if (CODE_ERROR != 0) {
+                neobject_destroy(condition);
+                return NEO_VOID;
             }
+
+            if (neoIsTrue(condition)) { // fin de l'attente passive
+                neobject_destroy(condition);
+            }
+            else
+            {
+                neobject_destroy(condition);
+                
+                if (atomic_counter < 0) {
+                    // on est dans un bloc atomique donc on peut pas passer au processus suivant
+                    // à cause du -1, on va retourner exécuter l'arbre d'avant cet appel, donc on restaure les arguments
+                    process_cycle->process->arg_tree = tree;
+                    return NEO_SPECIAL(-1);
+                }
+                else {
+                    atomic_counter = 0;
+                    // à cause du -1, on va retourner exécuter l'arbre d'avant cet appel, donc on restaure les arguments
+                    process_cycle->process->arg_tree = tree;
+                    return NEO_SPECIAL(-1); // on passe au processus suivant, et eval va enregistrer
+                    // tree donc la prochaine fois que ça sera notre tour, on
+                    // va revenir à AWAIT comme si de rien n'était
+                }
+            }
+            return neo_none_create();
         }
-        return neo_none_create();
-    }
 
-    else if (tree->type == TYPE_VARIABLE)
-    {
-        NeObj value = get_var_value(tree->variable);
+        case TYPE_VARIABLE:
+        {
+            NeObj value = get_var_value(tree->variable);
 
-        if (NEO_TYPE(value) == TYPE_EMPTY) {
-            CODE_ERROR = 5;
-            return NEO_VOID;
+            if (NEO_TYPE(value) == TYPE_EMPTY) {
+                CODE_ERROR = 5;
+                return NEO_VOID;
+            }
+
+            return neo_copy(value);
         }
 
-        return neo_copy(value);
-    }
+        case TYPE_DOUBLE:
+        case TYPE_STRING:
+        case TYPE_BOOL:
+        case TYPE_EXCEPTION:
+        case TYPE_NONE:
+        case TYPE_INTEGER:
+        {
+            return neo_copy(tree->data);
+        }
 
-    // quand ça sera de nouveau un switch, on mettra les 4 case au dessus de return neo_copy(tree->data)
-    else if (tree->type == TYPE_INTEGER)
-    {
-        return neo_copy(tree->data);
-    }
-
-    else if (tree->type == TYPE_DOUBLE)
-    {
-        return neo_copy(tree->data);
-    }
-
-    else if (tree->type == TYPE_STRING)
-    {
-        return neo_copy(tree->data);
-    }
-    
-    else if (tree->type == TYPE_BOOL)
-    {
-        return neo_copy(tree->data);
-    }
-
-    else if (tree->type == TYPE_EXCEPTION)
-    {
-        return neo_copy(tree->data);
-    }
-    
-    else if (tree->type == TYPE_NONE)
-    {
-        return neo_copy(tree->data);
     }
 
     CODE_ERROR = 19;
@@ -1487,7 +1467,7 @@ NeObj eval_aux(Tree* tree) {
 
 
 
-// cette fonction renvoie l'adresse permettant d'effectuer une affectation sur l'objet pointé
+// cette fonction renvoie l'adresse de l'objet correspondant à une expression permettant d'effectuer une affectation sur l'objet pointé
 NeObj* get_address(Tree* tree) {
 
     if (tree->type == TYPE_VARIABLE) {
@@ -2047,335 +2027,353 @@ int exec_aux(Tree* tree) {
     {
         LINENUMBER = tree->sons[inst]->line;
 
-        if (tree->sons[inst]->type == TYPE_TRYEXCEPT)
-        {
+        switch (tree->sons[inst]->type) {
 
-            // trucs qu'il y a à sauvegarder ici : inst
-            //stack_check_for(varstack, 3);
-            
-            intptr_t int_ret = exec_aux(tree->sons[inst]->sons[0]);
-
-            if (int_ret != EXIT_SUCCESS)
-                return int_ret;
-
-            Tree* maintree = tree->sons[inst];
-
-            // exécution du try
-
-            //printf("ERRREUR : %d\n", CODE_ERROR);
-
-            if (CODE_ERROR != 1 && CODE_ERROR != 0) // exit() n'est pas considéré comme une erreur
+            case TYPE_TRYEXCEPT:
             {
-                // on va parcourir la liste des exceptions jusqu'à en trouver une qui corresponde
-                int bo = 0; // va correspondre à l'indice du sous arbre que l'on va exécuter
+                
+                intptr_t int_ret = exec_aux(tree->sons[inst]->sons[0]);
 
-                // parcours des différents blocs except pour trouver le bon
-                for (int fils = 1 ; fils < maintree->nbSons && bo == 0 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
+                if (int_ret != EXIT_SUCCESS)
+                    return int_ret;
 
-                    if (maintree->sons[fils]->sons[0]->nbSons == 0) {
-                        bo = fils; // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
-                    }
+                Tree* maintree = tree->sons[inst];
 
-                    for (int i = 0 ; i < maintree->sons[fils]->sons[0]->nbSons ; i++)
-                    {
-                        NeObj obj = maintree->sons[fils]->sons[0]->sons[i]->data;
+                // exécution du try
 
-                        if (NEO_TYPE(obj) != TYPE_EXCEPTION)
-                        {
-                            CODE_ERROR = 78;
-                            return int_ret;
+                if (CODE_ERROR != 1 && CODE_ERROR != 0) // exit() n'est pas considéré comme une erreur
+                {
+                    // on va parcourir la liste des exceptions jusqu'à en trouver une qui corresponde
+                    int bo = 0; // va correspondre à l'indice du sous arbre que l'on va exécuter
+
+                    // parcours des différents blocs except pour trouver le bon
+                    for (int fils = 1 ; fils < maintree->nbSons && bo == 0 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
+
+                        if (maintree->sons[fils]->sons[0]->nbSons == 0) {
+                            bo = fils; // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
                         }
-                        else
+
+                        for (int i = 0 ; i < maintree->sons[fils]->sons[0]->nbSons ; i++)
                         {
-                            int code = get_exception_code(maintree->sons[fils]->sons[0]->sons[i]->data);
-                            if (exceptions_err.tab[CODE_ERROR] == code || (CODE_ERROR < 0 && -CODE_ERROR == code)) // l'erreur correspond
+                            NeObj obj = maintree->sons[fils]->sons[0]->sons[i]->data;
+
+                            if (NEO_TYPE(obj) != TYPE_EXCEPTION)
                             {
-                                if (CODE_ERROR < 0)
-                                    EXCEPTION = NULL;
-                                
-                                bo = fils;
-                                break;
+                                CODE_ERROR = 78;
+                                return int_ret;
+                            }
+                            else
+                            {
+                                int code = get_exception_code(maintree->sons[fils]->sons[0]->sons[i]->data);
+                                if (exceptions_err.tab[CODE_ERROR] == code || (CODE_ERROR < 0 && -CODE_ERROR == code)) // l'erreur correspond
+                                {
+                                    if (CODE_ERROR < 0)
+                                        EXCEPTION = NULL;
+                                    
+                                    bo = fils;
+                                    break;
+                                }
                             }
                         }
+
                     }
 
-                }
+                    if (bo > 0) // exécution du except
+                    {
+                        CODE_ERROR = 0; // du coup c'est bon on repart (la police a arrêté le programme, a vérifié ses papiers, et le programme est reparti)
+                        
+                        //stack_check_for(varstack, 3);
 
-                if (bo > 0) // exécution du except
-                {
-                    CODE_ERROR = 0; // du coup c'est bon on repart (la police a arrêté le programme, a vérifié ses papiers, et le programme est reparti)
-                    
-                    //stack_check_for(varstack, 3);
+                        int_ret = exec_aux(maintree->sons[bo]->sons[1]);
 
-                    int_ret = exec_aux(maintree->sons[bo]->sons[1]);
-
-                    if (CODE_ERROR != 0 || int_ret != EXIT_SUCCESS) {
-                        return int_ret;
+                        if (CODE_ERROR != 0 || int_ret != EXIT_SUCCESS) {
+                            return int_ret;
+                        }
                     }
                 }
+
+                break;
             }
-        }
 
-        else if (tree->sons[inst]->type == TYPE_ATOMICBLOCK)
-        {
-            // on va exécuter le bloc de code d'une traite, sans changer de processus
-            //stack_check_for(varstack, 4);
-            int temp = atomic_counter;
-            atomic_counter = -1; // tant qu'on n'a pas remis une valeur positive, on ne passera pas à un autre processus
-            
-            intptr_t int_ret = exec_aux(tree->sons[inst]);
-
-            
-            // s'il reste des crédits à ce processus, on les lui rend, sinon on passe au suivant
-            atomic_counter = (atomic_counter + temp > 0) ? atomic_counter + temp : 0;
-
-            if (CODE_ERROR != 0 || int_ret != 0) {
-                return int_ret;
-            }
-        }
-        
-        else if (tree->sons[inst]->type == TYPE_BLOCKWORD1LINE)
-        {
-            if (tree->sons[inst]->label2 == RETURN) // action de return
+            case TYPE_ATOMICBLOCK:
             {
-                if (tree->sons[inst]->nbSons > 1)
+                // on va exécuter le bloc de code d'une traite, sans changer de processus
+                //stack_check_for(varstack, 4);
+                int temp = atomic_counter;
+                atomic_counter = -1; // tant qu'on n'a pas remis une valeur positive, on ne passera pas à un autre processus
+                
+                intptr_t int_ret = exec_aux(tree->sons[inst]);
+
+                
+                // s'il reste des crédits à ce processus, on les lui rend, sinon on passe au suivant
+                atomic_counter = (atomic_counter + temp > 0) ? atomic_counter + temp : 0;
+
+                if (CODE_ERROR != 0 || int_ret != 0) {
+                    return int_ret;
+                }
+
+                break;
+            }
+            
+            case TYPE_BLOCKWORD1LINE:
+            {
+                if (tree->sons[inst]->label2 == RETURN) // action de return
                 {
-                    CODE_ERROR = 21;
+                    if (tree->sons[inst]->nbSons > 1)
+                    {
+                        CODE_ERROR = 21;
+                        return 0;
+                    }
+                    
+                    if (!neo_is_void(RETURN_VALUE)) // c'est pas correct, car on ne peut pas renvoyer une valeur alors que la précédente n'a pas été récupérée
+                    {
+                        CODE_ERROR = 99;
+                        return 0;
+                    }
+
+                    if (tree->sons[inst]->nbSons == 0) {
+                        RETURN_VALUE = neo_none_create();
+                        return EXIT_RETURN;
+                    }
+                    else {
+                        //stack_check_for(varstack, 3);
+                        RETURN_VALUE = eval_prolog(tree->sons[inst]->sons[0]);
+                        return EXIT_RETURN;
+                    }
+                }
+
+                
+                else if (tree->sons[inst]->label2 == IMPORT) // action de import
+                {
+                    for (int ext_index = 0 ; ext_index < tree->sons[inst]->nbSons ; ext_index++)
+                    {
+                        // on empile inst et ext_index
+                        //stack_check_for(varstack, 4);
+
+                        NeObj nom = eval_prolog(tree->sons[inst]->sons[ext_index]);
+
+                        if (CODE_ERROR != 0) {
+                            return 0;
+                        }
+
+                        char* nomAct = strdup(neo_to_string(nelist_nth(ADRESSES, NAME))); // pour restaurer le nom de fichier actuel
+
+                        #ifndef TI83PCE
+                            char* nomFichier = addStr(neo_to_string(nom), ".ne");
+
+                            updateFileName(strdup(neo_to_string(nom)));
+
+                            importFile(nomFichier);
+                            free(nomFichier);
+                        #else
+                            updateFileName(strdup(neo_to_string(nom)));
+                            importFile(neo_to_string(nom));
+                        #endif
+
+                        updateFileName(nomAct);
+
+                        neobject_destroy(nom);
+
+                        if (CODE_ERROR != 0) {
+                            return 0;
+                        }
+                        
+                        // en général un import fait pas mal de choses avec la mémoire, et on n'en fait pas souvent
+                        // c'est donc un bon endroit pour faire un garbage collection
+                        gc_mark_and_sweep();
+                    }
+                }
+
+                else if (tree->sons[inst]->label2 == LOCAL)
+                {
+                    if (tree->sons[inst]->nbSons == 0) // il faut au moins un argument
+                    {
+                        CODE_ERROR = 69;
+                        return 0;
+                    }
+                    else if (process_cycle->process->var_loc->tete == NULL)
+                    {
+                        CODE_ERROR = 70;
+                        return 0;
+                    }
+
+                    for (int i = 0 ; i < tree->sons[inst]->nbSons ; i++) // pour toutes les variables
+                    {
+                        // va traiter la variable comme étant locale
+                        save_later(process_cycle->process->varsToSave, tree->sons[inst]->sons[i]->variable);
+                        local(tree->sons[inst]->sons[i]->variable, process_cycle->process->var_loc);
+                    }
+                    
+                }
+
+                break;
+            }
+
+            
+            
+            case TYPE_KEYWORD:
+            {
+                if (tree->sons[inst]->label2 != PASS) {
+                    return tree->sons[inst]->label2;
+                }
+                break;
+            }
+
+            
+        
+            case TYPE_CONDITIONBLOCK:
+            {
+                int int_ret = execConditionBlock(tree->sons[inst]);
+                
+                if (int_ret != 0 || CODE_ERROR != 0) {
+                    return int_ret;
+                }
+
+                break;
+            }
+
+            
+
+            case TYPE_STATEMENTWHILE:
+            {
+                int int_ret = 0;
+
+                //stack_check_for(varstack, 4);
+                // évaluation de la condition
+
+                NeObj expr = eval_prolog(tree->sons[inst]->sons[0]);
+
+                if (CODE_ERROR != 0) {
+                    return 0;
+                }
+
+                bool cond = neoIsTrue(expr);
+                neobject_destroy(expr);
+
+                while (cond)
+                {
+
+                    int_ret = exec_aux(tree->sons[inst]->sons[1]);
+
+                    if (CODE_ERROR != 0) {
+                        return 0;
+                    }
+                    
+                    if (int_ret != 0 && int_ret != CONTINUE)
+                        break;
+
+                    // réévaluation de la condition
+
+                    expr = eval_prolog(tree->sons[inst]->sons[0]);
+
+                    if (CODE_ERROR != 0) {
+                        return 0;
+                    }
+
+                    cond = neoIsTrue(expr);
+                    neobject_destroy(expr);
+                    
+                }
+
+                
+                if (int_ret == EXIT_RETURN) { // en sortant d'une boucle, on n'a pas de break ou continue
+                    return int_ret;
+                }
+
+                break;
+            }
+            
+            
+            case TYPE_STATEMENTFOR:
+            {
+                
+                if (tree->sons[inst]->sons[0]->sons[0]->type != TYPE_VARIABLE)
+                {
+                    CODE_ERROR = 22;
+                    return 0;
+                }
+
+                int int_ret = execStatementFor(tree->sons[inst]);
+
+                if (CODE_ERROR != 0 || int_ret != 0)
+                    return int_ret;
+
+                break;
+            }
+
+            case TYPE_STATEMENTFOREACH:
+            {
+                
+                if (tree->sons[inst]->sons[0]->sons[0]->type != TYPE_VARIABLE)
+                {
+                    CODE_ERROR = 22;
+                    return 0;
+                }
+
+                if (tree->sons[inst]->sons[0]->nbSons != 2) {
+                    CODE_ERROR = 109;
+                    return 0;
+                }
+
+
+                NeObj iterable = eval_prolog(tree->sons[inst]->sons[0]->sons[1]);
+
+                if (CODE_ERROR != 0) {
                     return 0;
                 }
                 
-                if (!neo_is_void(RETURN_VALUE)) // c'est pas correct, car on ne peut pas renvoyer une valeur alors que la précédente n'a pas été récupérée
-                {
-                    CODE_ERROR = 99;
-                    return 0;
-                }
+                int int_ret = 0;
 
-                if (tree->sons[inst]->nbSons == 0) {
-                    RETURN_VALUE = neo_none_create();
-                    return EXIT_RETURN;
+                if (NEO_TYPE(iterable) == TYPE_LIST) {
+                    int_ret = execStatementForeachList(tree->sons[inst], iterable);
+                }
+                else if (NEO_TYPE(iterable) == TYPE_STRING) {
+                    int_ret = execStatementForeachString(tree->sons[inst], iterable);
                 }
                 else {
-                    //stack_check_for(varstack, 3);
-                    RETURN_VALUE = eval_prolog(tree->sons[inst]->sons[0]);
-                    return EXIT_RETURN;
-                }
-            }
-
-            
-            else if (tree->sons[inst]->label2 == IMPORT) // action de import
-            {
-                for (int ext_index = 0 ; ext_index < tree->sons[inst]->nbSons ; ext_index++)
-                {
-                    // on empile inst et ext_index
-                    //stack_check_for(varstack, 4);
-
-                    NeObj nom = eval_prolog(tree->sons[inst]->sons[ext_index]);
-
-                    if (CODE_ERROR != 0) {
-                        return 0;
-                    }
-
-                    char* nomAct = strdup(neo_to_string(nelist_nth(ADRESSES, NAME))); // pour restaurer le nom de fichier actuel
-
-                    #ifndef TI83PCE
-                        char* nomFichier = addStr(neo_to_string(nom), ".ne");
-
-                        updateFileName(strdup(neo_to_string(nom)));
-
-                        importFile(nomFichier);
-                        free(nomFichier);
-                    #else
-                        updateFileName(strdup(neo_to_string(nom)));
-                        importFile(neo_to_string(nom));
-                    #endif
-
-                    updateFileName(nomAct);
-
-                    neobject_destroy(nom);
-
-                    if (CODE_ERROR != 0) {
-                        return 0;
-                    }
-                    
-                    // en général un import fait pas mal de choses avec la mémoire, et on n'en fait pas souvent
-                    // c'est donc un bon endroit pour faire un garbage collection
-                    gc_mark_and_sweep();
-                }
-            }
-
-            else if (tree->sons[inst]->label2 == LOCAL)
-            {
-                if (tree->sons[inst]->nbSons == 0) // il faut au moins un argument
-                {
-                    CODE_ERROR = 69;
-                    return 0;
-                }
-                else if (process_cycle->process->var_loc->tete == NULL)
-                {
-                    CODE_ERROR = 70;
+                    neobject_destroy(iterable);
+                    CODE_ERROR = 109;
                     return 0;
                 }
 
-                for (int i = 0 ; i < tree->sons[inst]->nbSons ; i++) // pour toutes les variables
-                {
-                    // va traiter la variable comme étant locale
-                    save_later(process_cycle->process->varsToSave, tree->sons[inst]->sons[i]->variable);
-                    local(tree->sons[inst]->sons[i]->variable, process_cycle->process->var_loc);
-                }
-                
-            }
-        }
-
-        
-        
-        else if (tree->sons[inst]->type == TYPE_KEYWORD)
-        {
-            if (tree->sons[inst]->label2 != PASS) {
-                return tree->sons[inst]->label2;
-            }
-        }
-
-        
-    
-        else if (tree->sons[inst]->type == TYPE_CONDITIONBLOCK)
-        {
-            int int_ret = execConditionBlock(tree->sons[inst]);
-            
-            if (int_ret != 0 || CODE_ERROR != 0) {
-                return int_ret;
-            }
-        }
-
-        
-
-        else if (tree->sons[inst]->type == TYPE_STATEMENTWHILE)
-        {
-            intptr_t int_ret = 0;
-
-            //stack_check_for(varstack, 4);
-            // évaluation de la condition
-
-            NeObj expr = eval_prolog(tree->sons[inst]->sons[0]);
-
-            if (CODE_ERROR != 0) {
-                return 0;
-            }
-
-            bool cond = neoIsTrue(expr);
-            neobject_destroy(expr);
-
-            while (cond)
-            {
-
-                int_ret = exec_aux(tree->sons[inst]->sons[1]);
-
-                if (CODE_ERROR != 0) {
-                    return 0;
-                }
-                
-                if (int_ret != 0 && int_ret != CONTINUE)
-                    break;
-
-                // réévaluation de la condition
-
-                expr = eval_prolog(tree->sons[inst]->sons[0]);
-
-                if (CODE_ERROR != 0) {
-                    return 0;
-                }
-
-                cond = neoIsTrue(expr);
-                neobject_destroy(expr);
-                
-            }
-
-            
-            if (int_ret == EXIT_RETURN) { // en sortant d'une boucle, on n'a pas de break ou continue
-                return int_ret;
-            }
-        }
-        
-        
-        else if (tree->sons[inst]->type == TYPE_STATEMENTFOR) {
-            
-            if (tree->sons[inst]->sons[0]->sons[0]->type != TYPE_VARIABLE)
-            {
-                CODE_ERROR = 22;
-                return 0;
-            }
-
-            int int_ret = execStatementFor(tree->sons[inst]);
-
-            if (CODE_ERROR != 0 || int_ret != 0)
-                return int_ret;
-        }
-
-        else if (tree->sons[inst]->type == TYPE_STATEMENTFOREACH) {
-            
-            if (tree->sons[inst]->sons[0]->sons[0]->type != TYPE_VARIABLE)
-            {
-                CODE_ERROR = 22;
-                return 0;
-            }
-
-            if (tree->sons[inst]->sons[0]->nbSons != 2) {
-                CODE_ERROR = 109;
-                return 0;
-            }
-
-
-            NeObj iterable = eval_prolog(tree->sons[inst]->sons[0]->sons[1]);
-
-            if (CODE_ERROR != 0) {
-                return 0;
-            }
-            
-            int int_ret = 0;
-
-            if (NEO_TYPE(iterable) == TYPE_LIST) {
-                int_ret = execStatementForeachList(tree->sons[inst], iterable);
-            }
-            else if (NEO_TYPE(iterable) == TYPE_STRING) {
-                int_ret = execStatementForeachString(tree->sons[inst], iterable);
-            }
-            else {
                 neobject_destroy(iterable);
-                CODE_ERROR = 109;
-                return 0;
+
+                if (CODE_ERROR != 0 || int_ret != 0) {
+                    return int_ret;
+                }
+                break;
             }
 
-            neobject_destroy(iterable);
+            
 
-            if (CODE_ERROR != 0 || int_ret != 0) {
-                return int_ret;
+            case TYPE_FUNCTIONDEF:
+            {
+                // définition de fonction en cours d'exécution
+
+                // il faut d'abord évaluer les arguments optionnels
+                NeList* opt_args = treeToList(tree->sons[inst]->sons[0]);
+
+                // on crée la nouvelle fonction avec ces arguments optionnels
+                NeObj function = userFuncDefine(tree->sons[inst]->data, opt_args);
+
+                // et on la met dans la variable qui porte son nom
+                Var var = get_var(tree->sons[inst]->label1);
+                replace_var(var, function);
+                break;
             }
-        }
 
+            default:
+            {
+                NeObj res = eval_prolog(tree->sons[inst]);
         
+                neobject_destroy(res); // sinon, évaluation de l'expression, en la libérant juste après
 
-        else if (tree->sons[inst]->type == TYPE_FUNCTIONDEF)
-        {
-            // définition de fonction en cours d'exécution
+                if (CODE_ERROR != 0)
+                    return 0;
 
-            // il faut d'abord évaluer les arguments optionnels
-            NeList* opt_args = treeToList(tree->sons[inst]->sons[0]);
+                break;
+            }
 
-            // on crée la nouvelle fonction avec ces arguments optionnels
-            NeObj function = userFuncDefine(tree->sons[inst]->data, opt_args);
-
-            // et on la met dans la variable qui porte son nom
-            Var var = get_var(tree->sons[inst]->label1);
-            replace_var(var, function);
-        }
-
-        else
-        {
-            NeObj res = eval_prolog(tree->sons[inst]);
-    
-            neobject_destroy(res); // sinon, évaluation de l'expression, en la libérant juste après
-
-            if (CODE_ERROR != 0)
-                return 0;
         }
         
 
