@@ -9,9 +9,7 @@ extern NeObj OBJECTS_LIST; // liste chaînée de containers et de listes
 extern NeList* ADRESSES;
 extern strlist* NOMS;
 
-/*
-Ajoute un objet profond (liste/container) à la banque d'objets du garbage collector
-*/
+
 
 // récupère l'objet d'après dans la liste chaînée
 NeObj get_next(const NeObj obj) {
@@ -69,6 +67,7 @@ void set_prev(NeObj obj, NeObj prev) {
 }
 
 
+// ajoute un objet profond (liste ou container) dans la liste chaînée d'objets suivis
 void gc_add_deep_object(const NeObj next) {
     set_next(next, OBJECTS_LIST);
     set_prev(OBJECTS_LIST, next);
@@ -176,14 +175,14 @@ void gc_mark(NeObj obj) {
     }
 }
 
-
+// affiche l'ensemble des objets traqués par le GC
 void print_objects_list(void) {
     if (neo_is_void(OBJECTS_LIST)) {
-        setColor(RED) ; printString("The Garbage Collector is empty.");
+        setColor(BLUE) ; printString("The Garbage Collector is empty.");
     }
     else {
-        setColor(RED) ; printString("Objects currently tracked by the Garbage Collector :"); newLine();
-        setColor(BLUE) ; printString("{ "); setColor(GREEN);
+        setColor(BLUE) ; printString("Objects currently tracked by the Garbage Collector :"); newLine();
+        setColor(GREEN) ; printString("{ "); setColor(WHITE);
         NeObj next;
         for (NeObj ptr = OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = next) {
             next = get_next(ptr);
@@ -191,17 +190,18 @@ void print_objects_list(void) {
             neobject_aff(ptr);
 
             if (!neo_is_void(next)) {
-                setColor(BLUE) ; printString(" | "); setColor(GREEN) ;
+                setColor(GREEN) ; printString(" | "); setColor(WHITE) ;
             }
         }
 
-        setColor(BLUE) ; printString(" }"); setColor(WHITE);
+        setColor(GREEN) ; printString(" }");
         newLine();
     }
+    setColor(WHITE);
 }
 
 
-
+// implémentation de l'algorithme Mark & Sweep
 void gc_mark_and_sweep(void) {
 
     if (neo_is_void(OBJECTS_LIST))
@@ -272,7 +272,8 @@ void gc_mark_and_sweep(void) {
 
 
 
-
+// variante de Mark & Sweep qui est faite pour fonctionner même si ADRESSES n'existe plus
+// supprime tous les objets traqués, peu importe leur état, leur compteur de références
 void gc_final_sweep(void) {
     if (neo_is_void(OBJECTS_LIST))
         return;
@@ -281,14 +282,6 @@ void gc_final_sweep(void) {
     // on parcourt maintenant tous les containers et listes
     // on fait une première passe dans laquelle on supprime de manière non récursive les objets présents
     for (NeObj ptr = OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = get_next(ptr)) {
-
-        // l'objet n'est pas marqué, on va donc devoir nous en débarrasser
-        // on commence par supprimer les objets qu'il contient avec une profondeur de 1.
-        // en effet :
-        // - soit c'est un objet accessible depuis ADRESSES, auquel cas il faut juste décrémenter son compteur de références
-        // - sinon, pas besoin d'être récursif car il est à un autre endroit dans la OBJECTS_LIST et on va le supprimer aussi
-        // a l'issue de cette suppression, les seuls objets restants à supprimer sont les NeObjects*, data et les refc des
-        // containers et listes contenues dans OBJECTS_LISTS
         neobject_partial_destroy(ptr);
     }
 
