@@ -7,7 +7,7 @@
 
 .text
 
-#ifdef LINUX
+#ifdef LINUX_AMD64
 
 .globl eval_epilog_unaligned
 .type eval_epilog_unaligned, @function
@@ -176,7 +176,7 @@ switch_registers:
 
 #endif
 
-#if defined(WINDOWS11) || defined(WINDOWS10)
+#ifdef WINDOWS_AMD64
 
 
 

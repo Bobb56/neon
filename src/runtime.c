@@ -1450,6 +1450,12 @@ NeObj eval_aux(Tree* tree) {
             return neo_copy(tree->data);
         }
 
+        default:
+        {
+            CODE_ERROR = 19;
+            return NEO_VOID;
+        }
+
     }
 
     CODE_ERROR = 19;
@@ -2158,7 +2164,7 @@ int exec_aux(Tree* tree) {
 
                         char* nomAct = strdup(neo_to_string(nelist_nth(ADRESSES, NAME))); // pour restaurer le nom de fichier actuel
 
-                        #ifndef TI83PCE
+                        #ifndef TI_EZ80
                             char* nomFichier = addStr(neo_to_string(nom), ".ne");
 
                             updateFileName(strdup(neo_to_string(nom)));

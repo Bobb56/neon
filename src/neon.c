@@ -15,14 +15,10 @@
 #include "headers/syntaxtrees.h"
 #include "headers/neon.h"
 
-#ifdef WASM
-    #include <emscripten/emscripten.h>
-    char* INPUTMESSAGE = NULL;
-#endif
 
 
 
-#ifdef TI83PCE
+#ifdef TI_EZ80
     #include "nio_ce.h"
     nio_console console;
 #endif
@@ -33,7 +29,7 @@
 int CODE_ERROR = 0;
 
 
-#if defined(LINUX)
+#if defined(LINUX_AMD64)
     #include <signal.h>
 
     void handle_signal(int sig) {
@@ -42,7 +38,7 @@ int CODE_ERROR = 0;
 #endif
 
 
-#if defined(WINDOWS11) || defined(WINDOWS10)
+#ifdef WINDOWS_AMD64
     #include <windows.h>
 
     // Fonction de gestion du signal
@@ -135,6 +131,7 @@ Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
 - Opérateurs or et and paresseux +0.0.0.1
 - Refonte du système d'objets : les objets sont maintenant (partiellement) stockés sur la pile +0.1
 - Les arguments optionnels sont évalués lors de la définition de la fonction et non lors de l'appel +0.0.0.1
+- Changement des plateformes : LINUX_AMD64, WINDOWS_AMD64 et TI_EZ80. Toutes les versions windows n'ont pas de couleurs par défaut
 
 --> Ne pas oublier de mettre à jour la documentation de Neon avec tout ça
 */
@@ -373,82 +370,6 @@ void startMessage(void)
 
 
 
-
-
-
-#ifdef WASM
-    void EMSCRIPTEN_KEEPALIVE execCode(char* code)
-    {
-        
-    	if (strcmp(code,"")==0) // si l'utilisateur n'a rien ecrit
-    	    return;
-        
-        FILENAME = NULL;
-    
-    	Tree* tree = tree_create(NULL, 0, 0);
-    	createSyntaxTree(tree, code);
-
-        if (CODE_ERROR != 0)
-        {
-            printError(CODE_ERROR);
-            CODE_ERROR = 0;
-            tree_destroy(tree);
-            return;
-        }
-
-        FILENAME = strdup(tree->label1);
-
-    	// s'il n'y a qu'une expression, alors, on affiche le résultat de l'expression
-    	if (tree->nbSons == 1 && tree->sons[0]->type != TYPE_TRYEXCEPT && tree->sons[0]->type != TYPE_CONDITIONBLOCK && tree->sons[0]->type != TYPE_STATEMENTFOR && tree->sons[0]->type != TYPE_STATEMENTFOREACH && tree->sons[0]->type != TYPE_STATEMENTWHILE && tree->sons[0]->type != TYPE_KEYWORD && tree->sons[0]->type != TYPE_FUNCTIONDEF && tree->sons[0]->type != TYPE_BLOCKWORD1LINE && tree->sons[0]->type != TYPE_ATOMICBLOCK)
-        {
-            
-            res = eval(tree->sons[0]);
-
-
-            if (CODE_ERROR != 1 && CODE_ERROR != 0)
-            {
-                printError(CODE_ERROR);
-                tree_destroy(tree);
-                continue;
-            }
-            else if (CODE_ERROR == 1) // quitte le terminal
-            {
-                tree_destroy(tree);
-                return ;
-            }
-            
-            printRes(res);
-            neobject_destroy(res,true);
-        }
-        else if (tree->nbSons > 0)
-        {
-            exec(tree);
-            if (CODE_ERROR != 1 && CODE_ERROR != 0)
-            {
-                printError(CODE_ERROR);
-                tree_destroy(tree);
-                continue;
-            }
-            else if (CODE_ERROR == 1) // quitte le terminal
-            {
-                tree_destroy(tree);
-                return ;
-            }
-        }
-        CODE_ERROR = 0;
-    	tree_destroy(tree);
-        return ;
-    }
-
-
-
-
-    char* EMSCRIPTEN_KEEPALIVE inputMessage(void)
-    {
-        return INPUTMESSAGE;
-    }
-
-#endif
 
 
 
@@ -708,15 +629,13 @@ void defineVariables(void)
 
 void neonInit(void)
 {
-    #if defined(LINUX)
+    #ifdef LINUX_AMD64
         linenoiseSetMultiLine(1); // spécial pour linenoise
         signal(SIGINT, handle_signal);
         signal(SIGTERM, handle_signal);
-        signal(SIGKILL, handle_signal);
-        signal(SIGSTOP, handle_signal);
     #endif
     
-    #if defined(WINDOWS10) || defined(WINDOWS11)
+    #ifdef WINDOWS_AMD64
         SetConsoleCtrlHandler(ctrlHandler, TRUE);
     #endif
 
@@ -1319,7 +1238,7 @@ void neonExit(void)
 
 
 
-#ifdef TI83PCE
+#ifdef TI_EZ80
     int main(void)
 #else
     int main (int argc, char* argv[])
@@ -1334,7 +1253,7 @@ void neonExit(void)
     NeObj l = neo_list_create(0);
     updateFileName(strdup("__main__")); // nom du fichier actuel
 
-    #ifdef TI83PCE
+    #ifdef TI_EZ80
         // récupération du nom de fichier si existant
         nio_init(&console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NIO_COLOR_BLACK, NIO_COLOR_WHITE, true);
         nio_set_default(&console);
@@ -1356,33 +1275,30 @@ void neonExit(void)
         }
         neonExit();
     #else
-        #ifndef WASM
+        // ajout des arguments dans le tableau contenant les arguments du programme
+        for (int i = 2 ; i < argc ; i++)
+            neo_list_append(l,neo_str_create(strdup(argv[i])));
 
-            // ajout des arguments dans le tableau contenant les arguments du programme
-            for (int i = 2 ; i < argc ; i++)
-                neo_list_append(l,neo_str_create(strdup(argv[i])));
+        nelist_append(ADRESSES,l);
+        strlist_append(NOMS,strdup("__args__"));
 
-            nelist_append(ADRESSES,l);
-            strlist_append(NOMS,strdup("__args__"));
+        updateFileName(strdup("__main__"));
 
-            updateFileName(strdup("__main__"));
+        if (argc >= 2)
+        {
+            execFile(argv[1]);
+        }
+        else
+        {
+            startMessage();
+            terminal();
+        }
 
-            if (argc >= 2)
-            {
-                execFile(argv[1]);
-            }
-            else
-            {
-                startMessage();
-                terminal();
-            }
-
-            neonExit();
-        #endif
+        neonExit();
     #endif
 
 
-    #ifdef TI83PCE
+    #ifdef TI_EZ80
         nio_free(&console);
     #endif
 

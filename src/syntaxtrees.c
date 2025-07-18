@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "headers/neonio.h"
-#include "headers/builtinfunctions.h"
 #include "headers/objects.h"
 #include "headers/dynarrays.h"
 #include "headers/parser.h"
@@ -21,49 +20,23 @@ extern strlist* CONTAINERS;
 extern NeList* ATTRIBUTES;
 
 //déclaration des variables globales à cut
-extern strlist acceptedChars;
-extern listlist syntax;
-extern strlist sousop;
 extern intlist gramm1;
 extern strlist operateurs3;
-extern strlist operateurs1;
-extern strlist operateurs2;
-extern strlist blockwords;
 extern strlist blockwords1Line;
-extern strlist neon_boolean;
 extern strlist exceptions;
-extern strlist keywords;
+
 extern strlist lkeywords;
-extern strlist constant;
 
 
 extern strlist OPERATEURS;
-extern intlist PRIORITE;
 extern intlist OPERANDES;
 
-extern void* PTRERROR;
 
 //stockage des variables
 extern strlist* NOMS;
 extern NeList* ADRESSES;
 
-extern strlist NOMSBUILTINSFONC;
-extern strlist HELPBUILTINSFONC;
-extern intlist TYPESBUILTINSFONC;
 
-extern NeObj (*OPFONC[NBOPERATEURS])(NeObj,NeObj);
-extern NeObj (*BUILTINSFONC[NBBUILTINFUNC])(NeList*);
-
-
-
-extern int error;
-
-
-
-// ces fonctions n'existent pas, et sont là pour que ça fonctionne en attendant qu'on enlève les appels vers ces fonctions
-char* nomBlockLine(char* blockline) {
-    return NULL;
-}
 
 
 /*
@@ -185,18 +158,8 @@ void tree_destroy(Tree* tree)
         }
         free(tree->sons);
         
-        if (tree->type != TYPE_VARIABLE && tree->type != TYPE_LISTINDEX && tree->type != TYPE_FONCTION && tree->type != TYPE_FUNCTIONDEF)
+        if (tree->type != TYPE_VARIABLE && tree->type != TYPE_LISTINDEX && tree->type != TYPE_FONCTION)
             neobject_destroy(tree->data);
-        else if (tree->type == TYPE_FUNCTIONDEF)
-        {
-            /*UserFunc* fun = tree->data->data.ptr;
-            free(fun->args);
-            tree_destroy(fun->opt_args);
-            free(fun);
-            free(tree->data->data.refc);
-            free(tree->data);*/
-            neobject_destroy(tree->data);
-        }
         
         free(tree);
     }

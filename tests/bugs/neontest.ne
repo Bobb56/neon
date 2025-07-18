@@ -151,7 +151,6 @@ function main(args) do
             "prog"
         ]
     )
-    print(screen)
     screen.Screen~runTests(clearScr := args==[] or args[0] != 'log')
 end
 

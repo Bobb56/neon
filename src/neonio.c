@@ -8,7 +8,7 @@
 #include "headers/neonio.h"
 #include "headers/linenoise.h"
 
-#ifndef LINUX
+#ifndef LINUX_AMD64
 #include "headers/strings.h"
 #endif
 
@@ -18,7 +18,7 @@ extern int CODE_ERROR;
 
 
 
-#ifndef TI83PCE
+#ifndef TI_EZ80
 
 
 
@@ -76,7 +76,7 @@ extern int CODE_ERROR;
         return ;
     }
 
-    #ifndef LINUX
+    #ifndef LINUX_AMD64
         char* input(char *text)
         {
             char* var=malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
@@ -319,16 +319,14 @@ extern int CODE_ERROR;
     
     void clearConsole(void)
     {
-        #if defined(LINUX)
+        #if defined(LINUX_AMD64)
             int result = system("clear");
-        #elif defined(WINDOWS)
+        #elif defined(WINDOWS_AMD64)
             int result = system("cls");
-        #elif defined(WASM)
-            printf("T5#sD9@jPzQ7fH*2m$1\n");
         #endif
     }
 
-#else //-------------------------------------------------PASSAGE A TI83PCE---------------------------------------------
+#else //------------------------------------------------- PASSAGE A TI_EZ80 ---------------------------------------------
 
     #include "nio_ce.h"
     #include <ti/vars.h>

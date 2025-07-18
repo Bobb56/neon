@@ -1,6 +1,6 @@
 #include "constants.h"
 
-#ifdef LINUX
+#ifdef LINUX_AMD64
 
 #ifndef __LINENOISE_H
 #define __LINENOISE_H

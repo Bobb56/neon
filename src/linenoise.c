@@ -1,5 +1,5 @@
 /*
-Modifié par Raphaël Le Puillandre pour Neon afin de rendre compatible la bibliothèque avec l'utilisation de couleurs
+Modifié par Raphaël Le Puillandre pour Neon afin de rendre compatible la bibliothèque avec l'utilisation de couleurs ANSI
 -> lignes 575 à 582, 921 à 934 et 657 à 665
 
 -> CTRL-D : 1217 et 1024
@@ -109,11 +109,15 @@ linenoise.c -- guerrilla line editing library against the idea that a
  *
  */
 
+
+#include "headers/constants.h"
+
+#ifdef LINUX_AMD64
+
 #include "headers/linenoise.h"
 #include "headers/neonio.h"
 extern int CODE_ERROR;
 
-#ifdef LINUX
 
 
 #include <termios.h>

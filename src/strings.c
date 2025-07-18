@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -27,7 +26,7 @@ extern int CODE_ERROR;
 
 void cleanStdin(void)// vide le buffer
 {
-#ifndef LINUX
+#ifndef LINUX_AMD64
     int c = 0;
     while ((c = getchar()) != '\n' && c != EOF);
 #endif
@@ -317,7 +316,7 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non compl√©t√
 
 char* inputCode(char* text)
 {
-    #ifndef LINUX
+    #ifndef LINUX_AMD64
         setColor(BLUE);
         printString(text);
         setColor(WHITE);

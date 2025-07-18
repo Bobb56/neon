@@ -14,9 +14,6 @@
 #include "headers/syntaxtrees.h"
 
 
-#ifdef WASM
-    extern char* INPUTMESSAGE;
-#endif
 
 extern char* EXCEPTION;
 extern int CODE_ERROR;
@@ -54,75 +51,48 @@ NeObj _print_(NeList* args)
 
 NeObj _input_(NeList* args)
 {
-    
-    #ifdef WASM
-        if (INPUTMESSAGE != NULL)
-            free(INPUTMESSAGE);
+
+    #ifndef LINUX_AMD64
+
+        for (int i=0 ; i< args->len ; i++)
+        {
+            if (NEO_TYPE(ARG(i)) == TYPE_STRING)
+                printString(neo_to_string(ARG(i)));
+            else
+                neobject_aff(ARG(i));
+            
+            
+            if (i < args->len - 1)
+                printString(" ");
         
-        if (args->len == 0)
-        {
-            INPUTMESSAGE = strdup("");
         }
-        else
-        {
-            char* str1 = strdup(""), * str2, *temp;
-            for (unsigned i=0 ; i < args->len ; i++)
-            {
-                temp = (NEO_TYPE(ARG(i)) == TYPE_STRING) ? strdup(neo_to_string(ARG(i))) : neobject_str(ARG(i));
-                str2 = addStr(str1,temp);
-                free(temp);free(str1);
-                str1 = addStr(str2," ");
-                free(str2);
-            }
-            
-            INPUTMESSAGE = str1;
-        }
+
+        char *entree=input("");
+
     #else
+        // à cause de linenoise, il faut mettre tout le texte dans une seule chaine de caractères
+        char* chaine = strdup("");
 
-        #ifndef LINUX
-    
-            for (int i=0 ; i< args->len ; i++)
-            {
-                if (NEO_TYPE(ARG(i)) == TYPE_STRING)
-                    printString(neo_to_string(ARG(i)));
-                else
-                    neobject_aff(ARG(i));
-                
-                
-                if (i < args->len - 1)
-                    printString(" ");
+        for (int i=0 ; i< args->len ; i++)
+        {
+            if (NEO_TYPE(ARG(i)) == TYPE_STRING)
+                chaine = addStr2(chaine, neo_to_string(ARG(i)));
+            else
+                chaine = addStr2(chaine,neobject_str(ARG(i)));
             
-            }
+            
+            if (i < args->len - 1)
+                chaine = addStr2(chaine, " ");
+        }
 
-            char *entree=input("");
+        char* entree = input(chaine);
+        free(chaine);
 
-        #else
-            // à cause de linenoise, il faut mettre tout le texte dans une seule chaine de caractères
-            char* chaine = strdup("");
+        if (CODE_ERROR != 0) {
+            return NEO_VOID;
+        }
 
-            for (int i=0 ; i< args->len ; i++)
-            {
-                if (NEO_TYPE(ARG(i)) == TYPE_STRING)
-                    chaine = addStr2(chaine, neo_to_string(ARG(i)));
-                else
-                    chaine = addStr2(chaine,neobject_str(ARG(i)));
-                
-                
-                if (i < args->len - 1)
-                    chaine = addStr2(chaine, " ");
-            }
-
-            char* entree = input(chaine);
-            free(chaine);
-
-            if (CODE_ERROR != 0) {
-                return NEO_VOID;
-            }
-
-        #endif
-    
-    #endif
-    
+    #endif    
     return neo_str_create(entree);
 }
 
@@ -515,7 +485,7 @@ NeObj _failwith_(NeList* args)
 
 NeObj _time_(NeList* args)
 {
-    #ifndef TI83PCE
+    #ifndef TI_EZ80
         time_t temps = time(NULL);
         double res = (double)temps;
         return neo_integer_create(res);

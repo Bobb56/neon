@@ -17,36 +17,29 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 // à définir en fonction des destinations de compilation
-#define LINUX
-//#define WINDOWS10
-//#define WINDOWS11
-//#define WASM
-//#define TI83PCE
+#define LINUX_AMD64
+//#define WINDOWS_AMD64
+//#define TI_EZ80
 
-#ifdef LINUX
-    #define PLATFORM "linux"
+#ifdef LINUX_AMD64
+    #define PLATFORM "LINUX_AMD64"
 #endif
-#ifdef WINDOWS11
-    #define PLATFORM "windows11"
+#ifdef WINDOWS_AMD64
+    #define PLATFORM "WINDOWS_AMD64"
 #endif
-#ifdef WINDOWS10
-    #define PLATFORM "windows10"
-#endif
-#ifdef TI83PCE
-    #define PLATFORM "ti83pce"
-#endif
-#ifdef WASM
-    #define PLATFORM "wasm"
+#ifdef TI_EZ80
+    #define PLATFORM "TI_EZ80"
 #endif
 
 
-#ifdef TI83PCE
+
+#ifdef TI_EZ80
     #include <ti/real.h>
     #include <sys/rtc.h>
 #endif
 
 
-#if defined(LINUX) || defined(WINDOWS11) || defined(TI83PCE)
+#if defined(LINUX_AMD64) || defined(TI_EZ80)
     // a définir uniquement si la console standard du système d'exploitation visé supporte les couleurs
     #define COLOR
 #endif
