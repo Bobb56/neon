@@ -52,7 +52,7 @@ end
 
 
 # cette fonction affiche toutes les lignes de l'affichage (donc plusieurs programmes sur la même ligne potentiellement)
-function printLines(screen, nblines := 20, nbcolumns := 2) do
+function printLines(screen, nblines := 15, nbcolumns := 2) do
     nbrealcolumns = (len(screen>>passed)) // nblines + 1
     
     for (i, 0, min(nblines, len(screen>>passed) + 1)) do
