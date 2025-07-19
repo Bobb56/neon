@@ -9,6 +9,9 @@
 
 #ifdef LINUX_AMD64
 
+# used registers : rdi, rsi, rdx, rcx, rax
+# saved registers : rbx, rbp, r12 - r15
+
 .globl eval_epilog_unaligned
 .type eval_epilog_unaligned, @function
 # cette fonction doit être appelée de manière désalignée par le return de execval_prolog
@@ -179,7 +182,11 @@ switch_registers:
 #ifdef WINDOWS_AMD64
 
 
-
+# switch registers :
+# rdx -> r8
+# rcx -> r9
+# rdi -> rcx
+# rsi -> rdx
 
 
 
