@@ -1,3 +1,5 @@
+setAtomicTime(1)
+
 function f() do
     i = 0
     while (i < 2000) do

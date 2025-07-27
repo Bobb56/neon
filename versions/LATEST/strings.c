@@ -1,44 +1,21 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 
-#include "headers.h"
+#include "headers/neonio.h"
+#include "headers/dynarrays.h"
+#include "headers/strings.h"
+#include "headers/linenoise.h"
+#include "headers/objects.h"
 
 
-
-
-
-
-
-//déclaration des variables globales à cut
-extern strlist acceptedChars;
-extern listlist syntax;
-extern strlist sousop;
-extern intlist gramm1;
-extern strlist operateurs3;
-extern strlist operateurs1;
-extern strlist operateurs2;
-extern strlist blockwords;
-extern strlist neon_boolean;
-extern strlist keywords;
-extern strlist lkeywords;
-extern strlist constant;
-
-
-extern strlist OPERATEURS;
-extern intlist PRIORITE;
-extern intlist OPERANDES;
 
 
 //stockage des variables
 extern strlist* NOMS;
 extern NeList* ADRESSES;
 
-extern strlist NOMSBUILTINSFONC;
-extern strlist HELPBUILTINSFONC;
-extern intlist TYPESBUILTINSFONC;
 
 extern strlist neon_boolean;
 
@@ -46,15 +23,14 @@ extern int CODE_ERROR;
 
 
 
-#ifndef LINUX
-    void cleanStdin(void)// vide le buffer
-    {
-        int c = 0;
-        while ((c = getchar()) != '\n' && c != EOF);
-    }
+
+void cleanStdin(void)// vide le buffer
+{
+#ifndef LINUX_AMD64
+    int c = 0;
+    while ((c = getchar()) != '\n' && c != EOF);
 #endif
-
-
+}
 
 
 
@@ -123,7 +99,7 @@ char* traitementString(char* string)
 	char* string6=replace(string5,"\\t", "\t");
 	char* string7=replace(string6,"\\n", "\n");
 	char* string8=replace(string7,"\\\\", "\\");
-	err_free(string1);err_free(string2);err_free(string3);err_free(string4);err_free(string5);err_free(string6);err_free(string7);
+	free(string1);free(string2);free(string3);free(string4);free(string5);free(string6);free(string7);
 	return string8;
 }
 
@@ -138,7 +114,7 @@ char* traitementStringInverse(char* string)
 	char* string5=replace(string4,"\v", "\\v");
 	char* string6=replace(string5,"\t", "\\t");
 	char* string7=replace(string6,"\n", "\\n");
-	err_free(string1);err_free(string2);err_free(string3);err_free(string4);err_free(string5);err_free(string6);err_free(string8);
+	free(string1);free(string2);free(string3);free(string4);free(string5);free(string6);free(string8);
 	return string7;
 }
 
@@ -146,6 +122,73 @@ char* traitementStringInverse(char* string)
 
 bool isidentifier(char c) {
     return isalnum(c) || c == '_';
+}
+
+
+
+int unitCharToInt(char car, const char base)
+{
+    if (car != '0' && car != '1' && base == 'b') // le binaire n'autorise que 0 ou 1
+        CODE_ERROR = 73;
+    
+    if (isdigit(car))
+        return car - '0';
+    else if (car >= 'a' && car <= 'f')
+        return car - 'a' + 10;
+    else if (car >= 'A' && car <= 'F')
+        return car - 'A' + 10;
+
+    CODE_ERROR = 73;
+    return 0;
+}
+
+
+intptr_t binToDec(char* chaine, int debut, int longueur)
+{
+    int res = 0;
+    for (int i = debut ; i < debut + longueur ; i++)
+    {
+        res *= 2;
+        res += unitCharToInt(chaine[i], 'b');
+
+        if (CODE_ERROR != 0)
+            return 0;
+        
+    }
+    return res;
+}
+
+
+
+
+intptr_t hexToDec(char* chaine, int debut, int longueur)
+{
+    int res = 0;
+    for (int i = debut ; i < debut + longueur ; i++)
+    {
+        res *= 16;
+        res += unitCharToInt(chaine[i], 'h');
+        
+        if (CODE_ERROR != 0)
+            return 0;
+    }
+    return res;
+}
+
+
+
+bool isString(char* string, char* test, int size)
+{
+    bool bo = true;
+    for (int i = 0 ; i < size ; i++)
+    {
+        if (string[i] != test[i])
+        {
+            bo = false;
+            break;
+        }
+    }
+    return bo && !isidentifier(string[size]);
 }
 
 
@@ -260,7 +303,7 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non complét�
         }
     }
 
-    err_free(string);
+    free(string);
     return acc;
 
 }
@@ -273,7 +316,7 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non complét�
 
 char* inputCode(char* text)
 {
-    #ifndef LINUX
+    #ifndef LINUX_AMD64
         setColor(BLUE);
         printString(text);
         setColor(WHITE);
@@ -290,7 +333,7 @@ char* inputCode(char* text)
     {
         if (CODE_ERROR != 0)
         {
-            err_free(str);
+            free(str);
             return NULL;
         }
 
@@ -303,19 +346,19 @@ char* inputCode(char* text)
         
         char* newStr = input(text);
 
-        err_free(text);
+        free(text);
 
         if (CODE_ERROR != 0 || newStr == NULL) {
-            err_free(str);
+            free(str);
             return NULL;
         }
             
         char* temp = addStr("\n", newStr);
         char* temp2 = addStr(str, temp);
-        err_free(str);
-        err_free(newStr);
+        free(str);
+        free(newStr);
         str = temp2;
-        err_free(temp);
+        free(temp);
     }
     return str;
 }
@@ -360,7 +403,7 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
     return NULL;
   }
   
-  char* newStr = err_malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
+  char* newStr = malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
 
   if (newStr == NULL)
   {
@@ -368,7 +411,7 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
       return NULL;
   }
   
-  err_memset(newStr,0,longueur*sizeof(char)+1);//initialisation à 0
+  memset(newStr,0,longueur*sizeof(char)+1);//initialisation à 0
   
   
   for (unsigned i=0; i < (unsigned)longueur && i+(unsigned)debut<strlen(string); i++)//recopie les caractères
@@ -387,7 +430,7 @@ char* sandwich(char* string, char car)
 
     /* fonction qui ajoute le caractère car avant et après la chaine de caractères string*/
     int len = strlen(string);
-    char* newStr = err_malloc(len + 3);
+    char* newStr = malloc(len + 3);
   
     newStr[0]=car;
     newStr[len+1]=car;
@@ -404,7 +447,7 @@ char* sandwich(char* string, char car)
 
 char* addStr(char* str1, char* str2)// concatène deux chaines de caractères
 {
-  char* newStr = err_malloc(strlen(str1) + strlen(str2) + 1);
+  char* newStr = malloc(strlen(str1) + strlen(str2) + 1);
   
   strcpy(newStr,str1);
   strcat(newStr,str2);
@@ -415,7 +458,7 @@ char* addStr(char* str1, char* str2)// concatène deux chaines de caractères
 
 char* charToString(char car)
 {
-    char* retour = err_malloc(2*sizeof(char));
+    char* retour = malloc(2*sizeof(char));
     retour[0] = car ; retour[1] = '\0';
     return retour;
 }
@@ -426,7 +469,7 @@ char* addStr2(char* str1, char* str2)
     la fonction libère la première str1
     */
     char* str = addStr(str1, str2);
-    err_free(str1);
+    free(str1);
     return str;
 }
 
@@ -450,7 +493,7 @@ char* subReplace(char* string, int len, int debut, int longueur, char* remplacem
         return 0;
     }
     
-    char* resultat = err_malloc(sizeof(char) * (len - longueur + len_remplacement + 1));
+    char* resultat = malloc(sizeof(char) * (len - longueur + len_remplacement + 1));
 
     for (int i = 0 ; i < debut ; i++) // partie inchangée
         resultat[i] = string[i];
@@ -496,7 +539,7 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
     // création de la nouvelle chaine de caractères
 
     int new_len = len + l.len * (len_remplacement - len_aremplacer);
-    char* res = err_malloc(sizeof(char)*(new_len+1));
+    char* res = malloc(sizeof(char)*(new_len+1));
     res[new_len] = '\0';
 
     int i_string = 0, i_res = 0;
@@ -523,7 +566,7 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
         }
     }
 
-    err_free(l.tab);
+    free(l.tab);
 
     return res;
 }
@@ -584,7 +627,7 @@ strlist* get_all_modules(void) {
             strlist_append(modules, prefix);
         }
         else if (prefix != NULL)
-            err_free(prefix);
+            free(prefix);
     }
     return modules;
 }
@@ -606,7 +649,7 @@ int function_module(char* module, char* function) {
     char* functionName = addStr2(addStr(module, "~"), function);
     int n = strlist_index(NOMS, functionName);
     CODE_ERROR = 0;
-    err_free(functionName);
+    free(functionName);
 
     if (n < 0 || (NEO_TYPE(ADRESSES->tab[n]) != TYPE_USERFUNC && NEO_TYPE(ADRESSES->tab[n]) != TYPE_USERMETHOD))
         return -1;

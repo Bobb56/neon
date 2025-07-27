@@ -3,60 +3,30 @@
 #include <time.h>
 #include <math.h>
 
-#include "headers.h"
+#include "headers/neonio.h"
+#include "headers/builtinfunctions.h"
+#include "headers/dynarrays.h"
+#include "headers/gc.h"
+#include "headers/operators.h"
+#include "headers/runtime.h"
+#include "headers/printerror.h"
+#include "headers/strings.h"
+#include "headers/syntaxtrees.h"
 
 
-#ifdef WASM
-    extern char* INPUTMESSAGE;
-#endif
-
-extern strlist* CONTAINERS;
-extern NeList* ATTRIBUTES;
 
 extern char* EXCEPTION;
-
-extern strlist ERRORS_MESSAGES;
-extern intlist exceptions_err;
-
 extern int CODE_ERROR;
-
 extern char* FILENAME;
 extern int LINENUMBER;
 
-//déclaration des variables globales à cut
-extern strlist acceptedChars;
-extern listlist syntax;
-extern strlist sousop;
-extern intlist gramm1;
-extern strlist operateurs3;
-extern strlist operateurs1;
-extern strlist operateurs2;
-extern strlist blockwords;
-extern strlist neon_boolean;
 extern strlist exceptions;
-
-extern strlist keywords;
-extern strlist lkeywords;
-extern strlist constant;
-
-
-extern strlist OPERATEURS;
-extern intlist PRIORITE;
-extern intlist OPERANDES;
 
 
 //stockage des variables
 extern strlist* NOMS;
 extern NeList* ADRESSES;
 
-extern strlist NOMSBUILTINSFONC;
-extern strlist HELPBUILTINSFONC;
-extern intlist TYPESBUILTINSFONC;
-
-extern NeObj (*OPFONC[NBOPERATEURS])(NeObj,NeObj);
-extern NeObj (*BUILTINSFONC[NBBUILTINFONC])(NeList*);
-
-extern int error;
 
 extern int ATOMIC_TIME;
 extern int atomic_counter;
@@ -81,75 +51,48 @@ NeObj _print_(NeList* args)
 
 NeObj _input_(NeList* args)
 {
-    
-    #ifdef WASM
-        if (INPUTMESSAGE != NULL)
-            err_free(INPUTMESSAGE);
+
+    #ifndef LINUX_AMD64
+
+        for (int i=0 ; i< args->len ; i++)
+        {
+            if (NEO_TYPE(ARG(i)) == TYPE_STRING)
+                printString(neo_to_string(ARG(i)));
+            else
+                neobject_aff(ARG(i));
+            
+            
+            if (i < args->len - 1)
+                printString(" ");
         
-        if (args->len == 0)
-        {
-            INPUTMESSAGE = strdup("");
         }
-        else
-        {
-            char* str1 = strdup(""), * str2, *temp;
-            for (unsigned i=0 ; i < args->len ; i++)
-            {
-                temp = (NEO_TYPE(ARG(i)) == TYPE_STRING) ? strdup(neo_to_string(ARG(i))) : neobject_str(ARG(i));
-                str2 = addStr(str1,temp);
-                err_free(temp);err_free(str1);
-                str1 = addStr(str2," ");
-                err_free(str2);
-            }
-            
-            INPUTMESSAGE = str1;
-        }
+
+        char *entree=input("");
+
     #else
+        // à cause de linenoise, il faut mettre tout le texte dans une seule chaine de caractères
+        char* chaine = strdup("");
 
-        #ifndef LINUX
-    
-            for (int i=0 ; i< args->len ; i++)
-            {
-                if (NEO_TYPE(ARG(i)) == TYPE_STRING)
-                    printString(neo_to_string(ARG(i)));
-                else
-                    neobject_aff(ARG(i));
-                
-                
-                if (i < args->len - 1)
-                    printString(" ");
+        for (int i=0 ; i< args->len ; i++)
+        {
+            if (NEO_TYPE(ARG(i)) == TYPE_STRING)
+                chaine = addStr2(chaine, neo_to_string(ARG(i)));
+            else
+                chaine = addStr2(chaine,neobject_str(ARG(i)));
             
-            }
+            
+            if (i < args->len - 1)
+                chaine = addStr2(chaine, " ");
+        }
 
-            char *entree=input("");
+        char* entree = input(chaine);
+        free(chaine);
 
-        #else
-            // à cause de linenoise, il faut mettre tout le texte dans une seule chaine de caractères
-            char* chaine = strdup("");
+        if (CODE_ERROR != 0) {
+            return NEO_VOID;
+        }
 
-            for (int i=0 ; i< args->len ; i++)
-            {
-                if (NEO_TYPE(ARG(i)) == TYPE_STRING)
-                    chaine = addStr2(chaine, neo_to_string(ARG(i)));
-                else
-                    chaine = addStr2(chaine,neobject_str(ARG(i)));
-                
-                
-                if (i < args->len - 1)
-                    chaine = addStr2(chaine, " ");
-            }
-
-            char* entree = input(chaine);
-            err_free(chaine);
-
-            if (CODE_ERROR != 0) {
-                return NEO_VOID;
-            }
-
-        #endif
-    
-    #endif
-    
+    #endif    
     return neo_str_create(entree);
 }
 
@@ -265,7 +208,7 @@ NeObj _reverse_(NeList* args)
         char* chaine = neo_to_string(ARG(0));
         int len = strlen(chaine);
         
-        char* retour = err_malloc((len+1)*sizeof(char));
+        char* retour = malloc((len+1)*sizeof(char));
         
         for (int i=0 ; i<len ; i++)
         {
@@ -297,14 +240,14 @@ NeObj _eval_(NeList* args)
 
     if (CODE_ERROR != 0) {
         tree_destroy(tree);
-        err_free(sov);
+        free(sov);
         return NEO_VOID;
     }
 
-    NeObj res = eval_prolog(tree);
+    NeObj res; eval_prolog(&res, tree);
 
     if (CODE_ERROR != 0)
-        err_free(sov);
+        free(sov);
     else
         FILENAME = sov;
     
@@ -481,7 +424,7 @@ NeObj _help_(NeList* args)
                 {
                     char* temp = strdup(fun->help); // c'est pas beau, c'est juste pour ne pas avoir le warning du compilateur
                     printString(temp);
-                    err_free(temp);
+                    free(temp);
                     newLine();
                 }
             }
@@ -542,7 +485,7 @@ NeObj _failwith_(NeList* args)
 
 NeObj _time_(NeList* args)
 {
-    #ifndef TI83PCE
+    #ifndef TI_EZ80
         time_t temps = time(NULL);
         double res = (double)temps;
         return neo_integer_create(res);
@@ -583,7 +526,7 @@ NeObj _output_(NeList* args)
 NeObj _chr_(NeList* args)
 {
     int n = neo_to_integer(ARG(0));
-    char* c = err_malloc(sizeof(char) * 2);
+    char* c = malloc(sizeof(char) * 2);
     c[0] = (char)n;
     c[1] = '\0';
     return neo_str_create(c);
@@ -626,7 +569,7 @@ NeObj _list_comp_(NeList* args)
 
     if (NEO_TYPE(ARG(1)) != TYPE_INTEGER || NEO_TYPE(ARG(2)) != TYPE_INTEGER || NEO_TYPE(ARG(3)) != TYPE_INTEGER) {
         if (sov_FILENAME != NULL)
-            err_free(sov_FILENAME);
+            free(sov_FILENAME);
         CODE_ERROR = 112;
         return NEO_VOID;
     }
@@ -643,7 +586,7 @@ NeObj _list_comp_(NeList* args)
         tree_destroy(cond);
         tree_destroy(val);
         if (sov_FILENAME != NULL)
-            err_free(sov_FILENAME);
+            free(sov_FILENAME);
         return NEO_VOID;
     }
 
@@ -654,7 +597,7 @@ NeObj _list_comp_(NeList* args)
         tree_destroy(cond);
         tree_destroy(val);
         if (sov_FILENAME != NULL)
-            err_free(sov_FILENAME);
+            free(sov_FILENAME);
         return NEO_VOID;
     }
 
@@ -663,7 +606,7 @@ NeObj _list_comp_(NeList* args)
 
     while (neo_to_integer(*i) < neo_to_integer(ARG(2)))
     {
-        NeObj bo = eval_prolog(cond);
+        NeObj bo; eval_prolog(&bo, cond);
 
 
         if (CODE_ERROR != 0) {
@@ -671,13 +614,14 @@ NeObj _list_comp_(NeList* args)
             tree_destroy(val);
             neobject_destroy(liste);
             if (sov_FILENAME != NULL)
-                err_free(sov_FILENAME);
+                free(sov_FILENAME);
             return NEO_VOID;
         }
 
 
         if (neoIsTrue(bo)) {
-            neo_list_append(liste, eval_prolog(val));
+            NeObj neo; eval_prolog(&neo, val);
+            neo_list_append(liste, neo);
 
             if (CODE_ERROR != 0) {
                 neobject_destroy(bo);
@@ -685,7 +629,7 @@ NeObj _list_comp_(NeList* args)
                 tree_destroy(cond);
                 tree_destroy(val);
                 if (sov_FILENAME != NULL)
-                    err_free(sov_FILENAME);
+                    free(sov_FILENAME);
                 return NEO_VOID;
             }
         }
@@ -1052,7 +996,7 @@ NeObj _setFunctionDoc_(NeList* args) {
     UserFunc* fun = neo_to_userfunc(ARG(0));
 
     if (fun->doc != NULL)
-        err_free(fun->doc);
+        free(fun->doc);
 
     fun->doc = strdup(neo_to_string(ARG(1)));
     return neo_none_create();
@@ -1087,7 +1031,7 @@ NeObj _load_namespace_(NeList* args) {
 
             if (strlist_inList(NOMS, without_prefix)) {
                 _affect2(&ADRESSES->tab[strlist_index(NOMS, without_prefix)], ADRESSES->tab[i]);
-                err_free(without_prefix);
+                free(without_prefix);
             }
             else {
                 strlist_append(NOMS, without_prefix);
@@ -1095,7 +1039,7 @@ NeObj _load_namespace_(NeList* args) {
             }
         }
     }
-    err_free(prefix);
+    free(prefix);
     return neo_none_create();
 }
 

@@ -1,3 +1,5 @@
+setAtomicTime(1)
+
 a = 2
 
 function f() do

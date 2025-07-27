@@ -60,6 +60,8 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 
 
 Liste des choses qui marchent pas :
+
+
 reverse des listes
 _____________________
 
@@ -74,9 +76,12 @@ S'il y a encore un problème de lecture dans la pile allouée par malloc, et un 
 probablement encore un problème d'inlinig généré par GCC (même si les fonctions concernées ont été normalement toutes
 interdites d'inlining)
 
+S'il y a des problèmes liés aux piles et tout, bien vérifier les tailles des contextes des fonctions et regarder si on gère ça correctement
+
 Peut être qu'il y a des endroits où on oublie de mettre à jour les promesses
 
-
+J'ai enlevé les vérifications de CODE_ERROR juste après avoir restauré les registres et la pile, ça peut causer des problèmes
+S'il y a des problèmes, relire mes commentaires dans launch_process, eval_prolog et switch_registers
 
 
 Choses à modifier pour la refonte du système d'objets :
@@ -86,6 +91,12 @@ Choses à modifier pour la refonte du système d'objets :
 
 Avancement et choses à faire :
 -------------------------------
+> Il faut absolument gérer les cas où le processus principal ne termine pas en dernier :
+  -> Dans ce cas il faut prendre en charge le retour dans eval_prolog (ça devrait le faire)
+  -> Il faut prendre en charge la sortie dans launch_process
+> Il faut en finir avec STACK_PTR en trimbalant la pile système comme les registres sauvegardés associés à cette pile
+> Il faut faire un eval_prolog moins lourd en rajoutant une dimension : on transforme le eval_prolog actuel pour qu'il change de processus systématiquement et on fait un nouveau eval_prolog qui appelle l'autre qu'en cas de atomic_time == 0
+
 > Mettre à jour la documentation sur les integer et les flottants
 > Changer les prototypes des fonctions en utilisant le unspecified type
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement

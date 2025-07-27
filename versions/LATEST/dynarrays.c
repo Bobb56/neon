@@ -3,43 +3,10 @@
 #include <string.h>
 
 
-#include "headers.h"
-
+#include "headers/neonio.h"
+#include "headers/dynarrays.h"
 
 extern int CODE_ERROR;
-
-
-
-//déclaration des variables globales à cut
-extern strlist acceptedChars;
-extern listlist syntax;
-extern strlist sousop;
-extern intlist gramm1;
-extern strlist operateurs3;
-extern strlist operateurs1;
-extern strlist operateurs2;
-extern strlist blockwords;
-extern strlist neon_boolean;
-extern strlist keywords;
-extern strlist lkeywords;
-extern strlist constant;
-
-
-extern strlist OPERATEURS;
-extern intlist PRIORITE;
-extern intlist OPERANDES;
-
-
-//stockage des variables
-extern strlist* NOMS;
-extern NeList* ADRESSES;
-
-extern strlist NOMSBUILTINSFONC;
-extern strlist HELPBUILTINSFONC;
-extern intlist TYPESBUILTINSFONC;
-
-
-extern int error;
 
 
 // fonctions de copies. Servent à "déplacer" un tableau de la pile vers le tas
@@ -50,7 +17,7 @@ extern int error;
 void strlist_copy(strlist* list, const char** tab, int len)
 {
     // copie du tableau dans le tas
-    char** res = err_malloc(sizeof(char*)*len);
+    char** res = malloc(sizeof(char*)*len);
     for (int i = 0 ; i < len ; i++)
     {
         res[i] = strdup(tab[i]);
@@ -70,7 +37,7 @@ void strlist_copy(strlist* list, const char** tab, int len)
 void intlist_copy(intlist* list, const int* tab, int len)
 {
     // copie du tableau dans le tas
-    int* res = err_malloc(sizeof(int)*len);
+    int* res = malloc(sizeof(int)*len);
     for (int i = 0 ; i < len ; i++)
     {
         res[i] = tab[i];
@@ -91,12 +58,12 @@ void intlist_copy(intlist* list, const int* tab, int len)
 void listlist_copy(listlist* list, const intlist* tab, int len)
 {
     // copie du tableau dans le tas
-    intlist* res = err_malloc(sizeof(strlist)*len);
+    intlist* res = malloc(sizeof(strlist)*len);
     intlist temp;
     for (int i = 0 ; i < len ; i++)
     {
         // ---- copie -----
-        int* res2 = err_malloc(sizeof(char*)*tab[i].len);
+        int* res2 = malloc(sizeof(char*)*tab[i].len);
         for (int j = 0 ; j < tab[i].len ; j++)
         {
             res2[j] = tab[i].tab[j];
@@ -130,9 +97,9 @@ listlist listlist_create(int len)// crée une liste de pointeurs
   while (pow(2, list.capacity) < len)
     list.capacity++;
   
-  list.tab=err_malloc(pow(2, list.capacity)*sizeof(intlist));//initialise le tableau de longueur len avec de zéros
+  list.tab=malloc(pow(2, list.capacity)*sizeof(intlist));//initialise le tableau de longueur len avec de zéros
   
-  err_memset(list.tab,0,len);
+  memset(list.tab,0,len);
   list.len=len;//initialise la bonne longueur
   return list;//retourne la structure
 }
@@ -146,7 +113,7 @@ void listlist_append(listlist* list, intlist* ptr)//ajoute un élément à la fi
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(intlist));//réallocation de list.tab
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(intlist));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
 
@@ -169,7 +136,7 @@ void listlist_remove(listlist* list,int index)//indiquer si il faut libérer l'�
     return ;
   }
   
-  err_free(list->tab[index].tab);
+  free(list->tab[index].tab);
   
   for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];
@@ -179,7 +146,7 @@ void listlist_remove(listlist* list,int index)//indiquer si il faut libérer l'�
   if (pow(2, list->capacity-1)==list->len-1)
   {
     list->capacity--;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(intlist));//réalloue un nouveau pointeur de la bonne taille
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(intlist));//réalloue un nouveau pointeur de la bonne taille
     list->tab = tmp;
   }
   
@@ -205,9 +172,9 @@ void listlist_destroy(listlist* list)
 {
   for (int i=0;i<list->len;i++)
   {
-    err_free(list->tab[i].tab);
+    free(list->tab[i].tab);
   }
-  err_free(list->tab);
+  free(list->tab);
 }
 
 
@@ -298,7 +265,7 @@ int ptrlist_destroy(ptrlist* l, bool freeElements, bool freeTab)
     }
     else if (l->queue == NULL && freeElements)
     {
-        err_free(l->tete);
+        free(l->tete);
         
         if (freeTab) // on ne libère pas l s'il ne faut pas
             free(l);
@@ -315,7 +282,7 @@ int ptrlist_destroy(ptrlist* l, bool freeElements, bool freeTab)
         {
             if (freeElements)
             {
-                err_free(ptr->tete);
+                free(ptr->tete);
                 // printString("Liberation du pointeur %p  (2)\n", ptr->tete);
             }
             tmp = ptr->queue;
@@ -378,15 +345,15 @@ void ptrlist_direct_remove(ptrlist* list, ptrlist* ptr, ptrlist* prev) {
         list->tete = list->queue->tete; // on met le deuxième élément dans le premier
         ptrlist* sov = list->queue;
         list->queue = sov->queue; // on raccorde le premier chainon au troisième chainon
-        err_free(sov);
+        free(sov);
     }
     else if (ptr->queue == NULL) { // ptr est à la fin de la liste
         prev->queue = NULL;
-        err_free(ptr);
+        free(ptr);
     }
     else {
         prev->queue = ptr->queue;
-        err_free(ptr);
+        free(ptr);
     }
 }
 
@@ -457,7 +424,7 @@ void* ptrlist_pop(ptrlist* list)
     else {
       list->tete = list->queue->tete;
       list->queue = list->queue->queue;
-      err_free(sov_chainon);
+      free(sov_chainon);
     }
     return val;
 }
@@ -496,9 +463,9 @@ intlist intlist_create(int len)// crée une liste d'entiers
   while (pow(2, list.capacity) < len)
     list.capacity++;
   
-  list.tab=err_malloc(pow(2, list.capacity)*sizeof(int));//initialise le tableau de longueur len avec de zéros
+  list.tab=malloc(pow(2, list.capacity)*sizeof(int));//initialise le tableau de longueur len avec de zéros
   
-  err_memset(list.tab,0,len);
+  memset(list.tab,0,len);
   
   list.len=len;//initialise la bonne longueur
   return list;//retourne la structure
@@ -538,7 +505,7 @@ void intlist_append(intlist* list,int nombre)//ajoute un élément à la fin de 
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réallocation de list.tab
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
 
@@ -557,7 +524,7 @@ void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la n
     while (pow(2, list->capacity) < newLen)
       list->capacity++;
       
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réalloue un pointeur de la nouvelle taille
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réalloue un pointeur de la nouvelle taille
     
     if (tmp == NULL)
     {
@@ -599,7 +566,7 @@ void intlist_remove(intlist* list,int index)//supprime un élément de la liste
   if (pow(2, list->capacity-1)==list->len-1)
   {
     list->capacity--;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réalloue un nouveau pointeur de la bonne taille
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réalloue un nouveau pointeur de la bonne taille
     list->tab = tmp;
   }
   
@@ -669,7 +636,7 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réallocation de list.tab
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
   
@@ -716,9 +683,9 @@ intptrlist intptrlist_create(int len)// crée une liste d'entiers
   while (pow(2, list.capacity) < len)
     list.capacity++;
   
-  list.tab=err_malloc(pow(2, list.capacity)*sizeof(int*));//initialise le tableau de longueur len avec de zéros
+  list.tab=malloc(pow(2, list.capacity)*sizeof(int*));//initialise le tableau de longueur len avec de zéros
   
-  err_memset(list.tab,0,len);
+  memset(list.tab,0,len);
   
   list.len=len;//initialise la bonne longueur
   return list;//retourne la structure
@@ -732,7 +699,7 @@ void intptrlist_append(intptrlist* list, int* ptr)//ajoute un élément à la fi
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(int*));//réallocation de list.tab
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int*));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
 
@@ -744,9 +711,9 @@ void intptrlist_append(intptrlist* list, int* ptr)//ajoute un élément à la fi
 void intptrlist_destroy(intptrlist* list) {
   for (int i = 0 ; i < list->len ; i++) {
     if (list->tab[i] != NULL)
-      err_free(list->tab[i]);
+      free(list->tab[i]);
   }
-  err_free(list->tab);
+  free(list->tab);
 }
 
 
@@ -755,16 +722,16 @@ void intptrlist_destroy(intptrlist* list) {
 
 strlist* strlist_create(int len)
 {
-  strlist* list = err_malloc(sizeof(strlist));
+  strlist* list = malloc(sizeof(strlist));
   
   list->capacity = 0;
   
   while (pow(2, list->capacity) < len)
     list->capacity++;
   
-  list->tab=err_malloc(pow(2, list->capacity)*sizeof(char*));
+  list->tab=malloc(pow(2, list->capacity)*sizeof(char*));
   
-  err_memset(list->tab,0,len);
+  memset(list->tab,0,len);
   list->len=len;
   return list;
 }
@@ -792,7 +759,7 @@ void strlist_aff(strlist* list)
         if (tmp != NULL)
             printString(tmp);
         printString("\", ");
-        //err_free(tmp);
+        //free(tmp);
     }
 
     printString("\"");
@@ -813,7 +780,7 @@ void strlist_append(strlist* list, char *chaine)
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réallocation de list.tab
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
     
@@ -828,11 +795,11 @@ void strlist_destroy(strlist* list, bool bo)
 {
   for (int i=0 ; i < list->len;i++)
   {
-    err_free(list->tab[i]);
+    free(list->tab[i]);
   }
-  err_free(list->tab);
+  free(list->tab);
   if (bo)
-    err_free(list);
+    free(list);
 }
 
 
@@ -845,7 +812,7 @@ void strlist_resize(strlist* list, int newLen, bool freeElement)
   if (newLen < list->len && freeElement)
   {
       for (int i = newLen ; i < list->len ; i++)
-	    err_free(list->tab[i]);
+	    free(list->tab[i]);
   }
   
   
@@ -857,7 +824,7 @@ void strlist_resize(strlist* list, int newLen, bool freeElement)
     while (pow(2, list->capacity) < newLen)
       list->capacity++;
       
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réalloue un pointeur de la nouvelle taille
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réalloue un pointeur de la nouvelle taille
     
     if (tmp == NULL)
     {
@@ -892,7 +859,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
   }
   
   if (freeElement)
-      err_free(list->tab[index]);
+      free(list->tab[index]);
   
   for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];
@@ -902,7 +869,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
   if (pow(2, list->capacity-1)==list->len-1)
   {
     list->capacity--;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réalloue un nouveau pointeur de la bonne taille
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réalloue un nouveau pointeur de la bonne taille
     list->tab = tmp;
   }
   
@@ -978,7 +945,7 @@ void strlist_insert(strlist* list,char* chaine, int index)//ajoute un élément 
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réallocation de list.tab
+    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
   

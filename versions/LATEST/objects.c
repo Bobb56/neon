@@ -4,9 +4,15 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <sys/types.h>
 
-#include "headers.h"
+#include "headers/neonio.h"
+#include "headers/builtinfunctions.h"
+#include "headers/objects.h"
+#include "headers/dynarrays.h"
+#include "headers/gc.h"
+#include "headers/operators.h"
+#include "headers/runtime.h"
+#include "headers/strings.h"
 
 
 extern NeList* PROMISES;
@@ -17,9 +23,8 @@ extern int CODE_ERROR;
 extern strlist* CONTAINERS;
 extern NeList* ATTRIBUTES;
 
-extern intlist TYPESBUILTINSFONC;
 extern strlist NOMSBUILTINSFONC;
-extern NeObj (*BUILTINSFONC[NBBUILTINFONC])(NeList*);
+extern NeObj (*BUILTINSFONC[NBBUILTINFUNC])(NeList*);
 extern NeList* ADRESSES;
 extern strlist HELPBUILTINSFONC;
 extern strlist* NOMS;
@@ -30,19 +35,6 @@ extern int LINENUMBER;
 
 
 
-/*
-Fonctionnement du compteur de références :
-Les NeObject sont des structures contenant :
--> Un type
--> Un pointeur sur un NeObjDat (data), qui est une structure qui contient :
---> Un void* (ptr)
---> Un int* (refc)
-
-Un objet dont le data.ptr est NULL doit aussi avoir le refc de NULL. C'est pour ça que l'on n'alloue pas refc
-dans neobject_create directement
-*/
-
-
 /////////////// MANIPULATION DES VARIABLES ///////////////////
 
 
@@ -51,7 +43,7 @@ NeObj* get_absolute_address(Var rel_var_addr) {
 }
 
 NeObj get_var_value(Var rel_var_addr) {
-    return *get_absolute_address(rel_var_addr);
+    return nelist_nth(ADRESSES, rel_var_addr);
 }
 
 
@@ -62,6 +54,10 @@ char* var_name(NeObj obj) {
     else {
         return "<anonymous object>";
     }
+}
+
+Var get_var_from_addr(NeObj* obj) {
+    return (int)(((long int)obj - (long int)ADRESSES->tab)/sizeof(NeObj));
 }
 
 
@@ -134,7 +130,7 @@ bool neo_exact_equal(NeObj a, NeObj b) {
 
 
 Container* container_create(int type, NeList* data) {
-    Container* c = err_malloc(sizeof(Container));
+    Container* c = malloc(sizeof(Container));
     c->type = type;
     c->data = data;
     c->myCopy = NULL;
@@ -205,7 +201,7 @@ NeObj get_container_field(Container* c, int index) {
 
 void container_destroy(Container* c) {
     nelist_destroy(c->data);
-    err_free(c);
+    free(c);
 }
 
 void neo_container_aff(NeObj neo) {
@@ -298,7 +294,7 @@ char* neo_container_str(NeObj neo) {
 
             char* s = neobject_str(get_container_field(c, i));
             str1 = addStr2(str1, s);
-            err_free(s);
+            free(s);
 
             if (i < c->data->len - 1)
                 str1 = addStr2(str1, ", ");
@@ -407,14 +403,14 @@ NeObj neo_fun_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const
 }
 
 void function_destroy(Function* fun) {
-    err_free(fun->typeArgs);
-    err_free(fun);
+    free(fun->typeArgs);
+    free(fun);
 }
 
 
 Function* function_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const int* typeArgs, int typeRetour)
 {
-    Function* fun = err_malloc(sizeof(Function));
+    Function* fun = malloc(sizeof(Function));
     fun->ptr = ptr;
     fun->nbArgs = nbArgs;
     fun->help = help;
@@ -424,12 +420,12 @@ Function* function_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, 
     // copie de typeArgs dans le tas
     if (nbArgs == -1)
     {
-        fun->typeArgs = err_malloc(sizeof(int));
+        fun->typeArgs = malloc(sizeof(int));
         fun->typeArgs[0] = typeArgs[0];
     }
     else
     {
-        fun->typeArgs = err_malloc(sizeof(int)*nbArgs);
+        fun->typeArgs = malloc(sizeof(int)*nbArgs);
         for (int i = 0 ; i < nbArgs ; i++)
             fun->typeArgs[i] = typeArgs[i];
     }
@@ -457,7 +453,7 @@ NeObj functionCall(NeObj fun, NeList* args)
 void compFunc(const char** helpbuiltinsfonc, const int* nbargs, const int** typesArgs, const int* typesRetour)
 {
     NeObj func;
-    for (int i = 0 ; i < NBBUILTINFONC ; i++)
+    for (int i = 0 ; i < NBBUILTINFUNC ; i++)
     {
         func = neo_fun_create(BUILTINSFONC[i], helpbuiltinsfonc[i], nbargs[i], typesArgs[i], typesRetour[i]);
         strlist_append(NOMS, strdup(NOMSBUILTINSFONC.tab[i]));
@@ -515,7 +511,7 @@ UserFunc* neo_to_userfunc(NeObj neo) {
 
 NeObj userFuncCreate(Var* args, Tree* code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type)
 {
-    UserFunc* fun = err_malloc(sizeof(UserFunc));
+    UserFunc* fun = malloc(sizeof(UserFunc));
     fun->args = args;
     fun->code = code;
     fun->nbArgs = nbArgs;
@@ -536,7 +532,7 @@ NeObj userFuncCreate(Var* args, Tree* code, int nbArgs, bool unlimited_arguments
 // qui correspond à la userfunc définie
 NeObj userFuncDefine(NeObj obj, NeList* opt_args) {
     UserFunc* fun = neo_to_userfunc(obj);
-    Var* args = err_malloc(sizeof(Var) * fun->nbArgs);
+    Var* args = malloc(sizeof(Var) * fun->nbArgs);
 
     // copie des noms de variable des arguments
     for (int i = 0 ; i < fun->nbArgs ; i++)
@@ -548,11 +544,11 @@ NeObj userFuncDefine(NeObj obj, NeList* opt_args) {
 
 void userfunc_destroy(UserFunc* fun) {
     if (fun->doc != NULL)
-        err_free(fun->doc);
-    err_free(fun->args);
+        free(fun->doc);
+    free(fun->args);
     if (fun->opt_args != NULL)
         nelist_destroy(fun->opt_args);
-    err_free(fun);
+    free(fun);
 }
 
 
@@ -586,10 +582,10 @@ char* neo_promise_str(NeObj neo) {
     char* s1 = strdup("<promise from process ");
     char* s2 = int_to_str(neo_to_integer(neo));
     s1 = addStr2(s1, s2);
-    err_free(s2);
+    free(s2);
     s2 = strdup(">");
     char* ret = addStr2(s1, s2);
-    err_free(s2);
+    free(s2);
     return ret;
 }
 
@@ -602,7 +598,7 @@ char* neo_promise_str(NeObj neo) {
 NeObj neo_str_create(char* string) // attention, la chaine de caractères passée en argument va être mise dans le NeObject directement sans être copiée. Donc elle doit être dans le tas, et ne pas être libérée par l'extérieur
 {
     NeObj neo = neobject_create(TYPE_STRING);
-    neo.string = err_malloc(sizeof(String));
+    neo.string = malloc(sizeof(String));
     neo.string->refc = 1;
     neo.string->string = string;
     return neo;
@@ -619,20 +615,20 @@ void neo_string_aff(NeObj neo) {
     char* traite = traitementStringInverse(neo.string->string);
     printString(traite);
     printString("\"");
-    err_free(traite);
+    free(traite);
 }
 
 char* neo_string_str(NeObj neo) {
     char* traite = traitementStringInverse(neo.string->string);
     char* str1 = addStr("\"",traite);
     char* ret = addStr(str1,"\"");
-    err_free(str1);err_free(traite);
+    free(str1);free(traite);
     return ret;
 }
 
 void string_destroy(String* string) {
-    err_free(string->string);
-    err_free(string);
+    free(string->string);
+    free(string);
 }
 
 ///////////////////// TYPE_EXCEPTION ////////////////
@@ -662,7 +658,7 @@ void neo_exception_aff(NeObj neo) {
 NeObj neo_const_create(char* string) // attention, la chaine de caractères passée en argument va être mise dans le NeObject directement sans être copiée. Donc elle doit être dans le tas, et ne pas être libérée par l'extérieur
 {
     NeObj neo = neobject_create(TYPE_CONST);
-    neo.string = err_malloc(sizeof(String));
+    neo.string = malloc(sizeof(String));
     neo.string->refc = 1;
     neo.string->string = string;
     return neo;
@@ -737,15 +733,15 @@ char* nelist_str(NeList* list)
         {
             temp = neobject_str(nelist_nth(list, i));
             str2 = addStr(str1,temp);
-            err_free(temp);err_free(str1);
+            free(temp);free(str1);
             str1 = addStr(str2,", ");
-            err_free(str2);
+            free(str2);
         }
         temp = neobject_str(nelist_nth(list, list->len-1));
         str2 = addStr(str1,temp);
-        err_free(str1);err_free(temp);
+        free(str1);free(temp);
         str1 = addStr(str2, "]");
-        err_free(str2);
+        free(str2);
         return str1;
     }
     return strdup("Erreur17");
@@ -764,8 +760,8 @@ void nelist_destroy(NeList* list)
         //    printf("Suppression de %s\n", NOMS->tab[i]);
         neobject_destroy(list->tab[i]);
     }
-    err_free(list->tab);
-    err_free(list);
+    free(list->tab);
+    free(list);
 }
 
 
@@ -775,8 +771,8 @@ void nelist_destroy_until(NeList *list, int index_max) {
     {
         neobject_destroy(list->tab[i]);
     }
-    err_free(list->tab);
-    err_free(list);
+    free(list->tab);
+    free(list);
 }
 
 
@@ -838,7 +834,7 @@ NeList* nelist_dup(NeList* l)
 
 NeList* nelist_create(int len)
 {
-    NeList* list = err_malloc(sizeof(NeList));//crée la structure
+    NeList* list = malloc(sizeof(NeList));//crée la structure
     list->myCopy = NULL;
     list->refc = 1;
     list->len = len; // initialise la bonne longueur
@@ -849,7 +845,7 @@ NeList* nelist_create(int len)
     while (pow(2, list->capacity) < list->len)
         list->capacity++;
   
-    list->tab = err_malloc(pow(2, list->capacity)*sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
+    list->tab = malloc(pow(2, list->capacity)*sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
   
     return list;//retourne la structure
 }
@@ -863,7 +859,7 @@ void nelist_append(NeList* list, NeObj ptr)//ajoute un élément à la fin de la
     if (pow(2, list->capacity)==list->len)
     {
         list->capacity++;
-        tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réallocation de list.tab
+        tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réallocation de list.tab
         list->tab = tmp;//affectation du pointeur de tmp vers list.tab
     }
 
@@ -894,7 +890,7 @@ void nelist_insert(NeList* list,NeObj neo, int index)//ajoute un élément à la
   
     if (pow(2, list->capacity)==list->len) {
         list->capacity++;
-        tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj)); // réallocation de list.tab
+        tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj)); // réallocation de list.tab
         list->tab = tmp; // affectation du pointeur de tmp vers list.tab
     }
   
@@ -929,7 +925,7 @@ void nelist_remove(NeList* list,int index)
     if (pow(2, list->capacity-1)==list->len-1)
     {
         list->capacity--;
-        tmp = err_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réalloue un nouveau pointeur de la bonne taille
+        tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réalloue un nouveau pointeur de la bonne taille
         list->tab = tmp;
     }
   
@@ -1011,8 +1007,8 @@ NeObj neo_list_create(int len)
 void neo_list_free(NeObj list) {
     if (*list.refc_ptr == 1) { // il ne restait plus qu'un seul pointeur sur cette NeList, donc on peut bel et bien la supprimer
         NeList* nelist = neo_to_list(list);
-        err_free(nelist->tab);
-        err_free(nelist);
+        free(nelist->tab);
+        free(nelist);
     }
     // si des gens pointent encore vers la liste, il restera encore le refc et la NeList, donc c'est ok
 }
@@ -1062,17 +1058,13 @@ int neo_list_len(NeObj neo)
 
 
 NeObj neo_copy(NeObj neo) {
-    update_if_promise(&neo);
-
-    NeObj neo_cop;
-    memcpy(&neo_cop, &neo, sizeof(NeObj));
     // il y a le cas des TYPE_EMPTY et des TYPE_NONE que l'on peut copier mais on a aucun refc à incrémenter
     // en fin de compte, un refc ça sert à compter les références du ptr au dessus donc s'il n'y en a pas il sert à rien
     
     if (neo.type & HEAP_ALLOCATED)
         *neo.refc_ptr += 1; // pour les promesses, cette opération va incrémenter le bon indice de PROMISES_CNT
 
-    return neo_cop;
+    return neo;
 }
 
 
@@ -1191,9 +1183,6 @@ NeObj neo_dup(NeObj neo) {
 
     // sinon, on le copie en bonne et due forme
 
-    // on commence par résoudre la promesse si c'en est une
-    update_if_promise(&neo);
-
     // pour les listes et les containers, une copie profonde a un réel impact puisque ces objets contiennent d'autres objets
     // en revanche pour tous les autres objets ça ne change strictement rien pour l'utilisateur d'avoir une réelle copie ou non
     
@@ -1294,7 +1283,6 @@ void neobject_aff(NeObj neo)
     }
     else {
         mark(neo);
-        update_if_promise(&neo);
         
         if (NEO_TYPE(neo) == TYPE_DOUBLE) {
             printDouble(neo_to_double(neo));
@@ -1356,7 +1344,6 @@ char* neobject_str(NeObj neo)
     }
     else {
         mark(neo);
-        update_if_promise(&neo);
 
         char* ret = NULL; // la chaîne finale que l'on va renvoyer
 

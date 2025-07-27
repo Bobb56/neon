@@ -2,13 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "headers/neonio.h"
+#include "headers/linenoise.h"
+
+#ifndef LINUX_AMD64
+#include "headers/strings.h"
+#endif
+
+
 
 extern int CODE_ERROR;
 
-#include "headers.h"
 
 
-#ifndef TI83PCE
+#ifndef TI_EZ80
 
 
 
@@ -26,7 +36,7 @@ extern int CODE_ERROR;
         fpos_t pos;
         fgetpos(fichier, &pos);
     
-      
+        
         // calcul de la longueur du programme
         int longueur = 0;
         while (fgetc(fichier)!=EOF)
@@ -35,7 +45,7 @@ extern int CODE_ERROR;
         }
         
         fsetpos(fichier, &pos);//remet la tête de fichier au début
-        char* program=err_malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
+        char* program=malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
     
 
         // copie du fichier
@@ -66,11 +76,11 @@ extern int CODE_ERROR;
         return ;
     }
 
-    #ifndef LINUX
+    #ifndef LINUX_AMD64
         char* input(char *text)
         {
-            char* var=err_malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
-            err_memset(var,(char)0,4001*sizeof(char));//initialise le pointeur à '\0' partout
+            char* var=malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
+            memset(var,(char)0,4001*sizeof(char));//initialise le pointeur à '\0' partout
             //on effectue l'entrée
             printf("%s",text);
             
@@ -80,22 +90,22 @@ extern int CODE_ERROR;
             
             if (err != 1)
             {
-                err_free(var);
+                free(var);
                 CODE_ERROR = 104;
                 return NULL;
             }
             
             //crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
-            char* newVar = err_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
+            char* newVar = malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
             
             void * ptrtest=strcpy(newVar,var);//copie de var dans newVar
             
-            err_free(var);
+            free(var);
             var=NULL;
                 
             if (ptrtest==NULL)
             {
-                err_free(newVar);
+                free(newVar);
                 CODE_ERROR = 66;
                 return NULL;
             }
@@ -170,25 +180,30 @@ extern int CODE_ERROR;
 
     char* int_to_str(intptr_t number)//nombre en chaine de caractère
     {
-        int lenstr = nbdigits(number) + 1;
-
-        if (number < 0)
-            lenstr++;
-
-        char* strNombre = err_malloc(sizeof(char) * lenstr);
-        int i = lenstr - 1;
-        strNombre[i--] = '\0';
-
-        while (number > 0) {
-            strNombre[i--] = number%10 + '0';
-            number -= number%10;
-            number /= 10;
+        if (number == 0) {
+            return strdup("0");
         }
+        else {
+            int lenstr = nbdigits(number) + 1;
 
-        if (number < 0)
-            strNombre[0] = '-';
+            if (number < 0)
+                lenstr++;
 
-        return strNombre;
+            char* strNombre = malloc(sizeof(char) * lenstr);
+            int i = lenstr - 1;
+            strNombre[i--] = '\0';
+
+            while (number > 0) {
+                strNombre[i--] = number%10 + '0';
+                number -= number%10;
+                number /= 10;
+            }
+
+            if (number < 0)
+                strNombre[0] = '-';
+
+            return strNombre;
+        }
     }
     
 
@@ -227,13 +242,13 @@ extern int CODE_ERROR;
         else
         {
             //une fois qu'on a copié le nombre dans la chaine de caracteres, il faut le réallouer de la bonne taille
-            char* strNombre = (char*)err_malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
+            char* strNombre = (char*)malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
             int err = snprintf(strNombre, 310, "%lf", number);//converison du nombre
             
             if (err<0 || err!=(int)strlen(strNombre))
             {
                 CODE_ERROR = 66;
-                err_free(strNombre);
+                free(strNombre);
                 return 0;
             }
             
@@ -304,16 +319,14 @@ extern int CODE_ERROR;
     
     void clearConsole(void)
     {
-        #if defined(LINUX)
+        #if defined(LINUX_AMD64)
             int result = system("clear");
-        #elif defined(WINDOWS)
+        #elif defined(WINDOWS_AMD64)
             int result = system("cls");
-        #elif defined(WASM)
-            printf("T5#sD9@jPzQ7fH*2m$1\n");
         #endif
     }
 
-#else //-------------------------------------------------PASSAGE A TI83PCE---------------------------------------------
+#else //------------------------------------------------- PASSAGE A TI_EZ80 ---------------------------------------------
 
     #include "nio_ce.h"
     #include <ti/vars.h>
@@ -333,19 +346,19 @@ extern int CODE_ERROR;
             return NULL;
         else if (type != OS_TYPE_STR || string->len == 0)
         {
-            err_free(string);
+            free(string);
             return NULL;
         }
 
 
         // transforme string en chaine de caractères
-        char* ret = err_malloc(sizeof(char) * (string->len + 1));
+        char* ret = malloc(sizeof(char) * (string->len + 1));
         for (int i=0 ; i < string->len ; i++)
             ret[i] = string->data[i];
 
         ret[string->len] = '\0';
 
-        err_free(string);
+        free(string);
 
         return ret;
 
@@ -367,7 +380,7 @@ extern int CODE_ERROR;
         uint16_t longueur = ti_GetSize(fichier);
 
         
-        char* program=err_malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
+        char* program=malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
     
 
         // copie du fichier
@@ -400,8 +413,8 @@ extern int CODE_ERROR;
 
     char* input(char *text)
     {
-        char* var=err_malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
-        err_memset(var,(char)0,4001*sizeof(char));//initialise le pointeur à '\0' partout
+        char* var=malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
+        memset(var,(char)0,4001*sizeof(char));//initialise le pointeur à '\0' partout
         //on effectue l'entrée
         nio_printf("%s",text);
     
@@ -414,16 +427,16 @@ extern int CODE_ERROR;
     
     
         //crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
-        char* newVar = err_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
+        char* newVar = malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
     
         void * ptrtest=strcpy(newVar,var);//copie de var dans newVar
     
-        err_free(var);
+        free(var);
         var=NULL;
     
         if (ptrtest==NULL)
         {
-            err_free(newVar);
+            free(newVar);
             CODE_ERROR = 66;
             return NULL;
         }
@@ -467,13 +480,13 @@ extern int CODE_ERROR;
         else
         {
             //une fois qu'on a copié le nombre dans la chaine de caracteres, il faut le réallouer de la bonne taille
-            char* strNombre = (char*)err_malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
+            char* strNombre = (char*)malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
             int err = snprintf(strNombre, 310, "%lf", number);//converison du nombre
             
             if (err<0 || err!=(int)strlen(strNombre))
             {
                 CODE_ERROR = 66;
-                err_free(strNombre);
+                free(strNombre);
                 return 0;
             }
             
@@ -510,7 +523,7 @@ extern int CODE_ERROR;
     void printDouble(double n)
     {
         real_t x = os_FloatToReal((float)num)
-        char* result = err_malloc(sizeof(char) * 127);
+        char* result = malloc(sizeof(char) * 127);
         os_RealToStr(result, &x, 127, 1, -1);
         nio_printf("%s", result);
     }

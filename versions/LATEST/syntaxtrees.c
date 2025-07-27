@@ -2,7 +2,13 @@
 #include <math.h>
 #include <string.h>
 
-#include "headers.h"
+#include "headers/neonio.h"
+#include "headers/objects.h"
+#include "headers/dynarrays.h"
+#include "headers/parser.h"
+#include "headers/runtime.h"
+#include "headers/strings.h"
+#include "headers/syntaxtrees.h"
 
 extern int CODE_ERROR;
 
@@ -14,49 +20,23 @@ extern strlist* CONTAINERS;
 extern NeList* ATTRIBUTES;
 
 //déclaration des variables globales à cut
-extern strlist acceptedChars;
-extern listlist syntax;
-extern strlist sousop;
 extern intlist gramm1;
 extern strlist operateurs3;
-extern strlist operateurs1;
-extern strlist operateurs2;
-extern strlist blockwords;
 extern strlist blockwords1Line;
-extern strlist neon_boolean;
 extern strlist exceptions;
-extern strlist keywords;
+
 extern strlist lkeywords;
-extern strlist constant;
 
 
 extern strlist OPERATEURS;
-extern intlist PRIORITE;
 extern intlist OPERANDES;
 
-extern void* PTRERROR;
 
 //stockage des variables
 extern strlist* NOMS;
 extern NeList* ADRESSES;
 
-extern strlist NOMSBUILTINSFONC;
-extern strlist HELPBUILTINSFONC;
-extern intlist TYPESBUILTINSFONC;
 
-extern NeObj (*OPFONC[NBOPERATEURS])(NeObj,NeObj);
-extern NeObj (*BUILTINSFONC[NBBUILTINFONC])(NeList*);
-
-
-
-extern int error;
-
-
-
-// ces fonctions n'existent pas, et sont là pour que ça fonctionne en attendant qu'on enlève les appels vers ces fonctions
-char* nomBlockLine(char* blockline) {
-    return NULL;
-}
 
 
 /*
@@ -90,7 +70,7 @@ Ajouter les nouveaux traitements pour les indices de liste et les appels de fonc
 
 Tree* tree_create(char* label1, int label2, uint8_t type)
 {
-    Tree* newTree = err_malloc(sizeof(Tree));
+    Tree* newTree = malloc(sizeof(Tree));
 
     if (newTree == NULL)
     {
@@ -105,12 +85,12 @@ Tree* tree_create(char* label1, int label2, uint8_t type)
     // création de la liste de fils
     newTree->capacity = 0;
 
-    Tree** tmp = err_malloc(sizeof(Tree*));
+    Tree** tmp = malloc(sizeof(Tree*));
     
     if (tmp == NULL)
     {
         CODE_ERROR = 12;
-        err_free(newTree);
+        free(newTree);
         return NULL;
     }
     
@@ -134,7 +114,7 @@ void tree_appendSon(Tree* tree, Tree* son)
     tree->capacity++;
     
     //réallocation
-    tmp = err_malloc(pow(2, tree->capacity)*sizeof(Tree*));
+    tmp = malloc(pow(2, tree->capacity)*sizeof(Tree*));
 
     if (tmp == NULL) {
         CODE_ERROR = 12;
@@ -147,7 +127,7 @@ void tree_appendSon(Tree* tree, Tree* son)
         tmp[i] = tree->sons[i];
     }
     
-    err_free(tree->sons);
+    free(tree->sons);
     
     tree->sons = tmp;//affectation du pointeur de tmp vers tree.tab
   }
@@ -169,29 +149,19 @@ void tree_destroy(Tree* tree)
 {
     if (tree != NULL) {
         if (tree->label1 != NULL)
-            err_free(tree->label1);
+            free(tree->label1);
             
         if (tree->nbSons > 0)
         {
             for (int i=0 ; i<tree->nbSons ; i++)
                 tree_destroy(tree->sons[i]);
         }
-        err_free(tree->sons);
+        free(tree->sons);
         
-        if (tree->type != TYPE_VARIABLE && tree->type != TYPE_LISTINDEX && tree->type != TYPE_FONCTION && tree->type != TYPE_FUNCTIONDEF)
+        if (tree->type != TYPE_VARIABLE && tree->type != TYPE_LISTINDEX && tree->type != TYPE_FONCTION)
             neobject_destroy(tree->data);
-        else if (tree->type == TYPE_FUNCTIONDEF)
-        {
-            /*UserFunc* fun = tree->data->data.ptr;
-            err_free(fun->args);
-            tree_destroy(fun->opt_args);
-            err_free(fun);
-            err_free(tree->data->data.refc);
-            err_free(tree->data);*/
-            neobject_destroy(tree->data);
-        }
         
-        err_free(tree);
+        free(tree);
     }
 }
 
@@ -220,7 +190,7 @@ void tree_removeSon(Tree* tree, int index)
   if (pow(2, tree->capacity-1)==tree->nbSons-1)
   {
     tree->capacity--;
-    tmp = err_realloc(tree->sons, pow(2, tree->capacity)*sizeof(Tree));//réalloue un nouveau pointeur de la bonne taille
+    tmp = realloc(tree->sons, pow(2, tree->capacity)*sizeof(Tree));//réalloue un nouveau pointeur de la bonne taille
     tree->sons = tmp;
   }
   tree->nbSons--;//décrémentation de la longueur
@@ -271,10 +241,15 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
     int count = ast_typeCountAst(ast, tokens->len, TYPE_ENDOFLINE, offset);
     int real_length = ast_length(ast, tokens->len, offset);
     
+    // tous les tokens sont des retours à la ligne
+    if (count == real_length) {
+        LINENUMBER = lines->tab[offset];
+        CODE_ERROR = 30;
+        return ;
+    }
     // il y a un seul token qui n'est pas un retour à la ligne
-    if (count == real_length - 1) // traitement des cas de base de la fonction récursive
+    else if (count == real_length - 1) // traitement des cas de base de la fonction récursive
     {
-
         if (real_length > 1) { // on enlève tous les retours à la ligne
 
             int i = 0;
@@ -497,8 +472,8 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                         {
                             CODE_ERROR = 83;
                             LINENUMBER = tree->line;
-                            err_free(tree2->sons);
-                            err_free(tree2);
+                            free(tree2->sons);
+                            free(tree2);
                             return ;
                         }
 
@@ -506,10 +481,10 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                         tree_appendSon(tree2, tree->sons[k]);
                     }
                     // petit échange
-                    err_free(tree->sons);
+                    free(tree->sons);
                     tree->sons = tree2->sons;
                     // libération de ce qui reste de tree2
-                    err_free(tree2);
+                    free(tree2);
                 }
 
                 tree->label1 = NULL;
@@ -544,7 +519,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                             return;
                         }
                         
-                        err_free(argsTree->label1);
+                        free(argsTree->label1);
                         argsTree->label1 = NULL;
                     }
                     else
@@ -636,7 +611,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
             char* intermediaire = sub(tokens->tab[0],1,strlen(tokens->tab[0])-1); // on enlève les guillemets
             tree->data = neo_str_create(traitementString(intermediaire));
             tree->type = TYPE_STRING;
-            err_free(intermediaire);
+            free(intermediaire);
         }
         
         else if (ast[0]->type == TYPE_LIST)
@@ -663,15 +638,15 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 if (fils->type != TYPE_VIRGULE) {
                     tree_appendSon(tree, fils);
                 } else {
-                    err_free(tree->sons);
+                    free(tree->sons);
                     tree->sons = fils->sons;
                     tree->capacity = fils->capacity;
                     tree->nbSons = fils->nbSons;
-                    err_free(fils->label1);
+                    free(fils->label1);
                     tree->label2 = fils->label2;
                     tree->data = fils->data;
                     tree->variable = fils->variable;
-                    err_free(fils);
+                    free(fils);
                 }
             }
             
@@ -722,6 +697,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
             
             tree->label1 = strdup(",");
             tree->type = TYPE_VIRGULE;
+            tree->line = lines->tab[offset];
             
             Tree* arbre;
             int index = 0, len;
@@ -745,7 +721,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
 
                 if (CODE_ERROR != 0) {
                     tree_destroy(arbre);
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     return;
                 }
@@ -792,7 +768,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 // si c'est un opérateur '.', on va changer la structure de l'arbre, donc c'est une opération différente
                 if (tree->label2 == 30) // si c'est un point
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
 
                     strlist tokensGauche = (strlist) {.tab = tokens->tab, .len = index};
@@ -843,7 +819,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 }
                 else if (tree->label2 == 34) // opérateur >>
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     tree->label2 = 0;
 
@@ -873,8 +849,8 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                             int r = ast_pop(ast[index+1]);
 
                             if (r == -1) { // cet ast n'arrivera jamais à un type variable
-                                err_free(stack_sov_fin.tab);
-                                err_free(stack_sov_typ.tab);
+                                free(stack_sov_fin.tab);
+                                free(stack_sov_typ.tab);
                                 CODE_ERROR = 82;
                                 LINENUMBER = lines->tab[offset + index + 1];
                                 return;
@@ -893,8 +869,8 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                         // on se ramènera plus tard au cas de base
                         createExpressionTreeAux(tree, ast, tokens, lines, offset);
 
-                        err_free(stack_sov_fin.tab);
-                        err_free(stack_sov_typ.tab);
+                        free(stack_sov_fin.tab);
+                        free(stack_sov_typ.tab);
                     }
                     else {
                         strlist tokensGauche = (strlist){.tab = tokens->tab, .len = index};
@@ -927,7 +903,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                     Tree* filsg = tree_create(NULL, 0, TYPE_SYNTAXTREE);
                     if (CODE_ERROR != 0)
                     {
-                        err_free(tree->label1);
+                        free(tree->label1);
                         tree->label1 = NULL;
                         return;
                     }
@@ -935,7 +911,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                     Tree* filsd = tree_create(NULL, 0, TYPE_SYNTAXTREE);
                     if (CODE_ERROR != 0)
                     {
-                        err_free(tree->label1);
+                        free(tree->label1);
                         tree->label1 = NULL;
                         tree_destroy(filsg);
                         return;
@@ -983,7 +959,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 if (CODE_ERROR != 0)
                 {
                     tree_destroy(fils);
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     return ;
                 }
@@ -998,7 +974,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 Tree* filsg = tree_create(NULL, 0, TYPE_SYNTAXTREE);
                 if (CODE_ERROR != 0)
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     return;
                 }
@@ -1008,7 +984,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 if (CODE_ERROR != 0)
                 {
                     tree_destroy(filsg);
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     return;
                 }
@@ -1032,7 +1008,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 
                 if (CODE_ERROR != 0)
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     tree_destroy(filsg);
                     tree_destroy(filsd);
@@ -1053,7 +1029,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 Tree* filsg = tree_create(NULL, 0, TYPE_SYNTAXTREE);
                 if (CODE_ERROR != 0)
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     return;
                 }
@@ -1063,7 +1039,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 if (CODE_ERROR != 0)
                 {
                     tree_destroy(filsg);
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     return;
                 }
@@ -1077,7 +1053,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 
                 if (CODE_ERROR != 0)
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     tree_destroy(filsg);
                     tree_destroy(filsd);
@@ -1087,7 +1063,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 
                 if (CODE_ERROR != 0)
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     tree_destroy(filsg);
                     tree_destroy(filsd);
@@ -1107,7 +1083,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 Tree* filsg = tree_create(NULL, 0, TYPE_SYNTAXTREE);
                 if (CODE_ERROR != 0)
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     return;
                 }
@@ -1117,7 +1093,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 if (CODE_ERROR != 0)
                 {
                     tree_destroy(filsg);
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     return;
                 }
@@ -1131,7 +1107,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 
                 if (CODE_ERROR != 0)
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     tree_destroy(filsg);
                     tree_destroy(filsd);
@@ -1141,7 +1117,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 
                 if (CODE_ERROR != 0)
                 {
-                    err_free(tree->label1);
+                    free(tree->label1);
                     tree->label1 = NULL;
                     tree_destroy(filsg);
                     tree_destroy(filsd);
@@ -1222,8 +1198,8 @@ void createExpressionTree(Tree* tree, char* string)
     cut(tokens, &types, string, true, &lines);
 
     if (CODE_ERROR != 0) {
-        err_free(types.tab);
-        err_free(lines.tab);
+        free(types.tab);
+        free(lines.tab);
         strlist_destroy(tokens, true);
         return;
     }
@@ -1235,8 +1211,8 @@ void createExpressionTree(Tree* tree, char* string)
     parse(tokens, types, ast, &lines, 0);
 
     if (CODE_ERROR != 0) {
-        err_free(types.tab);
-        err_free(lines.tab);
+        free(types.tab);
+        free(lines.tab);
         ast_destroy(ast, tokens->len);
         strlist_destroy(tokens, true);
         return;
@@ -1251,12 +1227,176 @@ void createExpressionTree(Tree* tree, char* string)
     ast_destroy(ast, tokens->len);
 
     strlist_destroy(tokens, true);
-    err_free(types.tab);
-    err_free(lines.tab);
+    free(types.tab);
+    free(lines.tab);
 
     return;
     
 }
+
+
+
+
+
+
+void affExpr(Tree* tree)
+{
+    if (tree->type == TYPE_OPERATOR)
+    {
+        int gramm = gramm1.tab[strlist_index(&operateurs3,tree->label1)];
+
+        if (strcmp(tree->label1, "_") == 0)
+        {
+            free(tree->label1);
+            tree->label1 = strdup("-");
+        }
+        
+        if (gramm & VARLEFT)
+        {
+            affExpr(tree->sons[0]);
+            printString(" ");
+            printString(tree->label1);
+            printString(" ");
+        }
+
+
+        if (gramm & VARRIGHT || gramm & RIGHT)
+        {
+            printString(" ");
+            printString(tree->label1);
+            printString(" ");
+            affExpr(tree->sons[0]);
+        }
+
+        if (gramm & VAR_RIGHT || gramm & RIGHT_LEFT)
+        {
+            affExpr(tree->sons[0]);
+            printString(" ");
+            printString(tree->label1);
+            printString(" ");
+            affExpr(tree->sons[1]);
+        }
+
+        
+    }
+
+
+    if (tree->type == TYPE_FONCTION)
+    {
+        NeObj fonction = eval(tree->sons[0]);
+
+        char* nom = NOMS->tab[nelist_index2(ADRESSES, fonction)];
+        printString(nom);
+        printString("(");
+
+        for (int i = 0 ; i + 1 < tree->sons[0]->nbSons ; i++)
+        {
+            affExpr(tree->sons[0]->sons[i]);
+            printString(", ");
+        }
+        if (tree->sons[0]->nbSons > 0)
+            affExpr(tree->sons[0]->sons[tree->sons[0]->nbSons-1]);
+
+
+        printString(")");
+
+        neobject_destroy(fonction);
+    }
+
+    if (tree->type == TYPE_VARIABLE)
+    {
+        char* nom = NOMS->tab[nelist_index(ADRESSES, tree->data)];
+        printString(nom);
+    }
+
+    if (tree->type == TYPE_NONE || tree->type == TYPE_BOOL || tree->type == TYPE_CONST || tree->type == TYPE_EXCEPTION || tree->type == TYPE_INTEGER || tree->type == TYPE_DOUBLE)
+    {
+        neobject_aff(tree->data);
+    }
+
+    if (tree->type == TYPE_STRING)
+    {
+        char* string = neo_to_string(tree->data);
+        //char* str2 = traitementStringInverse(string);
+        printString("\"");
+        printString(string);
+        printString("\"");
+        //free(str2);
+    }
+
+
+    if (tree->type == TYPE_LISTINDEX)
+    {
+        affExpr(tree->sons[0]);
+        printString("[");
+        affExpr(tree->sons[1]);
+        printString("]");
+    }
+
+    if (tree->type == TYPE_LIST)
+    {
+        if (tree->nbSons == 0)
+        {
+            printString("[]");
+        }
+        else
+        {
+            printString("[");
+            for (int i=0;i<tree->nbSons-1;i++)
+            {
+                affExpr(tree->sons[i]);
+                printString(", ");
+            }
+            affExpr(tree->sons[tree->nbSons - 1]);
+            printString("]");
+        }
+        
+    }
+
+    if (tree->type == TYPE_CONTAINER)
+    {
+        //affichage du type
+        printString(CONTAINERS->tab[tree->label2]);
+        printString("(");
+
+        // boucle pour afficher chaque nom de champ et chaque expression associée
+        for (int i = 0 ; i < tree->nbSons ; i++)
+        {
+            printString(tree->sons[i]->label1);
+            printString(": ");
+            affExpr(tree->sons[i]->sons[0]);
+
+            if (i < tree->nbSons - 1)
+                printString(", ");
+        }
+        printString(")");
+
+    }
+
+
+    if (tree->type == TYPE_ATTRIBUTE)
+    {
+        affExpr(tree->sons[0]);
+        printString(">>");
+
+
+        // normalement dans tous les cas on est censé vérifier la conditino
+        // en effet, l'arbre garde toujours le nom de l'attribut, sinon c'est trop risqué de le récupérer par évaluation arrivé ici
+        // par exemple le container peut être une variable locale qui a disparu lors de l'affichage de l'erreur
+        if (tree->label1 != NULL) // si ça se trouve le neobject a pas été initialisé, auquel cas on peut directement lire la chaine de caractères
+            printString(tree->label1);
+        else
+        {
+            printString("unknown_attribute");
+        }
+
+    }
+
+    return ;
+}
+
+
+
 
 
 
@@ -1440,7 +1580,7 @@ void createFunctionTree(Tree* tree, Ast** ast, strlist* tokens, intlist* lines, 
 
     // majorant du nombre d'arguments
     int size_liste = strlist_count(&argsTok, ",") + 1;
-    Var* liste = err_malloc(sizeof(Var)*size_liste); // tableau qui va contenir toutes les variables à affecter
+    Var* liste = malloc(sizeof(Var)*size_liste); // tableau qui va contenir toutes les variables à affecter
     int liste_index = 0;
 
     int nbOptArgs = 0;
@@ -1448,7 +1588,7 @@ void createFunctionTree(Tree* tree, Ast** ast, strlist* tokens, intlist* lines, 
     Tree* opt_args = tree_create(NULL, 0, TYPE_SYNTAXTREE); // même si la fonction n'a pas d'arguments elle a un arbre
 
     if (CODE_ERROR != 0) {
-        err_free(liste);
+        free(liste);
         return;
     }
 
@@ -1486,7 +1626,7 @@ void createFunctionTree(Tree* tree, Ast** ast, strlist* tokens, intlist* lines, 
 
                         if (CODE_ERROR != 0) {
                             tree_destroy(opt_args);
-                            err_free(liste);
+                            free(liste);
                             return ;
                         }
 
@@ -1499,7 +1639,7 @@ void createFunctionTree(Tree* tree, Ast** ast, strlist* tokens, intlist* lines, 
                         CODE_ERROR = 96;
                         LINENUMBER = lines->tab[offset + args_offset + i];
                         tree_destroy(opt_args);
-                        err_free(liste);
+                        free(liste);
                         return ;
                     }
                     else { // argument non optionnel
@@ -1508,7 +1648,7 @@ void createFunctionTree(Tree* tree, Ast** ast, strlist* tokens, intlist* lines, 
                             CODE_ERROR = 96;
                             LINENUMBER = lines->tab[offset + args_offset + i];
                             tree_destroy(opt_args);
-                            err_free(liste);
+                            free(liste);
                             return ;
                         }
                         tree_appendSon(opt_args, NULL);
@@ -1525,7 +1665,7 @@ void createFunctionTree(Tree* tree, Ast** ast, strlist* tokens, intlist* lines, 
                     CODE_ERROR = 96;
                     LINENUMBER = lines->tab[offset + args_offset + i];
                     tree_destroy(opt_args);
-                    err_free(liste);
+                    free(liste);
                     return ;
                 }
             }
@@ -1883,8 +2023,8 @@ void createSyntaxTree(Tree* tree, char* program)
     cut(tokens, &types, program, true, &lines);
 
     if (CODE_ERROR != 0) {
-        err_free(types.tab);
-        err_free(lines.tab);
+        free(types.tab);
+        free(lines.tab);
         strlist_destroy(tokens, true);
         return;
     }
@@ -1896,8 +2036,8 @@ void createSyntaxTree(Tree* tree, char* program)
     parse(tokens, types, ast, &lines, 0);
 
     if (CODE_ERROR != 0) {
-        err_free(types.tab);
-        err_free(lines.tab);
+        free(types.tab);
+        free(lines.tab);
         ast_destroy(ast, tokens->len);
         strlist_destroy(tokens, true);
         return;
@@ -1908,8 +2048,8 @@ void createSyntaxTree(Tree* tree, char* program)
     statements(&types, tokens, ast, &lines, 0);
 
     if (CODE_ERROR != 0) {
-        err_free(types.tab);
-        err_free(lines.tab);
+        free(types.tab);
+        free(lines.tab);
         ast_destroy(ast, tokens->len);
         strlist_destroy(tokens, true);
         return;
@@ -1923,7 +2063,9 @@ void createSyntaxTree(Tree* tree, char* program)
 
     ast_destroy(ast, tokens->len);
     strlist_destroy(tokens, true);
-    err_free(types.tab);
-    err_free(lines.tab);
+    free(types.tab);
+    free(lines.tab);
 
 }
+
+

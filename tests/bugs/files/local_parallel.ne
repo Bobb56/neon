@@ -1,3 +1,5 @@
+setAtomicTime(1)
+
 a = 18
 
 function f(x) do

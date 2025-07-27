@@ -2,46 +2,16 @@
 #include <string.h>
 #include <math.h>
 
-#include "headers.h"
+#include "headers/objects.h"
+#include "headers/dynarrays.h"
+#include "headers/strings.h"
+#include "headers/runtime.h"
 
 extern int CODE_ERROR;
-
-
-extern ptrlist* VAR_LOC;
-
-
-//déclaration des variables globales à cut
-extern strlist acceptedChars;
-extern listlist syntax;
-extern strlist sousop;
-extern intlist gramm1;
-extern strlist operateurs3;
-extern strlist operateurs1;
-extern strlist operateurs2;
-extern strlist blockwords;
-extern strlist neon_boolean;
-extern strlist keywords;
-extern strlist lkeywords;
-extern strlist constant;
-
-
-extern strlist OPERATEURS;
-extern intlist PRIORITE;
-extern intlist OPERANDES;
-
 
 //stockage des variables
 extern strlist* NOMS;
 extern NeList* ADRESSES;
-
-extern strlist NOMSBUILTINSFONC;
-extern strlist HELPBUILTINSFONC;
-extern intlist TYPESBUILTINSFONC;
-
-extern strlist* CONTAINERS;
-
-extern NeObj (*OPFONC[NBOPERATEURS])(NeObj,NeObj);
-extern NeObj (*BUILTINSFONC[NBBUILTINFONC])(NeList*);
 
 
 
@@ -299,7 +269,7 @@ NeObj _mul(NeObj _op1, NeObj _op2)
     }
     
     int len_sousch = strlen(sousch);
-    char* multip = err_malloc(sizeof(char*)*(times*len_sousch+1));
+    char* multip = malloc(sizeof(char*)*(times*len_sousch+1));
 
     for (int i=0 ; i < times*len_sousch ; i++)
     {
@@ -853,14 +823,21 @@ NeObj _not(NeObj op1)
 
 
 
-NeObj _ref(NeObj op1)
+NeObj _ref(NeObj* op1)
 {
-    if (NEO_TYPE(op1) == TYPE_EMPTY)
+    if (NEO_TYPE((*op1)) == TYPE_EMPTY)
     {
         CODE_ERROR = 59;//undefined var
         return NEO_VOID;
     }
-    int index = nelist_index(ADRESSES,op1);
+    
+    int index = get_var_from_addr(op1);
+
+    if (index < 0) {
+      CODE_ERROR = 5;
+      return NEO_VOID;
+    }
+
     return neo_str_create(strdup(NOMS->tab[index]));
 }
 

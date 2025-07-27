@@ -1,3 +1,5 @@
+setAtomicTime(1)
+
 function join(process) do
     while (type(process) == "Promise") do pass end
 end

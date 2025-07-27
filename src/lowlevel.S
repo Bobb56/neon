@@ -1,32 +1,68 @@
 #include "headers/constants.h"
 
 .extern STACK_PTR
-.extern eval_prolog
-.extern create_new_process
-.extern eval_epilog
+.extern launch_process
 
 .text
 
 #ifdef LINUX_AMD64
 
+
+#define LOAD_REGISTERS(source_index)    \
+    mov     0(source_index), %rbx;      \
+    mov     8(source_index), %rbp;      \
+    mov     16(source_index), %r12;     \
+    mov     24(source_index), %r13;     \
+    mov     32(source_index), %r14;     \
+    mov     40(source_index), %r15;
+
+
+#define SAVE_REGISTERS(dest_index)      \
+    mov     %rbx,    0(dest_index);     \
+    mov     %rbp,    8(dest_index);     \
+    mov     %r12,    16(dest_index);    \
+    mov     %r13,    24(dest_index);    \
+    mov     %r14,    32(dest_index);    \
+    mov     %r15,    40(dest_index);
+
+
+#define MOVE_REGISTERS(source_index, dest_index)    \
+    mov     0(source_index), %rax;                  \
+    mov     %rax,    0(dest_index);                 \
+    mov     8(source_index), %rax;                  \
+    mov     %rax,    8(dest_index);                 \
+    mov     16(source_index), %rax;                 \
+    mov     %rax,    16(dest_index);                \
+    mov     24(source_index), %rax;                 \
+    mov     %rax,    24(dest_index);                \
+    mov     32(source_index), %rax;                 \
+    mov     %rax,    32(dest_index);                \
+    mov     40(source_index), %rax;                 \
+    mov     %rax,    40(dest_index);
+
+
+
+.globl get_stack
+get_stack:
+    movq    %rsp,   %rax
+    addq    $8,     %rax
+    ret
+
+
 # used registers : rdi, rsi, rdx, rcx, rax
+# registers that may be used to contain an address : rcx, rsi, rdi, rax
 # saved registers : rbx, rbp, r12 - r15
 
-.globl eval_epilog_unaligned
-.type eval_epilog_unaligned, @function
-# cette fonction doit être appelée de manière désalignée par le return de execval_prolog
-eval_epilog_unaligned:
-    sub    $8,     %rsp # réaligne la pile pour l'appel. Le retour se fera sur une pile différente
-    jmp    eval_epilog
+
 
 
 .globl reset_stack_and_registers
 .type reset_stack_and_registers, @function
 # Cette fonction remet la pile d'origine
-# on renvoie le résultat de execval_prolog en ne touchant pas à rax ni à rdx
+# on renvoie le résultat de execval_prolog (l'adresse de l'objet à affecter passé en argument) en ne touchant pas à rax
 reset_stack_and_registers:
     # on récupère l'adresse à laquelle on est censé retourner
-    pop     %rcx
+    pop     %rdx
 
     # on restaure la pile d'origine, courante dans execval_prolog
     mov     STACK_PTR(%rip),    %rsi
@@ -35,6 +71,7 @@ reset_stack_and_registers:
     test    %rsi,               %rsi
     jz      next2
     mov     %rsi,               %rsp
+
     # on remet STACK_PTR à nul
     movq    $0,                 STACK_PTR(%rip)
 
@@ -43,77 +80,53 @@ reset_stack_and_registers:
     movq	process_cycle(%rip), %rdi
 	movq	(%rdi), %rdi
 
-    mov     0(%rdi), %rbx
-    mov     8(%rdi), %rbp
-    mov     16(%rdi), %r12
-    mov     24(%rdi), %r13
-    mov     32(%rdi), %r14
-    mov     40(%rdi), %r15
+    LOAD_REGISTERS(%rdi)
 
     next2:
     # on ajoute dedans l'adresse de retour que l'on a récupérée sur l'ancienne pile
-    push    %rcx
+    push    %rdx
 
     ret
 
 
 
 
+/*
+Quand un processus tourne, la valeur des registres stockés à l'intérieur est la valeur à restaurer à la fin du processus
+Quand un processus ne tourne pas, la valeur des registres stockés à l'intérieur est la valeur des registres sauvegardés de ce processus
+Quand on passe d'un processus à l'autre :
+registres actuels -> stockés dans l'ancien processus
+registres du nouveau processus -> mis dans les vrais registres
+registres à restaurer après l'ancien processus -> stockés dans le nouveau processus
+
+La fonction a un support pour des appels sans processus précédent, tel que le soi-disant processus précédent ait été restauré (pile, registres)
+Mais actuellement elle n'est jamais appelée sans processus précédent
+
+Remarque : la version actuelle ne fonctionne que parce que eval_prolog n'utilise pas de registres sauvegardés après le changement de pile
+En effet, quand on commence un processus, on restaure les registres sauvegardés du processus, mais lorsque le processus en question n'a
+jamais été appelé avant, les registres sauvegardés reçoivent des valeurs arbitraires
+*/
+# switch_registers(process, prev_process, flags)
 .globl switch_registers
 .type switch_registers, @function
-# Cette fonction sauvegarde les registres actuels et restaure les registres du processus précédent, et change de pile
-# void switch_registers(process, prev_process, save_stack, load_stack)
-
 switch_registers:
     # sauvegarde des registres actuels
     sub     $48,     %rsp
 
     # d'abord on empile les valeurs des registres
-    mov     %rbx,    0(%rsp)
-    mov     %rbp,    8(%rsp)
-    mov     %r12,    16(%rsp)
-    mov     %r13,    24(%rsp)
-    mov     %r14,    32(%rsp)
-    mov     %r15,    40(%rsp)
+    SAVE_REGISTERS(%rsp)
 
     # restauration des registres de ce processus
-    mov     0(%rdi), %rbx
-    mov     8(%rdi), %rbp
-    mov     16(%rdi), %r12
-    mov     24(%rdi), %r13
-    mov     32(%rdi), %r14
-    mov     40(%rdi), %r15
+    LOAD_REGISTERS(%rdi)
 
     # si on a un processus précédent, on transfère les registres à restaurer au nouveau processus, et on enregistre les registres actuels dans l'ancien processus
     test    %rsi,   %rsi
     jz      switch_registers_skip0
     # si on a un processus précédent on sauvegarde la pile actuelle dedans
-    mov     0(%rsi), %rax
-    mov     %rax,    0(%rdi)
-    mov     8(%rsi), %rax
-    mov     %rax,    8(%rdi)
-    mov     16(%rsi), %rax
-    mov     %rax,    16(%rdi)
-    mov     24(%rsi), %rax
-    mov     %rax,    24(%rdi)
-    mov     32(%rsi), %rax
-    mov     %rax,    32(%rdi)
-    mov     40(%rsi), %rax
-    mov     %rax,    40(%rdi)
+    MOVE_REGISTERS(%rsi, %rdi)
     
     # et enfin on enregistre les registres d'avant dans la structure
-    mov     0(%rsp), %rax
-    mov     %rax,    0(%rsi)
-    mov     8(%rsp), %rax
-    mov     %rax,    8(%rsi)
-    mov     16(%rsp), %rax
-    mov     %rax,    16(%rsi)
-    mov     24(%rsp), %rax
-    mov     %rax,    24(%rsi)
-    mov     32(%rsp), %rax
-    mov     %rax,    32(%rsi)
-    mov     40(%rsp), %rax
-    mov     %rax,    40(%rsi)
+    MOVE_REGISTERS(%rsp, %rsi)
 
     add     $48,     %rsp
 
@@ -125,18 +138,7 @@ switch_registers:
     jmp     switch_registers_skip1
     switch_registers_skip0:
 
-    mov     0(%rsp), %rax
-    mov     %rax,    0(%rdi)
-    mov     8(%rsp), %rax
-    mov     %rax,    8(%rdi)
-    mov     16(%rsp), %rax
-    mov     %rax,    16(%rdi)
-    mov     24(%rsp), %rax
-    mov     %rax,    24(%rdi)
-    mov     32(%rsp), %rax
-    mov     %rax,    32(%rdi)
-    mov     40(%rsp), %rax
-    mov     %rax,    40(%rdi)
+    MOVE_REGISTERS(%rsp, %rdi)
 
     add     $48,     %rsp
     switch_registers_skip1:
@@ -147,7 +149,7 @@ switch_registers:
     pop     %rsi
 
     # s'il faut sauver stack, on met rsp dans STACK_PTR
-    test    %rdx,     %rdx
+    test    $0b00000100,    %dl
     jz      switch_registers_skip2
     mov     %rsp,     STACK_PTR(%rip)
     switch_registers_skip2:
@@ -155,7 +157,7 @@ switch_registers:
     # restaure la pile du nouveau processus, cette pile est courante dans execval_prolog
 
     # si il faut restaurer depuis STACK_PTR
-    test    %rcx,               %rcx
+    test    $0b00000010,    %dl
     jz      switch_registers_skip3
 
     mov     STACK_PTR(%rip),    %rax
@@ -167,7 +169,15 @@ switch_registers:
     movq    $0,                 STACK_PTR(%rip)
     jmp     switch_registers_skip4
     switch_registers_skip3:
+    # on remet la pile du processus
     mov     48(%rdi), %rsp
+
+    # si le processus est un processus non encore initialisé, on saute à launch_process
+    test    $0b00000001,    %dl
+    jz      switch_registers_skip4
+
+    jmp     launch_process
+    
     switch_registers_skip4:
 
     # et on empile l'adresse de retour
@@ -175,6 +185,8 @@ switch_registers:
 
     # on retourne à l'adresse de retour que l'on a mise artificiellement dans la pile
     ret
+
+
 
 
 #endif

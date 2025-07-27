@@ -1,5 +1,7 @@
 # module de simulation de réseau
 
+setAtomicTime(1)
+
 $
 chaque processus a :
 une file des messages qu'il recoit. Recevoir un message consiste à défiler un élément
