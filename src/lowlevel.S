@@ -99,12 +99,17 @@ registres actuels -> stockés dans l'ancien processus
 registres du nouveau processus -> mis dans les vrais registres
 registres à restaurer après l'ancien processus -> stockés dans le nouveau processus
 
-La fonction a un support pour des appels sans processus précédent, tel que le soi-disant processus précédent ait été restauré (pile, registres)
-Mais actuellement elle n'est jamais appelée sans processus précédent
 
 Remarque : la version actuelle ne fonctionne que parce que eval_prolog n'utilise pas de registres sauvegardés après le changement de pile
 En effet, quand on commence un processus, on restaure les registres sauvegardés du processus, mais lorsque le processus en question n'a
 jamais été appelé avant, les registres sauvegardés reçoivent des valeurs arbitraires
+
+TODO: Il faudrait sauvegarder la pile courante à switch_registers, ça ferait sûrement moins de bidouillages
+On aurait juste à modifier l'adresse de retour plutôt que de l'empiler
+
+TODO: Ne pas différencier la pile des autres registres dans les manipulations des versions sauvegardées (restaurer et sauvegarder la pile
+en même temps que les autres registres)
+
 */
 # switch_registers(process, prev_process, flags)
 .globl switch_registers
@@ -132,7 +137,7 @@ switch_registers:
     add     $8,      %rsp
     mov     %rsp,    48(%rsi)
     sub     $8,      %rsp
-    
+
 
     # PASSE A LA NOUVELLE PILE
 
@@ -140,36 +145,36 @@ switch_registers:
     pop     %rsi
 
     # s'il faut sauver stack, on met rsp dans STACK_PTR
-    test    $0b00000100,    %dl
-    jz      switch_registers_skip2
+    test    $0b100,    %dl
+    jz      switch_registers_skip0
     mov     %rsp,     STACK_PTR(%rip)
-    switch_registers_skip2:
+    switch_registers_skip0:
 
     # restaure la pile du nouveau processus, cette pile est courante dans execval_prolog
 
     # si il faut restaurer depuis STACK_PTR
-    test    $0b00000010,    %dl
-    jz      switch_registers_skip3
+    test    $0b010,    %dl
+    jz      switch_registers_skip1
 
     mov     STACK_PTR(%rip),    %rax
     # si STACK_PTR est non nul
     test    %rax,               %rax
-    jz      switch_registers_skip4
+    jz      switch_registers_skip2
     mov     %rax,               %rsp
     # on remet STACK_PTR à nul
     movq    $0,                 STACK_PTR(%rip)
-    jmp     switch_registers_skip4
-    switch_registers_skip3:
+    jmp     switch_registers_skip2
+    switch_registers_skip1:
     # on remet la pile du processus
     mov     48(%rdi), %rsp
 
     # si le processus est un processus non encore initialisé, on saute à launch_process
-    test    $0b00000001,    %dl
-    jz      switch_registers_skip4
+    test    $0b001,    %dl
+    jz      switch_registers_skip2
 
     jmp     launch_process
     
-    switch_registers_skip4:
+    switch_registers_skip2:
 
     # et on empile l'adresse de retour
     push    %rsi

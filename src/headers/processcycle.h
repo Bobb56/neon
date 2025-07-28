@@ -52,7 +52,8 @@ ProcessCycle* processCycle_remove(ProcessCycle* pc);
 ProcessCycle* loadNextLivingProcess(ProcessCycle* pc);
 void unloadCurrentProcess(Process* p);
 Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool delete_tree, bool isInitialized);
-bool processCycle_isEmpty(ProcessCycle* cycle);
+bool processCycle_isActive(ProcessCycle* cycle);
+bool processCycle_isEmpty(ProcessCycle* pc);
 void processCycle_clean(ProcessCycle* cycle);
 void process_preRemove(Process* p);
 

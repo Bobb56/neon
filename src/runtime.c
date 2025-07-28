@@ -244,7 +244,7 @@ void launch_process(void) {
     PROCESS_FINISH.tab[process_cycle->process->id] = 1; // on a fini le processus, on libère la place
 
     // on regarde si on doit retourner dans l'exécution ou bien quitter pour toujours
-    if (!processCycle_isEmpty(process_cycle)) { // il reste des processus annexes à exécuter
+    if (processCycle_isActive(process_cycle)) { // il reste des processus annexes à exécuter
         // on passe au prochain processus non terminé
         process_cycle = loadNextLivingProcess(process_cycle);
 
@@ -263,7 +263,7 @@ void launch_process(void) {
 
     // supprime définitivement tous les processus qui restaient
 
-    while (process_cycle != NULL) {
+    while (!processCycle_isEmpty(process_cycle)) {
         process_cycle = processCycle_remove(process_cycle);
     }
 
@@ -2191,7 +2191,7 @@ void exitRuntime(void) {
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
     process_preRemove(process_cycle->process);
 
-    if (!processCycle_isEmpty(process_cycle)) { // il reste des processus annexes à exécuter
+    if (processCycle_isActive(process_cycle)) { // il reste des processus annexes à exécuter
         //printf("saut direct à eval_prolog après la fin du processus principal\n");
 
         // on passe au prochain processus non terminé
@@ -2202,7 +2202,7 @@ void exitRuntime(void) {
         // on n'est jamais censé retourner, eval_prolog va de suite supprimer ce processus
     }
 
-    while (process_cycle != NULL) {
+    while (!processCycle_isEmpty(process_cycle)) {
         process_cycle = processCycle_remove(process_cycle);
     }
 

@@ -10,16 +10,6 @@ extern intlist PROCESS_FINISH;
 extern ProcessCycle* process_cycle;
 
 
-ProcessCycle* processCycle_create(void) {
-    ProcessCycle* pc = malloc(sizeof(ProcessCycle));
-    pc->process = NULL;
-    pc->next = NULL;
-    pc->prev = NULL;
-    return pc;
-}
-
-
-
 
 
 // dans le cas où il n'y en n'a pas, elle renvoie le même processus
@@ -65,6 +55,16 @@ void set_stack_pointer(uint8_t* registers, void* stack) {
         //        ^
         //        8    0
     }
+}
+
+
+
+ProcessCycle* processCycle_create(void) {
+    ProcessCycle* pc = malloc(sizeof(ProcessCycle));
+    pc->process = NULL;
+    pc->next = NULL;
+    pc->prev = NULL;
+    return pc;
 }
 
 
@@ -148,16 +148,21 @@ void processCycle_print(ProcessCycle* cycle) {
 
 // renvoie vrai si et seulement si : il existe un processus dans ce cycle => ce processus a fini
 __attribute__((noinline))
-bool processCycle_isEmpty(ProcessCycle* cycle) {
+bool processCycle_isActive(ProcessCycle* cycle) {
     ProcessCycle* cycle_sov = cycle;
     do {
         if (cycle->process->state == Running)
-            return false;
+            return true;
         
         cycle = cycle->next;
     } while (cycle_sov != cycle);
-    return true;
+    return false;
 }
+
+bool processCycle_isEmpty(ProcessCycle* pc) {
+    return pc->process == NULL && pc->next == NULL && pc->prev == NULL;
+}
+
 
 
 // supprime les processus ayant terminé, ne change pas le processus actuel, même si il a terminé
@@ -214,8 +219,10 @@ ProcessCycle* processCycle_remove(ProcessCycle* pc) {
     ProcessCycle* next = pc->next;
 
     if (pc->next == pc && pc->prev == pc) { // plus qu'un seul élément
-        free(pc);
-        return NULL;
+        pc->next = NULL;
+        pc->prev = NULL;
+        pc->process = NULL;
+        return pc;
     }
     else if (pc->next == pc->prev) {// il y a uniquement deux processus
         free(pc);
