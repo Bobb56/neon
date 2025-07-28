@@ -119,10 +119,8 @@ switch_registers:
     # restauration des registres de ce processus
     LOAD_REGISTERS(%rdi)
 
-    # si on a un processus précédent, on transfère les registres à restaurer au nouveau processus, et on enregistre les registres actuels dans l'ancien processus
-    test    %rsi,   %rsi
-    jz      switch_registers_skip0
-    # si on a un processus précédent on sauvegarde la pile actuelle dedans
+
+    # on sauvegarde la pile actuelle dans le processus d'avant
     MOVE_REGISTERS(%rsi, %rdi)
     
     # et enfin on enregistre les registres d'avant dans la structure
@@ -134,14 +132,7 @@ switch_registers:
     add     $8,      %rsp
     mov     %rsp,    48(%rsi)
     sub     $8,      %rsp
-
-    jmp     switch_registers_skip1
-    switch_registers_skip0:
-
-    MOVE_REGISTERS(%rsp, %rdi)
-
-    add     $48,     %rsp
-    switch_registers_skip1:
+    
 
     # PASSE A LA NOUVELLE PILE
 

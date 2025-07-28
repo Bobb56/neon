@@ -9,7 +9,7 @@ LDFLAGS = -lm -g # Flags de linkage
 ASMFLAGS = -g
 
 # Fichiers src et objets
-C_src = src/neon.c src/operators.c src/builtinfunctions.c src/strings.c src/dynarrays.c src/parser.c src/syntaxtrees.c src/neonio.c src/objects.c src/printerror.c src/linenoise.c src/gc.c src/runtime.c
+C_src = src/neon.c src/operators.c src/builtinfunctions.c src/strings.c src/dynarrays.c src/parser.c src/syntaxtrees.c src/neonio.c src/objects.c src/printerror.c src/linenoise.c src/gc.c src/runtime.c src/processcycle.c
 
 C_OBJECTS = $(patsubst src/%.c,obj/%.o,$(C_src))
 

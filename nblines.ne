@@ -11,6 +11,7 @@ files = [
     "operators.c",
     "runtime.c",
     "objects.c",
+    "processcycle.c",
     "lowlevel.S",
     
     "headers/printerror.h",
@@ -25,6 +26,7 @@ files = [
     "headers/operators.h",
     "headers/runtime.h",
     "headers/objects.h",
+    "headers/processcycle.h",
     "headers/lowlevel.h"
 ]
 
