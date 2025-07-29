@@ -5,7 +5,8 @@
 #include "objects.h"
 #include "processcycle.h"
 
-NeObj* reset_stack_and_registers(void);
+void reset_stack_and_registers(void);
+void save_stack_and_registers(void);
 void switch_registers(Process* process, Process* prev);
 void* get_stack(void);
 

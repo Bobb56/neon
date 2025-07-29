@@ -82,7 +82,9 @@ S'il y a des problèmes liés aux piles et tout, bien vérifier les tailles des 
 Peut être qu'il y a des endroits où on oublie de mettre à jour les promesses
 
 J'ai enlevé les vérifications de CODE_ERROR juste après avoir restauré les registres et la pile, ça peut causer des problèmes
-S'il y a des problèmes, relire mes commentaires dans launch_process, eval_prolog et switch_registers
+
+General Protection Fault = Problème d'alignement de la pile
+
 
 
 Choses à modifier pour la refonte du système d'objets :
@@ -92,9 +94,7 @@ Choses à modifier pour la refonte du système d'objets :
 
 Avancement et choses à faire :
 -------------------------------
-> Il faut absolument gérer les cas où le processus principal ne termine pas en dernier :
-  -> Dans ce cas il faut prendre en charge le retour dans eval_prolog (ça devrait le faire)
-  -> Il faut prendre en charge la sortie dans launch_process
+
 > Il faut faire un eval_prolog moins lourd en rajoutant une dimension : on transforme le eval_prolog actuel pour qu'il change de processus systématiquement et on fait un nouveau eval_prolog qui appelle l'autre qu'en cas de atomic_time == 0
 
 > Mettre à jour la documentation sur les integer et les flottants

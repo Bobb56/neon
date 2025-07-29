@@ -22,6 +22,7 @@
     mov     %r15,    48(%rdx);
 
 
+
 # dépile les registres dans une autre structure
 # modifie rax
 #define POP_REGISTERS(dest_index)       \
@@ -42,6 +43,15 @@
     add     $56,    %rdx; # instruction inutile
 
 
+
+#define SAVE_REGISTERS(dest_index)      \
+    mov     %rsp,    0(dest_index);     \
+    mov     %rbx,    8(dest_index);     \
+    mov     %rbp,    16(dest_index);    \
+    mov     %r12,    24(dest_index);    \
+    mov     %r13,    32(dest_index);    \
+    mov     %r14,    40(dest_index);    \
+    mov     %r15,    48(dest_index);
 
 
 #define LOAD_REGISTERS(source_index)    \
@@ -94,6 +104,17 @@ reset_stack_and_registers:
 
     ret
 
+
+.globl save_stack_and_registers
+.type save_stack_and_registers, @function
+# cette fonction sauvegarde la pile et les registres sauvegardés dans le processus qui tourne actuellement
+save_stack_and_registers:
+    movq	process_cycle(%rip), %rdi
+	movq	(%rdi), %rdi
+
+    SAVE_REGISTERS(%rdi)
+
+    ret
 
 
 

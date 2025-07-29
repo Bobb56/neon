@@ -148,7 +148,8 @@ function main(args) do
             "variables_arguments",
             "gc",
             "lambda",
-            "prog"
+            "prog",
+            "relaunch"
         ]
     )
     screen.Screen~runTests(clearScr := args==[] or args[0] != 'log')

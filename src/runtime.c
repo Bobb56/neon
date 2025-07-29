@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "headers/dynarrays.h"
 #include "headers/neon.h"
@@ -193,35 +192,15 @@ Quand switch_registers va charger ce processus pour la première fois, elle va d
 dans cette fonction qui va à son tour rappeler eval_prolog
 Cette fonction appelle eval_prolog comme il faut, avec l'adresse d'un objet en argument, etc
 Quand le processus aura terminé, il retournera ici, et on pourra le supprimer dans les règles de l'art
-IMPORTANT : cette fonction ne peut pas être appelée sur la pile principale
 */
 
-/*
-launch_process et eval_prolog doivent avoir la même taille de contexte puisque quand launch_process termine,
-il termine sur le contexte de eval_prolog
-*/
 
-// attention, cette fonction n'a pas la même taille de contexte que eval_prolog, donc il faut trouver une manière de gérer ça
-// une manière de le gérer serait de gérer directement ça dans reset_stack_and_registers, faire une version vraiment spécifique de cette fonction
-// donc le rôle est d'agrandir le contexte de la fonction appelante pour que celui-ci soit un contexte conforme à launch_process
-// en gros, le rôle de la fonction serait de restaurer la pile de base, mais en faisant comme si launch_process avait été appelée de manière
-// conforme sur la pile de base
-// pour le saut dans eval_prolog à la sauvage, il faut aussi trouver une solution pour le rendre propre
-// une solution pourrait être de ne pas démonter le contexte de eval_prolog au moment de sauter, et de se réinjecter en plein milieu de la fonction
-// une autre solution plus propre que l'assembleur inline pourrait être de faire une fonction assembleur dont le rôle est de modifier l'adresse
-// de retour de launch_process, comme ça il y aurait qu'à faire un return, et ça démonterait automatiquement le contexte de launch_process
-// réfléchir à si on a le droit de faire ça avec la pile principale, et si ça va pas tout casser pour le processus qui utilise la pile principale
-// pour le processus utilisant la pile principale, on ne modifie pas sa sauvegarde de la pile et des registres, donc pour peu qu'on ne
-// modifie pas LE CONTENU de la pile, ça va (à voir)
-
-// il faudrait vraiment trouver une manière propre de revenir dans le game après cette fonction
 __attribute__((noinline))
 void launch_process(void) {
+    NeObj result;
+
     // pour être sûr d'avoir cleané le dernier processus qui a terminé
     processCycle_clean(process_cycle);
-
-
-    NeObj result;
 
     process_cycle->process->state = Running;
 
@@ -255,10 +234,7 @@ void launch_process(void) {
         // on n'est jamais censé retourner, eval_prolog va de suite supprimer ce processus
     }
 
-    // normalement, tant qu'on n'a pas corrigé le problème de l'appel à eval_prolog du processus principal qui ne retourne pas dans l'exécution,
-    // on n'est jamais censé passer par ici
-
-    // on revient sur la pile principale, avec le contexte de eval_prolog diminué de 16 octets, comme ça il reste nos 8 octets à nous
+    // on revient sur la pile et les registres principaux sauvegardés dans exitRuntime
     // il faut faire attention à ce que cette fonction n'utilise pas de registres sauvegardés sinon reset_stack_and_registers va les changer
     reset_stack_and_registers();
 
@@ -268,18 +244,7 @@ void launch_process(void) {
         process_cycle = processCycle_remove(process_cycle);
     }
 
-    //printf("On est sortis par un processus secondaire, ce qui veut dire que le processus principal a fini avant un processus secondaire\n");
-
-    // renvoie la promesse associée au processus principal
-
-    /**PROMISES_CNT.tab[0] = 0;
-    // récupéré de promesse sur le processus principal
-    PROCESS_FINISH.tab[0] = true;
-    
-    result = PROMISES->tab[0];
-    PROMISES->tab[0] = NEO_VOID;*/
-    return ; // la promesse associée au processus principal
-    // on supprime non pas le contexte de cette fonction, mais celui de eval_prolog car on est sur la pile principale, courant eval_prolog
+    return ;
 }
 
 
@@ -1366,15 +1331,6 @@ NeObj* get_address(Tree* tree) {
 
 
 
-
-
-
-
-
-
-
-
-
 int execConditionBlock(Tree* maintree) {
     intptr_t int_ret = 0;
     int bloc = 0;
@@ -1699,16 +1655,6 @@ int execStatementForeachList(Tree* tree, NeObj neo_list) {
         ext_index++;
     }
 
-    // la variable représentant le variant de boucle a été supprimée à la fin de la dernière
-    // itération, et si on la laisse telle quelle, elle va se refaire supprimer lors du delete context
-    // ce qui se passe : le newContext nous offre une nouvelle variable libre pour faire nos trucs
-    // a chaque itération, on crée l'objet et on le supprime
-    // à la fin de la boucle, on a donc un bilan neutre, on peut donc reset la variable pour qu'elle ne se
-    // refasse pas supprimer
-    // conclusion : quand on delete un context, il faut faire attention :
-    // -> soit si on a un bilan neutre sur la variable, de la vider de ses pointeurs
-    // -> sinon, si il faut la supprimer, on la laiss telle quelle et le deleteContext va la supprimer
-
     deleteContext(process_cycle->process->var_loc);
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
@@ -1878,7 +1824,6 @@ int exec_aux(Tree* tree) {
                 
                 intptr_t int_ret = exec_aux(tree->sons[inst]);
 
-                
                 // s'il reste des crédits à ce processus, on les lui rend, sinon on passe au suivant
                 atomic_counter = (atomic_counter + temp > 0) ? atomic_counter + temp : 0;
 
@@ -2169,8 +2114,12 @@ void initRuntime(void) {
 }
 
 void exitRuntime(void) {
+    volatile NeObj unused = NEO_VOID; // sert à avoir la même taille de pile utilisée que la fonction launch_process
 
     PROCESS_FINISH.tab[process_cycle->process->id] = 1; // on a fini le processus, on libère la place
+    *PROMISES_CNT.tab[0] = 0; // normalement il ne peut pas être à autre chose que zéro, vu que personne n'a jamais
+    // récupéré de promesse sur le processus principal
+    PROCESS_FINISH.tab[0] = true;
 
     // supprime définitivement ce dernier processus
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
@@ -2178,6 +2127,10 @@ void exitRuntime(void) {
 
     if (processCycle_isActive(process_cycle)) { // il reste des processus annexes à exécuter
         //printf("saut direct à eval_prolog après la fin du processus principal\n");
+
+        // ici, on sauvegarde les registres sauvegardés et la pile dans le processus actuel
+        // comme ça quand on va passer au prochain processus, ils vont être transférés de processus en processus et restaurés à la fin
+        save_stack_and_registers();
 
         // on passe au prochain processus non terminé
         process_cycle = loadNextLivingProcess(process_cycle);
@@ -2191,11 +2144,6 @@ void exitRuntime(void) {
         process_cycle = processCycle_remove(process_cycle);
     }
 
-    // renvoie la promesse associée au processus principal
-
-    *PROMISES_CNT.tab[0] = 0; // normalement il ne peut pas être à autre chose que zéro, vu que personne n'a jamais
-    // récupéré de promesse sur le processus principal
-    PROCESS_FINISH.tab[0] = true;
     return;
 }
 
