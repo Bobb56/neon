@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "syntaxtrees.h"
-
+#include "constants.h"
 
 
 typedef struct NeSave
@@ -14,22 +14,20 @@ typedef struct NeSave
 
 
 
-
-typedef enum {
-    Running,
-    Finished,
-    Uninitialized
-} ProcessState;
+// état d'un processus
+#define Uninitialized   0   
+#define Running         1
+#define Finished        2
 
 
 typedef struct Process
 {
-    uint8_t registers[64]; // sert à faire les échanges de registres
+    uint8_t registers[REG_BUFFER_SIZE]; // sert à faire les échanges de registres
 
     // l'état du processus est à Uninitialized si jamais la pile de ce processus n'a pas été appelé dans eval_prolog de manière normale
     // lorsque switch_registers restaure un processus dont ce champ est à Uninitialized, il appelle directement launch_process qui appelle à son tour eval_prolog de manière normale
     // ainsi quand un processus créé avec ce flag termine, il revient automatiquement à launch_process qui le supprime proprement et continue l'exécution
-    ProcessState state;
+    uint8_t state;
     
     Tree* arg_tree;
     NeObj* arg_obj;

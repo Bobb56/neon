@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "headers/processcycle.h"
@@ -42,18 +43,7 @@ void* allocate_new_stack(void) {
 
 void set_stack_pointer(uint8_t* registers, void* stack) {
     if (stack != NULL) {
-        ((uint64_t*)registers)[6] = -16 & ((uint64_t)stack + STACK_SIZE); // sommet de la pile aligné à 16 octets
-        // ajoute l'adresse de retour vers launch_process
-
-        // il faut que la case de rsp dans registers soit un pointeur sur un type de la taille d'un pointeur, donc registers doit être un niveau de pointeur en plus
-        // techniquement, rsp est un tableau de void*
-        ((void* **)registers)[6] -= 1; // on désaligne le sommet de pile à 8 octets
-        //*((uint64_t**)registers)[6] = (uint64_t) launch_process_unaligned; // et on met l'adresse au sommet de pile
-        // manière alignée, donc on utilise une routine assembleur qui va réaligner ça
-        // organisation de la pile que l'on vient de créer :
-        // ... | ret | ? | ...
-        //        ^
-        //        8    0
+        ((uint64_t*)registers)[0] = -16 & ((uint64_t)stack + STACK_SIZE); // sommet de la pile aligné à 16 octets
     }
 }
 

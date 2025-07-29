@@ -56,6 +56,8 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #define STACK_SIZE (8*1024*1024) // taille de la pile par défaut à 8 Mio, ça peut changer en fonction de la plateforme
 
+#define REG_BUFFER_SIZE 64 // taille de la zone de sauvegarde de registres dans les processus
+
 /*constantes de couleur*/
 #define BLUE 0
 #define RED 1

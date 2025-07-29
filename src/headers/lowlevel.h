@@ -6,7 +6,7 @@
 #include "processcycle.h"
 
 NeObj* reset_stack_and_registers(void);
-void switch_registers(Process* process, Process* prev, uint8_t flags);
+void switch_registers(Process* process, Process* prev);
 void* get_stack(void);
 
 #endif

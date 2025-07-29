@@ -45,7 +45,6 @@ extern NeObj RETURN_VALUE;
 extern intlist exceptions_err;
 extern char* EXCEPTION;
 extern ProcessCycle* process_cycle;
-extern void* STACK_PTR;
 
 
 // fonctions des opérateurs
@@ -228,6 +227,8 @@ void launch_process(void) {
 
     eval_prolog(&result, process_cycle->process->arg_tree);
 
+    //printf("End process %d\n", process_cycle->process->id);
+
     // on marque le processus comme terminé, il sera supprimé automatiquement par eval_prolog
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
     process_preRemove(process_cycle->process);
@@ -281,12 +282,6 @@ void launch_process(void) {
     // on supprime non pas le contexte de cette fonction, mais celui de eval_prolog car on est sur la pile principale, courant eval_prolog
 }
 
-// cette fonction fabrique un octet dans lequel sont codés les conditions envoyées à switch_registers en plus des deux pointeurs
-uint8_t make_switch_registers_flags(bool save_stack, bool load_stack, bool isInitialized) {
-    return save_stack << 2 | load_stack << 1 | isInitialized;
-}
-
-
 
 
 /*
@@ -304,14 +299,8 @@ NeObj* eval_prolog(NeObj* obj, Tree* tree) {
     {
         atomic_counter = ATOMIC_TIME;
 
-        uint8_t flags = make_switch_registers_flags(
-            process_cycle->prev->process->stack == NULL,
-            process_cycle->process->stack == NULL,
-            process_cycle->process->state == Uninitialized
-        );
-
         // on passe sur la pile et les registres du processus suivant
-        switch_registers(process_cycle->process, process_cycle->prev->process, flags);
+        switch_registers(process_cycle->process, process_cycle->prev->process);
 
         obj = process_cycle->process->arg_obj;
         tree = process_cycle->process->arg_tree;
@@ -349,13 +338,7 @@ NeObj* eval_prolog(NeObj* obj, Tree* tree) {
 
             //printf("Switching from process %d to process %d\n", process_cycle->prev->process->id, process_cycle->process->id);
 
-            uint8_t flags = make_switch_registers_flags(
-                process_cycle->prev->process->stack == NULL,
-                process_cycle->process->stack == NULL,
-                process_cycle->process->state == Uninitialized
-            );
-
-            switch_registers(process_cycle->process, process_cycle->prev->process, flags);
+            switch_registers(process_cycle->process, process_cycle->prev->process);
 
             // a partir de maintenant on est sur la nouvelle pile et les nouveaux registres donc on a retrouvé obj et tree de l'appel d'origine
 
@@ -577,6 +560,8 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
 
 __attribute__((noinline)) // cette fonction est tellement grosse que de toute façon gcc n'aurait jamais l'idée de l'inliner
 NeObj eval_aux(Tree* tree) {
+
+    //printf("pile : %p\n", get_stack());
 
     // =================== EVALUATION =====================
 
