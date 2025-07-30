@@ -162,11 +162,10 @@ Ajout d'un type de données NeObject : +0.0.1
 #define TYPE_CONTAINER          (51 | HEAP_ALLOCATED)
 #define TYPE_ATTRIBUTE          52
 #define TYPE_PROMISE            (53 | HEAP_ALLOCATED)
-#define TYPE_AWAIT              54
 
-#define TYPE_EMPTY              55
+#define TYPE_EMPTY              54
 
-#define TYPE_BLOCKFOREACH       56
-#define TYPE_STATEMENTFOREACH   57
+#define TYPE_BLOCKFOREACH       55
+#define TYPE_STATEMENTFOREACH   56
 
 #endif

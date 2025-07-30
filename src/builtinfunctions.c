@@ -245,7 +245,7 @@ NeObj _eval_(NeList* args)
         return NEO_VOID;
     }
 
-    NeObj res; eval_prolog(&res, tree);
+    NeObj res = eval_aux(tree);
 
     if (CODE_ERROR != 0)
         free(sov);
@@ -607,7 +607,7 @@ NeObj _list_comp_(NeList* args)
 
     while (neo_to_integer(*i) < neo_to_integer(ARG(2)))
     {
-        NeObj bo; eval_prolog(&bo, cond);
+        NeObj bo = eval_aux(cond);
 
 
         if (CODE_ERROR != 0) {
@@ -621,7 +621,7 @@ NeObj _list_comp_(NeList* args)
 
 
         if (neoIsTrue(bo)) {
-            NeObj neo; eval_prolog(&neo, val);
+            NeObj neo = eval_aux(val);
             neo_list_append(liste, neo);
 
             if (CODE_ERROR != 0) {
@@ -1068,8 +1068,3 @@ NeObj _setColor_(NeList* args) {
     return neo_none_create();
 }
 
-
-
-NeObj _yield_(NeList* args) {
-    return neo_none_create();
-}

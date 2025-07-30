@@ -8,29 +8,28 @@ p2 = None
 
 function atexit() do
     await(p1 == 0 and p2 == 0)
-    assert(l == [[0, "blue"], [1, "blue"], [0, "red"], [2, "blue"], [0, "green"], [1, "red"], [3, "blue"], [1, "green"], [2, "red"], [4, "blue"], [2, "green"], [3, "red"], [5, "blue"], [4, "red"], [6, "blue"], [5, "red"], [7, "blue"], [6, "red"], "This is the end", [8, "blue"], [7, "red"], [9, "blue"], [8, "red"], [9, "red"]])
+    assert( l == ["p1", "p1", "p1", "p2", "p1", "p2", "p1", "main", "p2", "p1", "main", "p2", "p1", "main", "p2", "p1", "main", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "This is the end", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p2", "p2"])
 end
 
 parallel atexit()
 
 
 
-function process(color, bound) do
+function process(name, bound) do
     for (i, 0, bound) do
         atomic
-            l.append([i, color])
+            l.append(name)
         end
-        yield() # pour lancer une évaluation qui va changer de processus
     end
     
     return (0)
 end
 
 # code principal
-p1 = parallel process('blue', 10)
-p2 = parallel process('red', 10)
+p1 = parallel process('p1', 20)
+p2 = parallel process('p2', 20)
 
-process('green', 3)
+process('main', 4)
 
 # fin
 l.append("This is the end")

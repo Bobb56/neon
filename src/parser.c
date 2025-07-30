@@ -485,9 +485,9 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
             LINENUMBER++;
         
         // comptage des variables relatives à la détection de nombres
-        if (char1 == '.')
+        if (!isPotentiallyString && !isPotentiallyString2 && char1 == '.')
             nombrePoints+=1;
-        if (isPotentiallyNumber && char1=='.' && nombrePoints==1 && i+1<len_string && isdigit(string [i+1]))
+        if (isPotentiallyNumber && !isPotentiallyString && !isPotentiallyString2 && char1=='.' && nombrePoints==1 && i+1<len_string && isdigit(string [i+1]))
             stepNumber=1;
         else if (isPotentiallyNumber && char1=='.' && (i+1>=len_string || isdigit(string[i+1])))
         {

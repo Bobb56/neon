@@ -1882,15 +1882,7 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
             
             fils->label2 = strlist_index(&blockwords1Line, name) + 1;
 
-            // on a besoin que les AWAIT soient un type spécial pour la manière donc c'est géré dans execval
-            // on va dire qu'un AWAIT est une expression, ce qui permet de sauter directement à            
-
-            if (fils->label2 == AWAIT) {
-                fils->type = TYPE_AWAIT;
-            }
-            else {
-                fils->type = TYPE_BLOCKWORD1LINE;
-            }
+            fils->type = TYPE_BLOCKWORD1LINE;
             
             tree_appendSon(tree, fils);
         }

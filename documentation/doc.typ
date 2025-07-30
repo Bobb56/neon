@@ -125,6 +125,8 @@ On peut notamment obtenir leur taille grâce à la fonction `len`, et accéder a
 
 Les objets de type `Bool` ne peuvent valoir que `True` ou `False`. Ce sont les deux seules valeurs possibles. Ces valeurs peuvent être obtenues en les écrivant littéralement dans un programme, ou grâce aux opérateurs booléens, qui seront décrits dans la section Opérateurs.
 
+Toute expression booléenne (résultat des opérateurs de comparaison, des opérateurs logiques) s'évalue en `True` ou `False`.
+
 Les booléens permettent de représenter des valeurs de vérité, et donc d'instrumenter des branchements conditionnels, des boucles, etc.
 
 === 1.2.5 - Le type `List`
@@ -180,7 +182,7 @@ Cette fonction attend un nombre indéfini de paramètres, et affiche la représe
 Cette fonction prend en argument une chaîne de caractères, l'affiche et attend du texte de l'utilisateur. Elle renvoie une chaîne de caractères correspondant au texte entré.
 
 *`nbr` :*\
-Cette fonction prend en argument une chaîne de caractères représentant un nombre et la convertit en nombre.
+Cette fonction prend en argument une chaîne de caractères représentant un nombre et la convertit en entier ou en décimal.
 
 *`str` :*\
 Cette fonction prend un objet quelconque et renvoie sa représentation textuelle évaluable par Neon.
@@ -372,6 +374,7 @@ Cette fonction appelle le Garbage Collector.
 
 *`setColor` :*\
 Cette fonction change la couleur du texte affiché dans le terminal après son appel. Les couleurs disponibles sont : `"blue"`, `"red"`, `"green"`, `"white"`. Sur les terminaux où c'est disponible, le rouge et le bleu sont affichés en gras.
+
 
 === 1.2.9 - Le type `Function`
 
@@ -596,3 +599,166 @@ maVariable *= 7
 maVariable --
 print(maVariable)
 ```
+
+
+À partir de ces blocs de code basiques, il est possible d'en construire de plus complexes.
+
+== 3.1 - Les blocs conditionnels
+
+Les blocs conditionnels servent à exécuter du code à certaines conditions. Alors que les blocs de code constitués d'expressions à la suite s'exécutent quoi qu'il arrive, le code à l'intérieur de blocs conditionnels s'exécute uniquement si une certaine condition spécifiée est vraie.
+
+Un bloc conditionnel complet s'écrit de la manière suivante :
+
+```
+if (expression booléenne) then
+    code à exécuter
+elif (autre expression booléenne) then
+    autre code à exécuter
+⁝ nombre arbitraire de blocs elif
+elif (autre expression booléenne) then
+    autre code à exécuter
+else
+    autre code à exécuter
+end
+```
+
+Voici comment il est interprété : les expressions booléennes vont être testées une à une dans l'ordre. D'abord celle du `if`, puis celle du premier `elif`, etc. Pour la première de ces expressions qui s'évalue à `True`, le code juste en dessous est exécuté, et on sort du bloc conditionnel.
+
+Si aucune des conditions ne s'évalue à `True` (donc toutes les conditions s'évaluent à `False`), le code à l'intérieur du `else` est exécuté.
+
+Comme dit plus haut, ceci est un bloc conditionnel complet.
+
+Un bloc conditionnel valide doit forcément commencer par un bloc `if`, puis peut contenir un nombre quelconque de bloc `elif` (y compris zéro), puis peut contenir un bloc `else`.
+
+Les blocs conditionnels suivants sont valides :
+
+```
+if (1+1 == 2) then
+    print("vrai")
+end
+```
+
+\
+
+```
+if (1+1 == 0) then
+    print("vrai")
+else
+    print("faux")
+end
+```
+
+== 3.2 - Les boucles `while`
+
+
+
+== 3.3 - Les boucles `for`
+
+
+
+== 3.4 - Les boucles `foreach`
+
+
+== 3.5 - Instructions de contrôle
+
+=== 3.5.1 - Instruction `break`
+
+
+=== 3.5.2 - Instruction `continue`
+
+
+=== 3.5.3 - Instruction `pass`
+
+
+== 3.6 - La gestion d'erreurs
+
+
+= Partie 4 - Définition de fonctions et méthodes
+
+
+== 4.1 Définition de procédures
+
+
+== 4.2 Fonctions basiques
+
+
+== 4.3 Variables locales et globales
+
+
+== 4.4 Méthodes avancées de passage d'arguments
+
+=== 4.4.1 - Passage d'arguments dans le désordre
+
+=== 4.4.2 - Arguments optionnels
+
+=== 4.4.3 - Nombre illimité d'arguments
+
+=== 4.4.4 - Arguments vraiment optionnels
+
+== 4.5 - Programmation d'ordre supérieur, clôtures
+
+== 4.6 - Programmation modulaire
+
+
+= Partie 5 - Programmation concurrente
+
+== 5.1 - Vision par processus
+
+Dans les sections précédentes, quand on décrivait le comportement du programme, on en parlait comme d'une sorte de tête de lecture parcourant le programme et exécutant les instructions qu'elle rencontre. Cette vision correspond relativement bien au réel déroulement de l'interprétation d'un programme. Cette tête de lecture dont on parle implicitement quand on décrit le comportement d'un programme est en quelque sorte la personnification de l'exécution d'un programme.
+
+À partir de maintenant et grâce à la programmation concurrente, nous allons créer des programmes possédant plusieurs têtes de lecture différentes, c'est-à-dire exécutant simultanément différentes portions d'un programme. On dira alors qu'un programme possède différents fils d'exécution.
+
+Avant d'aller plus loin, il est essentiel de comprendre comment une telle chose est possible, et surtout comment elle est réalisée dans Neon.
+
+De nombreux ordinateurs ou appareils électroniques ne disposent que d'un unique processeur avec un unique coeur. Cependant, la quasi totalité des systèmes d'exploitation nécessitent la capacité d'exécuter plusieurs programmes en même temps. Ces systèmes d'exploitation gèrent alors ce qu'on appelle de l'entrelacement entre processus. Le processeur exécute quelques instructions d'un processus, puis quelques instructions d'un autre processus, puis revient au premier processus, etc. Il alterne l'exécution entre tous les processus. Cette gymnastique donne l'illusion que ces processus sont exécutés en même temps.
+
+Neon ayant pour but de pouvoir être exécuté sur n'importe quelle plateforme, il n'effectue aucune supposition sur le système d'exploitation. Ainsi, il ne peut pas utiliser de telles fonctionnalités d'entrelacement.
+
+C'est pourquoi l'interpréteur Neon gère lui-même l'entrelacement entre ses propres processus. Cette caractéristique possède des avantages, mais également des inconvénients.
+
+En effet, l'avantage n°1 est la possibilité d'exécuter plusieurs programmes à la fois sur des appareils pour lesquels c'est impossible autrement. Le fait que l'interpréteur ait directement le contrôle sur l'entrelacement permet également de mieux contrôler certains paramètres comme le temps passé à exécuter un processus avant de passer au suivant.
+
+En revanche, sur des appareils disposant de plusieurs coeurs d'exécution simultanée, l'interpréteur Neon sera incapable de distribuer les tâches sur ces différents coeurs.
+
+Ainsi, un programme Neon écrit de manière concurrente ne sera jamais plus rapide que sa version écrite entièrement séquentiellement. Les fonctionnalités concurrentes de Neon ne doivent être utilisées que lorsque cela facilite l'écriture du programme.
+
+== 5.2 - L'opérateur `parallel`
+
+== 5.3 - Le retour de processus via les promesses
+
+== 5.4 - Variables locales aux processus
+
+== 5.5 - Blocs atomiques
+
+== 5.6 - Attente passive
+
+== 5.7 - Fonctions du système d'entrelacement
+
+Le passage d'un processus à l'autre par l'interpréteur Neon n'est pas effectué à n'importe quel moment. Il est effectué par une fonction nommée `neon_interp_yield`. Cette fonction est appelée uniquement à deux endroits : lors d'un appel à la fonction d'évaluation de Neon et lors d'un appel à la fonction d'exécution d'un bloc de code Neon.
+
+À chaque fois que `neon_interp_yield` est appelée, un compteur est décrémenté. Tant que ce compteur n'atteint pas zéro, la fonction ne fait rien d'autre, mais lorsqu'il devient nul, `neon_interp_yield` va mettre en pause le processus actuel et relancer un autre processus.
+
+
+=== 5.7.1 - La fonction `setAtomicTime`
+
+Le nombre de fois que `neon_interp_yield` décrémente le compteur avant de passer au processus suivant est stocké dans la variable `ATOMIC_TIME`. C'est la valeur par défaut du compteur atomique d'un processus.
+Par défaut, `ATOMIC_TIME` vaut 1500, c'est-à-dire que pour chaque processus, au bout de 1500 appels à la fonction `neon_interp_yield`, celle-ci passera au processus suivant.
+
+La fonction `setAtomicTime` permet de modifier cette valeur (1 est la plus petite valeur possible).
+
+
+= Partie 6 - Fonctionnalités supplémentaires
+
+== 6.1 - Mot-clé `import`
+
+== 6.2 - Arguments de programme
+
+== 6.3 - Variables prédéfinies
+
+=== 6.3.1 - La variable `__name__`
+
+=== 6.3.2 - La variable `__platform__`
+
+=== 6.3.3 - La variable `__version__`
+
+== 6.4 - La variable spéciale `Ans`
