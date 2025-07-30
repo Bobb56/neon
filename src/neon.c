@@ -15,7 +15,7 @@
 #include "headers/syntaxtrees.h"
 #include "headers/neon.h"
 #include "headers/processcycle.h"
-
+#include "headers/operators.h"
 
 
 
@@ -113,8 +113,8 @@ Avancement et choses à faire :
 Procédure pour ajouter une fonction built-in :
 ------------------------------------------------
 1) Programmer cette fonction selon le prototype NeObj _maFonction_ (NeList* args)
-4) Ajouter 1 à la constante pré-processeur NBBUILTINFUNC définie au début de neon.h
-3) Ajouter le prototype de cette fonction tout à la fin de neon.h
+4) Ajouter 1 à la constante pré-processeur NBBUILTINFUNC définie au début de builtinfunctions.h
+3) Ajouter le prototype de cette fonction tout à la fin de builtinfunctions.h
 4) Ajouter la fonction dans le tableau de fonctions au début de ce fichier
 5) Compléter les informations sur la fonction dans neonInit
 
@@ -790,10 +790,10 @@ void neonInit(void)
 
 
     /*----- Préparation des fonctions ------*/
-    const char* NOMSBUILTINSFONC_temp[NBBUILTINFUNC] = {"print","input","nbr","str","len","sub","exit","append","remove","insert","type", "reverse", "eval","clear","help", "randint", "failwith", "time", "assert", "output", "chr", "ord", "listComp", "createException", "raise", "int", "index", "replace", "count", "list", "sortAsc", "sortDesc", "sin", "cos", "tan", "deg", "rad", "sqrt", "ln", "exp", "log", "log2", "round", "abs", "ceil", "floor", "readFile", "writeFile", "setFunctionDoc", "setAtomicTime", "copy", "loadNamespace", "gc", "setColor"};
+    const char* NOMSBUILTINSFONC_temp[NBBUILTINFUNC] = {"print","input","nbr","str","len","sub","exit","append","remove","insert","type", "reverse", "eval","clear","help", "randint", "failwith", "time", "assert", "output", "chr", "ord", "listComp", "createException", "raise", "int", "index", "replace", "count", "list", "sortAsc", "sortDesc", "sin", "cos", "tan", "deg", "rad", "sqrt", "ln", "exp", "log", "log2", "round", "abs", "ceil", "floor", "readFile", "writeFile", "setFunctionDoc", "setAtomicTime", "copy", "loadNamespace", "gc", "setColor", "yield"};
     strlist_copy(&NOMSBUILTINSFONC, NOMSBUILTINSFONC_temp, NBBUILTINFUNC);
 
-    const int typesRetour[NBBUILTINFUNC] = {TYPE_NONE, TYPE_STRING, TYPE_ANYTYPE, TYPE_STRING, TYPE_INTEGER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_STRING, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_INTEGER, TYPE_NONE, TYPE_INTEGER, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_INTEGER, TYPE_LIST, TYPE_EXCEPTION, TYPE_NONE, TYPE_INTEGER, TYPE_INTEGER, TYPE_STRING, TYPE_INTEGER, TYPE_LIST, TYPE_NONE, TYPE_NONE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_ANYTYPE, TYPE_NONE, TYPE_NONE, TYPE_NONE};
+    const int typesRetour[NBBUILTINFUNC] = {TYPE_NONE, TYPE_STRING, TYPE_ANYTYPE, TYPE_STRING, TYPE_INTEGER, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_STRING, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_INTEGER, TYPE_NONE, TYPE_INTEGER, TYPE_NONE, TYPE_NONE, TYPE_STRING, TYPE_INTEGER, TYPE_LIST, TYPE_EXCEPTION, TYPE_NONE, TYPE_INTEGER, TYPE_INTEGER, TYPE_STRING, TYPE_INTEGER, TYPE_LIST, TYPE_NONE, TYPE_NONE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_STRING, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_ANYTYPE, TYPE_NONE, TYPE_NONE, TYPE_NONE, TYPE_NONE};
 
     const char* helpbuiltinsfonc[NBBUILTINFUNC] = {
         "Displays arguments in the terminal",
@@ -849,11 +849,12 @@ void neonInit(void)
         "Performs a deep copy of an object, preserving the pointer dependencies",
         "Loads any variable from a given namespace without the namespace prefix",
         "Calls the Garbage Collector",
-        "Changes the writing text color in console if available.\nColors: red, green, blue and white"
+        "Changes the writing text color in console if available.\nColors: red, green, blue and white",
+        "Calling this function allows the interpreter to switch to another process"
     };
 
 
-    const int nbargs[NBBUILTINFUNC] = {-1,-1,1,1,1,3,0,2,2,3,1,1,1,0,-1,2,1,0,-1,-1,1,1,6,1,2,1,2,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,2,2,1,1,1,0,1}; // nombre d'arguments en tout
+    const int nbargs[NBBUILTINFUNC] = {-1,-1,1,1,1,3,0,2,2,3,1,1,1,0,-1,2,1,0,-1,-1,1,1,6,1,2,1,2,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,2,2,1,1,1,0,1, 0}; // nombre d'arguments en tout
 
     // les fonctions ayant un nombre illimité d'arguments ne doivent avoir qu'un seul élément dans typeArgs
     const int* typesArgs[NBBUILTINFUNC] = {
@@ -910,7 +911,8 @@ void neonInit(void)
         (int[]){TYPE_ANYTYPE},
         (int[]){TYPE_STRING},
         NULL,
-        (int[]){TYPE_STRING}
+        (int[]){TYPE_STRING},
+        NULL
     };
 
     /* ----- fin préparation des fonctions ------*/

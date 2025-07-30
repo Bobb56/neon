@@ -68,8 +68,6 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #define UNIT ((void*)-1) // valeur de pointeur spéciale comme NULL
 
-// pour builtinfonc et opfonc
-#define NBOPERATEURS 40
 
 
 // definition des types d’arguments pris par les operateurs

@@ -50,7 +50,7 @@ extern ProcessCycle* process_cycle;
 void* OPFONC[NBOPERATEURS] = {_and,_or,_xor,_add,_mul,_sub,_div,_pow,_equal,_notEq,_infEqual,_supEqual,_inf,_sup,_affectNone,_addEqual,_subEqual,_mulEqual,_divEqual,_incr,_decr,_not,_mod,_eucl,_ref,_goIn, _deref, _minus, _del, _affect, NULL, _exponent, _implique, _in, NULL, NULL, _swap, NULL, NULL, NULL};
 
 // fonctions des fonctions built-in
-NeObj (*BUILTINSFONC[NBBUILTINFUNC])(NeList*)={_print_,_input_,_nbr_,_str_,_len_,_substring_,_exit_,_append_,_remove_,_insert_,_type_, _reverse_, _eval_,_clear_,_help_, _randint_,_failwith_, _time_, _assert_, _output_, _chr_, _ord_, _list_comp_, _create_exception_, _raise_, _int_, _index_, _replace_, _count_, _list_, _sort_asc_, _sort_desc_, _sin_, _cos_, _tan_, _deg_, _rad_, _sqrt_, _ln_, _exp_, _log_, _log2_, _round_, _abs_, _ceil_, _floor_, _readFile_, _writeFile_, _setFunctionDoc_, _setAtomicTime_, _copy_, _load_namespace_, _gc_, _setColor_};
+NeObj (*BUILTINSFONC[NBBUILTINFUNC])(NeList*)={_print_,_input_,_nbr_,_str_,_len_,_substring_,_exit_,_append_,_remove_,_insert_,_type_, _reverse_, _eval_,_clear_,_help_, _randint_,_failwith_, _time_, _assert_, _output_, _chr_, _ord_, _list_comp_, _create_exception_, _raise_, _int_, _index_, _replace_, _count_, _list_, _sort_asc_, _sort_desc_, _sin_, _cos_, _tan_, _deg_, _rad_, _sqrt_, _ln_, _exp_, _log_, _log2_, _round_, _abs_, _ceil_, _floor_, _readFile_, _writeFile_, _setFunctionDoc_, _setAtomicTime_, _copy_, _load_namespace_, _gc_, _setColor_, _yield_};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

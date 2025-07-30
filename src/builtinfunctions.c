@@ -7,6 +7,7 @@
 #include "headers/builtinfunctions.h"
 #include "headers/dynarrays.h"
 #include "headers/gc.h"
+#include "headers/objects.h"
 #include "headers/operators.h"
 #include "headers/runtime.h"
 #include "headers/printerror.h"
@@ -1064,5 +1065,11 @@ NeObj _setColor_(NeList* args) {
     else if (strcmp(color, "red") == 0) {
         setColor(RED);
     }
+    return neo_none_create();
+}
+
+
+
+NeObj _yield_(NeList* args) {
     return neo_none_create();
 }

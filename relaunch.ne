@@ -20,7 +20,7 @@ function process(color, bound) do
         atomic
             l.append([i, color])
         end
-        _ = 0 # pour lancer une évaluation qui va changer de processus
+        yield() # pour lancer une évaluation qui va changer de processus
     end
     
     return (0)

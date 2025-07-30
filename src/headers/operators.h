@@ -5,6 +5,8 @@
 
 #include "constants.h"
 
+#define NBOPERATEURS 40
+
 NeObj _and(Tree* tree1, Tree* tree2);
 NeObj _or(Tree* tree1, Tree* tree2);
 NeObj _xor(NeObj op1, NeObj op2);
