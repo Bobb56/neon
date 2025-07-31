@@ -116,8 +116,7 @@ linenoise.c -- guerrilla line editing library against the idea that a
 
 #include "headers/linenoise.h"
 #include "headers/neonio.h"
-extern int CODE_ERROR;
-
+#include "headers/neon.h"
 
 
 #include <termios.h>
@@ -1028,7 +1027,7 @@ char *linenoiseEditFeed(struct linenoiseState *l) {
             history_len--;
             free(history[history_len]);
             errno = ENOENT;
-            CODE_ERROR = 1;
+            global_env->CODE_ERROR = 1;
             return "\0";
         }
         break;
@@ -1222,7 +1221,7 @@ static char *linenoiseNoTTY(void) {
         if (c == EOF || c == '\n') {
 
             if (c == EOF)
-                CODE_ERROR = 1; // quand on lit EOF, c'est qu'on a appuyé sur CTRL-D
+                global_env->CODE_ERROR = 1; // quand on lit EOF, c'est qu'on a appuyé sur CTRL-D
 
             if (c == EOF && len == 0) {
                 free(line);

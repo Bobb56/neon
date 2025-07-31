@@ -43,14 +43,14 @@ typedef struct ProcessCycle
     struct ProcessCycle* prev;
 } ProcessCycle;
 
-ProcessCycle* processCycle_create(void);
-ProcessCycle* processCycle_remove(ProcessCycle* pc);
+ProcessCycle* ProcessCycle_create(void);
+ProcessCycle* ProcessCycle_remove(ProcessCycle* pc);
 ProcessCycle* loadNextLivingProcess(ProcessCycle* pc);
 void unloadCurrentProcess(Process* p);
-Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitialized);
-bool processCycle_isActive(ProcessCycle* cycle);
-bool processCycle_isEmpty(ProcessCycle* pc);
-void processCycle_clean(ProcessCycle* cycle);
+Process* ProcessCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitialized);
+bool ProcessCycle_isActive(ProcessCycle* cycle);
+bool ProcessCycle_isEmpty(ProcessCycle* pc);
+void ProcessCycle_clean(ProcessCycle* cycle);
 void process_preRemove(Process* p);
 
 void save_later(ptrlist* variables_a_sauvegarder, Var var);

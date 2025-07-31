@@ -104,6 +104,7 @@ struct UserFunc
 bool neo_is_void(NeObj neo);
 bool neo_exact_equal(NeObj a, NeObj b);
 
+void variable_append(char* name, NeObj value);
 void free_var(Var var);
 void replace_var(Var var, NeObj object);
 void set_var(Var var, NeObj object);
@@ -170,7 +171,6 @@ NeObj neo_list_convert(NeList* list);
 NeObj gc_extern_neo_list_convert(NeList* list);
 Function* function_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const int* typeArgs, int typeRetour);
 NeObj neo_fun_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const int* typeArgs, int typeRetour);
-void compFunc(const char** helpbuiltinsfonc, const int* nbargs, const int** typesArgs, const int* typesRetour);
 bool funcArgsCheck(Function* fun, NeList* args);
 NeObj functionCall(NeObj fun, NeList* args);
 char* type(NeObj neo);

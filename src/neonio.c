@@ -7,14 +7,11 @@
 
 #include "headers/neonio.h"
 #include "headers/linenoise.h"
+#include "headers/neon.h"
 
 #ifndef LINUX_AMD64
 #include "headers/strings.h"
 #endif
-
-
-
-extern int CODE_ERROR;
 
 
 
@@ -27,7 +24,7 @@ extern int CODE_ERROR;
         FILE* fichier = fopen(filename, "rt");//lit le fichier
         if (fichier == NULL)
         {
-            CODE_ERROR = 67;
+            global_env->CODE_ERROR = 67;
             return NULL;
         }
         
@@ -67,7 +64,7 @@ extern int CODE_ERROR;
         FILE* fichier = fopen(filename, "w+");
         if (fichier == NULL)
         {
-            CODE_ERROR = 67;
+            global_env->CODE_ERROR = 67;
             return;
         }
 
@@ -91,7 +88,7 @@ extern int CODE_ERROR;
             if (err != 1)
             {
                 free(var);
-                CODE_ERROR = 104;
+                global_env->CODE_ERROR = 104;
                 return NULL;
             }
             
@@ -106,7 +103,7 @@ extern int CODE_ERROR;
             if (ptrtest==NULL)
             {
                 free(newVar);
-                CODE_ERROR = 66;
+                global_env->CODE_ERROR = 66;
                 return NULL;
             }
             
@@ -118,7 +115,7 @@ extern int CODE_ERROR;
             char* str = linenoise(text);
 
             if (str == NULL) {
-                CODE_ERROR = 104;
+                global_env->CODE_ERROR = 104;
                 return NULL;
             }
             else if (strlen(str) > 0) { // Ajout de la ligne à l'historique
@@ -222,7 +219,7 @@ extern int CODE_ERROR;
             int err = sscanf(string,"%lf",&nombre);
             if (err!=1)
             {
-                CODE_ERROR = 66;
+                global_env->CODE_ERROR = 66;
                 return 0;
             }
             return nombre;
@@ -247,7 +244,7 @@ extern int CODE_ERROR;
             
             if (err<0 || err!=(int)strlen(strNombre))
             {
-                CODE_ERROR = 66;
+                global_env->CODE_ERROR = 66;
                 free(strNombre);
                 return 0;
             }
@@ -371,7 +368,7 @@ extern int CODE_ERROR;
         uint8_t fichier = ti_Open(filename, "r"); //ouvre l'AppVar
         if (fichier == 0)
         {
-            CODE_ERROR = 67;
+            global_env->CODE_ERROR = 67;
             return NULL;
         }
         
@@ -400,7 +397,7 @@ extern int CODE_ERROR;
         uint8_t fichier = ti_Open(filename, "w"); //ouvre l'AppVar
         if (fichier == 0)
         {
-            CODE_ERROR = 67;
+            global_env->CODE_ERROR = 67;
             return;
         }
         
@@ -420,7 +417,7 @@ extern int CODE_ERROR;
     
         if (!nio_getsn(var, 4000))
         {
-            CODE_ERROR = 1;
+            global_env->CODE_ERROR = 1;
             return NULL;
         }
     
@@ -437,7 +434,7 @@ extern int CODE_ERROR;
         if (ptrtest==NULL)
         {
             free(newVar);
-            CODE_ERROR = 66;
+            global_env->CODE_ERROR = 66;
             return NULL;
         }
     
@@ -460,7 +457,7 @@ extern int CODE_ERROR;
             int err = sscanf(string,"%lf",&nombre);
             if (err!=1)
             {
-                CODE_ERROR = 66;
+                global_env->CODE_ERROR = 66;
                 return 0;
             }
             return nombre;
@@ -485,7 +482,7 @@ extern int CODE_ERROR;
             
             if (err<0 || err!=(int)strlen(strNombre))
             {
-                CODE_ERROR = 66;
+                global_env->CODE_ERROR = 66;
                 free(strNombre);
                 return 0;
             }

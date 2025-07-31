@@ -6,9 +6,7 @@
 #include "headers/constants.h"
 #include "headers/dynarrays.h"
 #include "headers/neon.h"
-//#include "headers/neonio.h"
 #include "headers/objects.h"
-#include "headers/builtinfunctions.h"
 #include "headers/operators.h"
 #include "headers/gc.h"
 #include "headers/runtime.h"
@@ -17,51 +15,19 @@
 #include "headers/lowlevel.h"
 #include "headers/processcycle.h"
 
-extern NeList* PROMISES;
-extern intptrlist PROMISES_CNT;
-extern intlist PROCESS_FINISH;
-
-extern int CODE_ERROR;
-
-extern strlist* CONTAINERS;
-extern NeList* ATTRIBUTES;
-
-extern intlist TYPESBUILTINSFONC;
-extern strlist NOMSBUILTINSFONC;
-extern NeObj (*BUILTINSFONC[NBBUILTINFUNC])(NeList*);
-extern NeList* ADRESSES;
-extern strlist HELPBUILTINSFONC;
-extern strlist* NOMS;
-extern intlist NBARGS;
 
 extern strlist exceptions;
-extern int LINENUMBER;
-extern int NAME;
-//extern ptrlist* VAR_LOC;
-extern int ATOMIC_TIME;
-extern int atomic_counter;
 extern intlist OPERANDES;
-extern NeObj RETURN_VALUE;
 extern intlist exceptions_err;
-extern char* EXCEPTION;
-extern ProcessCycle* process_cycle;
 
-
-// fonctions des opérateurs
-void* OPFONC[NBOPERATEURS] = {_and,_or,_xor,_add,_mul,_sub,_div,_pow,_equal,_notEq,_infEqual,_supEqual,_inf,_sup,_affectNone,_addEqual,_subEqual,_mulEqual,_divEqual,_incr,_decr,_not,_mod,_eucl,_ref,_goIn, _deref, _minus, _del, _affect, NULL, _exponent, _implique, _in, NULL, NULL, _swap, NULL, NULL, NULL};
-
-// fonctions des fonctions built-in
-NeObj (*BUILTINSFONC[NBBUILTINFUNC])(NeList*)={_print_,_input_,_nbr_,_str_,_len_,_substring_,_exit_,_append_,_remove_,_insert_,_type_, _reverse_, _eval_,_clear_,_help_, _randint_,_failwith_, _time_, _assert_, _output_, _chr_, _ord_, _list_comp_, _create_exception_, _raise_, _int_, _index_, _replace_, _count_, _list_, _sort_asc_, _sort_desc_, _sin_, _cos_, _tan_, _deg_, _rad_, _sqrt_, _ln_, _exp_, _log_, _log2_, _round_, _abs_, _ceil_, _floor_, _readFile_, _writeFile_, _setFunctionDoc_, _setAtomicTime_, _copy_, _load_namespace_, _gc_, _setColor_};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
 
 void updateFileName(char* name)
 {
-    neobject_destroy(ADRESSES->tab[NAME]);
-    ADRESSES->tab[NAME] = neo_str_create(name);
+    neobject_destroy(global_env->ADRESSES->tab[global_env->NAME]);
+    global_env->ADRESSES->tab[global_env->NAME] = neo_str_create(name);
 
     return ;
 }
@@ -133,7 +99,7 @@ void deleteContext(ptrlist* var_loc)
 bool isTrue(Tree* tree) {
     NeObj obj = eval_aux(tree);
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return false;
 
     bool b = neoIsTrue(obj);
@@ -158,7 +124,7 @@ bool neoIsTrue(NeObj expr)
     }
     else
     {
-        CODE_ERROR = 20;
+        global_env->CODE_ERROR = 20;
     }
     return false;
 }
@@ -187,24 +153,24 @@ void local(Var var, ptrlist* var_loc)
 
 __attribute__((noinline))
 void neon_interp_yield(void) {
-    if (atomic_counter == 0) {
-        atomic_counter = ATOMIC_TIME;
+    if (global_env->atomic_counter == 0) {
+        global_env->atomic_counter = global_env->ATOMIC_TIME;
 
-        if (process_cycle->next != process_cycle) {
+        if (global_env->process_cycle->next != global_env->process_cycle) {
             // on passe au prochain processus non terminé, et on supprime tous ceux qui ont fini
-            unloadCurrentProcess(process_cycle->process);
-            process_cycle = loadNextLivingProcess(process_cycle);
+            unloadCurrentProcess(global_env->process_cycle->process);
+            global_env->process_cycle = loadNextLivingProcess(global_env->process_cycle);
 
             // on est sûrs que le processus précédent dans la chaîne était vraiment le processus précédent
             // on change les registres après les avoir sauvegardés et on change de pile
 
-            //printf("switch from process %d to process %d\n", process_cycle->prev->process->id, process_cycle->process->id);
+            //printf("switch from process %d to process %d\n", global_env->process_cycle->prev->process->id, global_env->process_cycle->process->id);
 
-            switch_registers(process_cycle->process, process_cycle->prev->process);
+            switch_registers(global_env->process_cycle->process, global_env->process_cycle->prev->process);
         }
     }
 
-    atomic_counter--;
+    global_env->atomic_counter--;
 
     return;
 }
@@ -212,16 +178,16 @@ void neon_interp_yield(void) {
 
 __attribute__((noinline))
 void neon_interp_next_process(void) {
-    atomic_counter = ATOMIC_TIME;
+    global_env->atomic_counter = global_env->ATOMIC_TIME;
 
     // on passe au prochain processus non terminé
-    process_cycle = loadNextLivingProcess(process_cycle);
+    global_env->process_cycle = loadNextLivingProcess(global_env->process_cycle);
 
     // on passe sur la pile et les registres du processus suivant
-    switch_registers(process_cycle->process, process_cycle->prev->process);
+    switch_registers(global_env->process_cycle->process, global_env->process_cycle->prev->process);
 
     // on est sur la pile d'un processus réglementaire, donc on peut supprimer les processus qui ne sont plus actifs et qui ont été pré-supprimés
-    processCycle_clean(process_cycle);
+    ProcessCycle_clean(global_env->process_cycle);
 
     return;
 }
@@ -247,42 +213,42 @@ __attribute__((noinline, optimize("O0")))
 void launch_process(void) {
 
     // pour être sûr d'avoir cleané le dernier processus qui a terminé
-    processCycle_clean(process_cycle);
+    ProcessCycle_clean(global_env->process_cycle);
 
-    process_cycle->process->state = Running;
+    global_env->process_cycle->process->state = Running;
 
-    NeObj result = eval_aux(process_cycle->process->original_call);
+    NeObj result = eval_aux(global_env->process_cycle->process->original_call);
 
-    //printf("End process %d\n", process_cycle->process->id);
+    //printf("End process %d\n", global_env->process_cycle->process->id);
 
     // on marque le processus comme terminé, il sera supprimé automatiquement par neon_interp_next_process
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
-    process_preRemove(process_cycle->process);
+    process_preRemove(global_env->process_cycle->process);
 
     // on résoud la promesse et on continue l'exécution
     // le résultat est mis ici en attente, et neo_copy se chargera de vérifier si la valeur a changé ou pas
-    if (*PROMISES_CNT.tab[process_cycle->process->id] != 0) { // si c'est zéro, je sais que toutes les promesses ont été détruites avant même de les utiliser
-        PROMISES->tab[process_cycle->process->id] = result;
+    if (*global_env->PROMISES_CNT.tab[global_env->process_cycle->process->id] != 0) { // si c'est zéro, je sais que toutes les promesses ont été détruites avant même de les utiliser
+        global_env->PROMISES->tab[global_env->process_cycle->process->id] = result;
     }
     else {
         neobject_destroy(result);
     }
 
-    PROCESS_FINISH.tab[process_cycle->process->id] = 1; // on a fini le processus, on libère la place
+    global_env->PROCESS_FINISH.tab[global_env->process_cycle->process->id] = 1; // on a fini le processus, on libère la place
 
     // on regarde si on doit retourner dans l'exécution ou bien quitter pour toujours
-    if (processCycle_isActive(process_cycle)) { // il reste des processus annexes à exécuter
+    if (ProcessCycle_isActive(global_env->process_cycle)) { // il reste des processus annexes à exécuter
         neon_interp_next_process();
     }
 
     // on revient sur la pile et les registres principaux sauvegardés dans exitRuntime
     // il faut faire attention à ce que cette fonction n'utilise pas de registres sauvegardés sinon reset_stack_and_registers va les changer
-    reset_stack_and_registers();
+    reset_stack_and_registers(global_env->process_cycle->process);
 
     // supprime définitivement tous les processus qui restaient
 
-    while (!processCycle_isEmpty(process_cycle)) {
-        process_cycle = processCycle_remove(process_cycle);
+    while (!ProcessCycle_isEmpty(global_env->process_cycle)) {
+        global_env->process_cycle = ProcessCycle_remove(global_env->process_cycle);
     }
 
     return ;
@@ -303,7 +269,7 @@ NeList* treeToList(Tree* tree) {
         if (tree->sons[index] != NULL) {
             l->tab[index] = eval_aux(tree->sons[index]);
             
-            if (CODE_ERROR != 0)
+            if (global_env->CODE_ERROR != 0)
             {
                 // si y a eu un problème dans l'évaluation d'un argument, on doit libérer toute la liste créée jusqu'alors
                 nelist_destroy_until(l, index - 1);
@@ -323,19 +289,19 @@ NeList* treeToList(Tree* tree) {
 NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args) {
 
     // ouvre un nouveau contexte pour sauvegarder les variables locales de cet appel
-    newContext(process_cycle->process->var_loc);
+    newContext(global_env->process_cycle->process->var_loc);
 
 
     // on sauvegarde les "variables à sauvegarder" de ce processus avant d'en ajouter d'autres
-    ptrlist* sov_vars_to_save = process_cycle->process->varsToSave->tete;
+    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
 
     if (fun->unlimited_arguments) {
         int len = neo_list_len(neo_local_args);
 
         Var var = get_var("__local_args__");
 
-        save_later(process_cycle->process->varsToSave, var);
-        local(var, process_cycle->process->var_loc);
+        save_later(global_env->process_cycle->process->varsToSave, var);
+        local(var, global_env->process_cycle->process->var_loc);
         // on lui dit de  sauvegarder cette variable avant de switcher de processus
         replace_var(var, neo_local_args);
 
@@ -348,22 +314,22 @@ NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args) {
     {
         NeObj temp = neo_copy(nelist_nth(args, i));
         
-        save_later(process_cycle->process->varsToSave, fun->args[i]);
-        local(fun->args[i], process_cycle->process->var_loc);
+        save_later(global_env->process_cycle->process->varsToSave, fun->args[i]);
+        local(fun->args[i], global_env->process_cycle->process->var_loc);
         
         replace_var(fun->args[i], temp);
         
-        if (CODE_ERROR != 0) // erreur : libération des arguments affectés
+        if (global_env->CODE_ERROR != 0) // erreur : libération des arguments affectés
         {
             
             // libérer la sauvegarde des variables
-            //deleteContext(process_cycle->process->var_loc);
+            //deleteContext(global_env->process_cycle->process->var_loc);
             
             for (int j = 1 ; j < i ; j++)
                 free_var(fun->args[j]);
 
-            deleteContext(process_cycle->process->var_loc);
-            partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+            deleteContext(global_env->process_cycle->process->var_loc);
+            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
             return NEO_VOID;
         }
@@ -375,16 +341,16 @@ NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args) {
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    deleteContext(process_cycle->process->var_loc);
-    partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+    deleteContext(global_env->process_cycle->process->var_loc);
+    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
 
-    if (CODE_ERROR != 0) // erreur
+    if (global_env->CODE_ERROR != 0) // erreur
         return NEO_VOID;
     
     if (int_ret == EXIT_RETURN) {
-        NeObj sov = RETURN_VALUE;
-        RETURN_VALUE = NEO_VOID; // pour dire que l'on l'a utilisé
+        NeObj sov = global_env->RETURN_VALUE;
+        global_env->RETURN_VALUE = NEO_VOID; // pour dire que l'on l'a utilisé
         return sov;
     }
     else
@@ -401,19 +367,19 @@ NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args) {
 NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_args) {
 
     // ouvre un nouveau contexte pour sauvegarder les variables locales de cet appel
-    newContext(process_cycle->process->var_loc);
+    newContext(global_env->process_cycle->process->var_loc);
 
 
     // on sauvegarde les "variables à sauvegarder" de ce processus avant d'en ajouter d'autres
-    ptrlist* sov_vars_to_save = process_cycle->process->varsToSave->tete;
+    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
 
     if (fun->unlimited_arguments) {
         int len = neo_list_len(neo_local_args);
 
         Var var = get_var("__local_args__");
 
-        save_later(process_cycle->process->varsToSave, var);
-        local(var, process_cycle->process->var_loc);
+        save_later(global_env->process_cycle->process->varsToSave, var);
+        local(var, global_env->process_cycle->process->var_loc);
         // on lui dit de  sauvegarder cette variable avant de switcher de processus
         
         replace_var(var, neo_local_args);
@@ -429,22 +395,22 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
     {
         NeObj temp = neo_copy(nelist_nth(args, i));
         
-        save_later(process_cycle->process->varsToSave, fun->args[i]);
-        local(fun->args[i], process_cycle->process->var_loc);
+        save_later(global_env->process_cycle->process->varsToSave, fun->args[i]);
+        local(fun->args[i], global_env->process_cycle->process->var_loc);
         
         replace_var(fun->args[i], temp);
         
-        if (CODE_ERROR != 0) // erreur : libération des arguments affectés
+        if (global_env->CODE_ERROR != 0) // erreur : libération des arguments affectés
         {
             
             // libérer la sauvegarde des variables
-            //deleteContext(process_cycle->process->var_loc);
+            //deleteContext(global_env->process_cycle->process->var_loc);
             
             for (int j = 1 ; j < i ; j++)
                 free_var(fun->args[j]);
 
-            deleteContext(process_cycle->process->var_loc);
-            partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+            deleteContext(global_env->process_cycle->process->var_loc);
+            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
             return NEO_VOID;
         }
@@ -454,9 +420,9 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
     
     int int_ret = exec_aux(fun->code);
 
-    if (CODE_ERROR != 0) {
-        deleteContext(process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
-        partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+    if (global_env->CODE_ERROR != 0) {
+        deleteContext(global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
+        partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
         return NEO_VOID;
     }
 
@@ -464,17 +430,17 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
     NeObj object = neo_copy(get_var_value(fun->args[0]));
 
     // et on démonte le contexte de la fonction
-    deleteContext(process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
+    deleteContext(global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
     neobject_destroy(*self);
     *self = object;
     
     if (int_ret == EXIT_RETURN) {
-        NeObj sov = RETURN_VALUE;
-        RETURN_VALUE = NEO_VOID; // pour dire que l'on l'a utilisé
+        NeObj sov = global_env->RETURN_VALUE;
+        global_env->RETURN_VALUE = NEO_VOID; // pour dire que l'on l'a utilisé
         return sov;
     }
     else
@@ -491,12 +457,12 @@ NeObj eval_aux(Tree* tree) {
     neon_interp_yield();
 
     // il est possible qu'entre temps un processus ait lancé une erreur
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
 
     // =================== EVALUATION =====================
 
-    LINENUMBER = tree->line;
+    global_env->LINENUMBER = tree->line;
 
     switch (tree->type) {
 
@@ -521,12 +487,12 @@ NeObj eval_aux(Tree* tree) {
                     maintree_copy->capacity = maintree->capacity;
                     maintree_copy->data = eval_aux(maintree->sons[0]);
 
-                    if (CODE_ERROR != 0) {
+                    if (global_env->CODE_ERROR != 0) {
                         free(maintree_copy);
                         return NEO_VOID;
                     }
                     if (NEO_TYPE(maintree_copy->data) != TYPE_USERFUNC) {
-                        CODE_ERROR = 100;
+                        global_env->CODE_ERROR = 100;
                         neobject_destroy(maintree_copy->data);
                         free(maintree_copy);
                         return NEO_VOID;
@@ -542,32 +508,32 @@ NeObj eval_aux(Tree* tree) {
 
                 // opérateur paresseux
                 else if (OPERANDES.tab[tree->label2] & LAZY) {
-                    NeObj (*func)(Tree*) = OPFONC[tree->label2];
+                    NeObj (*func)(Tree*) = operators_functions[tree->label2];
                     return func(tree->sons[0]);
                 }
                 else {
-                    // opérateur qui prend directement des objets/adresses en argument
+                    // opérateur qui prend directement des objets/global_env->ADRESSES en argument
 
                     if (OPERANDES.tab[tree->label2] & VARRIGHT || OPERANDES.tab[tree->label2] & VARLEFT)
                     {
                         NeObj* op1 = get_address(tree->sons[0]); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
                         
-                        if (CODE_ERROR != 0) {
+                        if (global_env->CODE_ERROR != 0) {
                             return NEO_VOID;
                         }
 
-                        NeObj (*func) (NeObj*) = OPFONC[tree->label2];
+                        NeObj (*func) (NeObj*) = operators_functions[tree->label2];
                         return func(op1);
                     }
                     else
                     {
                         NeObj op1 = eval_aux(tree->sons[0]);
 
-                        if (CODE_ERROR != 0) {
+                        if (global_env->CODE_ERROR != 0) {
                             return NEO_VOID;
                         }
 
-                        NeObj (*func) (NeObj) = OPFONC[tree->label2];
+                        NeObj (*func) (NeObj) = operators_functions[tree->label2];
                         NeObj retour = func(op1);
                         neobject_destroy(op1);
                         return retour;
@@ -579,17 +545,17 @@ NeObj eval_aux(Tree* tree) {
             {
                 // opérateur paresseux
                 if (OPERANDES.tab[tree->label2] & LAZY) {
-                    NeObj (*func) (Tree*, Tree*) = OPFONC[tree->label2];
+                    NeObj (*func) (Tree*, Tree*) = operators_functions[tree->label2];
                     return func(tree->sons[0], tree->sons[1]);
                 }
                 else {
                     // opérateur normal qui prend des objets en arguments
 
                     if (tree->label2 == 37) { // opérateur :=
-                        CODE_ERROR = 95;
+                        global_env->CODE_ERROR = 95;
                         return NEO_VOID;
                     } else if (tree->label2 == 35) { // opérateur :
-                        CODE_ERROR = 92;
+                        global_env->CODE_ERROR = 92;
                         return NEO_VOID;
                     }
                                         
@@ -597,15 +563,15 @@ NeObj eval_aux(Tree* tree) {
                     {
                         NeObj* op1 = get_address(tree->sons[0]);
 
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                             return NEO_VOID;
                         
                         NeObj op2 = eval_aux(tree->sons[1]);
 
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                             return NEO_VOID;
 
-                        NeObj (*func)(NeObj*, NeObj) = OPFONC[tree->label2];
+                        NeObj (*func)(NeObj*, NeObj) = operators_functions[tree->label2];
                         NeObj result = func(op1, op2);
                         neobject_destroy(op2);
                         return result;
@@ -614,15 +580,15 @@ NeObj eval_aux(Tree* tree) {
                     {                    
                         NeObj op1 = eval_aux(tree->sons[0]);
                         
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                             return NEO_VOID;
                     
                         NeObj* op2 = get_address(tree->sons[1]);
 
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                             return NEO_VOID;
 
-                        NeObj (*func)(NeObj, NeObj*) = OPFONC[tree->label2];
+                        NeObj (*func)(NeObj, NeObj*) = operators_functions[tree->label2];
                         NeObj result = func(op1, op2);
                         neobject_destroy(op1);
                         return result;
@@ -631,15 +597,15 @@ NeObj eval_aux(Tree* tree) {
                     {
                         NeObj* op1 = get_address(tree->sons[0]);
 
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                             return NEO_VOID;
                         
                         NeObj* op2 = get_address(tree->sons[1]);
 
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                             return NEO_VOID;
 
-                        NeObj (*func)(NeObj*, NeObj*) = OPFONC[tree->label2];
+                        NeObj (*func)(NeObj*, NeObj*) = operators_functions[tree->label2];
                         NeObj result = func(op1, op2);
                         return result;
                     }
@@ -647,7 +613,7 @@ NeObj eval_aux(Tree* tree) {
                     {
                         NeObj op1 = eval_aux(tree->sons[0]);
 
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                         {
                             neobject_destroy(op1);
                             return NEO_VOID;
@@ -655,13 +621,13 @@ NeObj eval_aux(Tree* tree) {
 
                         NeObj op2 = eval_aux(tree->sons[1]);
 
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                         {
                             neobject_destroy(op1);
                             neobject_destroy(op2);
                             return NEO_VOID;
                         }
-                        NeObj (*func)(NeObj, NeObj) = OPFONC[tree->label2];
+                        NeObj (*func)(NeObj, NeObj) = operators_functions[tree->label2];
                         NeObj result = func(op1, op2);
 
                         neobject_destroy(op1);
@@ -680,7 +646,7 @@ NeObj eval_aux(Tree* tree) {
             NeList* l = treeToList(tree);
 
 
-            if (CODE_ERROR != 0) {                   
+            if (global_env->CODE_ERROR != 0) {                   
                 return NEO_VOID;
             }
 
@@ -697,7 +663,7 @@ NeObj eval_aux(Tree* tree) {
             if (neo_is_void(tree->data)) {
                 tree->data = eval_aux(tree->sons[0]);
 
-                if (CODE_ERROR != 0) { // erreur lors de l'évaluation de la fonction
+                if (global_env->CODE_ERROR != 0) { // erreur lors de l'évaluation de la fonction
                     return NEO_VOID;
                 }
             }
@@ -713,7 +679,7 @@ NeObj eval_aux(Tree* tree) {
                 NeList* args = treeToList(tree->sons[1]);
                 tree->data = tree_data_sov;
 
-                if (CODE_ERROR != 0) {
+                if (global_env->CODE_ERROR != 0) {
                     neobject_destroy(tree->data);
                     tree->data = NEO_VOID;
                     return NEO_VOID;
@@ -722,7 +688,7 @@ NeObj eval_aux(Tree* tree) {
         
                 if (!funcArgsCheck(fun, args))
                 {
-                    CODE_ERROR = 14;
+                    global_env->CODE_ERROR = 14;
                     nelist_destroy(args);
                     neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                     tree->data = NEO_VOID;
@@ -735,12 +701,12 @@ NeObj eval_aux(Tree* tree) {
                 neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                 tree->data = NEO_VOID;
                 
-                if (CODE_ERROR != 0) {
+                if (global_env->CODE_ERROR != 0) {
                     neobject_destroy(retour);
                     return NEO_VOID;
                 }
 
-                LINENUMBER = tree->line; // certaines fonctions modifient le numéro de ligne
+                global_env->LINENUMBER = tree->line; // certaines fonctions modifient le numéro de ligne
 
                 return retour;
             }
@@ -753,7 +719,7 @@ NeObj eval_aux(Tree* tree) {
 
                 if (tree->sons[1]->nbSons > fun->nbArgs && ! fun->unlimited_arguments)
                 {
-                    CODE_ERROR = 6;
+                    global_env->CODE_ERROR = 6;
                     neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                     tree->data = NEO_VOID;
                     return NEO_VOID;
@@ -800,7 +766,7 @@ NeObj eval_aux(Tree* tree) {
                 // Ainsi elles ne seront pas remplacés sauf si on l'indique explicitement
                 for (int i = fun->nbArgs - fun->nbOptArgs ; i < fun -> nbArgs ; i++) {
                     if (i == 0 && NEO_TYPE(tree->data) == TYPE_USERMETHOD) {
-                        CODE_ERROR = 110;
+                        global_env->CODE_ERROR = 110;
                         nelist_destroy(arguments);
                         neobject_destroy(tree->data);
                         tree->data = NEO_VOID;
@@ -822,7 +788,7 @@ NeObj eval_aux(Tree* tree) {
                             nelist_destroy(arguments);
                             neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                             tree->data = NEO_VOID;
-                            CODE_ERROR = 93;
+                            global_env->CODE_ERROR = 93;
                             return NEO_VOID;
                         }
 
@@ -832,7 +798,7 @@ NeObj eval_aux(Tree* tree) {
                             nelist_destroy(arguments);
                             neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                             tree->data = NEO_VOID;
-                            CODE_ERROR = 93;
+                            global_env->CODE_ERROR = 93;
                             return NEO_VOID;
                         }
                         
@@ -840,7 +806,7 @@ NeObj eval_aux(Tree* tree) {
                             nelist_destroy(arguments);
                             neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                             tree->data = NEO_VOID;
-                            CODE_ERROR = 94;
+                            global_env->CODE_ERROR = 94;
                             return NEO_VOID;
                         }
                         // et on évalue l'argument envoyé
@@ -848,7 +814,7 @@ NeObj eval_aux(Tree* tree) {
                         arguments->tab[index] = eval_aux(tree->sons[1]->sons[i]->sons[1]);
                         tree->data = tree_data_sov;
 
-                        if (CODE_ERROR != 0) {
+                        if (global_env->CODE_ERROR != 0) {
                             nelist_destroy(arguments);
                             neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                             tree->data = NEO_VOID;
@@ -871,7 +837,7 @@ NeObj eval_aux(Tree* tree) {
                         arguments->tab[index] = eval_aux(tree->sons[1]->sons[i]);
                         tree->data = tree_data_sov;
 
-                        if (CODE_ERROR != 0) {
+                        if (global_env->CODE_ERROR != 0) {
                             nelist_destroy(arguments);
                             neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                             tree->data = NEO_VOID;
@@ -894,7 +860,7 @@ NeObj eval_aux(Tree* tree) {
                             arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
 
                             if (neo_is_void(arguments->tab[i])) {
-                                CODE_ERROR = 7;
+                                global_env->CODE_ERROR = 7;
                                 neobject_destroy(tree->data); // on supprime la fonction que l'on vient de créer
                                 tree->data = NEO_VOID;
                                 nelist_destroy(arguments);
@@ -902,7 +868,7 @@ NeObj eval_aux(Tree* tree) {
                             }
 
                             if (i == 0) { // le premier argument d'une méthode ne peut pas être un argument optionnel
-                                CODE_ERROR = 110;
+                                global_env->CODE_ERROR = 110;
                                 nelist_destroy(arguments);
                                 neobject_destroy(tree->data);
                                 tree->data = NEO_VOID;
@@ -943,7 +909,7 @@ NeObj eval_aux(Tree* tree) {
 
                 nelist_destroy(arguments);
 
-                if (CODE_ERROR != 0) {
+                if (global_env->CODE_ERROR != 0) {
                     return NEO_VOID;
                 }
 
@@ -954,14 +920,14 @@ NeObj eval_aux(Tree* tree) {
 
             else if (NEO_TYPE(tree->data) == TYPE_EMPTY)
             {
-                CODE_ERROR = 8;
+                global_env->CODE_ERROR = 8;
                 neobject_destroy(tree->data);
                 tree->data = NEO_VOID;
                 return NEO_VOID;
             }
             else
             {
-                CODE_ERROR = 9;
+                global_env->CODE_ERROR = 9;
                 neobject_destroy(tree->data);
                 tree->data = NEO_VOID;
                 return NEO_VOID;
@@ -973,26 +939,26 @@ NeObj eval_aux(Tree* tree) {
         {
             NeObj obj = *get_address(tree->sons[0]);
 
-            if (CODE_ERROR != 0)
+            if (global_env->CODE_ERROR != 0)
                 return NEO_VOID;
 
             NeObj index = eval_aux(tree->sons[1]);
 
-            if (CODE_ERROR != 0)
+            if (global_env->CODE_ERROR != 0)
                 return NEO_VOID;
 
 
             // on vérifie que nos objets ont bien les types attendus
             if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
             {
-                CODE_ERROR = 15;
+                global_env->CODE_ERROR = 15;
                 return NEO_VOID;
             }
 
             if (NEO_TYPE(index) != TYPE_INTEGER)
             {
                 neobject_destroy(index);
-                CODE_ERROR = 16;
+                global_env->CODE_ERROR = 16;
                 return NEO_VOID;
             }
             
@@ -1003,12 +969,12 @@ NeObj eval_aux(Tree* tree) {
             // vérifications supplémentaires
             if (NEO_TYPE(obj) == TYPE_EMPTY)
             {
-                CODE_ERROR = 17;
+                global_env->CODE_ERROR = 17;
                 return NEO_VOID;
             }
             else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
             {
-                CODE_ERROR = 18;
+                global_env->CODE_ERROR = 18;
                 return NEO_VOID;
             }
             
@@ -1037,7 +1003,7 @@ NeObj eval_aux(Tree* tree) {
 
                 val->tab[ext_index] = eval_aux(tree->sons[ext_index]->sons[0]);
 
-                if (CODE_ERROR != 0)
+                if (global_env->CODE_ERROR != 0)
                 {
                     nelist_destroy_until(val, ext_index - 1);
                     return NEO_VOID;
@@ -1053,7 +1019,7 @@ NeObj eval_aux(Tree* tree) {
 
             NeObj neo = eval_aux(tree->sons[0]);
 
-            if (CODE_ERROR != 0) {
+            if (global_env->CODE_ERROR != 0) {
                 return NEO_VOID;
             }
 
@@ -1061,7 +1027,7 @@ NeObj eval_aux(Tree* tree) {
             {
                 // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
                 neobject_destroy(neo);
-                CODE_ERROR = 80;
+                global_env->CODE_ERROR = 80;
                 return NEO_VOID;
             }
 
@@ -1092,7 +1058,7 @@ NeObj eval_aux(Tree* tree) {
             NeObj value = get_var_value(tree->variable);
 
             if (NEO_TYPE(value) == TYPE_EMPTY) {
-                CODE_ERROR = 5;
+                global_env->CODE_ERROR = 5;
                 return NEO_VOID;
             }
 
@@ -1111,13 +1077,13 @@ NeObj eval_aux(Tree* tree) {
 
         default:
         {
-            CODE_ERROR = 19;
+            global_env->CODE_ERROR = 19;
             return NEO_VOID;
         }
 
     }
 
-    CODE_ERROR = 19;
+    global_env->CODE_ERROR = 19;
     return NEO_VOID;
 }
 
@@ -1143,13 +1109,13 @@ NeObj* get_address(Tree* tree) {
     else if (tree->type == TYPE_LISTINDEX) {
         NeObj obj = *get_address(tree->sons[0]);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
         {
             return NULL;
         }
 
 
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
             return NULL;
         }
 
@@ -1157,14 +1123,14 @@ NeObj* get_address(Tree* tree) {
         NeObj index = eval_aux(tree->sons[1]);
 
 
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
             return NULL;
         }
 
 
         if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
         {
-            CODE_ERROR = 15;
+            global_env->CODE_ERROR = 15;
             return NULL;
         }
 
@@ -1172,7 +1138,7 @@ NeObj* get_address(Tree* tree) {
         if (NEO_TYPE(index) != TYPE_INTEGER)
         {
             neobject_destroy(index);
-            CODE_ERROR = 16;
+            global_env->CODE_ERROR = 16;
             return NULL;
         }
         
@@ -1182,12 +1148,12 @@ NeObj* get_address(Tree* tree) {
 
         if (NEO_TYPE(obj) == TYPE_EMPTY)
         {
-            CODE_ERROR = 17;
+            global_env->CODE_ERROR = 17;
             return NULL;
         }
         else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
         {
-            CODE_ERROR = 18;
+            global_env->CODE_ERROR = 18;
             return NULL;
         }
         
@@ -1197,7 +1163,7 @@ NeObj* get_address(Tree* tree) {
             return nelist_nth_addr(neo_to_list(obj), index2);
         }
         else {
-            CODE_ERROR = 105;
+            global_env->CODE_ERROR = 105;
             return NULL;
         }
     }
@@ -1206,7 +1172,7 @@ NeObj* get_address(Tree* tree) {
 
         NeObj neo = eval_aux(tree->sons[0]);
 
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
             return NULL;
         }
 
@@ -1214,7 +1180,7 @@ NeObj* get_address(Tree* tree) {
         {
             // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
             neobject_destroy(neo);
-            CODE_ERROR = 80;
+            global_env->CODE_ERROR = 80;
             return NULL;
         }
 
@@ -1239,7 +1205,7 @@ NeObj* get_address(Tree* tree) {
         return ret;
     }
 
-    CODE_ERROR = 89;
+    global_env->CODE_ERROR = 89;
     return NULL;
 }
 
@@ -1263,7 +1229,7 @@ int execConditionBlock(Tree* maintree) {
     NeObj expr;
 
     // on garde un pointeur vers le début de la liste quand on est arrivés
-    ptrlist* sov_vars_to_save = process_cycle->process->varsToSave->tete;
+    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
 
     // on a comme variables locales : int_ret, bloc, inst : d'ailleurs inst doit être empilé partout
 
@@ -1272,28 +1238,28 @@ int execConditionBlock(Tree* maintree) {
         expr = eval_aux(maintree->sons[bloc]->sons[0]);
 
 
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
             return 0;
         }
 
         bool cond = neoIsTrue(expr);
         neobject_destroy(expr);
 
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
             return 0;
         }
 
         if (cond)
         {
             // on s'apprete à exécuter du code, on peut donc ouvrir un nouveau contexte
-            newContext(process_cycle->process->var_loc);
+            newContext(global_env->process_cycle->process->var_loc);
 
             int_ret = exec_aux(maintree->sons[bloc]->sons[1]);
 
-            deleteContext(process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
+            deleteContext(global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
             
-            if (CODE_ERROR != 0) {
+            if (global_env->CODE_ERROR != 0) {
                 return 0;
             }
 
@@ -1327,7 +1293,7 @@ int execConditionBlock(Tree* maintree) {
             cond = neoIsTrue(expr);
             neobject_destroy(expr);
 
-            if (CODE_ERROR != 0) {
+            if (global_env->CODE_ERROR != 0) {
                 return 0;
             }
 
@@ -1335,14 +1301,14 @@ int execConditionBlock(Tree* maintree) {
             if (!elif && cond)
             {
                 // on s'apprete à exécuter du code, on peut donc ouvrir un nouveau contexte
-                newContext(process_cycle->process->var_loc);
+                newContext(global_env->process_cycle->process->var_loc);
 
                 int_ret = exec_aux(maintree->sons[bloc]->sons[1]);
 
-                deleteContext(process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
+                deleteContext(global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
 
-                if (CODE_ERROR != 0) {
+                if (global_env->CODE_ERROR != 0) {
                     return 0;
                 }
 
@@ -1361,13 +1327,13 @@ int execConditionBlock(Tree* maintree) {
         {
             if (!elif) // si on a le droit d'y aller
             {
-                newContext(process_cycle->process->var_loc);
+                newContext(global_env->process_cycle->process->var_loc);
 
                 int_ret = exec_aux(maintree->sons[bloc]);
 
-                deleteContext(process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
+                deleteContext(global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
-                if (CODE_ERROR != 0) {
+                if (global_env->CODE_ERROR != 0) {
                     return 0;
                 }
 
@@ -1383,7 +1349,7 @@ int execConditionBlock(Tree* maintree) {
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
 
-    partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
     return 0;
 }
@@ -1402,12 +1368,12 @@ int execStatementFor(Tree* tree) {
     if (tree->sons[0]->nbSons == 4) {
         NeObj step = eval_aux(tree->sons[0]->sons[3]);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return 0;
 
         if (NEO_TYPE(step) != TYPE_INTEGER) {
             neobject_destroy(step);
-            CODE_ERROR = 108;
+            global_env->CODE_ERROR = 108;
             return 0;
         }
 
@@ -1417,7 +1383,7 @@ int execStatementFor(Tree* tree) {
         // on évalue la valeur de départ de la boucle
         start = eval_aux(tree->sons[0]->sons[1]);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return 0;
 
         tempMax = eval_aux(tree->sons[0]->sons[2]);
@@ -1429,7 +1395,7 @@ int execStatementFor(Tree* tree) {
         // on évalue la valeur de départ de la boucle
         start = eval_aux(tree->sons[0]->sons[1]);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return 0;
 
         tempMax = eval_aux(tree->sons[0]->sons[2]);
@@ -1440,17 +1406,17 @@ int execStatementFor(Tree* tree) {
         incr = 1;
         start = neo_integer_create(0);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return 0;
 
         tempMax = eval_aux(tree->sons[0]->sons[1]);
     }
     else {
-        CODE_ERROR = 108;
+        global_env->CODE_ERROR = 108;
         return 0;
     }
 
-    if (CODE_ERROR != 0) { // il y a eu une erreur lors de l'évaluation du tempMax
+    if (global_env->CODE_ERROR != 0) { // il y a eu une erreur lors de l'évaluation du tempMax
         neobject_destroy(start);
         return 0;
     }
@@ -1459,7 +1425,7 @@ int execStatementFor(Tree* tree) {
     {
         neobject_destroy(start);
         neobject_destroy(tempMax);
-        CODE_ERROR = 10;
+        global_env->CODE_ERROR = 10;
         return 0;
     }
 
@@ -1470,7 +1436,7 @@ int execStatementFor(Tree* tree) {
 
     // on récupère le variant de boucle
     if (tree->sons[0]->sons[0]->type != TYPE_VARIABLE) {
-        CODE_ERROR = 111;
+        global_env->CODE_ERROR = 111;
         neobject_destroy(tempMax);
         return 0;
     }
@@ -1478,11 +1444,11 @@ int execStatementFor(Tree* tree) {
     Var var = tree->sons[0]->sons[0]->variable; // variable à incrémenter lors de la boucle
 
     // ouverture du nouveau contexte, sauvegarde du variant
-    newContext(process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
-    ptrlist* sov_vars_to_save = process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
+    newContext(global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
+    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
-    save_later(process_cycle->process->varsToSave, var);
-    local(var, process_cycle->process->var_loc); // on localise l'indice de la boucle
+    save_later(global_env->process_cycle->process->varsToSave, var);
+    local(var, global_env->process_cycle->process->var_loc); // on localise l'indice de la boucle
 
 
     
@@ -1498,10 +1464,10 @@ int execStatementFor(Tree* tree) {
 
         int_ret = exec_aux(tree->sons[1]);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
         {
-            deleteContext(process_cycle->process->var_loc);
-            partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+            deleteContext(global_env->process_cycle->process->var_loc);
+            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
             return 0;
         }
 
@@ -1522,11 +1488,11 @@ int execStatementFor(Tree* tree) {
     // -> sinon, si il faut la supprimer, on la laiss telle quelle et le deleteContext va la supprimer
 
 
-    deleteContext(process_cycle->process->var_loc);
+    deleteContext(global_env->process_cycle->process->var_loc);
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
     if (int_ret != BREAK)
         return int_ret;
@@ -1543,17 +1509,17 @@ int execStatementForeachList(Tree* tree, NeObj neo_list) {
 
     // on récupère le variant de boucle
     if (tree->sons[0]->sons[0]->type != TYPE_VARIABLE) {
-        CODE_ERROR = 111;
+        global_env->CODE_ERROR = 111;
         return 0;
     }
 
     Var var = tree->sons[0]->sons[0]->variable; // variable à incrémenter lors de la boucle
 
-    newContext(process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
-    ptrlist* sov_vars_to_save = process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
+    newContext(global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
+    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
-    save_later(process_cycle->process->varsToSave, var);
-    local(var, process_cycle->process->var_loc); // on localise l'indice de la boucle
+    save_later(global_env->process_cycle->process->varsToSave, var);
+    local(var, global_env->process_cycle->process->var_loc); // on localise l'indice de la boucle
 
 
     // l'indice qui va parcourir la liste
@@ -1568,10 +1534,10 @@ int execStatementForeachList(Tree* tree, NeObj neo_list) {
 
         int_ret = exec_aux(tree->sons[1]);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
         {
-            deleteContext(process_cycle->process->var_loc);
-            partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+            deleteContext(global_env->process_cycle->process->var_loc);
+            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
             return 0;
         }
 
@@ -1581,11 +1547,11 @@ int execStatementForeachList(Tree* tree, NeObj neo_list) {
         ext_index++;
     }
 
-    deleteContext(process_cycle->process->var_loc);
+    deleteContext(global_env->process_cycle->process->var_loc);
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
     if (int_ret != BREAK)
         return int_ret;
@@ -1602,17 +1568,17 @@ int execStatementForeachString(Tree* tree, NeObj neo_string) {
 
     // on récupère le variant de boucle
     if (tree->sons[0]->sons[0]->type != TYPE_VARIABLE) {
-        CODE_ERROR = 111;
+        global_env->CODE_ERROR = 111;
         return 0;
     }
 
     Var var = tree->sons[0]->sons[0]->variable; // variable à incrémenter lors de la boucle
 
-    newContext(process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
-    ptrlist* sov_vars_to_save = process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
+    newContext(global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
+    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
-    save_later(process_cycle->process->varsToSave, var);
-    local(var, process_cycle->process->var_loc); // on localise l'indice de la boucle
+    save_later(global_env->process_cycle->process->varsToSave, var);
+    local(var, global_env->process_cycle->process->var_loc); // on localise l'indice de la boucle
 
 
 
@@ -1628,10 +1594,10 @@ int execStatementForeachString(Tree* tree, NeObj neo_string) {
 
         int_ret = exec_aux(tree->sons[1]);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
         {
-            deleteContext(process_cycle->process->var_loc);
-            partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+            deleteContext(global_env->process_cycle->process->var_loc);
+            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
             return 0;
         }
 
@@ -1651,11 +1617,11 @@ int execStatementForeachString(Tree* tree, NeObj neo_string) {
     // -> soit si on a un bilan neutre sur la variable, de la vider de ses pointeurs
     // -> sinon, si il faut la supprimer, on la laiss telle quelle et le deleteContext va la supprimer
 
-    deleteContext(process_cycle->process->var_loc);
+    deleteContext(global_env->process_cycle->process->var_loc);
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    partialRestore(process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
     if (int_ret != BREAK)
         return int_ret;
@@ -1671,12 +1637,12 @@ int exec_aux(Tree* tree) {
 
     neon_interp_yield();
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return 0;
 
     for (int inst=0 ; inst < tree->nbSons ; inst++)
     {
-        LINENUMBER = tree->sons[inst]->line;
+        global_env->LINENUMBER = tree->sons[inst]->line;
 
         switch (tree->sons[inst]->type) {
 
@@ -1692,16 +1658,16 @@ int exec_aux(Tree* tree) {
 
                 // exécution du try
 
-                if (CODE_ERROR != 1 && CODE_ERROR != 0) // exit() n'est pas considéré comme une erreur
+                if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) // exit() n'est pas considéré comme une erreur
                 {
                     // on va parcourir la liste des exceptions jusqu'à en trouver une qui corresponde
-                    int bo = 0; // va correspondre à l'indice du sous arbre que l'on va exécuter
+                    int block_found = 0; // va correspondre à l'indice du sous arbre que l'on va exécuter
 
                     // parcours des différents blocs except pour trouver le bon
-                    for (int fils = 1 ; fils < maintree->nbSons && bo == 0 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
+                    for (int fils = 1 ; fils < maintree->nbSons && block_found == 0 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
 
                         if (maintree->sons[fils]->sons[0]->nbSons == 0) {
-                            bo = fils; // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
+                            block_found = fils; // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
                         }
 
                         for (int i = 0 ; i < maintree->sons[fils]->sons[0]->nbSons ; i++)
@@ -1710,18 +1676,18 @@ int exec_aux(Tree* tree) {
 
                             if (NEO_TYPE(obj) != TYPE_EXCEPTION)
                             {
-                                CODE_ERROR = 78;
+                                global_env->CODE_ERROR = 78;
                                 return int_ret;
                             }
                             else
                             {
                                 int code = get_exception_code(maintree->sons[fils]->sons[0]->sons[i]->data);
-                                if (exceptions_err.tab[CODE_ERROR] == code || (CODE_ERROR < 0 && -CODE_ERROR == code)) // l'erreur correspond
+                                if (exceptions_err.tab[global_env->CODE_ERROR] == code || (global_env->CODE_ERROR < 0 && -global_env->CODE_ERROR == code)) // l'erreur correspond
                                 {
-                                    if (CODE_ERROR < 0)
-                                        EXCEPTION = NULL;
+                                    if (global_env->CODE_ERROR < 0)
+                                        global_env->EXCEPTION = NULL;
                                     
-                                    bo = fils;
+                                    block_found = fils;
                                     break;
                                 }
                             }
@@ -1729,15 +1695,15 @@ int exec_aux(Tree* tree) {
 
                     }
 
-                    if (bo > 0) // exécution du except
+                    if (block_found > 0) // exécution du except
                     {
-                        CODE_ERROR = 0; // du coup c'est bon on repart (la police a arrêté le programme, a vérifié ses papiers, et le programme est reparti)
+                        global_env->CODE_ERROR = 0; // du coup c'est bon on repart (la police a arrêté le programme, a vérifié ses papiers, et le programme est reparti)
                         
                         //stack_check_for(varstack, 3);
 
-                        int_ret = exec_aux(maintree->sons[bo]->sons[1]);
+                        int_ret = exec_aux(maintree->sons[block_found]->sons[1]);
 
-                        if (CODE_ERROR != 0 || int_ret != EXIT_SUCCESS) {
+                        if (global_env->CODE_ERROR != 0 || int_ret != EXIT_SUCCESS) {
                             return int_ret;
                         }
                     }
@@ -1750,15 +1716,15 @@ int exec_aux(Tree* tree) {
             {
                 // on va exécuter le bloc de code d'une traite, sans changer de processus
                 //stack_check_for(varstack, 4);
-                int temp = atomic_counter;
-                atomic_counter = -1; // tant qu'on n'a pas remis une valeur positive, on ne passera pas à un autre processus
+                int temp = global_env->atomic_counter;
+                global_env->atomic_counter = -1; // tant qu'on n'a pas remis une valeur positive, on ne passera pas à un autre processus
                 
                 intptr_t int_ret = exec_aux(tree->sons[inst]);
 
                 // s'il reste des crédits à ce processus, on les lui rend, sinon on passe au suivant
-                atomic_counter = (atomic_counter + temp > 0) ? atomic_counter + temp : 0;
+                global_env->atomic_counter = (global_env->atomic_counter + temp > 0) ? global_env->atomic_counter + temp : 0;
 
-                if (CODE_ERROR != 0 || int_ret != 0) {
+                if (global_env->CODE_ERROR != 0 || int_ret != 0) {
                     return int_ret;
                 }
 
@@ -1771,23 +1737,23 @@ int exec_aux(Tree* tree) {
                 {
                     if (tree->sons[inst]->nbSons > 1)
                     {
-                        CODE_ERROR = 21;
+                        global_env->CODE_ERROR = 21;
                         return 0;
                     }
                     
-                    if (!neo_is_void(RETURN_VALUE)) // c'est pas correct, car on ne peut pas renvoyer une valeur alors que la précédente n'a pas été récupérée
+                    if (!neo_is_void(global_env->RETURN_VALUE)) // c'est pas correct, car on ne peut pas renvoyer une valeur alors que la précédente n'a pas été récupérée
                     {
-                        CODE_ERROR = 99;
+                        global_env->CODE_ERROR = 99;
                         return 0;
                     }
 
                     if (tree->sons[inst]->nbSons == 0) {
-                        RETURN_VALUE = neo_none_create();
+                        global_env->RETURN_VALUE = neo_none_create();
                         return EXIT_RETURN;
                     }
                     else {
                         //stack_check_for(varstack, 3);
-                        RETURN_VALUE = eval_aux(tree->sons[inst]->sons[0]);
+                        global_env->RETURN_VALUE = eval_aux(tree->sons[inst]->sons[0]);
                         return EXIT_RETURN;
                     }
                 }
@@ -1802,11 +1768,11 @@ int exec_aux(Tree* tree) {
 
                         NeObj nom = eval_aux(tree->sons[inst]->sons[ext_index]);
 
-                        if (CODE_ERROR != 0) {
+                        if (global_env->CODE_ERROR != 0) {
                             return 0;
                         }
 
-                        char* nomAct = strdup(neo_to_string(nelist_nth(ADRESSES, NAME))); // pour restaurer le nom de fichier actuel
+                        char* nomAct = strdup(neo_to_string(nelist_nth(global_env->ADRESSES, global_env->NAME))); // pour restaurer le nom de fichier actuel
 
                         #ifndef TI_EZ80
                             char* nomFichier = addStr(neo_to_string(nom), ".ne");
@@ -1816,7 +1782,7 @@ int exec_aux(Tree* tree) {
                             importFile(nomFichier);
                             free(nomFichier);
                         #else
-                            updateFileName(strdup(neo_to_string(nom)));
+                            updateFileglobal_env->NAME(strdup(neo_to_string(nom)));
                             importFile(neo_to_string(nom));
                         #endif
 
@@ -1824,7 +1790,7 @@ int exec_aux(Tree* tree) {
 
                         neobject_destroy(nom);
 
-                        if (CODE_ERROR != 0) {
+                        if (global_env->CODE_ERROR != 0) {
                             return 0;
                         }
                         
@@ -1838,20 +1804,20 @@ int exec_aux(Tree* tree) {
                 {
                     if (tree->sons[inst]->nbSons == 0) // il faut au moins un argument
                     {
-                        CODE_ERROR = 69;
+                        global_env->CODE_ERROR = 69;
                         return 0;
                     }
-                    else if (process_cycle->process->var_loc->tete == NULL)
+                    else if (global_env->process_cycle->process->var_loc->tete == NULL)
                     {
-                        CODE_ERROR = 70;
+                        global_env->CODE_ERROR = 70;
                         return 0;
                     }
 
                     for (int i = 0 ; i < tree->sons[inst]->nbSons ; i++) // pour toutes les variables
                     {
                         // va traiter la variable comme étant locale
-                        save_later(process_cycle->process->varsToSave, tree->sons[inst]->sons[i]->variable);
-                        local(tree->sons[inst]->sons[i]->variable, process_cycle->process->var_loc);
+                        save_later(global_env->process_cycle->process->varsToSave, tree->sons[inst]->sons[i]->variable);
+                        local(tree->sons[inst]->sons[i]->variable, global_env->process_cycle->process->var_loc);
                     }
                     
                 }
@@ -1861,26 +1827,26 @@ int exec_aux(Tree* tree) {
 
                     if (tree->sons[inst]->nbSons > 1)
                     {
-                        CODE_ERROR = 101;
+                        global_env->CODE_ERROR = 101;
                         return 0;
                     }
 
                     while (!isTrue(tree->sons[inst]->sons[0]))
                     {
-                        if (CODE_ERROR != 0)
+                        if (global_env->CODE_ERROR != 0)
                             return 0;
 
-                        if (atomic_counter < 0) {
+                        if (global_env->atomic_counter < 0) {
                             continue;
                         }
                         else {
-                            atomic_counter = 0;
+                            global_env->atomic_counter = 0;
                             neon_interp_yield();
                         }
 
                     }
 
-                    if (CODE_ERROR != 0)
+                    if (global_env->CODE_ERROR != 0)
                         return 0;
                 }
 
@@ -1903,7 +1869,7 @@ int exec_aux(Tree* tree) {
             {
                 int int_ret = execConditionBlock(tree->sons[inst]);
                 
-                if (int_ret != 0 || CODE_ERROR != 0) {
+                if (int_ret != 0 || global_env->CODE_ERROR != 0) {
                     return int_ret;
                 }
 
@@ -1921,7 +1887,7 @@ int exec_aux(Tree* tree) {
 
                 NeObj expr = eval_aux(tree->sons[inst]->sons[0]);
 
-                if (CODE_ERROR != 0) {
+                if (global_env->CODE_ERROR != 0) {
                     return 0;
                 }
 
@@ -1933,7 +1899,7 @@ int exec_aux(Tree* tree) {
 
                     int_ret = exec_aux(tree->sons[inst]->sons[1]);
 
-                    if (CODE_ERROR != 0) {
+                    if (global_env->CODE_ERROR != 0) {
                         return 0;
                     }
                     
@@ -1944,7 +1910,7 @@ int exec_aux(Tree* tree) {
 
                     expr = eval_aux(tree->sons[inst]->sons[0]);
 
-                    if (CODE_ERROR != 0) {
+                    if (global_env->CODE_ERROR != 0) {
                         return 0;
                     }
 
@@ -1967,13 +1933,13 @@ int exec_aux(Tree* tree) {
                 
                 if (tree->sons[inst]->sons[0]->sons[0]->type != TYPE_VARIABLE)
                 {
-                    CODE_ERROR = 22;
+                    global_env->CODE_ERROR = 22;
                     return 0;
                 }
 
                 int int_ret = execStatementFor(tree->sons[inst]);
 
-                if (CODE_ERROR != 0 || int_ret != 0)
+                if (global_env->CODE_ERROR != 0 || int_ret != 0)
                     return int_ret;
 
                 break;
@@ -1984,19 +1950,19 @@ int exec_aux(Tree* tree) {
                 
                 if (tree->sons[inst]->sons[0]->sons[0]->type != TYPE_VARIABLE)
                 {
-                    CODE_ERROR = 22;
+                    global_env->CODE_ERROR = 22;
                     return 0;
                 }
 
                 if (tree->sons[inst]->sons[0]->nbSons != 2) {
-                    CODE_ERROR = 109;
+                    global_env->CODE_ERROR = 109;
                     return 0;
                 }
 
 
                 NeObj iterable = eval_aux(tree->sons[inst]->sons[0]->sons[1]);
 
-                if (CODE_ERROR != 0) {
+                if (global_env->CODE_ERROR != 0) {
                     return 0;
                 }
                 
@@ -2010,13 +1976,13 @@ int exec_aux(Tree* tree) {
                 }
                 else {
                     neobject_destroy(iterable);
-                    CODE_ERROR = 109;
+                    global_env->CODE_ERROR = 109;
                     return 0;
                 }
 
                 neobject_destroy(iterable);
 
-                if (CODE_ERROR != 0 || int_ret != 0) {
+                if (global_env->CODE_ERROR != 0 || int_ret != 0) {
                     return int_ret;
                 }
                 break;
@@ -2046,7 +2012,7 @@ int exec_aux(Tree* tree) {
         
                 neobject_destroy(res); // sinon, évaluation de l'expression, en la libérant juste après
 
-                if (CODE_ERROR != 0)
+                if (global_env->CODE_ERROR != 0)
                     return 0;
 
                 break;
@@ -2055,7 +2021,7 @@ int exec_aux(Tree* tree) {
         }
         
 
-        if (CODE_ERROR != 0) { // ben oui sinon les erreurs ne seront pas captées au bon endroit
+        if (global_env->CODE_ERROR != 0) { // ben oui sinon les erreurs ne seront pas captées au bon endroit
             return 0;
         }
     
@@ -2078,27 +2044,27 @@ __attribute__((noinline, optimize("O0")))
 void exitRuntime(void) {
     volatile NeObj unused = NEO_VOID; // sert à avoir la même taille de pile utilisée que la fonction launch_process
 
-    PROCESS_FINISH.tab[process_cycle->process->id] = 1; // on a fini le processus, on libère la place
-    *PROMISES_CNT.tab[0] = 0; // normalement il ne peut pas être à autre chose que zéro, vu que personne n'a jamais
+    global_env->PROCESS_FINISH.tab[global_env->process_cycle->process->id] = 1; // on a fini le processus, on libère la place
+    *global_env->PROMISES_CNT.tab[0] = 0; // normalement il ne peut pas être à autre chose que zéro, vu que personne n'a jamais
     // récupéré de promesse sur le processus principal
-    PROCESS_FINISH.tab[0] = true;
+    global_env->PROCESS_FINISH.tab[0] = true;
 
     // supprime définitivement ce dernier processus
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
-    process_preRemove(process_cycle->process);
+    process_preRemove(global_env->process_cycle->process);
 
-    if (processCycle_isActive(process_cycle)) { // il reste des processus annexes à exécuter
+    if (ProcessCycle_isActive(global_env->process_cycle)) { // il reste des processus annexes à exécuter
         //printf("saut direct à eval_aux après la fin du processus principal\n");
 
         // ici, on sauvegarde les registres sauvegardés et la pile dans le processus actuel
         // comme ça quand on va passer au prochain processus, ils vont être transférés de processus en processus et restaurés à la fin
-        save_stack_and_registers();
+        save_stack_and_registers(global_env->process_cycle->process);
 
         neon_interp_next_process();
     }
 
-    while (!processCycle_isEmpty(process_cycle)) {
-        process_cycle = processCycle_remove(process_cycle);
+    while (!ProcessCycle_isEmpty(global_env->process_cycle)) {
+        global_env->process_cycle = ProcessCycle_remove(global_env->process_cycle);
     }
 
     return;

@@ -3,22 +3,9 @@
 #include <math.h>
 
 #include "headers/objects.h"
-#include "headers/dynarrays.h"
 #include "headers/strings.h"
 #include "headers/runtime.h"
-
-extern int CODE_ERROR;
-
-//stockage des variables
-extern strlist* NOMS;
-extern NeList* ADRESSES;
-
-
-
-extern int error;
-
-
-
+#include "headers/neon.h"
 
 
 //definition des fonctions attribuees aux operateurs
@@ -27,7 +14,7 @@ NeObj _add(NeObj _op1, NeObj _op2)
 {
   if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "add");
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
       return NEO_VOID;
     }
     return ret;
@@ -64,7 +51,7 @@ NeObj _add(NeObj _op1, NeObj _op2)
     else
     {
       // Erreur : types non supportes pour l addition
-      CODE_ERROR = 40;
+      global_env->CODE_ERROR = 40;
       return NEO_VOID;
     }
   }
@@ -85,14 +72,14 @@ NeObj _add(NeObj _op1, NeObj _op2)
       else
       {
         // Erreur : types non supportes pour l addition
-        CODE_ERROR = 40;
+        global_env->CODE_ERROR = 40;
         return NEO_VOID;
       }
   }
   else
   {
     // Erreur : types non supportes pour l addition
-    CODE_ERROR = 40;
+    global_env->CODE_ERROR = 40;
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -107,7 +94,7 @@ NeObj _sub(NeObj _op1, NeObj _op2)
 {
   if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "sub");
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
       return NEO_VOID;
     }
     return ret;
@@ -138,7 +125,7 @@ NeObj _sub(NeObj _op1, NeObj _op2)
   {
     // on enlève le nombre de caractères à la fin de la chaîne
     char* retour = sub(neo_to_string(_op1), 0, strlen(neo_to_string(_op1)) - neo_to_integer(_op2));
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     
     return neo_str_create(retour);
@@ -152,7 +139,7 @@ NeObj _sub(NeObj _op1, NeObj _op2)
   else
   {
     // Erreur : types non supportes pour la soustraction
-    CODE_ERROR = 41;
+    global_env->CODE_ERROR = 41;
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -167,7 +154,7 @@ NeObj _div(NeObj _op1, NeObj _op2)
 {
   if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "div");
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
       return NEO_VOID;
     }
     return ret;
@@ -181,7 +168,7 @@ NeObj _div(NeObj _op1, NeObj _op2)
   else
   {
     // Erreur : types non supportes pour la division
-    CODE_ERROR = 42;
+    global_env->CODE_ERROR = 42;
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -197,7 +184,7 @@ NeObj _mul(NeObj _op1, NeObj _op2)
   // gère les multiplications avec les booléens
   if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "mul");
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
       return NEO_VOID;
     }
     return ret;
@@ -308,7 +295,7 @@ NeObj _mul(NeObj _op1, NeObj _op2)
   }
   else
   {
-    CODE_ERROR = 43; //unsupported types for mul
+    global_env->CODE_ERROR = 43; //unsupported types for mul
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -322,7 +309,7 @@ NeObj _mod(NeObj _op1, NeObj _op2)
 {
   if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "mod");
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
       return NEO_VOID;
     }
     return ret;
@@ -331,14 +318,14 @@ NeObj _mod(NeObj _op1, NeObj _op2)
   {
     if (neo_to_integer(_op2) == 0)
     {
-        CODE_ERROR = 44;
+        global_env->CODE_ERROR = 44;
         return NEO_VOID;
     }
     return neo_integer_create(neo_to_integer(_op1) % neo_to_integer(_op2));
   }
   else
   {
-    CODE_ERROR = 44; // unsupported types
+    global_env->CODE_ERROR = 44; // unsupported types
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -353,13 +340,13 @@ NeObj _eucl(NeObj _op1, NeObj _op2)
 
   if (NEO_TYPE(_op2) == TYPE_INTEGER && neo_to_integer(_op2) == 0)
   {
-      CODE_ERROR = 45;
+      global_env->CODE_ERROR = 45;
       return NEO_VOID;
   }
   
   if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "eucl");
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
       return NEO_VOID;
     }
     return ret;
@@ -391,14 +378,14 @@ NeObj _eucl(NeObj _op1, NeObj _op2)
   }
   else if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "eucl");
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
       return NEO_VOID;
     }
     return ret;
   }
   else
   {
-    CODE_ERROR = 46;
+    global_env->CODE_ERROR = 46;
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -410,9 +397,9 @@ NeObj _eucl(NeObj _op1, NeObj _op2)
 
 NeObj _and(Tree* tree1, Tree* tree2)
 {
-  bool b = isTrue(tree1) && CODE_ERROR == 0 && isTrue(tree2);
+  bool b = isTrue(tree1) && global_env->CODE_ERROR == 0 && isTrue(tree2);
 
-  if (CODE_ERROR != 0)
+  if (global_env->CODE_ERROR != 0)
     return NEO_VOID;
   else
     return neo_bool_create(b);
@@ -424,9 +411,9 @@ NeObj _and(Tree* tree1, Tree* tree2)
 
 NeObj _or(Tree* tree1, Tree* tree2)
 {
-  bool b = isTrue(tree1) || CODE_ERROR != 0 || isTrue(tree2);
+  bool b = isTrue(tree1) || global_env->CODE_ERROR != 0 || isTrue(tree2);
 
-  if (CODE_ERROR != 0)
+  if (global_env->CODE_ERROR != 0)
     return NEO_VOID;
   else
     return neo_bool_create(b);
@@ -441,7 +428,7 @@ NeObj _xor(NeObj op1, NeObj op2)
 {
   if ((NEO_TYPE(op1) != TYPE_BOOL && NEO_TYPE(op1) != TYPE_INTEGER) || (NEO_TYPE(op2) != TYPE_BOOL && NEO_TYPE(op2) != TYPE_INTEGER))
   {
-      CODE_ERROR = 49;
+      global_env->CODE_ERROR = 49;
       return NEO_VOID;
   }
   
@@ -459,7 +446,7 @@ NeObj _pow(NeObj _op1, NeObj _op2)
 {
   if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "pow");
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
       return NEO_VOID;
     }
     return ret;
@@ -472,7 +459,7 @@ NeObj _pow(NeObj _op1, NeObj _op2)
   }
   else
   {
-      CODE_ERROR = 50;
+      global_env->CODE_ERROR = 50;
       return NEO_VOID;
   }
   return NEO_VOID;
@@ -502,9 +489,9 @@ NeObj _notEq(NeObj _op1, NeObj _op2)
 NeObj _infEqual(NeObj op1, NeObj op2)
 {
     bool res = neo_compare(op1, op2) <= 0;
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
     {
-        CODE_ERROR = 52;
+        global_env->CODE_ERROR = 52;
         return NEO_VOID;
     }
     
@@ -518,9 +505,9 @@ NeObj _infEqual(NeObj op1, NeObj op2)
 NeObj _supEqual(NeObj op1, NeObj op2)
 {
     bool res = neo_compare(op1, op2) >= 0;
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
     {
-        CODE_ERROR = 53;
+        global_env->CODE_ERROR = 53;
         return NEO_VOID;
     }
     
@@ -535,9 +522,9 @@ NeObj _supEqual(NeObj op1, NeObj op2)
 NeObj _inf(NeObj op1, NeObj op2)
 {
     bool res = neo_compare(op1, op2) < 0;
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
     {
-        CODE_ERROR = 54;
+        global_env->CODE_ERROR = 54;
         return NEO_VOID;
     }
     
@@ -551,9 +538,9 @@ NeObj _inf(NeObj op1, NeObj op2)
 NeObj _sup(NeObj op1, NeObj op2)
 {
     bool res = neo_compare(op1, op2) > 0;
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
     {
-        CODE_ERROR = 55;
+        global_env->CODE_ERROR = 55;
         return NEO_VOID;
     }
     
@@ -571,7 +558,7 @@ NeObj _affect(NeObj op2, NeObj* op1)
     //neobject_destroy(op1);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
-        CODE_ERROR = 56; // unedfined var
+        global_env->CODE_ERROR = 56; // unedfined var
         return NEO_VOID;
     }
     else
@@ -597,7 +584,7 @@ NeObj _affectNone(NeObj* op1, NeObj op2)
     //neobject_destroy(op1);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
-        CODE_ERROR = 56; // unedfined var
+        global_env->CODE_ERROR = 56; // unedfined var
         return NEO_VOID;
     }
     else
@@ -624,7 +611,7 @@ void _affect2(NeObj* op1, NeObj op2)
     //neobject_destroy(op1);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
-        CODE_ERROR = 56;//undefined var
+        global_env->CODE_ERROR = 56;//undefined var
         return ;
     }
     else
@@ -648,21 +635,21 @@ NeObj _goIn(NeObj op2, NeObj op1)
         
         NeObj* var = NULL;
         
-        if (!strlist_inList(NOMS,nomVar)) // création d'une nouvelle variable
+        if (!strlist_inList(global_env->NOMS,nomVar)) // création d'une nouvelle variable
         {
-            strlist_append(NOMS,strdup(nomVar));
-            nelist_append(ADRESSES, neo_empty_create()); // variable ajoutée
-            var = &ADRESSES->tab[ADRESSES->len-1];
+            strlist_append(global_env->NOMS,strdup(nomVar));
+            nelist_append(global_env->ADRESSES, neo_empty_create()); // variable ajoutée
+            var = &global_env->ADRESSES->tab[global_env->ADRESSES->len-1];
         }
         else
         {
-            int index = strlist_index(NOMS, nomVar);
-            var = &ADRESSES->tab[index];            
+            int index = strlist_index(global_env->NOMS, nomVar);
+            var = &global_env->ADRESSES->tab[index];            
         }
     
-        // ADRESSES->tab[index] contient donc le NeObject dans lequel on doit mettre la valeur
+        // global_env->ADRESSES->tab[index] contient donc le NeObject dans lequel on doit mettre la valeur
         NeObj res = _affect(op1, var);
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return NEO_VOID;
         
         return res;
@@ -672,7 +659,7 @@ NeObj _goIn(NeObj op2, NeObj op1)
     else
     {
       // Erreur : Vous devez procéder comme suit valeur ->  \"nom_variable\"
-      CODE_ERROR = 57;
+      global_env->CODE_ERROR = 57;
     }
 
     return NEO_VOID;
@@ -692,10 +679,10 @@ NeObj _goIn(NeObj op2, NeObj op1)
 NeObj _addEqual(NeObj* op1, NeObj op2)
 {
     NeObj add = _add(*op1,op2);
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     NeObj res = _affect(add, op1);
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     neobject_destroy(add);
     return res;
@@ -707,10 +694,10 @@ NeObj _addEqual(NeObj* op1, NeObj op2)
 NeObj _subEqual(NeObj* op1, NeObj op2)
 {
     NeObj sub = _sub(*op1,op2);
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     NeObj res = _affect(sub, op1);
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     neobject_destroy(sub);
     return res;
@@ -721,10 +708,10 @@ NeObj _subEqual(NeObj* op1, NeObj op2)
 NeObj _mulEqual(NeObj* op1, NeObj op2)
 {
     NeObj mul = _mul(*op1,op2);
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     NeObj res = _affect(mul, op1);
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     neobject_destroy(mul);
     return res;
@@ -735,10 +722,10 @@ NeObj _mulEqual(NeObj* op1, NeObj op2)
 NeObj _divEqual(NeObj* op1, NeObj op2)
 {
     NeObj div = _div(*op1,op2);
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     NeObj res = _affect(div, op1);
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     neobject_destroy(div);
     return res;
@@ -756,7 +743,7 @@ NeObj _incr(NeObj* op1)
         new = neo_double_create(neo_to_double(*op1) + (double)1);
     }
     else {
-        CODE_ERROR = 40;
+        global_env->CODE_ERROR = 40;
         return NEO_VOID;
     }
 
@@ -773,7 +760,7 @@ void _incr2(NeObj* op1, int incr) {
         new = neo_double_create(neo_to_double(*op1) + (double)1);
     }
     else {
-        CODE_ERROR = 40;
+        global_env->CODE_ERROR = 40;
         return ;
     }
 
@@ -793,7 +780,7 @@ NeObj _decr(NeObj* op1)
         new = neo_double_create(neo_to_double(*op1) - (double)1);
     }
     else {
-        CODE_ERROR = 40;
+        global_env->CODE_ERROR = 40;
         return NEO_VOID;
     }
 
@@ -808,7 +795,7 @@ NeObj _not(NeObj op1)
 {
   if (NEO_TYPE(op1) != TYPE_BOOL && NEO_TYPE(op1) != TYPE_INTEGER)
   {
-        CODE_ERROR = 58;
+        global_env->CODE_ERROR = 58;
         return NEO_VOID;
   }
 
@@ -827,18 +814,18 @@ NeObj _ref(NeObj* op1)
 {
     if (NEO_TYPE((*op1)) == TYPE_EMPTY)
     {
-        CODE_ERROR = 59;//undefined var
+        global_env->CODE_ERROR = 59;//undefined var
         return NEO_VOID;
     }
     
     int index = get_var_from_addr(op1);
 
     if (index < 0) {
-      CODE_ERROR = 5;
+      global_env->CODE_ERROR = 5;
       return NEO_VOID;
     }
 
-    return neo_str_create(strdup(NOMS->tab[index]));
+    return neo_str_create(strdup(global_env->NOMS->tab[index]));
 }
 
 
@@ -862,14 +849,14 @@ NeObj _minus(NeObj op1)
     else if (NEO_TYPE(op1) == TYPE_CONTAINER)
     {
         NeObj ret = callOverloadedUnaryOperator(op1, "minus");
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
           return NEO_VOID;
         }
         return ret;
     }
     else
     {
-        CODE_ERROR = 61; // types non supportés par l'opérateur moins (unaire)
+        global_env->CODE_ERROR = 61; // types non supportés par l'opérateur moins (unaire)
         return NEO_VOID;
     }
 
@@ -895,7 +882,7 @@ NeObj _exponent(NeObj op1, NeObj op2)
   }
   else
   {
-      CODE_ERROR = 50;
+      global_env->CODE_ERROR = 50;
       return NEO_VOID;
   }
   return NEO_VOID;
@@ -906,7 +893,7 @@ NeObj _implique(NeObj op1, NeObj op2)
 {
     if (NEO_TYPE(op2) != TYPE_BOOL && NEO_TYPE(op1) != TYPE_BOOL)
     {
-        CODE_ERROR=75;
+        global_env->CODE_ERROR=75;
         return NEO_VOID;
     }
     else
@@ -921,7 +908,7 @@ NeObj _in(NeObj op1, NeObj op2)
 
     if (NEO_TYPE(op1) == TYPE_CONTAINER || NEO_TYPE(op2) == TYPE_CONTAINER) {
         NeObj ret = callOverloadedBinaryOperator(op1, op2, "in");
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
           return NEO_VOID;
         }
         return ret;
@@ -929,7 +916,7 @@ NeObj _in(NeObj op1, NeObj op2)
 
     if (NEO_TYPE(op2) != TYPE_LIST)
     {
-        CODE_ERROR = 79;
+        global_env->CODE_ERROR = 79;
         return NEO_VOID;
     }
     else
@@ -949,18 +936,18 @@ NeObj _swap(NeObj* op1, NeObj* op2)
 
 NeObj _deref(NeObj op1) {
     if (NEO_TYPE(op1) != TYPE_STRING) {
-        CODE_ERROR = 60; // ceci n'est pas une chaine de caractères
+        global_env->CODE_ERROR = 60; // ceci n'est pas une chaine de caractères
         return NEO_VOID;
     }
 
     char* nom=neo_to_string(op1);
 
-    if(!strlist_inList(NOMS, nom))
+    if(!strlist_inList(global_env->NOMS, nom))
     {
-        CODE_ERROR = 5;
+        global_env->CODE_ERROR = 5;
         return NEO_VOID;
     }
         
-    int index = strlist_index(NOMS,nom);    
-    return neo_copy(ADRESSES->tab[index]);
+    int index = strlist_index(global_env->NOMS,nom);    
+    return neo_copy(global_env->ADRESSES->tab[index]);
 }

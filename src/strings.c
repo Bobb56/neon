@@ -8,19 +8,10 @@
 #include "headers/strings.h"
 #include "headers/linenoise.h"
 #include "headers/objects.h"
-
-
-
-
-//stockage des variables
-extern strlist* NOMS;
-extern NeList* ADRESSES;
+#include "headers/neon.h"
 
 
 extern strlist neon_boolean;
-
-extern int CODE_ERROR;
-
 
 
 
@@ -129,7 +120,7 @@ bool isidentifier(char c) {
 int unitCharToInt(char car, const char base)
 {
     if (car != '0' && car != '1' && base == 'b') // le binaire n'autorise que 0 ou 1
-        CODE_ERROR = 73;
+        global_env->CODE_ERROR = 73;
     
     if (isdigit(car))
         return car - '0';
@@ -138,7 +129,7 @@ int unitCharToInt(char car, const char base)
     else if (car >= 'A' && car <= 'F')
         return car - 'A' + 10;
 
-    CODE_ERROR = 73;
+    global_env->CODE_ERROR = 73;
     return 0;
 }
 
@@ -151,7 +142,7 @@ intptr_t binToDec(char* chaine, int debut, int longueur)
         res *= 2;
         res += unitCharToInt(chaine[i], 'b');
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return 0;
         
     }
@@ -169,7 +160,7 @@ intptr_t hexToDec(char* chaine, int debut, int longueur)
         res *= 16;
         res += unitCharToInt(chaine[i], 'h');
         
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return 0;
     }
     return res;
@@ -326,12 +317,12 @@ char* inputCode(char* text)
     #endif
     
     
-    if (CODE_ERROR != 0 || str == NULL)
+    if (global_env->CODE_ERROR != 0 || str == NULL)
         return NULL;
     
     while (!isFull(str))
     {
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
         {
             free(str);
             return NULL;
@@ -348,7 +339,7 @@ char* inputCode(char* text)
 
         free(text);
 
-        if (CODE_ERROR != 0 || newStr == NULL) {
+        if (global_env->CODE_ERROR != 0 || newStr == NULL) {
             free(str);
             return NULL;
         }
@@ -399,7 +390,7 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
   
   if ((unsigned) (debut+longueur) > strlen(string) || longueur < 0)
   {
-    CODE_ERROR = 67;
+    global_env->CODE_ERROR = 67;
     return NULL;
   }
   
@@ -407,7 +398,7 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
 
   if (newStr == NULL)
   {
-      CODE_ERROR = 12;
+      global_env->CODE_ERROR = 12;
       return NULL;
   }
   
@@ -489,7 +480,7 @@ char* subReplace(char* string, int len, int debut, int longueur, char* remplacem
 {
     if ((unsigned) (debut+longueur) > strlen(string))
     {
-        CODE_ERROR = 67;
+        global_env->CODE_ERROR = 67;
         return 0;
     }
     
@@ -621,9 +612,9 @@ Renvoie tous les noms de modules existants
 strlist* get_all_modules(void) {
     strlist* modules = strlist_create(0);
     // on récupère tous les noms de modules
-    for (int i=0 ; i < NOMS->len ; i++) {
-        char* prefix = get_prefix(NOMS->tab[i]);
-        if (prefix != NULL && NEO_TYPE(ADRESSES->tab[i]) != TYPE_EMPTY && !strlist_inList(modules, prefix)) {
+    for (int i=0 ; i < global_env->NOMS->len ; i++) {
+        char* prefix = get_prefix(global_env->NOMS->tab[i]);
+        if (prefix != NULL && NEO_TYPE(global_env->ADRESSES->tab[i]) != TYPE_EMPTY && !strlist_inList(modules, prefix)) {
             strlist_append(modules, prefix);
         }
         else if (prefix != NULL)
@@ -636,8 +627,8 @@ strlist* get_all_modules(void) {
 Cette fonction vérifie si un module existe
 */
 bool is_module(char* module) {
-    for (int i=0 ; i < NOMS->len ; i++) {
-        if (has_strict_prefix(NOMS->tab[i], module)) {
+    for (int i=0 ; i < global_env->NOMS->len ; i++) {
+        if (has_strict_prefix(global_env->NOMS->tab[i], module)) {
             return true;
         }
     }
@@ -647,11 +638,11 @@ bool is_module(char* module) {
 
 int function_module(char* module, char* function) {
     char* functionName = addStr2(addStr(module, "~"), function);
-    int n = strlist_index(NOMS, functionName);
-    CODE_ERROR = 0;
+    int n = strlist_index(global_env->NOMS, functionName);
+    global_env->CODE_ERROR = 0;
     free(functionName);
 
-    if (n < 0 || (NEO_TYPE(ADRESSES->tab[n]) != TYPE_USERFUNC && NEO_TYPE(ADRESSES->tab[n]) != TYPE_USERMETHOD))
+    if (n < 0 || (NEO_TYPE(global_env->ADRESSES->tab[n]) != TYPE_USERFUNC && NEO_TYPE(global_env->ADRESSES->tab[n]) != TYPE_USERMETHOD))
         return -1;
 
     return n;

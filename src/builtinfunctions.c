@@ -13,24 +13,10 @@
 #include "headers/printerror.h"
 #include "headers/strings.h"
 #include "headers/syntaxtrees.h"
+#include "headers/neon.h"
 
-
-
-extern char* EXCEPTION;
-extern int CODE_ERROR;
-extern char* FILENAME;
-extern int LINENUMBER;
 
 extern strlist exceptions;
-
-
-//stockage des variables
-extern strlist* NOMS;
-extern NeList* ADRESSES;
-
-
-extern int ATOMIC_TIME;
-extern int atomic_counter;
 
 
 NeObj _print_(NeList* args)
@@ -89,7 +75,7 @@ NeObj _input_(NeList* args)
         char* entree = input(chaine);
         free(chaine);
 
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
             return NEO_VOID;
         }
 
@@ -108,7 +94,7 @@ NeObj _nbr_(NeList* args)
     }
     else {
         double ret = str_to_double(string);
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return NEO_VOID;
         return neo_double_create(ret);
     }
@@ -137,7 +123,7 @@ NeObj _len_(NeList* args)
     }
     else
     {
-        CODE_ERROR = 4; // cet objet n'a pas de longueur
+        global_env->CODE_ERROR = 4; // cet objet n'a pas de longueur
         return NEO_VOID;
     }
   
@@ -156,7 +142,7 @@ NeObj _substring_(NeList* args)
 
 NeObj _exit_(NeList* args)
 {
-  CODE_ERROR = 1;
+  global_env->CODE_ERROR = 1;
   return NEO_VOID;
 }
 
@@ -222,7 +208,7 @@ NeObj _reverse_(NeList* args)
     }
     else
     {
-        CODE_ERROR = 62;//unsupported types for reverse
+        global_env->CODE_ERROR = 62;//unsupported types for reverse
         return NEO_VOID;
     }
 }
@@ -234,12 +220,12 @@ NeObj _eval_(NeList* args)
     
     char* exp = neo_to_string(ARG(0));
 
-    char* sov = FILENAME;
-    FILENAME = NULL;
+    char* sov = global_env->FILENAME;
+    global_env->FILENAME = NULL;
     
     createExpressionTree(tree, exp);
 
-    if (CODE_ERROR != 0) {
+    if (global_env->CODE_ERROR != 0) {
         tree_destroy(tree);
         free(sov);
         return NEO_VOID;
@@ -247,10 +233,10 @@ NeObj _eval_(NeList* args)
 
     NeObj res = eval_aux(tree);
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         free(sov);
     else
-        FILENAME = sov;
+        global_env->FILENAME = sov;
     
     tree_destroy(tree);
     return res;
@@ -287,10 +273,10 @@ NeObj _help_(NeList* args)
         bool bo = false;
         printString("List of all existing variables :");
         newLine();
-        for (int i = 0 ; i < NOMS->len ; i++) {
-            if (NEO_TYPE(ADRESSES->tab[i]) != TYPE_EMPTY) {
+        for (int i = 0 ; i < global_env->NOMS->len ; i++) {
+            if (NEO_TYPE(global_env->ADRESSES->tab[i]) != TYPE_EMPTY) {
                 bo=true;
-                printString(NOMS->tab[i]);printString(": ");setColor(GREEN);printString(type(ADRESSES->tab[i]));setColor(WHITE);
+                printString(global_env->NOMS->tab[i]);printString(": ");setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(WHITE);
                 newLine();
             }
         }
@@ -336,7 +322,7 @@ NeObj _help_(NeList* args)
                     printString("function ");
 
 
-                printString(NOMS->tab[nelist_index2(ADRESSES,ARG(i))]);
+                printString(global_env->NOMS->tab[nelist_index2(global_env->ADRESSES,ARG(i))]);
 
                 printString("(");
 
@@ -378,7 +364,7 @@ NeObj _help_(NeList* args)
                 Function* fun = neo_to_function(ARG(i));
                 printString("Built-in function ");
 
-                printString(NOMS->tab[nelist_index2(ADRESSES,ARG(i))]);
+                printString(global_env->NOMS->tab[nelist_index2(global_env->ADRESSES,ARG(i))]);
                 newLine();
                 
                 if (fun->nbArgs == -1)
@@ -432,10 +418,10 @@ NeObj _help_(NeList* args)
             // aide à propos d'un module
             else if (NEO_TYPE(ARG(i)) == TYPE_STRING && is_module(neo_to_string(ARG(0)))) {
                 printString("Module ");printString(neo_to_string(ARG(0)));printString(" :");newLine();
-                for (int i=0 ; i < NOMS->len ; i++) {
-                    if (has_strict_prefix(NOMS->tab[i], neo_to_string(ARG(0))) && NEO_TYPE(ADRESSES->tab[i]) != TYPE_EMPTY) {
-                        printString(NOMS->tab[i]);printString(": ");
-                        setColor(GREEN);printString(type(ADRESSES->tab[i]));setColor(WHITE);newLine();
+                for (int i=0 ; i < global_env->NOMS->len ; i++) {
+                    if (has_strict_prefix(global_env->NOMS->tab[i], neo_to_string(ARG(0))) && NEO_TYPE(global_env->ADRESSES->tab[i]) != TYPE_EMPTY) {
+                        printString(global_env->NOMS->tab[i]);printString(": ");
+                        setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(WHITE);newLine();
                     }
                 }
             }
@@ -475,9 +461,9 @@ NeObj _failwith_(NeList* args)
     printString(neo_to_string(ARG(0)));
     newLine();
     setColor(WHITE);
-    affLine(FILENAME, LINENUMBER);
+    affLine(global_env->FILENAME, global_env->LINENUMBER);
 
-    CODE_ERROR = 1;
+    global_env->CODE_ERROR = 1;
     
     return NEO_VOID;
 }
@@ -502,7 +488,7 @@ NeObj _assert_(NeList* args)
     {
         if (!neo_is_true(ARG(i)))
         {
-            CODE_ERROR = 71;
+            global_env->CODE_ERROR = 71;
             return NEO_VOID;
         }
     }
@@ -546,8 +532,8 @@ NeObj _ord_(NeList* args)
 NeObj _list_comp_(NeList* args)
 {
 
-    char* sov_FILENAME = FILENAME;
-    FILENAME = NULL;
+    char* sov_FILENAME = global_env->FILENAME;
+    global_env->FILENAME = NULL;
 
     /* args : indice, debut, fin, pas, condition, valeur */
     char* nom = neo_to_string(ARG(0));
@@ -555,11 +541,11 @@ NeObj _list_comp_(NeList* args)
     int index;
     NeObj* i;
 
-    if(!strlist_inList(NOMS, nom))
+    if(!strlist_inList(global_env->NOMS, nom))
     {
-        strlist_append(NOMS, strdup(nom));
-        nelist_append(ADRESSES, neo_empty_create());
-        index = ADRESSES->len - 1;
+        strlist_append(global_env->NOMS, strdup(nom));
+        nelist_append(global_env->ADRESSES, neo_empty_create());
+        index = global_env->ADRESSES->len - 1;
     }
     else
     {
@@ -571,7 +557,7 @@ NeObj _list_comp_(NeList* args)
     if (NEO_TYPE(ARG(1)) != TYPE_INTEGER || NEO_TYPE(ARG(2)) != TYPE_INTEGER || NEO_TYPE(ARG(3)) != TYPE_INTEGER) {
         if (sov_FILENAME != NULL)
             free(sov_FILENAME);
-        CODE_ERROR = 112;
+        global_env->CODE_ERROR = 112;
         return NEO_VOID;
     }
     
@@ -582,7 +568,7 @@ NeObj _list_comp_(NeList* args)
 
     createExpressionTree(cond, neo_to_string(ARG(4)));
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
     {
         tree_destroy(cond);
         tree_destroy(val);
@@ -593,7 +579,7 @@ NeObj _list_comp_(NeList* args)
 
     createExpressionTree(val, neo_to_string(ARG(5)));
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
     {
         tree_destroy(cond);
         tree_destroy(val);
@@ -610,7 +596,7 @@ NeObj _list_comp_(NeList* args)
         NeObj bo = eval_aux(cond);
 
 
-        if (CODE_ERROR != 0) {
+        if (global_env->CODE_ERROR != 0) {
             tree_destroy(cond);
             tree_destroy(val);
             neobject_destroy(liste);
@@ -624,7 +610,7 @@ NeObj _list_comp_(NeList* args)
             NeObj neo = eval_aux(val);
             neo_list_append(liste, neo);
 
-            if (CODE_ERROR != 0) {
+            if (global_env->CODE_ERROR != 0) {
                 neobject_destroy(bo);
                 neobject_destroy(liste);
                 tree_destroy(cond);
@@ -647,7 +633,7 @@ NeObj _list_comp_(NeList* args)
     tree_destroy(cond);
     tree_destroy(val);
 
-    FILENAME = sov_FILENAME;
+    global_env->FILENAME = sov_FILENAME;
     
     return liste;
 }
@@ -656,25 +642,25 @@ NeObj _list_comp_(NeList* args)
 Voici comment fonctionnent les exceptions utilisateur
 Une exception est un objet qui contient un entier correspondant un numéro d'exception, à l'indice de l'exception
 dans le tableau exceptions
-Quand une exception utilisateur est lancée, CODE_ERROR est mis à la valeur négative de l'indice de l'exception,
+Quand une exception utilisateur est lancée, global_env->CODE_ERROR est mis à la valeur négative de l'indice de l'exception,
 et EXCEPTION est mis au message d'erreur
-De cette manière si CODE_ERROR est négatif, printError sait que c'est une exception lancée par l'utilisateur
+De cette manière si global_env->CODE_ERROR est négatif, printError sait que c'est une exception lancée par l'utilisateur
 */
 NeObj _create_exception_(NeList* args)
 {
     strlist_append(&exceptions, strdup(neo_to_string(ARG(0))));
     NeObj e = neo_exception_create(exceptions.len - 1);
 
-    if (strlist_inList(NOMS,neo_to_string(ARG(0))))
+    if (strlist_inList(global_env->NOMS,neo_to_string(ARG(0))))
     {
-        int index = strlist_index(NOMS,neo_to_string(ARG(0)));
-        _affect2(&ADRESSES->tab[index], e);
+        int index = strlist_index(global_env->NOMS,neo_to_string(ARG(0)));
+        _affect2(&global_env->ADRESSES->tab[index], e);
         neobject_destroy(e);
     }
     else
     {
-        strlist_append(NOMS,strdup(neo_to_string(ARG(0)))); // on ajoute le nom à la liste des noms
-        nelist_append(ADRESSES,e); // on ajoute l'objet à la liste des variables
+        strlist_append(global_env->NOMS,strdup(neo_to_string(ARG(0)))); // on ajoute le nom à la liste des global_env->NOMS
+        nelist_append(global_env->ADRESSES,e); // on ajoute l'objet à la liste des variables
     }
 
     return neo_none_create();
@@ -683,8 +669,8 @@ NeObj _create_exception_(NeList* args)
 
 NeObj _raise_(NeList* args)
 {
-    EXCEPTION = neo_to_string(ARG(1));
-    CODE_ERROR = -get_exception_code(ARG(0));
+    global_env->EXCEPTION = neo_to_string(ARG(1));
+    global_env->CODE_ERROR = -get_exception_code(ARG(0));
     return NEO_VOID;
 }
 
@@ -698,7 +684,7 @@ NeObj _int_(NeList* args)
     else if (NEO_TYPE(ARG(0)) == TYPE_STRING && is_integer(neo_to_string(ARG(0))))
         return neo_integer_create(str_to_int(neo_to_string(ARG(0))));
     else {
-        CODE_ERROR = 113;
+        global_env->CODE_ERROR = 113;
         return NEO_VOID;
     }
     
@@ -750,7 +736,7 @@ NeObj _count_(NeList* args)
     }
     else
     {
-        CODE_ERROR = 14;
+        global_env->CODE_ERROR = 14;
         return NEO_VOID;
     }
 }
@@ -813,7 +799,7 @@ NeObj _sort_asc_(NeList* args)
 
     quickSort(l->tab, 0, l->len - 1, neo_compare);
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     
     return neo_none_create();
@@ -827,7 +813,7 @@ NeObj _sort_desc_(NeList* args)
 
     quickSort(l->tab, 0, l->len - 1, neo_compare2);
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     
     return neo_none_create();
@@ -837,7 +823,7 @@ NeObj _sort_desc_(NeList* args)
 NeObj _sin_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     return neo_double_create(sin(neo_to_double(ARG(0))));
@@ -847,7 +833,7 @@ NeObj _sin_(NeList* args)
 NeObj _cos_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     return neo_double_create(cos(neo_to_double(ARG(0))));
@@ -857,7 +843,7 @@ NeObj _cos_(NeList* args)
 NeObj _tan_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     return neo_double_create(tan(neo_to_double(ARG(0))));
@@ -867,7 +853,7 @@ NeObj _tan_(NeList* args)
 NeObj _deg_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     double angle = neo_to_double(ARG(0));
@@ -878,7 +864,7 @@ NeObj _deg_(NeList* args)
 NeObj _rad_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     double angle = neo_to_double(ARG(0));
@@ -889,7 +875,7 @@ NeObj _rad_(NeList* args)
 NeObj _sqrt_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     return neo_double_create(sqrt(neo_to_double(ARG(0))));
@@ -899,7 +885,7 @@ NeObj _sqrt_(NeList* args)
 NeObj _ln_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     return neo_double_create(log(neo_to_double(ARG(0))));;
@@ -909,7 +895,7 @@ NeObj _ln_(NeList* args)
 NeObj _exp_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     return neo_double_create(exp(neo_to_double(ARG(0))));
@@ -919,7 +905,7 @@ NeObj _exp_(NeList* args)
 NeObj _log_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     return neo_double_create(log10(neo_to_double(ARG(0))));
@@ -929,7 +915,7 @@ NeObj _log_(NeList* args)
 NeObj _log2_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        CODE_ERROR = 114;
+        global_env->CODE_ERROR = 114;
         return NEO_VOID;
     }
     return neo_double_create(log2(neo_to_double(ARG(0))));
@@ -970,7 +956,7 @@ NeObj _readFile_(NeList* args)
 {
     char* res = openFile(neo_to_string(ARG(0)));
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     
     return neo_str_create(res);
@@ -982,7 +968,7 @@ NeObj _writeFile_(NeList* args)
 {
     writeFile(neo_to_string(ARG(0)),neo_to_string(ARG(1)));
 
-    if (CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     
     return neo_none_create();
@@ -991,7 +977,7 @@ NeObj _writeFile_(NeList* args)
 
 NeObj _setFunctionDoc_(NeList* args) {
     if (NEO_TYPE(ARG(0)) != TYPE_USERFUNC && NEO_TYPE(ARG(0)) != TYPE_USERMETHOD) {
-        CODE_ERROR = 98;
+        global_env->CODE_ERROR = 98;
         return NEO_VOID;
     }
     UserFunc* fun = neo_to_userfunc(ARG(0));
@@ -1005,12 +991,12 @@ NeObj _setFunctionDoc_(NeList* args) {
 
 
 NeObj _setAtomicTime_(NeList* args) {
-    ATOMIC_TIME = neo_to_integer(ARG(0));
-    atomic_counter = 0;
+    global_env->ATOMIC_TIME = neo_to_integer(ARG(0));
+    global_env->atomic_counter = 0;
 
-    if (ATOMIC_TIME < 1)
+    if (global_env->ATOMIC_TIME < 1)
     {
-        CODE_ERROR = 102;
+        global_env->CODE_ERROR = 102;
         return NEO_VOID;
     }
     return neo_none_create();
@@ -1026,17 +1012,17 @@ NeObj _copy_(NeList* args) {
 NeObj _load_namespace_(NeList* args) {
     char* namespace = neo_to_string(ARG(0));
     char* prefix = addStr(namespace, "~"); // le préfixe que l'on cherche
-    for (int i=0 ; i < NOMS->len ; i++) {
-        if (has_strict_prefix(NOMS->tab[i], prefix)) {
-            char* without_prefix = remove_prefix(NOMS->tab[i], prefix);
+    for (int i=0 ; i < global_env->NOMS->len ; i++) {
+        if (has_strict_prefix(global_env->NOMS->tab[i], prefix)) {
+            char* without_prefix = remove_prefix(global_env->NOMS->tab[i], prefix);
 
-            if (strlist_inList(NOMS, without_prefix)) {
-                _affect2(&ADRESSES->tab[strlist_index(NOMS, without_prefix)], ADRESSES->tab[i]);
+            if (strlist_inList(global_env->NOMS, without_prefix)) {
+                _affect2(&global_env->ADRESSES->tab[strlist_index(global_env->NOMS, without_prefix)], global_env->ADRESSES->tab[i]);
                 free(without_prefix);
             }
             else {
-                strlist_append(NOMS, without_prefix);
-                nelist_append(ADRESSES, neo_copy(ADRESSES->tab[i]));
+                strlist_append(global_env->NOMS, without_prefix);
+                nelist_append(global_env->ADRESSES, neo_copy(global_env->ADRESSES->tab[i]));
             }
         }
     }

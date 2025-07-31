@@ -2,12 +2,8 @@
 
 #include "headers/neonio.h"
 #include "headers/objects.h"
-#include "headers/dynarrays.h"
 #include "headers/gc.h"
-
-extern NeObj OBJECTS_LIST; // liste chaînée de containers et de listes
-extern NeList* ADRESSES;
-extern strlist* NOMS;
+#include "headers/neon.h"
 
 
 
@@ -69,17 +65,17 @@ void set_prev(NeObj obj, NeObj prev) {
 
 // ajoute un objet profond (liste ou container) dans la liste chaînée d'objets suivis
 void gc_add_deep_object(const NeObj next) {
-    set_next(next, OBJECTS_LIST);
-    set_prev(OBJECTS_LIST, next);
-    OBJECTS_LIST = next;
+    set_next(next, global_env->OBJECTS_LIST);
+    set_prev(global_env->OBJECTS_LIST, next);
+    global_env->OBJECTS_LIST = next;
 }
 
 // on supprime l'objet de la liste chaînée
 void gc_remove_container(Container* c) {
     if (neo_is_void(c->prev)) { // c'est le premier élément de la chaîne
-        OBJECTS_LIST = c->next;
-        if (!neo_is_void(OBJECTS_LIST))
-            set_prev(OBJECTS_LIST, NEO_VOID);
+        global_env->OBJECTS_LIST = c->next;
+        if (!neo_is_void(global_env->OBJECTS_LIST))
+            set_prev(global_env->OBJECTS_LIST, NEO_VOID);
     }
     else {
         set_next(c->prev, c->next);
@@ -91,9 +87,9 @@ void gc_remove_container(Container* c) {
 
 void gc_remove_nelist(NeList* l) {
     if (neo_is_void(l->prev)) { // c'est le premier élément de la chaîne
-        OBJECTS_LIST = l->next;
-        if (!neo_is_void(OBJECTS_LIST))
-            set_prev(OBJECTS_LIST, NEO_VOID);
+        global_env->OBJECTS_LIST = l->next;
+        if (!neo_is_void(global_env->OBJECTS_LIST))
+            set_prev(global_env->OBJECTS_LIST, NEO_VOID);
     }
     else {
         set_next(l->prev, l->next);
@@ -108,7 +104,7 @@ void gc_remove_nelist(NeList* l) {
 // comme les objets qu'on a ajoutés ont subi un neo_copy, il faut les supprimer proprement
 void gc_free_objects_list(void) {
     NeObj temp;
-    for (NeObj ptr = OBJECTS_LIST ; !neo_is_void(ptr) ;) {
+    for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ;) {
         temp = get_next(ptr);
         neobject_destroy(ptr);
         ptr = temp;
@@ -122,7 +118,7 @@ Détruit les objets simples et les listes/containers encore accessibles qui sont
 void nelist_partial_destroy(NeList* list) {
     for (int i=0 ; i < list->len ; i++) {
         // si l'objet est soit une feuille, soit une liste ou un container encore accessible depuis adresses
-        // les objets ne vérifiant pas cette condition sont les objets qui sont à supprimer dans OBJECTS_LIST
+        // les objets ne vérifiant pas cette condition sont les objets qui sont à supprimer dans global_env->OBJECTS_LIST
         if ((NEO_TYPE(list->tab[i]) != TYPE_CONTAINER && NEO_TYPE(list->tab[i]) != TYPE_LIST) || ismarked(list->tab[i])) {
             neobject_destroy(list->tab[i]);
         }
@@ -177,14 +173,14 @@ void gc_mark(NeObj obj) {
 
 // affiche l'ensemble des objets traqués par le GC
 void print_objects_list(void) {
-    if (neo_is_void(OBJECTS_LIST)) {
+    if (neo_is_void(global_env->OBJECTS_LIST)) {
         setColor(BLUE) ; printString("The Garbage Collector is empty.");
     }
     else {
         setColor(BLUE) ; printString("Objects currently tracked by the Garbage Collector :"); newLine();
         setColor(GREEN) ; printString("{ "); setColor(WHITE);
         NeObj next;
-        for (NeObj ptr = OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = next) {
+        for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = next) {
             next = get_next(ptr);
 
             neobject_aff(ptr);
@@ -204,24 +200,24 @@ void print_objects_list(void) {
 // implémentation de l'algorithme Mark & Sweep
 void gc_mark_and_sweep(void) {
 
-    if (neo_is_void(OBJECTS_LIST))
+    if (neo_is_void(global_env->OBJECTS_LIST))
         return;
 
     // on marque tous les objets accessibles depuis les variables
-    gc_nelist_mark(ADRESSES);
+    gc_nelist_mark(global_env->ADRESSES);
 
     // on parcourt maintenant tous les containers et listes
     // on fait une première passe dans laquelle on supprime de manière non récursive les objets présents
-    for (NeObj ptr = OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = get_next(ptr)) {
+    for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = get_next(ptr)) {
 
         if (!ismarked(ptr)) {
             // l'objet n'est pas marqué, on va donc devoir nous en débarrasser
             // on commence par supprimer les objets qu'il contient avec une profondeur de 1.
             // en effet :
             // - soit c'est un objet accessible depuis ADRESSES, auquel cas il faut juste décrémenter son compteur de références
-            // - sinon, pas besoin d'être récursif car il est à un autre endroit dans la OBJECTS_LIST et on va le supprimer aussi
+            // - sinon, pas besoin d'être récursif car il est à un autre endroit dans la global_env->OBJECTS_LIST et on va le supprimer aussi
             // a l'issue de cette suppression, les seuls objets restants à supprimer sont les NeObjects*, data et les refc des
-            // containers et listes contenues dans OBJECTS_LISTS
+            // containers et listes contenues dans global_env->OBJECTS_LISTS
             neobject_partial_destroy(ptr);
         }
     }
@@ -231,7 +227,7 @@ void gc_mark_and_sweep(void) {
     NeObj prev = NEO_VOID;
     NeObj next;
 
-    for (NeObj ptr = OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = next) {
+    for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = next) {
 
         if (ismarked(ptr)) { // l'objet est marqué, on doit donc le garder et on le démarque
             unmark(ptr);
@@ -242,9 +238,9 @@ void gc_mark_and_sweep(void) {
             // on fait pointer prev sur next(ptr) au lieu de ptr et next sur prev au lieu de ptr
             next = get_next(ptr);
 
-            if (neo_is_void(prev)) { // ca veut dire que ptr est OBJECTS_LIST
-                OBJECTS_LIST = next;
-                set_prev(OBJECTS_LIST, NEO_VOID);
+            if (neo_is_void(prev)) { // ca veut dire que ptr est global_env->OBJECTS_LIST
+                global_env->OBJECTS_LIST = next;
+                set_prev(global_env->OBJECTS_LIST, NEO_VOID);
             }
             else {
                 set_next(prev, next); // la chaîne saute ptr
@@ -275,20 +271,20 @@ void gc_mark_and_sweep(void) {
 // variante de Mark & Sweep qui est faite pour fonctionner même si ADRESSES n'existe plus
 // supprime tous les objets traqués, peu importe leur état, leur compteur de références
 void gc_final_sweep(void) {
-    if (neo_is_void(OBJECTS_LIST))
+    if (neo_is_void(global_env->OBJECTS_LIST))
         return;
 
 
     // on parcourt maintenant tous les containers et listes
     // on fait une première passe dans laquelle on supprime de manière non récursive les objets présents
-    for (NeObj ptr = OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = get_next(ptr)) {
+    for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = get_next(ptr)) {
         neobject_partial_destroy(ptr);
     }
 
     // deuxième tour, où on termine de supprimer totalement les objets à supprimer
 
     NeObj next;
-    for (NeObj ptr = OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = next) {
+    for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = next) {
 
         // l'objet n'est pas marqué, on va donc devoir nous en débarrasser
         // on fait pointer prev sur next(ptr) au lieu de ptr

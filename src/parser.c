@@ -2,14 +2,12 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "headers/neon.h"
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
 #include "headers/strings.h"
 #include "headers/parser.h"
 
-extern int CODE_ERROR;
-
-extern int LINENUMBER;
 
 //déclaration des variables globales à cut
 extern strlist acceptedChars;
@@ -29,16 +27,9 @@ extern strlist exceptions;
 extern strlist keywords;
 extern strlist lkeywords;
 extern strlist constant;
-
-
 extern strlist OPERATEURS;
 extern intlist PRIORITE;
 extern intlist OPERANDES;
-
-
-
-
-extern int error;
 
 
 
@@ -271,12 +262,12 @@ bool isFull(char* string)
 
     cut(tokens, &types, string, true, &lines);
 
-    if (CODE_ERROR == 0) {
+    if (global_env->CODE_ERROR == 0) {
         ast = ast_create(&types);
         
         parse(tokens, types, ast, &lines, 0);
 
-        if (CODE_ERROR == 0)
+        if (global_env->CODE_ERROR == 0)
             statements(&types, tokens, ast, &lines, 0);
 
         ast_destroy(ast, tokens->len);
@@ -287,12 +278,12 @@ bool isFull(char* string)
     free(lines.tab);
 
     
-    if (CODE_ERROR == 29 || CODE_ERROR == 26 || CODE_ERROR == 11 || CODE_ERROR == 77)
+    if (global_env->CODE_ERROR == 29 || global_env->CODE_ERROR == 26 || global_env->CODE_ERROR == 11 || global_env->CODE_ERROR == 77)
     {
-        CODE_ERROR = 0;
+        global_env->CODE_ERROR = 0;
         return false;
     }
-    else if (CODE_ERROR != 0)
+    else if (global_env->CODE_ERROR != 0)
         return false;
     else
         return true;
@@ -473,7 +464,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
     
     int nombrePoints=0; // nombre de points comptes apres le debut d’un nombre
 
-    LINENUMBER = 0;
+    global_env->LINENUMBER = 0;
 
     
     for (int i=0 ; i<len_string ; i++)
@@ -482,7 +473,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
         
         // compte le numéro de ligne du programme
         if (char2 == '\n') // si le caractère précédent était un retour à la ligne, le caractère actuel est le premier caractère de la nouvelle ligne
-            LINENUMBER++;
+            global_env->LINENUMBER++;
         
         // comptage des variables relatives à la détection de nombres
         if (!isPotentiallyString && !isPotentiallyString2 && char1 == '.')
@@ -491,7 +482,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
             stepNumber=1;
         else if (isPotentiallyNumber && char1=='.' && (i+1>=len_string || isdigit(string[i+1])))
         {
-            CODE_ERROR = 2;// plusieurs virgules décimales
+            global_env->CODE_ERROR = 2;// plusieurs virgules décimales
             free(string);
             return;
         }
@@ -516,7 +507,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
                 stepHexBin = 2;
             else
             {
-                CODE_ERROR = 73;
+                global_env->CODE_ERROR = 73;
                 free(string);
                 return ;
             }
@@ -526,7 +517,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
         //fins tokens simples
         finTokensSimples(string, &isPotentiallyNumber, &isPotentiallyString, &isPotentiallyWord, &isPotentiallyOp, &isPotentiallyLongComm, &isPotentiallyString2, &isPotentiallyComm, &isPotentiallyHexBin, &char2, &char1, &nouvTok, tokens, types, lines, &debTok, i, &stepNumber, &stepHexBin, len_string, &nombrePoints);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
         {
             free(string);
             return;
@@ -541,7 +532,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
         // vérifie si le caractère est reconnu
         if (!isPotentiallyHexBin && !isPotentiallyWord && !isPotentiallyString && !isPotentiallyNumber && !isPotentiallyOp && !isPotentiallyString2 && !isPotentiallyComm && !isPotentiallyLongComm && !nouvTok && char1 != ' ' && char1 != '\t')
         {
-            CODE_ERROR = 25; // caractère inconnu
+            global_env->CODE_ERROR = 25; // caractère inconnu
             free(string);
             return;
         }
@@ -551,7 +542,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
         {
             if (!isalnum(char1) && !(strlist_inList(&acceptedChars, char1_2)))
             {
-                CODE_ERROR = 25;
+                global_env->CODE_ERROR = 25;
                 free(string);
                 free(char1_2);
                 return;
@@ -571,7 +562,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
     {
         free(string);
 
-        CODE_ERROR = 26; // chaine de caractère, liste ou autre non terminée
+        global_env->CODE_ERROR = 26; // chaine de caractère, liste ou autre non terminée
         
         return;
     }
@@ -601,7 +592,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         strlist_append(tokenAdd,sousch);
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_STRING);
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyString)=false;
     }
     
@@ -611,7 +602,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         strlist_append(tokenAdd,sousch);
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_STRING);
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyString2)=false;
     }
     
@@ -626,7 +617,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         else
             intlist_append(typeTok, TYPE_INTEGER);
 
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyNumber)=false;
         *stepNumber = 0;
         *nombrePoints = 0;
@@ -638,7 +629,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
 
         intptr_t trad = (string[*debTok+1] == 'x') ? hexToDec(string, *debTok + 2, i - *debTok - 2) : binToDec(string, 2 + *debTok, i - *debTok - 2);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return ;
         
         char* nb = int_to_str(trad);
@@ -647,7 +638,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         strlist_append(tokenAdd,nb);
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_INTEGER);
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyHexBin)=false;
         *stepHexBin = 0;
         *nombrePoints = 0;
@@ -660,7 +651,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         strlist_append(tokenAdd,sub(string, (*debTok), i));
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_WORD);
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyWord)=false;
     }
     
@@ -700,7 +691,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         strlist_append(tokenAdd,sub(string, (*debTok), i));
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_OPERATOR);
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyOp)=false;
     }
     
@@ -717,7 +708,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         if ((*char1)==')')
             intlist_append(typeTok,TYPE_PARENTHESE2);
 
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         
         (*isPotentiallyNumber)=false;
         (*isPotentiallyWord)=false;
@@ -730,7 +721,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         strlist_append(tokenAdd,charToString(*char1));
         (*nouvTok)=true;
         intlist_append(typeTok, TYPE_ACCOLADE);
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyNumber)=false;
         (*isPotentiallyWord)=false;
         (*isPotentiallyOp)=false;
@@ -742,7 +733,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         strlist_append(tokenAdd,charToString(*char1));
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_CROCHET);
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyNumber)=false;
         (*isPotentiallyWord)=false;
         (*isPotentiallyOp)=false;
@@ -753,7 +744,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         strlist_append(tokenAdd,charToString(*char1));
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_VIRGULE);
-        intlist_append(lines, LINENUMBER);
+        intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyNumber)=false;
         (*isPotentiallyWord)=false;
         (*isPotentiallyOp)=false;
@@ -770,13 +761,13 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
             char* str = charToString(*char1);
             strlist_append(tokenAdd,str);
             intlist_append(typeTok,TYPE_ENDOFLINE);
-            intlist_append(lines, LINENUMBER);
+            intlist_append(lines, global_env->LINENUMBER);
             (*isPotentiallyNumber)=false;
         }
         
         if ((*isPotentiallyString) || (*isPotentiallyString2))
         {
-    		CODE_ERROR = 33; // chaine de carcatère non fermée en fin de ligne
+    		global_env->CODE_ERROR = 33; // chaine de carcatère non fermée en fin de ligne
             return;
         }
         
@@ -965,8 +956,8 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         {
             if (!(strlist_inList(&OPERATEURS, tokenAdd->tab[k])))
             {
-                CODE_ERROR = 24; // opérateur inconnu
-                LINENUMBER = lines->tab[offset + k]; // pour indiquer la ligne du programme de l'erreur
+                global_env->CODE_ERROR = 24; // opérateur inconnu
+                global_env->LINENUMBER = lines->tab[offset + k]; // pour indiquer la ligne du programme de l'erreur
                 return;
             }
         }
@@ -1049,8 +1040,8 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
         // vérification du nombre de parentheses
         if (nbAcc < 0 || nbCro < 0 || nbPar < 0) {
-            LINENUMBER = lines->tab[offset + k];
-            CODE_ERROR = 68;
+            global_env->LINENUMBER = lines->tab[offset + k];
+            global_env->CODE_ERROR = 68;
             return;
         }
 
@@ -1068,7 +1059,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
         // fin des fins et debut des debuts (hi hi hi)
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
         {
             return;
         }
@@ -1083,8 +1074,8 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         //strlist_aff(tokenAdd);
         //ast_aff(ast, tokenAdd->len);
         //printf("%d %d %d\n", nbAcc, nbCro, nbPar);
-        CODE_ERROR = 26;
-        LINENUMBER = lines->tab[offset + tokenAdd->len - 1];
+        global_env->CODE_ERROR = 26;
+        global_env->LINENUMBER = lines->tab[offset + tokenAdd->len - 1];
         return;
     }
     
@@ -1107,8 +1098,8 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
         if (!intlist_inList(&types_debut, ast[0]->type) || (ast[0]->type == TYPE_OPERATOR && !(gramm & VARRIGHT) && !(gramm & RIGHT) && !(gramm & SPECIAL)))
         {
-            CODE_ERROR = 32;
-            LINENUMBER = lines->tab[offset];
+            global_env->CODE_ERROR = 32;
+            global_env->LINENUMBER = lines->tab[offset];
             return ;
         }
 
@@ -1151,8 +1142,8 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
             if (!isAccepted(tokenAdd->tab[i_act], ast[i_act]->type, tokenAdd->tab[i_anc], ast[i_anc]->type))
             {
-                CODE_ERROR = 30;
-                LINENUMBER = lines->tab[offset + i_act];
+                global_env->CODE_ERROR = 30;
+                global_env->LINENUMBER = lines->tab[offset + i_act];
                 return;
             }
 
@@ -1169,8 +1160,8 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
             if ((plusieursTokens && (!intlist_inList(&types_fin, ast[i_act]->type) || (ast[i_act]->type == TYPE_OPERATOR && !(gramm & VARLEFT) && !(gramm & SPECIAL)))) || (!plusieursTokens && !intlist_inList(&types_fin, ast[0]->type)))
             {
-                CODE_ERROR = 32;
-                LINENUMBER = lines->tab[offset + i_act];
+                global_env->CODE_ERROR = 32;
+                global_env->LINENUMBER = lines->tab[offset + i_act];
                 return ;
             }
         }
@@ -1318,7 +1309,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         intlist types2 = (intlist) {.tab = typeTok.tab + *lastDebTok + 2, .len = k - *lastDebTok - 2};
         parse(&tokens2, types2, ast + *lastDebTok + 2, lines, *lastDebTok + 2 + offset);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return ;
         
 
@@ -1335,8 +1326,8 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
 
     else if ((*isPotentiallyFonc) && (*foncStep)==2 && (strlist_inList(&keywords, tokenAdd->tab[k]) || strlist_inList(&blockwords, tokenAdd->tab[k])))
     {
-        CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
-        LINENUMBER = lines->tab[offset + k];
+        global_env->CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
+        global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
     
@@ -1351,7 +1342,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         intlist types2 = {.tab = typeTok.tab + *debTok2 + 1, .len = k - *debTok2 - 1};
         parse(&tokens2, types2, ast + *debTok2 + 1, lines, *debTok2 + 1 + offset);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return;
 
         *isPotentiallyPar = false;
@@ -1386,8 +1377,8 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
     
     else if ((*isPotentiallyInst) && (*instStep)==2 && (strlist_inList(&keywords, tokenAdd->tab[k]) || strlist_inList(&blockwords, tokenAdd->tab[k])))
     {
-        CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
-        LINENUMBER = lines->tab[offset + k];
+        global_env->CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
+        global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
 
@@ -1401,8 +1392,8 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         // appel récursif sur parse
 
         if (k - *lastDebTok - 2 == 0) {
-            CODE_ERROR = 30;
-            LINENUMBER = lines->tab[offset + k];
+            global_env->CODE_ERROR = 30;
+            global_env->LINENUMBER = lines->tab[offset + k];
             return;
         }
 
@@ -1411,7 +1402,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         intlist types2 = (intlist) {.tab = typeTok.tab + *lastDebTok + 2, .len = k - *lastDebTok - 2};
         parse(&tokens2, types2, ast + *lastDebTok + 2, lines, *lastDebTok + 2 + offset);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return ;
 
         *nouvTokComp=true;
@@ -1430,8 +1421,8 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
       
     else if ((*isPotentiallyListIndex) && ((*listIndexStep)==2 || (*listIndexStep)==3) && (strlist_inList(&keywords, tokenAdd->tab[k]) || strlist_inList(&blockwords, tokenAdd->tab[k])))
     {
-        CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
-        LINENUMBER = lines->tab[offset + k];
+        global_env->CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
+        global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
       
@@ -1450,7 +1441,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         intlist types2 = (intlist) {.tab = typeTok.tab + *debTok2 + 1, .len = k - *debTok2 - 1};
         parse(&tokens2, types2, ast + *debTok2 + 1, lines, *debTok2 + 1 + offset);
 
-        if (CODE_ERROR != 0)
+        if (global_env->CODE_ERROR != 0)
             return;
 
         
@@ -1459,8 +1450,8 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
 
     else if ((*isPotentiallyList) && (strlist_inList(&keywords, tokenAdd->tab[k]) || strlist_inList(&blockwords, tokenAdd->tab[k])))
     {
-        CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
-        LINENUMBER = lines->tab[offset + k];
+        global_env->CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
+        global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
 
@@ -1551,8 +1542,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
         if (ast[i]->type == TYPE_BLOCK && ! isPotentiallyStat && funcMethStep != 2)//un block non précédé d'un blockline
         {
             // Erreur de syntaxe : Bloc d'instructions tout seul
-            CODE_ERROR = 34;
-            LINENUMBER = lines->tab[offset + i];
+            global_env->CODE_ERROR = 34;
+            global_env->LINENUMBER = lines->tab[offset + i];
             return;
         }
 
@@ -1577,8 +1568,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             }
             else if (typeact != TYPE_ENDOFLINE)
             {
-                CODE_ERROR = 11;
-                LINENUMBER = lines->tab[offset + i];
+                global_env->CODE_ERROR = 11;
+                global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
         }
@@ -1593,8 +1584,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             }
             else if (ast[i]->type != TYPE_ENDOFLINE)
             {
-                CODE_ERROR = 11;
-                LINENUMBER = lines->tab[offset + i];
+                global_env->CODE_ERROR = 11;
+                global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
         }
@@ -1609,8 +1600,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             }
             else
             {
-                CODE_ERROR = 11;
-                LINENUMBER = lines->tab[offset + i];
+                global_env->CODE_ERROR = 11;
+                global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
         }
@@ -1636,7 +1627,7 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
 
         
         /*else if (TEStep == 1 && typeact != TYPE_ENDOFLINE) {
-            CODE_ERROR = 33;
+            global_env->CODE_ERROR = 33;
             return;
         }*/
         
@@ -1670,8 +1661,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
                 conBlockStep = 2;
             else if (typeact != TYPE_ENDOFLINE) {
                 //printf("Z0\n");
-                CODE_ERROR = 33;
-                LINENUMBER = lines->tab[offset + i];
+                global_env->CODE_ERROR = 33;
+                global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
         }
@@ -1681,8 +1672,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
                 conBlockStep = 1;
             else if (typeact != TYPE_ENDOFLINE) {
                 //printf("Z1\n");
-                CODE_ERROR = 33;
-                LINENUMBER = lines->tab[offset + i];
+                global_env->CODE_ERROR = 33;
+                global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
         }
@@ -1711,7 +1702,7 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
         }
         /*else if (ast[debStat]->type == TYPE_STATEMENTEXCEPT) {
             //printf("Z3\n");
-            CODE_ERROR = 33;
+            global_env->CODE_ERROR = 33;
             return;
         }*/
 
@@ -1721,8 +1712,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
         }
         else if (TEStep == 2 && typeact != TYPE_ENDOFLINE) {
             //printf("Z4\n");
-            CODE_ERROR = 33;
-            LINENUMBER = lines->tab[offset + i];
+            global_env->CODE_ERROR = 33;
+            global_env->LINENUMBER = lines->tab[offset + i];
             return;
         }
 
@@ -1819,8 +1810,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             isPotentiallyStat=false;
         }
         else if (isPotentiallyStat && typeact != TYPE_ENDOFLINE && typeact != TYPE_ACCOLADE) {
-            CODE_ERROR = 27;
-            LINENUMBER = lines->tab[offset + i];
+            global_env->CODE_ERROR = 27;
+            global_env->LINENUMBER = lines->tab[offset + i];
             return;
         }
 
@@ -1835,8 +1826,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
         {
             if (ast[i]->fin - offset == tokens->len - 1)
             {
-                CODE_ERROR = 29; // Ligne de bloc d'instructions non suivi par un bloc d'instructions (ex: un if() tout seul)
-                LINENUMBER = lines->tab[offset + i];
+                global_env->CODE_ERROR = 29; // Ligne de bloc d'instructions non suivi par un bloc d'instructions (ex: un if() tout seul)
+                global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
             isPotentiallyStat=true;
@@ -1851,8 +1842,8 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
     }
 
     if (isPotentiallyStat || funcMethStep != 0) {
-        CODE_ERROR = 29;
-        LINENUMBER = lines->tab[offset + i];
+        global_env->CODE_ERROR = 29;
+        global_env->LINENUMBER = lines->tab[offset + i];
     }
     
 

@@ -5,9 +5,7 @@
 
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
-
-extern int CODE_ERROR;
-
+#include "headers/neon.h"
 
 // fonctions de copies. Servent à "déplacer" un tableau de la pile vers le tas
 
@@ -132,7 +130,7 @@ void listlist_remove(listlist* list,int index)//indiquer si il faut libérer l'�
 
   if (index >= list->len)
   {
-    CODE_ERROR = 38;
+    global_env->CODE_ERROR = 38;
     return ;
   }
   
@@ -309,7 +307,7 @@ void ptrlist_replace(ptrlist* liste, void* aRemplacer, void* nvlleValeur)
     
     if (ptr->queue == NULL && ptr->tete != aRemplacer)
     {
-        CODE_ERROR = 65;
+        global_env->CODE_ERROR = 65;
         return ;
     }
     
@@ -376,7 +374,7 @@ void ptrlist_remove(ptrlist* list, void* l, bool error)
     // l'élément n'a pas été trouvé
     if (ptr->queue == NULL && ptr->tete != l && error)
     {
-        CODE_ERROR = 65;
+        global_env->CODE_ERROR = 65;
         return ;
     }
     else if (ptr->queue == NULL && ptr->tete != l)
@@ -528,7 +526,7 @@ void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la n
     
     if (tmp == NULL)
     {
-        CODE_ERROR = 12;
+        global_env->CODE_ERROR = 12;
         return;
     }
     
@@ -554,7 +552,7 @@ void intlist_remove(intlist* list,int index)//supprime un élément de la liste
 {
   if (index >= list->len)
   {
-    CODE_ERROR = 38;
+    global_env->CODE_ERROR = 38;
     return ;
   }
   
@@ -618,7 +616,7 @@ int intlist_index(intlist* list, int nombre)
     }
     
   }
-  CODE_ERROR = 18;
+  global_env->CODE_ERROR = 18;
   return 1;
 }
 
@@ -628,7 +626,7 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
 {
   if (index > list->len)
   {
-    CODE_ERROR = 38;
+    global_env->CODE_ERROR = 38;
     return ;
   }
   
@@ -665,7 +663,7 @@ int intlist_max(intlist* list)
   }
   else
   {
-      CODE_ERROR = 38;
+      global_env->CODE_ERROR = 38;
       return EXIT_FAILURE;
   }
   return EXIT_FAILURE;
@@ -828,7 +826,7 @@ void strlist_resize(strlist* list, int newLen, bool freeElement)
     
     if (tmp == NULL)
     {
-        CODE_ERROR = 12;
+        global_env->CODE_ERROR = 12;
         return ;
     }
     
@@ -854,7 +852,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
   
   if (index >= list->len)
   {
-    CODE_ERROR = 38;
+    global_env->CODE_ERROR = 38;
     return ;
   }
   
@@ -925,7 +923,7 @@ int strlist_index(strlist* list, char* chaine)
     }
     
   }
-  CODE_ERROR = 18;
+  global_env->CODE_ERROR = 18;
   return -1;
 }
 
@@ -937,7 +935,7 @@ void strlist_insert(strlist* list,char* chaine, int index)//ajoute un élément 
 {
   if (index > list->len)
   {
-    CODE_ERROR = 38;
+    global_env->CODE_ERROR = 38;
     return ;
   }
   

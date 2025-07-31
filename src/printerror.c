@@ -3,31 +3,18 @@
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
 #include "headers/printerror.h"
-#include "headers/objects.h"
+#include "headers/neon.h"
 
 //creation du tableau de pointeurs generiques a liberer en cas d’erreur
 
 int indent = 0;
 
 
-extern char* EXCEPTION;
-
-extern int CODE_ERROR;
-
 //creation du tableau de pointeurs generiques a liberer en cas d’erreur
 extern strlist ERRORS_MESSAGES;
-
-
 extern strlist exceptions;
 extern intlist exceptions_err;
 
-
-//stockage des variables
-extern strlist* NOMS;
-extern NeList* ADRESSES;
-
-extern char* FILENAME;
-extern int LINENUMBER;
 
 
 void printError(int code)
@@ -38,7 +25,7 @@ void printError(int code)
         printString(" ");
         printString(exceptions.tab[-code]);
         printString(": ");
-        printString(EXCEPTION);
+        printString(global_env->EXCEPTION);
     }
     else
     {
@@ -55,7 +42,7 @@ void printError(int code)
     }
     setColor(WHITE);
     newLine();
-    affLine(FILENAME, LINENUMBER);
+    affLine(global_env->FILENAME, global_env->LINENUMBER);
 }
 
 

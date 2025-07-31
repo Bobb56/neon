@@ -86,17 +86,13 @@
 
 .globl reset_stack_and_registers
 .type reset_stack_and_registers, @function
-# Cette fonction remet la pile d'origine
-# on renvoie le résultat de execval_prolog (l'adresse de l'objet à affecter passé en argument) en ne touchant pas à rax
+# Cette fonction remet la pile d'origine ainsi que les registres d'origine
+# void reset_stack_and_registers(process_cycle->process)
 reset_stack_and_registers:
     # on récupère l'adresse à laquelle on est censé retourner
     pop     %rsi
 
     # restauration des registres
-    # on charge l'adresse de process_cycle->process dans rdi
-    movq	process_cycle(%rip), %rdi
-	movq	(%rdi), %rdi
-
     LOAD_REGISTERS(%rdi)
 
     # on modifie dedans l'adresse de retour que l'on a récupérée sur l'ancienne pile
@@ -108,10 +104,8 @@ reset_stack_and_registers:
 .globl save_stack_and_registers
 .type save_stack_and_registers, @function
 # cette fonction sauvegarde la pile et les registres sauvegardés dans le processus qui tourne actuellement
+# void save_stack_and_registers(process_cycle->process)
 save_stack_and_registers:
-    movq	process_cycle(%rip), %rdi
-	movq	(%rdi), %rdi
-
     SAVE_REGISTERS(%rdi)
 
     ret

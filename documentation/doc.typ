@@ -100,7 +100,29 @@ Les `Decimal` peuvent être créés par des constantes dans le code source du pr
 
 
 
-=== 1.2.3 - Le type `String`
+
+=== 1.2.3 - Le type `Bool`
+
+Les objets de type `Bool` ne peuvent valoir que `True` ou `False`. Ce sont les deux seules valeurs possibles. Ces valeurs peuvent être obtenues en les écrivant littéralement dans un programme, ou grâce aux opérateurs booléens, qui seront décrits dans la section Opérateurs.
+
+Toute expression booléenne (résultat des opérateurs de comparaison, des opérateurs logiques) s'évalue en `True` ou `False`.
+
+Les booléens permettent de représenter des valeurs de vérité, et donc d'instrumenter des branchements conditionnels, des boucles, etc.
+
+=== 1.2.4 - Le type `List`
+
+Une liste est un objet permettant de stocker une suite finie d'objets quelconques. Le terme informatique exact pour décrire cet objet serait tableau. Le langage de programmation Neon ne fait pas de différenciation entre ces deux termes. Lorsque l'on parle de liste chaînée, on parle explicitement de liste chaînée. On peut indexer des listes grâce à la syntaxe suivante : `list[i]`. L'indexation des éléments d'une liste commence à zéro, au lieu de commencer naturellement à 1. Ainsi, `list[i]` ne correspond pas à l'élément i mais à l'élément i+1. Cela peut paraîtré déroutant pour quelqu'un qui n'y est pas habitué, mais c'est en réalité cohérent avec le reste du langage. Ce choix a été fait pour rester dans les conventions de la grande majorité des langages de programmation. Historiquement, cette convention date des années 70 avec le langage C notamment, où l'indexation des tableaux elle exprime en réalité un *décalage par rapport au premier élément* et non l'accès à l'élément n°i.
+
+Une liste peut contenir n'importe quel type d'objet, y compris elle-même.
+
+Lorsque l'on copie une liste, ses éléments ne sont pas copiés. Ainsi toute modification apportée à une copie de liste apparaîtra sur toutes les autres copies et l'originale. Pour vraiment copier une liste, et la rendre indépendante de la liste originale, il faut utiliser la fonction `copy` pour faire une copie profonde.
+
+On peut obtenir des listes de plusieurs manières, en récupérant le retour de certaines fonctions ou certains opérateurs, mais également en écrivant des listes littérales. Ce sont des expressions qui sont évaluées en une liste.
+
+La syntaxe pour créer une liste littérale est `[element1, element2, ..., elementn]`. Les éléments peuvent être des expressions quelconques. La liste contiendra les objets résultants de l'évaluation des expressions (voir la section sur les expressions pour de plus amples explications).
+
+
+=== 1.2.5 - Le type `String`
 
 Les String sont des chaînes de caractères ASCII null-terminated. Elles peuvent être crées comme constantes dans le code source du programme ou combinées entre elles/obtenues grâce à d'autres fonctions. Pour créer une chaîne de caractère comme constante, il faut entourer le texte de guillemets `"` ou bien d'apostrophes `'`. Exemple :
 
@@ -120,24 +142,6 @@ On peut définir certains caractères spéciaux dans les chaînes de caractères
 `\n` #sym.arrow.r.long nouvelle ligne
 
 On peut notamment obtenir leur taille grâce à la fonction `len`, et accéder au caractère n°i grâce à la syntaxe `string[i]`. Cette syntaxe est la même que pour indexer des listes.
-
-=== 1.2.4 - Le type `Bool`
-
-Les objets de type `Bool` ne peuvent valoir que `True` ou `False`. Ce sont les deux seules valeurs possibles. Ces valeurs peuvent être obtenues en les écrivant littéralement dans un programme, ou grâce aux opérateurs booléens, qui seront décrits dans la section Opérateurs.
-
-Toute expression booléenne (résultat des opérateurs de comparaison, des opérateurs logiques) s'évalue en `True` ou `False`.
-
-Les booléens permettent de représenter des valeurs de vérité, et donc d'instrumenter des branchements conditionnels, des boucles, etc.
-
-=== 1.2.5 - Le type `List`
-
-Une liste est un objet permettant de stocker une suite finie d'objets quelconques. Le terme informatique exact pour décrire cet objet serait tableau. Le langage de programmation Neon ne fait pas de différenciation entre ces deux termes. Lorsque l'on parle de liste chaînée, on parle explicitement de liste chaînée. On peut indexer des listes grâce à la syntaxe suivante : `list[i]`. Cela permet d'accéder à l'élément n°i dans la liste. Une liste peut contenir n'importe quel type d'objet, y compris elle-même.
-
-Lorsque l'on copie une liste, ses éléments ne sont pas copiés. Ainsi toute modification apportée à une copie de liste apparaîtra sur toutes les autres copies et l'originale. Pour vraiment copier une liste, et la rendre indépendante de la liste originale, il faut utiliser la fonction `copy` pour faire une copie profonde.
-
-On peut obtenir des listes de plusieurs manières, en récupérant le retour de certaines fonctions ou certains opérateurs, mais également en écrivant des listes littérales. Ce sont des expressions qui sont évaluées en une liste.
-
-La syntaxe pour créer une liste littérale est `[element1, element2, ..., elementn]`. Les éléments peuvent être des expressions quelconques. La liste contiendra les objets résultants de l'évaluation des expressions (voir la section sur les expressions pour de plus amples explications).
 
 === 1.2.6 - Le type `NoneType`
 
@@ -465,10 +469,10 @@ Comparaison entre deux nombres. Renvoie True si et seulement si l'opérande de g
 Comparaison entre deux nombres. Renvoie True si et seulement si l'opérande de gauche est supérieure strictement à l'opérande de droite.
 
 *`and`* :\
-Effectue un ET logique entre deux booléens.
+Effectue un ET logique entre deux booléens. Cet opérateur est paresseux : si l'opérande de gauche s'évalue à `False`, l'opérande de droite n'est pas évalué et l'opérateur renvoie `False`.
 
 *`or`* :\
-Effectue un OU logique entre deux booléens.
+Effectue un OU logique entre deux booléens. Cet opérateur est paresseux : si l'opérande de gauche s'évalue à `True`, l'opérande de droite n'est pas évalué et l'opérateur renvoie `True`.
 
 *`xor`* :\
 Effectue un OU EXCLUSIF logique entre deux booléens.
@@ -650,27 +654,122 @@ end
 
 == 3.2 - Les boucles `while`
 
+Les boucles sont des structures qui répètent l'exécution d'un certain bloc de code en fonction de différents paramètres.\
+Une boucle `while` répète l'exécution d'un bloc de code tant qu'une certaine condition est vraie. Voici la syntaxe d'une boucle `while` :
+
+```
+while (expression booléenne) do
+    code à exécuter
+end
+```
+
+Il est important de noter que la condition est toujours testée *avant* l'exécution du code dans le bloc.
+
+On en déduit plusieurs faits :\
+- Le code à l'intérieur du bloc peut toujours supposer vraie la condition\
+- Si la condition est fausse dès l'entrée dans la boucle, le code ne sera jamais exécuté
 
 
 == 3.3 - Les boucles `for`
 
+Les boucles `for` permettent d'exécuter un bloc de code en faisant varier la valeur d'un entier, appelé variant, sur un certain intervalle.
 
+La syntaxe complète d'une boucle `for` est :
+
+```
+for (variant, début, fin, pas) do
+    code à exécuter
+end
+```
+
+Les champs `début`, `fin` et `pas` doivent être des expressions d'évaluant en nombres entiers, et le champ `variant` doit être une variable.
+
+À l'entrée dans la boucle `for`, la variable utilisée pour le variant va passer en variable locale à la boucle. C'est-à-dire que la valeur précédente de la variable ne sera plus accessible, et la variable aura la nouvelle valeur utilisée dans la boucle `for`. Quand la boucle `for` sera terminée, la valeur précédente du variant sera restaurée. Si la variable utilisée pour le variant n'était pas définie avant la boucle `for`, elle redeviendra indéfinie. La section 4.3 détaille plus les variables locales et globales.
+
+Le comportement de la boucle `for` est simple : le code à exécuter à l'intérieur du bloc sera exécuté pour chaque valeur différente du variant, à commencer par `début`, et jusqu'à `fin` *exclu*, en incrémentant la variable de `pas` à chaque tour de boucle.
+
+La variable utilisée pour le variant est réactualisée à chaque tour de boucle, ce qui signifie que même si elle est modifiée à l'intérieur du code, elle sera restaurée comme si de rien n'était à la fin du tour de boucle, et la boucle ne sera pas impactée.
+
+Il n'est pas toujours obligatoire de spécifier le pas et la valeur de début de la boucle. Il existe deux autres manières de définir une boucle `for` :
+
+```
+for (variant, début, fin) do
+    code à exécuter
+end
+```
+
+Dans ce cas, le pas par défaut est de 1.
+
+```
+for (variant, fin) do
+    code à exécuter
+end
+```
+
+Dans ce cas, le pas par défaut est de 1 et la valeur de début de la boucle est 0.
 
 == 3.4 - Les boucles `foreach`
+
+Les boucles `foreach` sont basées sur le même principe que les boucles `for` : elles permettent d'exécuter un bloc de code pour chaque valeur d'une liste ou chaque caractère d'une chaîne de caractères, dans l'ordre croissant des indices.
+
+Voici la syntaxe :
+
+```
+foreach (element, iterable) do
+    code à exécuter
+end
+```
+
+Comme pour les boucles `for`, la variable `element` est locale à la boucle et est restaurée à chaque nouveau tour de boucle.
 
 
 == 3.5 - Instructions de contrôle
 
+Les instructions de contrôle sont à elles seules des blocs de code, au même titre que les expressions. Elles doivent donc être séparées d'autres blocs de code par un retour à la ligne ou un point virgule.
+
 === 3.5.1 - Instruction `break`
+
+L'instruction `break` doit être utilisée exclusivement dans les boucles. Lorsque'une instruction `break` est rencontrée, l'exécution quitte immédiatement la boucle la plus intérieure dans laquelle se situe le `break`, et continue juste après ladite boucle.
 
 
 === 3.5.2 - Instruction `continue`
 
+L'instruction `continue` doit être utilisée exclusivement dans les boucles. Lorsque'une instruction `continue` est rencontrée, l'exécution saute au début de la boucle la plus intérieure dans laquelle se situe le `continue`. Dans cette opération, la condition de la boucle est revérifiée, donc si la condition était fausse au moment du `continue`, celui-ci aura le même effet qu'un `break`.
 
 === 3.5.3 - Instruction `pass`
 
+L'instruction `pass` ne sert strictement à rien.
 
 == 3.6 - La gestion d'erreurs
+
+Neon dispose d'un système de gestion d'erreurs. Lorsqu'une erreur survient, une exception est déclenchée. Il est possible de détecter le déclenchement d'exceptions grâce aux blocs `try ... except`, et d'exécuter du code en fonction de l'exception déclenchée.
+
+Les exceptions existant par défaut sont détaillées dans la section 1.2.7.
+
+Il est possible de manipuler les exceptions en tant qu'objet, et d'en créer à l'aide de la fonction `createException`.
+
+Il est également possible de déclencher volontairement des exceptions grâce à la fonction `raise` (voir comment l'utiliser dans la section 1.2.8).
+
+Voici comment écrire un bloc `try ... except` :
+
+```
+try
+    code à exécuter
+except (Exception1, Exception2, ...) do
+    code à exécuter
+⁝ nombre arbitraire de blocs except
+except (Exception3, ...) do
+    code à exécuter
+end
+```
+
+Lorsqu'on exécute un bloc `try ... except`, le code à l'intérieur du `try` est d'abord exécuté. Si tout se passe bien (c'est-à-dire aucune exception n'est déclenchée), le bloc `try ... except` a terminé quand le code à l'intérieur du `try` a fini.
+
+En revanche, si une exception est levée pendant l'exécution du code à l'intérieur du `try`, l'exécution du code sera stoppée au moment de l'exception, et le premier bloc `except` dont l'une des exceptions indiquées en tête correspond à l'exception lancée sera exécuté, entièrement et normalement. Quand ce bloc `except` a terminé, l'exécution du bloc `try ... except` est également terminée. 
+
+À noter que Exception, Exception2, ... doivent être directement des objets de type Exception, pas des expressions s'évaluant en exceptions.
+
+Le nombre d'exceptions que l'on peut spécifier pour un bloc `except` n'a aucune limite, et peut même être nul. Dans le cas où l'on ne spécifie aucune exception entre les parenthèses, le bloc `except` est exécuté quelle que soit l'exception levée.
 
 
 = Partie 4 - Définition de fonctions et méthodes

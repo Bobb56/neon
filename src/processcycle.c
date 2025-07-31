@@ -2,14 +2,7 @@
 #include <stdlib.h>
 
 #include "headers/processcycle.h"
-
-
-extern NeList* PROMISES;
-extern intptrlist PROMISES_CNT;
-extern intlist PROCESS_FINISH;
-
-extern ProcessCycle* process_cycle;
-
+#include "headers/neon.h"
 
 
 
@@ -53,7 +46,7 @@ void set_stack_pointer(uint8_t* registers, void* stack) {
 
 
 
-ProcessCycle* processCycle_create(void) {
+ProcessCycle* ProcessCycle_create(void) {
     ProcessCycle* pc = malloc(sizeof(ProcessCycle));
     pc->process = NULL;
     pc->next = NULL;
@@ -64,7 +57,7 @@ ProcessCycle* processCycle_create(void) {
 
 
 
-Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitialized) { // renvoie un pointeur vers le processus créé
+Process* ProcessCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitialized) { // renvoie un pointeur vers le processus créé
     // on crée le nouveau processus
     Process* p = malloc(sizeof(Process));
     // création de la nouvelle pile
@@ -89,7 +82,7 @@ Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitializ
     else if (pc->next == pc && pc->prev == pc) { // vu que c'est un cycle, la seule possibilité est qu'il n'y ait qu'un seul élément
         p->stack = allocate_new_stack();
 
-        ProcessCycle* npc = processCycle_create();
+        ProcessCycle* npc = ProcessCycle_create();
         npc->process = p;
 
         pc->next = npc; npc->prev = pc;
@@ -99,7 +92,7 @@ Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitializ
     else { // aucun des deux n'est nul, donc on s'insère entre les deux
         p->stack = allocate_new_stack();
 
-        ProcessCycle* npc = processCycle_create();
+        ProcessCycle* npc = ProcessCycle_create();
         npc->process = p;
 
         npc->next = pc->next;
@@ -118,7 +111,7 @@ Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitializ
 
 /*
 __attribute__((noinline))
-void processCycle_print(ProcessCycle* cycle) {
+void ProcessCycle_print(ProcessCycle* cycle) {
     ProcessCycle* sov = cycle;
     do {
         printString("Process n°");
@@ -140,7 +133,7 @@ void processCycle_print(ProcessCycle* cycle) {
 
 // renvoie vrai si et seulement si : il existe un processus dans ce cycle => ce processus a fini
 __attribute__((noinline))
-bool processCycle_isActive(ProcessCycle* cycle) {
+bool ProcessCycle_isActive(ProcessCycle* cycle) {
     ProcessCycle* cycle_sov = cycle;
     do {
         if (cycle->process->state == Running)
@@ -151,7 +144,7 @@ bool processCycle_isActive(ProcessCycle* cycle) {
     return false;
 }
 
-bool processCycle_isEmpty(ProcessCycle* pc) {
+bool ProcessCycle_isEmpty(ProcessCycle* pc) {
     return pc->process == NULL && pc->next == NULL && pc->prev == NULL;
 }
 
@@ -159,13 +152,13 @@ bool processCycle_isEmpty(ProcessCycle* pc) {
 
 // supprime les processus ayant terminé, ne change pas le processus actuel, même si il a terminé
 __attribute__((noinline))
-void processCycle_clean(ProcessCycle* cycle) {
+void ProcessCycle_clean(ProcessCycle* cycle) {
     ProcessCycle* cycle_sov = cycle;
 
     cycle = cycle->next;
     while (cycle != NULL && cycle != cycle_sov) {
         if (cycle->process->state == Finished) {
-            cycle = processCycle_remove(cycle);
+            cycle = ProcessCycle_remove(cycle);
         }
         else {
             cycle = cycle->next;
@@ -188,7 +181,7 @@ void process_preRemove(Process* p) {
 Cette fonction supprime le processus actuel et passe au processus suivant
 */
 __attribute__((noinline))
-ProcessCycle* processCycle_remove(ProcessCycle* pc) {
+ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
     Process* p = pc->process;
 
     free(p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés
@@ -294,20 +287,20 @@ int create_new_process(Tree* tree, bool isInitialized) {
     int id = 0;
 
     // on doit garder les processus n'ayant pas fini et les processus ayant fini mais n'ayant pas toutes été récupérées
-    for (; id < PROMISES->len && (PROCESS_FINISH.tab[id] == false || *PROMISES_CNT.tab[id] > 0) ; id++);
+    for (; id < global_env->PROMISES->len && (global_env->PROCESS_FINISH.tab[id] == false || *global_env->PROMISES_CNT.tab[id] > 0) ; id++);
 
-    if (id >= PROMISES->len) { // l'identifiant est un nouvel identifiant
-        nelist_append(PROMISES, NEO_VOID);
-        intptrlist_append(&PROMISES_CNT, malloc(sizeof(int))); // on alloue un nouveau pointeur ici, il y restera jusqu'à la fin de la vie de l'interpréteur
-        intlist_append(&PROCESS_FINISH, 0);
+    if (id >= global_env->PROMISES->len) { // l'identifiant est un nouvel identifiant
+        nelist_append(global_env->PROMISES, NEO_VOID);
+        intptrlist_append(&global_env->PROMISES_CNT, malloc(sizeof(int))); // on alloue un nouveau pointeur ici, il y restera jusqu'à la fin de la vie de l'interpréteur
+        intlist_append(&global_env->PROCESS_FINISH, 0);
     }
 
-    neobject_destroy(PROMISES->tab[id]);
-    PROMISES->tab[id] = NEO_VOID;
-    *PROMISES_CNT.tab[id] = 1;
-    PROCESS_FINISH.tab[id] = 0;
+    neobject_destroy(global_env->PROMISES->tab[id]);
+    global_env->PROMISES->tab[id] = NEO_VOID;
+    *global_env->PROMISES_CNT.tab[id] = 1;
+    global_env->PROCESS_FINISH.tab[id] = 0;
 
-    Process* p = processCycle_add(process_cycle, tree, id, isInitialized); // le processus principal a un id de zéro
+    Process* p = ProcessCycle_add(global_env->process_cycle, tree, id, isInitialized); // le processus principal a un id de zéro
 
     return id;
 }
