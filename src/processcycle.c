@@ -43,7 +43,11 @@ void* allocate_new_stack(void) {
 
 void set_stack_pointer(uint8_t* registers, void* stack) {
     if (stack != NULL) {
-        ((uint64_t*)registers)[0] = -16 & ((uint64_t)stack + STACK_SIZE); // sommet de la pile aligné à 16 octets
+        #ifndef TI_EZ80
+        ((uintptr_t*)registers)[0] = -16 & ((uintptr_t)stack + STACK_SIZE); // sommet de la pile aligné à 16 octets
+        #else
+        ((uintptr_t*)registers)[0] = ((uintptr_t)stack + STACK_SIZE); // sommet de la pile non aligné
+        #endif
     }
 }
 
@@ -60,7 +64,7 @@ ProcessCycle* processCycle_create(void) {
 
 
 
-Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool delete_tree, bool isInitialized) { // renvoie un pointeur vers le processus créé
+Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitialized) { // renvoie un pointeur vers le processus créé
     // on crée le nouveau processus
     Process* p = malloc(sizeof(Process));
     // création de la nouvelle pile
@@ -70,11 +74,9 @@ Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool delete_tree
     p->stack = NULL; // dans le cas où c'est le premier processus que l'on crée, p->stack va rester NULL, sinon on alloue une nouvelle pile
 
     // arguments de l'appel à la fonction
-    p->arg_tree = tree;
-    p->arg_obj = NULL;
     p->state = (isInitialized) ? Running : Uninitialized;
 
-    p->original_call = (delete_tree) ? tree : NULL;
+    p->original_call = tree;
 
     // et maintenant on chaîne le processus au cycle des processus
     // trois cas de figure possibles
@@ -287,7 +289,7 @@ Crée un nouveau processus et renvoie son identifiant
 Il faut également indiquer si on doit supprimer l'arbre après avoir exécuté le processus
 Si on doit supprimer l'arbre, il doit obligatoirement avoir la forme des arbres que l'on met dans les nouvelles promesses
 */
-int create_new_process(Tree* tree, bool delete_tree, bool isInitialized) {
+int create_new_process(Tree* tree, bool isInitialized) {
     // calcul de l'identifiant du processus que l'on ajoute
     int id = 0;
 
@@ -305,7 +307,7 @@ int create_new_process(Tree* tree, bool delete_tree, bool isInitialized) {
     *PROMISES_CNT.tab[id] = 1;
     PROCESS_FINISH.tab[id] = 0;
 
-    Process* p = processCycle_add(process_cycle, tree, id, delete_tree, isInitialized); // le processus principal a un id de zéro
+    Process* p = processCycle_add(process_cycle, tree, id, isInitialized); // le processus principal a un id de zéro
 
     return id;
 }

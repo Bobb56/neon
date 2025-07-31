@@ -251,7 +251,7 @@ void launch_process(void) {
 
     process_cycle->process->state = Running;
 
-    NeObj result = eval_aux(process_cycle->process->arg_tree);
+    NeObj result = eval_aux(process_cycle->process->original_call);
 
     //printf("End process %d\n", process_cycle->process->id);
 
@@ -534,7 +534,7 @@ NeObj eval_aux(Tree* tree) {
 
                     // on ajoute le processus, et il va se faire exécuter dans la chaine de processus
                     // on met isInitialized = false pour que le processus entre dans eval_aux de manière normale
-                    int id = create_new_process(maintree_copy, true, false);
+                    int id = create_new_process(maintree_copy, false);
 
                     return neo_promise_create(id);
                 }
@@ -2069,7 +2069,7 @@ int exec_aux(Tree* tree) {
 
 void initRuntime(void) {
     // on met isInitialized = true car ce processus va entrer dans eval_aux de manière normale, pas par une restauration de registres
-    create_new_process(NULL, false, true);
+    create_new_process(NULL, true);
 }
 
 

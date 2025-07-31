@@ -29,8 +29,6 @@ typedef struct Process
     // ainsi quand un processus créé avec ce flag termine, il revient automatiquement à launch_process qui le supprime proprement et continue l'exécution
     uint8_t state;
     
-    Tree* arg_tree;
-    NeObj* arg_obj;
     Tree* original_call; // pointeur vers l'arbre original (le premier argument) de ce processus. Sert à libérer les arbres temporaires que l'on crée pour lancer des promesses
     void* stack; // ceci est un pointeur sur l'adresse de début de la pile (le haut de la pile), qui servira à la libérer
     ptrlist* var_loc; // les variables locales créés depuis le lancement du processus
@@ -49,7 +47,7 @@ ProcessCycle* processCycle_create(void);
 ProcessCycle* processCycle_remove(ProcessCycle* pc);
 ProcessCycle* loadNextLivingProcess(ProcessCycle* pc);
 void unloadCurrentProcess(Process* p);
-Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool delete_tree, bool isInitialized);
+Process* processCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitialized);
 bool processCycle_isActive(ProcessCycle* cycle);
 bool processCycle_isEmpty(ProcessCycle* pc);
 void processCycle_clean(ProcessCycle* cycle);
@@ -58,6 +56,6 @@ void process_preRemove(Process* p);
 void save_later(ptrlist* variables_a_sauvegarder, Var var);
 void switchGlobalLocalVariables(ptrlist* varsToSave);
 void partialRestore(ptrlist* varsToSave, ptrlist* sov_vars_to_save);
-int create_new_process(Tree* tree, bool delete_tree, bool isInitialized);
+int create_new_process(Tree* tree, bool isInitialized);
 
 #endif
