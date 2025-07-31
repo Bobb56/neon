@@ -10,8 +10,6 @@
     int main (int argc, char* argv[])
 #endif
 {
-
-    //stockage des variables
     neonInit();
 
     NeonEnv* main_env = NeonEnv_init();
