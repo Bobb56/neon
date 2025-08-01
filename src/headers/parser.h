@@ -15,6 +15,16 @@ typedef struct Ast
 } Ast;
 
 
+int get_operator_index(char* operator_string);
+int get_type_operande(char* operator_string);
+int get_type_operande_index(int index);
+char* get_True(void);
+bool operatorIs(int index, int mask);
+char* get_True(void);
+int get_blockword1Line_index(char* word);
+int get_lkeywords_index(char* word);
+
+
 char* nomBlockLine(char* blockline);//a liberer apres
 void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotentiallyString, bool* isPotentiallyWord, bool* isPotentiallyOp, bool* isPotentiallyLongComm, bool* isPotentiallyString2, bool* isPotentiallyComm, bool* isPotentiallyHexBin, char* char2, char* char1, bool* nouvTok, strlist* tokenAdd, intlist* typeTok, intlist* lines, int* debTok, int i, int* stepNumber, int* stepHexBin, int len_string, int* nombrePoints);
 void debutTokensSimples(int i, int* debTok, char* char1, bool* isPotentiallyString, bool* isPotentiallyNumber, bool* isPotentiallyWord, bool* isPotentiallyOp, bool* isPotentiallyString2, bool* isPotentiallyComm, bool* isPotentiallyLongComm, bool* isPotentiallyHexBin);

@@ -9,14 +9,13 @@
 #include "headers/builtinfunctions.h"
 #include "headers/dynarrays.h"
 #include "headers/gc.h"
-#include "headers/linenoise.h"
+#include "extern/linenoise.h"
 #include "headers/printerror.h"
 #include "headers/runtime.h"
 #include "headers/strings.h"
 #include "headers/syntaxtrees.h"
 #include "headers/neon.h"
 #include "headers/processcycle.h"
-#include "headers/operators.h"
 
 // Variables d'environnement de Neon
 NeonEnv* global_env = NULL;
@@ -125,48 +124,6 @@ Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
 
 
 
-strlist ERRORS_MESSAGES;
-
-// VARIABLES GLOBALES SERVANT A DEFINIR LES ELEMENTS MODIFIABLES DE LA SYNTAXE
-
-//définition de acceptedChars
-strlist acceptedChars ;
-
-// definit les types de tokens composes et indique par quel type de token compose ils peuvent etre precedes
-listlist syntax;
-intlist types_debut;
-intlist types_fin;
-
-//définition de sousop
-strlist sousop ;
-
-// liste qui contient les opérandes prises par les opérateurs, correspond a operateurs3[]
-intlist gramm1 ;
-
-//définition de operateurs3
-strlist operateurs3;
-
-//définition de operateurs1
-// opérateurs composés de caractères de sousop
-strlist operateurs1;
-
-// opérateurs mots
-strlist operateurs2;
-
-//mots de blocs d'instructions
-strlist blockwords;
-strlist blockwords1Line;
-strlist keywordFunction;
-strlist keywords;
-strlist lkeywords;
-strlist neon_boolean;
-strlist exceptions;
-strlist constant;
-strlist OPERATEURS;
-intlist PRIORITE;
-intlist OPERANDES;
-intlist exceptions_err;
-
 
 // changes the global environment
 void setNeonEnv(NeonEnv* env) {
@@ -198,41 +155,8 @@ void defineVariables(NeonEnv* env)
 }
 
 
-void loadFunctions(NeonEnv* env, const Function builtinfunctions[], const char* names[])
+void loadFunctions(NeonEnv* env)
 {
-    for (int i = 0 ; i < NBBUILTINFUNC ; i++)
-    {
-        Function f = builtinfunctions[i];
-        NeObj func = neo_fun_create(f.ptr, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
-        strlist_append(env->NOMS, strdup(names[i]));
-        nelist_append(env->ADRESSES, func);
-    }
-    return;
-}
-
-// initializes an empty environment
-NeonEnv* NeonEnv_init(void) {
-    NeonEnv* env = malloc(sizeof(NeonEnv));
-
-    env->CODE_ERROR = 0;
-    env->ATOMIC_TIME = 1500;
-    env->atomic_counter = 0;
-    env->NAME = 0;
-    env->EXCEPTION = NULL;
-    env->FILENAME = NULL;
-    env->LINENUMBER = 0;
-    env->RETURN_VALUE = NEO_VOID;
-    env->OBJECTS_LIST = NEO_VOID;
-    env->CONTAINERS = strlist_create(0);
-    env->ATTRIBUTES = nelist_create(0);
-    env->PROMISES = nelist_create(0);
-    env->PROMISES_CNT = intptrlist_create(0);
-    env->PROCESS_FINISH = intlist_create(0);
-    env->process_cycle = ProcessCycle_create();
-    env->FONCTIONS = tree_create(NULL, 0, 0);
-    env->ADRESSES = nelist_create(0);
-    env->NOMS = strlist_create(0);
-
     // the names of the built-in functions
     const char* names[] = {
         "print",
@@ -673,7 +597,72 @@ NeonEnv* NeonEnv_init(void) {
         }
     };
 
-    loadFunctions(env, builtinfunctions, names);
+
+    for (int i = 0 ; i < NBBUILTINFUNC ; i++)
+    {
+        Function f = builtinfunctions[i];
+        NeObj func = neo_fun_create(f.ptr, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
+        strlist_append(env->NOMS, strdup(names[i]));
+        nelist_append(env->ADRESSES, func);
+    }
+    return;
+}
+
+
+
+void loadExceptions(NeonEnv* env) {
+    const char* exceptions[] = {
+        "SyntaxError",
+        "FileNotFound",
+        "UnmeasurableObject",
+        "UndefinedVariable",
+        "IncorrectFunctionCall",
+        "MemoryError",
+        "NonIndexableObject",
+        "IncorrectIndex",
+        "OutOfRange",
+        "IncorrectType",
+        "DivisionByZero",
+        "UnknownError",
+        "AssertionFailed",
+        "DefinitionError",
+        "KeyboardInterrupt"
+    };
+
+    for (int i = 0 ; i < 15 ; i++) {
+        strlist_append(env->EXCEPTIONS, strdup(exceptions[i]));
+    }
+}
+
+
+
+// initializes an empty environment
+NeonEnv* NeonEnv_init(void) {
+    NeonEnv* env = malloc(sizeof(NeonEnv));
+
+    env->CODE_ERROR = 0;
+    env->ATOMIC_TIME = 1500;
+    env->atomic_counter = 0;
+    env->NAME = 0;
+    env->EXCEPTION = NULL;
+    env->EXCEPTIONS = strlist_create(0);
+    env->FILENAME = NULL;
+    env->LINENUMBER = 0;
+    env->RETURN_VALUE = NEO_VOID;
+    env->OBJECTS_LIST = NEO_VOID;
+    env->CONTAINERS = strlist_create(0);
+    env->ATTRIBUTES = nelist_create(0);
+    env->PROMISES = nelist_create(0);
+    env->PROMISES_CNT = intptrlist_create(0);
+    env->PROCESS_FINISH = intlist_create(0);
+    env->process_cycle = ProcessCycle_create();
+    env->FONCTIONS = tree_create(NULL, 0, 0);
+    env->ADRESSES = nelist_create(0);
+    env->NOMS = strlist_create(0);
+
+
+    loadFunctions(env);
+    loadExceptions(env);
 
     defineVariables(env);
     
@@ -684,6 +673,8 @@ NeonEnv* NeonEnv_init(void) {
 
 void NeonEnv_destroy(NeonEnv* env) {
     free(env->process_cycle);
+
+    strlist_destroy(env->EXCEPTIONS, true);
 
     neobject_destroy(env->RETURN_VALUE);
 
@@ -708,6 +699,34 @@ void NeonEnv_destroy(NeonEnv* env) {
     free(env);
 }
 
+
+
+
+void neonInit(void)
+{
+    #ifdef LINUX_AMD64
+        linenoiseSetMultiLine(1); // spécial pour linenoise
+        signal(SIGINT, handle_signal);
+        signal(SIGTERM, handle_signal);
+    #endif
+    
+    #ifdef WINDOWS_AMD64
+        SetConsoleCtrlHandler(ctrlHandler, TRUE);
+    #endif
+
+    srand(time(NULL));
+
+    global_env = NeonEnv_init();
+
+    return;
+}
+
+
+void neonExit(void)
+{
+    NeonEnv_destroy(global_env);
+    return;
+}
 
 
 
@@ -1008,440 +1027,3 @@ void importFile(char* filename)
     tree_destroy(tree);
     return ;
 }
-
-
-
-
-
-
-
-
-
-void neonInit(void)
-{
-    #ifdef LINUX_AMD64
-        linenoiseSetMultiLine(1); // spécial pour linenoise
-        signal(SIGINT, handle_signal);
-        signal(SIGTERM, handle_signal);
-    #endif
-    
-    #ifdef WINDOWS_AMD64
-        SetConsoleCtrlHandler(ctrlHandler, TRUE);
-    #endif
-
-
-    //définition de acceptedChars
-    const char* acceptedChars_tab[32] = {"\"", "'", "+","*","-","/","<",">","=","%","&","@","!", ",", ";", "\n", "#", "$", "[", "]", "(", ")", "{", "}", "\\", ".", "_", " ", "\t", ".", ":", "~"};
-    strlist_copy(&acceptedChars, acceptedChars_tab, 32);
-
-
-
-    // definit les types de tokens composes et indique par quel type de token compose ils peuvent etre precedes
-
-    // les tableaux à l'intérieur ne sont pas des const, car sinon ça pose un problème avec le type strlist. Ce n'est pas grave, j'enlèverais ce tableau bientôt pour mettre quelque chose de moins "lourd"
-    const intlist syntax_tab[22] = {
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE, TYPE_KEYWORDFUNCTION} , .len = 5}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1, TYPE_DOUBLE, TYPE_INTEGER, TYPE_EXPRESSION, TYPE_STRING, TYPE_LIST, TYPE_VARIABLE, TYPE_FONCTION, TYPE_BOOL, TYPE_LISTINDEX, TYPE_ENDOFLINE,  TYPE_OPERATOR, TYPE_PARENTHESE2, TYPE_CONST, TYPE_VIRGULE, TYPE_EXCEPTION} , .len = 16},//suivant la grammaire de chaque operateur
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE, TYPE_CROCHET} , .len = 5}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE, TYPE_CROCHET} , .len = 5}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_ENDOFLINE, TYPE_BLOCKLINE, TYPE_KEYWORD, TYPE_FONCTION} , .len = 4},
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE,TYPE_PARENTHESE2} , .len = 5}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_ENDOFLINE, TYPE_BLOCK} , .len = 2},
-            (intlist) {.tab = (int[]) {TYPE_VIRGULE, TYPE_DOUBLE, TYPE_INTEGER, TYPE_EXPRESSION, TYPE_PARENTHESE1, TYPE_VARIABLE, TYPE_LISTINDEX, TYPE_BOOL, TYPE_OPERATOR, TYPE_LIST, TYPE_STRING, TYPE_BLOCKLINE, TYPE_BLOCK, TYPE_FONCTION, TYPE_PARENTHESE2, TYPE_KEYWORD, TYPE_CONST, TYPE_BLOCKWORD1LINE, TYPE_EXCEPTION} , .len = 19}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_OPERATOR, TYPE_ENDOFLINE, TYPE_VIRGULE, TYPE_PARENTHESE1} , .len = 4},
-            (intlist) {.tab = (int[]) {TYPE_OPERATOR, TYPE_DOUBLE, TYPE_INTEGER, TYPE_EXPRESSION, TYPE_STRING, TYPE_LIST, TYPE_FONCTION, TYPE_LISTINDEX, TYPE_VARIABLE, TYPE_PARENTHESE2,TYPE_BOOL} , .len = 11},
-            (intlist) {.tab = (int[]) {TYPE_DOUBLE, TYPE_INTEGER, TYPE_EXPRESSION, TYPE_STRING, TYPE_LIST, TYPE_VARIABLE, TYPE_FONCTION, TYPE_BOOL, TYPE_LISTINDEX, TYPE_ENDOFLINE, TYPE_OPERATOR, TYPE_CONST, TYPE_EXCEPTION} , .len = 13},
-            (intlist) {.tab = (int[]) {TYPE_ENDOFLINE, TYPE_BLOCK} , .len = 2},
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
-            (intlist) {.tab = (int[]) {TYPE_ENDOFLINE}, .len = 1},
-            (intlist) {.tab = (int[]) {TYPE_ENDOFLINE}, .len = 1},
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE}, .len = 4},
-            (intlist) {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE, TYPE_CROCHET} , .len = 5}
-    };
-
-
-    listlist_copy(&syntax, syntax_tab, 22);
-
-    // types acceptés en début d'entrée
-
-    
-    int types_debut_temp[22] = {TYPE_FONCTION, TYPE_PARENTHESE1, TYPE_OPERATOR, TYPE_ENDOFLINE, TYPE_LISTINDEX, TYPE_DOUBLE, TYPE_INTEGER, TYPE_STRING, TYPE_LIST, TYPE_VARIABLE, TYPE_BOOL, TYPE_BLOCKLINE, TYPE_KEYWORD, TYPE_CONST, TYPE_WORD, TYPE_COMMENT, TYPE_CROCHET, TYPE_BLOCKWORD, TYPE_BLOCKWORD1LINE, TYPE_EXPRESSION, TYPE_EXCEPTION};
-    intlist_copy(&types_debut, types_debut_temp, 22);
-
-    int types_fin_temp[21] = {TYPE_FONCTION, TYPE_PARENTHESE2, TYPE_OPERATOR, TYPE_ENDOFLINE, TYPE_LISTINDEX, TYPE_DOUBLE, TYPE_INTEGER, TYPE_STRING, TYPE_LIST, TYPE_VARIABLE, TYPE_BOOL, TYPE_KEYWORD, TYPE_CONST, TYPE_WORD, TYPE_COMMENT, TYPE_CROCHET, TYPE_EXPRESSION, TYPE_EXCEPTION, TYPE_BLOCK, TYPE_BLOCKWORD1LINE};
-    intlist_copy(&types_fin, types_fin_temp, 21);
-
-
-    //définition de sousop
-    const char* sousop_temp[] = {"+","*","-","/","<",">","=","%","&","@","!", ".",":"};
-    strlist_copy(&sousop, sousop_temp, 13);
-
-
-    // liste qui contient les opérandes prises par les opérateurs, correspond a operateurs3
-    int gramm1_temp[NBOPERATEURS] = {RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, SPECIAL, RIGHT};
-    intlist_copy(&gramm1, gramm1_temp, NBOPERATEURS);
-
-
-
-    //définition de operateurs3
-    const char* operateurs3_temp[NBOPERATEURS] = {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "...", "parallel"};
-    strlist_copy(&operateurs3, operateurs3_temp, NBOPERATEURS);
-
-
-    //définition de operateurs1
-    // opérateurs composés de caractères de sousop
-    const char* operateurs1_temp[] = {"+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","%","//","&","<-","@", "->", ".", "=>", ">>", ":", "<->", ":=", "..."};
-    strlist_copy(&operateurs1, operateurs1_temp, 31);
-
-
-    // opérateurs mots
-    const char* operateurs2_temp[] = {"and","or","xor","not", "del", "EE", "in", "parallel"};
-    strlist_copy(&operateurs2, operateurs2_temp, 8);
-
-
-
-    const char* OPERATEURS_temp[NBOPERATEURS] = {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "...", "parallel"};
-    strlist_copy(&OPERATEURS, OPERATEURS_temp, NBOPERATEURS);
-
-
-    const int PRIORITE_temp[NBOPERATEURS] = {7, 7, 7, 5, 4, 5, 4, 3, 6, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 3, 3, 7, 4, 4, 2, 8, 2, 1, 8, 8, 2, 3, 7, 6, 0, 8, 8, 8, 8, 7};
-    intlist_copy(&PRIORITE, PRIORITE_temp, NBOPERATEURS);
-
-    const int OPERANDES_temp[NBOPERATEURS] = {RIGHT_LEFT | LAZY,RIGHT_LEFT | LAZY,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT | LAZY, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, 0, RIGHT};
-    intlist_copy(&OPERANDES, OPERANDES_temp, NBOPERATEURS);
-
-
-    // ------------------
-
-    // définit les tokens de délimitation de blocks
-
-    //mots de blocs d'instructions
-    const char* blockwords_temp[] = {"if","while","for", "foreach", "ei", "return", "import", "local", "tr", "expt", "await", "atmc"};
-    strlist_copy(&blockwords, blockwords_temp, 12);
-
-    const char* blockwords1Line_temp[] = {"return", "import", "local", "await"};
-    strlist_copy(&blockwords1Line, blockwords1Line_temp, 4);
-
-    const char* keywordFunction_temp[] = {"function", "method"};
-    strlist_copy(&keywordFunction, keywordFunction_temp, 2);
-
-    const char* keywords_temp[] = {"es", "continue", "break", "pass", "tr", "atmc"};
-    strlist_copy(&keywords, keywords_temp, 6);
-
-    const char* lkeywords_temp[] = {"continue", "break", "pass"};
-    strlist_copy(&lkeywords, lkeywords_temp, 3);
-
-
-    const char* neon_boolean_temp[] = {"True","False"};
-    strlist_copy(&neon_boolean, neon_boolean_temp, 2);
-
-    const char* exceptions_temp[] = {
-        "SyntaxError",
-        "FileNotFound",
-        "UnmeasurableObject",
-        "UndefinedVariable",
-        "IncorrectFunctionCall",
-        "MemoryError",
-        "NonIndexableObject",
-        "IncorrectIndex",
-        "OutOfRange",
-        "IncorrectType",
-        "DivisionByZero",
-        "UnknownError",
-        "AssertionFailed",
-        "DefinitionError",
-        "KeyboardInterrupt"
-    };
-    // ici il faut s'assurer que capacity a la bonne valeur
-    exceptions.tab = malloc(sizeof(char*)*16);
-    exceptions.len = 15;
-    exceptions.capacity = 4;
-    for (int i = 0 ; i < 15 ; i++)
-        exceptions.tab[i] = strdup(exceptions_temp[i]);
-    
-
-    const char* constant_temp[] = {"None", "Infinity", "NaN"};
-    strlist_copy(&constant, constant_temp, 3);
-
-
-
-    // tableau des messages d'erreur :
-
-    const char* ERRORS_MESSAGES_temp[NB_ERRORS] = {
-        "",// ne doit pas être utilisé
-        "",// ne doit pas être utilisé
-        "Multiple decimal points in the same number",
-        "File doesn't exist",
-        "This object has no length",
-        "Use of an undefined variable",
-        "Too many arguments in user-defined function call",
-        "Insufficient arguments in user-defined function call",
-        "Call to an undefined function",
-        "Call to an invalid function",
-        "Starting or ending value of the for loop is not a number",
-        "Incorrect function definition",
-        "Memory error",
-        "Incorrect index for subtree deletion",
-        "Invalid arguments provided in function call",
-        "This object is not indexable",
-        "List index is not a number",
-        "Attempt to index an undefined list",
-        "List index out of range",
-        "Undetermined error, likely a syntax issue",
-        "Unevaluable condition due to incorrect type",
-        "Multiple arguments for return statement",
-        "'For' loop variant is not a variable",
-        "Incorrect built-in function name in function call",
-        "Unknown operator",
-        "Unknown character",
-        "String, list, or other structure not terminated",
-        "Unclosed string at the end of line",
-        "Incompatible keyword used in an expression",
-        "Block instruction line not followed by an instruction block (e.g., a lone if() statement)",
-        "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
-        "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
-        "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
-        "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
-        "Lone block of instructions",
-        "Incorrect statement definition",
-        "Incorrect number of arguments when calling a built-in function",
-        "Index out of range for inserting into a NeList",
-        "Index out of range for deleting from a NeList",
-        "Index out of range to access in a NeList",
-        "Unsupported types for addition",
-        "Unsupported types for subtraction",
-        "Unsupported types for division",
-        "Unsupported types for multiplication",
-        "Unsupported types for modulo",
-        "Euclidean division by zero",
-        "Unsupported types for Euclidean division",
-        "Unsupported types for 'and' operator",
-        "Unsupported types for 'or' operator",
-        "Unsupported types for 'xor' operator",
-        "Unsupported types for exponentiation",
-        "Unsupported types for equality tests",
-        "Unsupported types for <=",
-        "Unsupported types for >=",
-        "Unsupported types for <",
-        "Unsupported types for >",
-        "Attempt to assign the value of an undefined variable to another variable",
-        "Improper use of the '->' operator",
-        "Unsupported types for 'not' operator",
-        "Referencing an undefined variable",
-        "Dereferencing something other than a string",
-        "Unsupported types for unary minus operator",
-        "Unsupported types for reverse function",
-        "Attempt to use help on a non-function variable",
-        "The randint function must have two positive integers a and b as arguments, with a < b",
-        "Pointer is not allocated",
-        "Undefined error",
-        "Can not open file",
-        "More closing parentheses, curved brackets or square brackets than opening ones",
-        "local must have at least one argument",
-        "local can only be used in a function or in a method",
-        "Assertion failed",
-        "The '.' operator is only for functions or methods and can only be applied on a variable",
-        "Incorrect hexadecimal or binary number",
-        "", // code 74 spécial pour les appels d'exceptions
-        "Unsupported types for implication.",
-        "except block not preceded by a try block.",
-        "try block not followed by an except block",
-        "except expects exceptions",
-        "in can only be calculated with a list",
-        "'>>' is only for containers",
-        "A container field is set but the container is not used",
-        "Unknown container field",
-        "Same container name but not same fields",
-        "Containers must contain at least one field",
-        "Unknown container type",
-        "Two different fields cannot have the same name in a container",
-        "Incorrect container definition",
-        "Object not in list",
-        "Cannot assign a value or execute a method on a litteral object",
-        "That list cannot be sorted",
-        "Cannot call a function while dereferencing a container field",
-        "':' outside container definition",
-        "Unknown argument name in user-defined function call",
-        "You have already given a value to this argument in user-defined function call",
-        "':=' outside function call or function definition",
-        "Bad arguments definition in function definition",
-        "Use of '...' outside function definition",
-        "Can only set a documentation for a user-defined function or method",
-        "Use of return outside function",
-        "Can only call a user-defined function in parallel",
-        "await takes exactly one argument",
-        "Atomic time must be a positive integer, greater or equal to 1",
-        "Methods cannot be applied to volatile objects such as function or operators",
-        "Program interrupted", // code 104 spécial pour intercepter un CTRL-C
-        "Cannot assign a value to a string index",
-        "Stack overflow encountered during runtime",
-        "This operator has not yet been implemented for this type of container",
-        "For loop can only be defined with 2, 3 or 4 arguments as follows : \n for (var, end)\n for (var, start, end)\n for (var, start, end, step)",
-        "foreach needs exactly 2 arguments : a variable and a list or a string",
-        "Methods must have at least one argument, and this argument cannot be optional",
-        "for/foreach first argument must be a variable",
-        "listComp range parameters must be integers",
-        "This object cannot be converted to an integer",
-        "This function can only receive integer of decimal arguments"
-    };
-
-    strlist_copy(&ERRORS_MESSAGES, ERRORS_MESSAGES_temp, NB_ERRORS);
-
-    const int exceptions_err_temp[NB_ERRORS] = {
-        0,// ne doit pas être utilisé
-        0,// ne doit pas être utilisé
-        0,
-        1,
-        2,
-        3,
-        4,
-        4,
-        3,
-        4,
-        0,
-        0,
-        5,
-        11,
-        4,
-        6,
-        7,
-        3,
-        8,
-        0,
-        9,
-        0,
-        9,
-        4,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        4,
-        8,
-        8,
-        8,
-        9,
-        9,
-        9,
-        9,
-        9,
-        10,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        3,
-        9,
-        9,
-        3,
-        9,
-        9,
-        9,
-        9,
-        9,
-        5,
-        11,
-        1,
-        0,
-        0,
-        9,
-        12,
-        9,
-        0,
-        0,
-        9,
-        0,
-        0,
-        9,
-        9,
-        9,
-        5,
-        3,
-        13,
-        13,
-        13,
-        13,
-        0,
-        8,
-        4,
-        9,
-        0,
-        0,
-        4,
-        4,
-        0,
-        0,
-        0,
-        9,
-        0,
-        0,
-        0,
-        8,
-        4,
-        14,
-        9,
-        5,
-        9,
-        0,
-        0,
-        0,
-        0,
-        9,
-        9,
-        9
-    };
-
-    intlist_copy(&exceptions_err, exceptions_err_temp, NB_ERRORS);
-
-    srand(time(NULL));
-
-    return;
-}
-
-
-void neonExit(void)
-{
-    // il faut destroy tout
-    strlist_destroy(&acceptedChars, false);
-    listlist_destroy(&syntax);
-    strlist_destroy(&sousop, false) ;
-    free(gramm1.tab) ;
-    free(types_debut.tab);
-    free(types_fin.tab);
-    strlist_destroy(&operateurs3, false);
-    strlist_destroy(&operateurs1, false);
-    strlist_destroy(&operateurs2, false);
-    strlist_destroy(&blockwords, false);
-    strlist_destroy(&blockwords1Line, false);
-    strlist_destroy(&keywords, false);
-    strlist_destroy(&lkeywords, false);
-    strlist_destroy(&keywordFunction, false);
-    strlist_destroy(&neon_boolean, false);
-    strlist_destroy(&exceptions, false);
-    strlist_destroy(&constant, false);
-    strlist_destroy(&OPERATEURS, false);
-    free(PRIORITE.tab);
-    free(OPERANDES.tab);
-    free(exceptions_err.tab);
-    strlist_destroy(&ERRORS_MESSAGES, false);
-}
-

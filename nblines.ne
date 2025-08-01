@@ -12,6 +12,7 @@ files = [
     "runtime.c",
     "objects.c",
     "processcycle.c",
+    "main.c",
     "lowlevel.S",
     
     "headers/printerror.h",

@@ -6,12 +6,10 @@
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
 #include "headers/strings.h"
-#include "headers/linenoise.h"
+#include "extern/linenoise.h"
 #include "headers/objects.h"
 #include "headers/neon.h"
-
-
-extern strlist neon_boolean;
+#include "headers/parser.h"
 
 
 
@@ -468,7 +466,7 @@ char* addStr2(char* str1, char* str2)
 
 bool strToBool(char* string)
 {
-    return strcmp(string, neon_boolean.tab[0])==0;
+    return strcmp(string, get_True()) == 0;
 }
 
 

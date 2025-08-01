@@ -42,6 +42,9 @@ typedef struct NeonEnv {
     // printError affiche cette chaine de caractères lorsqu'il détecte une exception lancée par l'utilisateur
     char* EXCEPTION; // exception levée par l'utilisateur, à afficher par printError
 
+    // cette variable contient les exceptions par défaut et toutes les exceptions créées par l'utilisateur
+    strlist* EXCEPTIONS;
+
 
     // VARIABLES RELATIVES A LA ZONE DU PROGRAMME ACTUELLEMENT INTERPRÉTÉE
     // NAME représente l'indice dans ADRESSES du NeObject représentant le nom actuel de fichier interprété

@@ -12,9 +12,6 @@
 {
     neonInit();
 
-    NeonEnv* main_env = NeonEnv_init();
-    setNeonEnv(main_env);
-
     // définition de la liste des arguments
     NeObj l = neo_list_create(0);
     updateFileName(strdup("__main__")); // nom du fichier actuel
@@ -39,7 +36,6 @@
             execFile(filename);
             free(filename);
         }
-        neonEnv_destroy(global_env);
         neonExit();
     #else
         // ajout des arguments dans le tableau contenant les arguments du programme
@@ -60,7 +56,6 @@
             startMessage();
             terminal();
         }
-        NeonEnv_destroy(global_env);
         neonExit();
     #endif
 

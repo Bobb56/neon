@@ -33,11 +33,6 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 
-#ifdef TI_EZ80
-    #include <ti/real.h>
-    #include <sys/rtc.h>
-#endif
-
 
 #if defined(LINUX_AMD64) || defined(TI_EZ80)
     // a définir uniquement si la console standard du système d'exploitation visé supporte les couleurs
@@ -52,9 +47,15 @@ Ajout d'un type de données NeObject : +0.0.1
 #define SEQUENCE_ENTREE    ">> "
 #define SEQUENCE_SUITE     ".. "
 
-#define NB_ERRORS 115
 
-#define STACK_SIZE (8*1024*1024) // taille de la pile par défaut à 8 Mio, ça peut changer en fonction de la plateforme
+#ifdef TI_EZ80
+    #define STACK_SIZE (4*1024)
+#else
+    #define STACK_SIZE (8*1024*1024) // taille de la pile par défaut à 8 Mio, ça peut changer en fonction de la plateforme
+#endif
+
+
+
 
 #define REG_BUFFER_SIZE 64 // taille de la zone de sauvegarde de registres dans les processus
 

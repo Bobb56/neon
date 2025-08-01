@@ -12,15 +12,6 @@
 #include "headers/syntaxtrees.h"
 
 
-//déclaration des variables globales à cut
-extern intlist gramm1;
-extern strlist operateurs3;
-extern strlist blockwords1Line;
-extern strlist exceptions;
-extern strlist lkeywords;
-extern strlist OPERATEURS;
-extern intlist OPERANDES;
-
 
 
 /*
@@ -269,7 +260,7 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
         else if (ast[0]->type == TYPE_EXCEPTION)
         {
             // créer une exception
-            int index = strlist_index(&exceptions, tokens->tab[0]);
+            int index = strlist_index(global_env->EXCEPTIONS, tokens->tab[0]);
             tree->data = neo_exception_create(index);
             tree->type = TYPE_EXCEPTION;
         }
@@ -736,9 +727,9 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
                 return;
             }
             
-            int placeOp = strlist_index(&OPERATEURS,tokens->tab[index]);
+            int placeOp = get_operator_index(tokens->tab[index]);
             
-            int typeOperande = OPERANDES.tab[placeOp];
+            int typeOperande = get_type_operande_index(placeOp);
             
             tree->label1 = NULL;
             tree->label2 = placeOp;
@@ -1227,7 +1218,7 @@ void affExpr(Tree* tree)
 {
     if (tree->type == TYPE_OPERATOR)
     {
-        int gramm = gramm1.tab[strlist_index(&operateurs3,tree->label1)];
+        int gramm = get_type_operande_index(get_operator_index(tree->label1));
 
         if (strcmp(tree->label1, "_") == 0)
         {
@@ -1864,7 +1855,7 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
                 }
             }
             
-            fils->label2 = strlist_index(&blockwords1Line, name) + 1;
+            fils->label2 = get_blockword1Line_index(name) + 1;
 
             fils->type = TYPE_BLOCKWORD1LINE;
             
@@ -1889,7 +1880,7 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
             tree_appendSon(tree, fils);
         }
         else if (ast[index]->type == TYPE_KEYWORD) {
-            Tree * fils = tree_create(NULL, strlist_index(&lkeywords, tokens->tab[index]) + 1, TYPE_KEYWORD);
+            Tree * fils = tree_create(NULL, get_lkeywords_index(tokens->tab[index]) + 1, TYPE_KEYWORD);
             if (global_env->CODE_ERROR != 0)
             {
                 return;

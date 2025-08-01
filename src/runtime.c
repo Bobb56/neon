@@ -11,17 +11,11 @@
 #include "headers/operators.h"
 #include "headers/gc.h"
 #include "headers/runtime.h"
+#include "headers/printerror.h"
 #include "headers/strings.h"
 #include "headers/syntaxtrees.h"
 #include "headers/lowlevel.h"
 #include "headers/processcycle.h"
-
-
-extern strlist exceptions;
-extern intlist OPERANDES;
-extern intlist exceptions_err;
-
-
 
 
 
@@ -508,14 +502,14 @@ NeObj eval_aux(Tree* tree) {
 
 
                 // opérateur paresseux
-                else if (OPERANDES.tab[tree->label2] & LAZY) {
+                else if (operatorIs(tree->label2, LAZY)) {
                     NeObj (*func)(Tree*) = operators_functions[tree->label2];
                     return func(tree->sons[0]);
                 }
                 else {
                     // opérateur qui prend directement des objets/global_env->ADRESSES en argument
 
-                    if (OPERANDES.tab[tree->label2] & VARRIGHT || OPERANDES.tab[tree->label2] & VARLEFT)
+                    if (operatorIs(tree->label2, VARRIGHT) || operatorIs(tree->label2, VARLEFT))
                     {
                         NeObj* op1 = get_address(tree->sons[0]); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
                         
@@ -545,7 +539,7 @@ NeObj eval_aux(Tree* tree) {
             else if (tree->nbSons == 2) // operateur binaire
             {
                 // opérateur paresseux
-                if (OPERANDES.tab[tree->label2] & LAZY) {
+                if (operatorIs(tree->label2, LAZY)) {
                     NeObj (*func) (Tree*, Tree*) = operators_functions[tree->label2];
                     return func(tree->sons[0], tree->sons[1]);
                 }
@@ -560,7 +554,7 @@ NeObj eval_aux(Tree* tree) {
                         return NEO_VOID;
                     }
                                         
-                    if (OPERANDES.tab[tree->label2] & VAR_RIGHT)
+                    if (operatorIs(tree->label2, VAR_RIGHT))
                     {
                         NeObj* op1 = get_address(tree->sons[0]);
 
@@ -577,7 +571,7 @@ NeObj eval_aux(Tree* tree) {
                         neobject_destroy(op2);
                         return result;
                     }
-                    else if (OPERANDES.tab[tree->label2] & LEFT_VAR)
+                    else if (operatorIs(tree->label2, LEFT_VAR))
                     {                    
                         NeObj op1 = eval_aux(tree->sons[0]);
                         
@@ -594,7 +588,7 @@ NeObj eval_aux(Tree* tree) {
                         neobject_destroy(op1);
                         return result;
                     }
-                    else if (OPERANDES.tab[tree->label2] & VAR_VAR)
+                    else if (operatorIs(tree->label2, VAR_VAR))
                     {
                         NeObj* op1 = get_address(tree->sons[0]);
 
@@ -1683,7 +1677,7 @@ int exec_aux(Tree* tree) {
                             else
                             {
                                 int code = get_exception_code(maintree->sons[fils]->sons[0]->sons[i]->data);
-                                if (exceptions_err.tab[global_env->CODE_ERROR] == code || (global_env->CODE_ERROR < 0 && -global_env->CODE_ERROR == code)) // l'erreur correspond
+                                if (get_exception_from_code_error(global_env->CODE_ERROR) == code || (global_env->CODE_ERROR < 0 && -global_env->CODE_ERROR == code)) // l'erreur correspond
                                 {
                                     if (global_env->CODE_ERROR < 0)
                                         global_env->EXCEPTION = NULL;

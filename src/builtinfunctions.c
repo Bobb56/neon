@@ -16,8 +16,6 @@
 #include "headers/neon.h"
 
 
-extern strlist exceptions;
-
 
 NeObj _print_(NeList* args)
 {
@@ -648,8 +646,8 @@ De cette manière si global_env->CODE_ERROR est négatif, printError sait que c'
 */
 NeObj _create_exception_(NeList* args)
 {
-    strlist_append(&exceptions, strdup(neo_to_string(ARG(0))));
-    NeObj e = neo_exception_create(exceptions.len - 1);
+    strlist_append(global_env->EXCEPTIONS, strdup(neo_to_string(ARG(0))));
+    NeObj e = neo_exception_create(global_env->EXCEPTIONS->len - 1);
 
     if (strlist_inList(global_env->NOMS,neo_to_string(ARG(0))))
     {

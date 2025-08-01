@@ -2,35 +2,199 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "headers/constants.h"
 #include "headers/neon.h"
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
+#include "headers/operators.h"
 #include "headers/strings.h"
 #include "headers/parser.h"
 
 
-//déclaration des variables globales à cut
-extern strlist acceptedChars;
-extern listlist syntax;
-extern intlist types_debut;
-extern intlist types_fin;
-extern strlist sousop;
-extern intlist gramm1;
-extern strlist operateurs3;
-extern strlist operateurs1;
-extern strlist operateurs2;
-extern strlist blockwords;
-extern strlist blockwords1Line;
-extern strlist keywordFunction;
-extern strlist neon_boolean;
-extern strlist exceptions;
-extern strlist keywords;
-extern strlist lkeywords;
-extern strlist constant;
-extern strlist OPERATEURS;
-extern intlist PRIORITE;
-extern intlist OPERANDES;
 
+// définition des élément modifiables de la syntaxe
+
+static strlist acceptedChars = (strlist) {
+    .tab = (char*[]){"\"", "'", "+","*","-","/","<",">","=","%","&","@","!", ",", ";", "\n", "#", "$", "[", "]", "(", ")", "{", "}", "\\", ".", "_", " ", "\t", ".", ":", "~"},
+    .len = 32,
+    .capacity = 5
+};
+
+
+// definit les types de tokens composes et indique par quel type de token compose ils peuvent etre precedes
+static listlist syntax = (listlist) {
+    .tab = (intlist[]) {
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE, TYPE_KEYWORDFUNCTION} , .len = 5}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_PARENTHESE1, TYPE_DOUBLE, TYPE_INTEGER, TYPE_EXPRESSION, TYPE_STRING, TYPE_LIST, TYPE_VARIABLE, TYPE_FONCTION, TYPE_BOOL, TYPE_LISTINDEX, TYPE_ENDOFLINE,  TYPE_OPERATOR, TYPE_PARENTHESE2, TYPE_CONST, TYPE_VIRGULE, TYPE_EXCEPTION} , .len = 16},//suivant la grammaire de chaque operateur
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE, TYPE_CROCHET} , .len = 5}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE, TYPE_CROCHET} , .len = 5}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_ENDOFLINE, TYPE_BLOCKLINE, TYPE_KEYWORD, TYPE_FONCTION} , .len = 4},
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE,TYPE_PARENTHESE2} , .len = 5}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_ENDOFLINE, TYPE_BLOCK} , .len = 2},
+        {.tab = (int[]) {TYPE_VIRGULE, TYPE_DOUBLE, TYPE_INTEGER, TYPE_EXPRESSION, TYPE_PARENTHESE1, TYPE_VARIABLE, TYPE_LISTINDEX, TYPE_BOOL, TYPE_OPERATOR, TYPE_LIST, TYPE_STRING, TYPE_BLOCKLINE, TYPE_BLOCK, TYPE_FONCTION, TYPE_PARENTHESE2, TYPE_KEYWORD, TYPE_CONST, TYPE_BLOCKWORD1LINE, TYPE_EXCEPTION} , .len = 19}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_OPERATOR, TYPE_ENDOFLINE, TYPE_VIRGULE, TYPE_PARENTHESE1} , .len = 4},
+        {.tab = (int[]) {TYPE_OPERATOR, TYPE_DOUBLE, TYPE_INTEGER, TYPE_EXPRESSION, TYPE_STRING, TYPE_LIST, TYPE_FONCTION, TYPE_LISTINDEX, TYPE_VARIABLE, TYPE_PARENTHESE2,TYPE_BOOL} , .len = 11},
+        {.tab = (int[]) {TYPE_DOUBLE, TYPE_INTEGER, TYPE_EXPRESSION, TYPE_STRING, TYPE_LIST, TYPE_VARIABLE, TYPE_FONCTION, TYPE_BOOL, TYPE_LISTINDEX, TYPE_ENDOFLINE, TYPE_OPERATOR, TYPE_CONST, TYPE_EXCEPTION} , .len = 13},
+        {.tab = (int[]) {TYPE_ENDOFLINE, TYPE_BLOCK} , .len = 2},
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE} , .len = 4}, // suivant la grammaire de l’operateur
+        {.tab = (int[]) {TYPE_ENDOFLINE}, .len = 1},
+        {.tab = (int[]) {TYPE_ENDOFLINE}, .len = 1},
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE}, .len = 4},
+        {.tab = (int[]) {TYPE_PARENTHESE1,TYPE_OPERATOR,TYPE_ENDOFLINE,TYPE_VIRGULE, TYPE_CROCHET} , .len = 5}
+    },
+    .len = 22,
+    .capacity = 5
+};
+
+
+// types acceptés en début d'entrée
+static intlist types_debut = (intlist) {
+    .tab = (int[]) {TYPE_FONCTION, TYPE_PARENTHESE1, TYPE_OPERATOR, TYPE_ENDOFLINE, TYPE_LISTINDEX, TYPE_DOUBLE, TYPE_INTEGER, TYPE_STRING, TYPE_LIST, TYPE_VARIABLE, TYPE_BOOL, TYPE_BLOCKLINE, TYPE_KEYWORD, TYPE_CONST, TYPE_WORD, TYPE_COMMENT, TYPE_CROCHET, TYPE_BLOCKWORD, TYPE_BLOCKWORD1LINE, TYPE_EXPRESSION, TYPE_EXCEPTION},
+    .len = 21,
+    .capacity = 5
+};
+
+static intlist types_fin = (intlist) {
+    .tab = (int[]) {TYPE_FONCTION, TYPE_PARENTHESE2, TYPE_OPERATOR, TYPE_ENDOFLINE, TYPE_LISTINDEX, TYPE_DOUBLE, TYPE_INTEGER, TYPE_STRING, TYPE_LIST, TYPE_VARIABLE, TYPE_BOOL, TYPE_KEYWORD, TYPE_CONST, TYPE_WORD, TYPE_COMMENT, TYPE_CROCHET, TYPE_EXPRESSION, TYPE_EXCEPTION, TYPE_BLOCK, TYPE_BLOCKWORD1LINE},
+    .len = 20,
+    .capacity = 5
+};
+
+
+
+static strlist sousop = (strlist) {
+    .tab = (char*[]) {"+","*","-","/","<",">","=","%","&","@","!", ".",":"},
+    .len = 13,
+    .capacity = 4
+};
+
+
+
+
+
+//définition de operateurs1
+// opérateurs composés de caractères de sousop
+static strlist operateurs1 = (strlist) {
+    .tab = (char*[]) {"+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","%","//","&","<-","@", "->", ".", "=>", ">>", ":", "<->", ":=", "..."},
+    .len = 31,
+    .capacity = 5
+};
+
+
+// opérateurs mots
+static strlist operateurs2 = (strlist) {
+    .tab = (char*[]) {"and","or","xor","not", "del", "EE", "in", "parallel"},
+    .len = 8,
+    .capacity = 3
+};
+
+
+static strlist OPERATEURS = (strlist) {
+    .tab = (char*[]) {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "...", "parallel"},
+    .len = NBOPERATEURS,
+    .capacity = NBOPERATEURS
+};
+
+
+static intlist PRIORITE = (intlist) {
+    .tab = (int[]) {7, 7, 7, 5, 4, 5, 4, 3, 6, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 3, 3, 7, 4, 4, 2, 8, 2, 1, 8, 8, 2, 3, 7, 6, 0, 8, 8, 8, 8, 7},
+    .len = NBOPERATEURS,
+    .capacity = NBOPERATEURS // les tableaux ne sont jamais modifiés de toute façon, donc la capacité est anecdotique
+};
+
+
+static intlist OPERANDES = (intlist) {
+    .tab = (int[]) {RIGHT_LEFT | LAZY,RIGHT_LEFT | LAZY,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT | LAZY, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, SPECIAL, RIGHT},
+    .len = NBOPERATEURS,
+    .capacity = NBOPERATEURS // les tableaux ne sont jamais modifiés de toute façon, donc la capacité est anecdotique
+};
+
+
+// ------------------
+
+// définit les tokens de délimitation de blocks
+
+//mots de blocs d'instructions
+static strlist blockwords = (strlist) {
+    .tab = (char*[]) {"if","while","for", "foreach", "ei", "return", "import", "local", "tr", "expt", "await", "atmc"},
+    .len = 12,
+    .capacity = 4
+};
+
+static strlist blockwords1Line = (strlist) {
+    .tab = (char*[]) {"return", "import", "local", "await"},
+    .len = 4,
+    .capacity = 2
+};
+
+static strlist keywordFunction = (strlist) {
+    .tab = (char*[]) {"function", "method"},
+    .len = 2,
+    .capacity = 1
+};
+
+static strlist keywords = (strlist) {
+    .tab = (char*[]) {"es", "continue", "break", "pass", "tr", "atmc"},
+    .len = 6,
+    .capacity = 3
+};
+
+static strlist lkeywords = (strlist) {
+    .tab = (char*[]) {"continue", "break", "pass"},
+    .len = 3,
+    .capacity = 2
+};
+
+static strlist neon_boolean = (strlist) {
+    .tab = (char*[]) {"True","False"},
+    .len = 2,
+    .capacity = 1
+};
+
+static strlist constant = (strlist) {
+    .tab = (char*[]) {"None", "Infinity", "NaN"},
+    .len = 3,
+    .capacity = 2
+};
+
+
+int get_operator_index(char* operator) {
+    return strlist_index(&OPERATEURS, operator);
+}
+
+
+int get_type_operande_index(int index) {
+    return OPERANDES.tab[index];
+}
+
+int get_type_operande(char* operator_string) {
+    return get_type_operande_index(get_operator_index(operator_string));
+}
+
+char* get_True(void) {
+    return neon_boolean.tab[0];
+}
+
+bool operatorIs(int index, int mask) {
+    return get_type_operande_index(index) & mask;
+}
+
+int get_blockword1Line_index(char* word) {
+    return strlist_index(&blockwords1Line, word);
+}
+
+int get_lkeywords_index(char* word) {
+    return strlist_index(&lkeywords, word);
+}
+
+
+
+///////////// DÉFINITION DE LA STRUCTURE AST //////////////
 
 
 Ast** ast_create(intlist* typeTok) {
@@ -871,11 +1035,11 @@ bool isAccepted(char* token, uint8_t type, char* tokenAnc, int typeanc) {
 
     if (type == TYPE_OPERATOR) {
         // on vérifie que typeanc peut être avant cet opérateur
-        gramm=gramm1.tab[strlist_index(&operateurs3, token)];
+        gramm = get_type_operande(token);
 
 
         if (typeanc==TYPE_OPERATOR)
-            grammanc=gramm1.tab[strlist_index(&operateurs3, tokenAnc)];
+            grammanc = get_type_operande(tokenAnc);
 
 
         if (((gramm & VARLEFT || gramm & VAR_RIGHT || gramm & VAR_VAR) && typeanc != TYPE_VARIABLE && typeanc != TYPE_LISTINDEX) || ((gramm & RIGHT || gramm & VARRIGHT)  && (typeanc==TYPE_INTEGER || typeanc==TYPE_DOUBLE || typeanc==TYPE_EXPRESSION || typeanc==TYPE_STRING || typeanc==TYPE_LIST ||  typeanc==TYPE_VARIABLE ||  typeanc==TYPE_FONCTION ||  typeanc==TYPE_BOOL || typeanc==TYPE_CONST || typeanc==TYPE_NONE || typeanc==TYPE_EXCEPTION || typeanc==TYPE_LISTINDEX)) || ((gramm & LEFT_VAR || gramm & RIGHT_LEFT || gramm & VAR_VAR) && !(typeanc==TYPE_INTEGER || typeanc==TYPE_DOUBLE || typeanc==TYPE_EXPRESSION || typeanc==TYPE_STRING || typeanc==TYPE_LIST ||  typeanc==TYPE_VARIABLE ||  typeanc==TYPE_FONCTION ||  typeanc==TYPE_BOOL ||  typeanc==TYPE_LISTINDEX || typeanc==TYPE_CONST || typeanc==TYPE_NONE || typeanc==TYPE_EXCEPTION || typeanc==TYPE_PARENTHESE2 || (typeanc==TYPE_OPERATOR && grammanc & VARLEFT))))
@@ -887,10 +1051,10 @@ bool isAccepted(char* token, uint8_t type, char* tokenAnc, int typeanc) {
         // dans ce cas on vérifie que type peut suivre typeanc
 
         //recupere l’operateur pour verifier que ca correspond
-        gramm=gramm1.tab[strlist_index(&operateurs3, tokenAnc)];
+        gramm = get_type_operande(tokenAnc);
         
         if (type==TYPE_OPERATOR)
-            grammact=gramm1.tab[strlist_index(&operateurs3, token)];
+            grammact = get_type_operande(token);
 
         
         // on verifie que le token peut effectivement etre apres l’operateur
@@ -975,7 +1139,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
                 typeTok.tab[k] = TYPE_BOOL;
             }
 
-            else if (strlist_inList(&exceptions, tokenAdd->tab[k]))
+            else if (strlist_inList(global_env->EXCEPTIONS, tokenAdd->tab[k]))
             {
                 typeTok.tab[k] = TYPE_EXCEPTION;
             }
@@ -1094,7 +1258,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         
 
         if (ast[0]->type == TYPE_OPERATOR)
-            gramm = gramm1.tab[strlist_index(&operateurs3, tokenAdd->tab[0])];
+            gramm = get_type_operande(tokenAdd->tab[0]);
 
         if (!intlist_inList(&types_debut, ast[0]->type) || (ast[0]->type == TYPE_OPERATOR && !(gramm & VARRIGHT) && !(gramm & RIGHT) && !(gramm & SPECIAL)))
         {
@@ -1125,7 +1289,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
                     tokenAdd->tab[i_act] = strdup("_"); // si j=0 (c'est-à-dire que c'est le premier token), on sait que c'est forcément un moins unaire
                 }
                 
-                else if (!(ast[i_anc]->type == TYPE_DOUBLE || ast[i_anc]->type == TYPE_INTEGER || ast[i_anc]->type == TYPE_EXPRESSION || ast[i_anc]->type == TYPE_STRING || ast[i_anc]->type == TYPE_LISTINDEX || ast[i_anc]->type == TYPE_FONCTION || ast[i_anc]->type == TYPE_LIST || ast[i_anc]->type == TYPE_BOOL || ast[i_anc]->type == TYPE_CONST || ast[i_anc]->type == TYPE_NONE || ast[i_anc]->type == TYPE_EXCEPTION || ast[i_anc]->type == TYPE_PARENTHESE2 || ast[i_anc]->type == TYPE_VARIABLE || (ast[i_anc]->type==TYPE_OPERATOR && gramm1.tab[strlist_index(&operateurs3, tokenAdd->tab[i_anc])] & VARLEFT)) )
+                else if (!(ast[i_anc]->type == TYPE_DOUBLE || ast[i_anc]->type == TYPE_INTEGER || ast[i_anc]->type == TYPE_EXPRESSION || ast[i_anc]->type == TYPE_STRING || ast[i_anc]->type == TYPE_LISTINDEX || ast[i_anc]->type == TYPE_FONCTION || ast[i_anc]->type == TYPE_LIST || ast[i_anc]->type == TYPE_BOOL || ast[i_anc]->type == TYPE_CONST || ast[i_anc]->type == TYPE_NONE || ast[i_anc]->type == TYPE_EXCEPTION || ast[i_anc]->type == TYPE_PARENTHESE2 || ast[i_anc]->type == TYPE_VARIABLE || (ast[i_anc]->type==TYPE_OPERATOR && get_type_operande(tokenAdd->tab[i_anc]) & VARLEFT)) )
                 {
                     // si on a un moins qui est directement précédé d'une autre unité lexicale de type nombre etc, ça veut dire que c'est l'opérateur moins donc
                     // là on teste la condition inverse c'est à dire que l'on se trouve en présence d'un moins unaire
@@ -1156,7 +1320,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         
         if (i_act < tokenAdd->len) { // si ça n'a pas dépassé pendant la boucle
             if (ast[i_act]->type == TYPE_OPERATOR)
-                gramm = gramm1.tab[strlist_index(&operateurs3, tokenAdd->tab[i_act])];
+                gramm = get_type_operande(tokenAdd->tab[i_act]);
 
             if ((plusieursTokens && (!intlist_inList(&types_fin, ast[i_act]->type) || (ast[i_act]->type == TYPE_OPERATOR && !(gramm & VARLEFT) && !(gramm & SPECIAL)))) || (!plusieursTokens && !intlist_inList(&types_fin, ast[0]->type)))
             {

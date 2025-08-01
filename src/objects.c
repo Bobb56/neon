@@ -15,9 +15,6 @@
 #include "headers/neon.h"
 
 
-extern strlist exceptions;
-
-
 
 /////////////// MANIPULATION DES VARIABLES ///////////////////
 
@@ -624,7 +621,7 @@ int get_exception_code(NeObj exception) {
 }
 
 void neo_exception_aff(NeObj neo) {
-    printString(exceptions.tab[get_exception_code(neo)]);
+    printString(global_env->EXCEPTIONS->tab[get_exception_code(neo)]);
 }
 
 ///////////////////// TYPE_CONST //////////////////
@@ -1349,7 +1346,7 @@ char* neobject_str(NeObj neo)
         }
         else if (NEO_TYPE(neo) == TYPE_EXCEPTION)
         {
-            ret = strdup(exceptions.tab[get_exception_code(neo)]);
+            ret = strdup(global_env->EXCEPTIONS->tab[get_exception_code(neo)]);
         }
         else if (NEO_TYPE(neo) == TYPE_NONE)
         {

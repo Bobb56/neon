@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 #include "headers/neonio.h"
-#include "headers/linenoise.h"
+#include "extern/linenoise.h"
 #include "headers/neon.h"
 
 #ifndef LINUX_AMD64
