@@ -1,5 +1,5 @@
 files = [
-    "printerror.c",
+    "errors.c",
     "builtinfunctions.c",
     "dynarrays.c",
     "strings.c",
@@ -15,7 +15,7 @@ files = [
     "main.c",
     "lowlevel.S",
     
-    "headers/printerror.h",
+    "headers/errors.h",
     "headers/builtinfunctions.h",
     "headers/dynarrays.h",
     "headers/strings.h",
@@ -32,8 +32,8 @@ files = [
 ]
 
 other_files = [
-    "linenoise.c",
-    "headers/linenoise.h"
+    "extern/linenoise.c",
+    "extern/linenoise.h"
 ]
 
 function print_number(n) do

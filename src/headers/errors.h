@@ -12,7 +12,4 @@ int get_exception_from_code_error(int code_error);
 
 
 
-
-
-
 #endif

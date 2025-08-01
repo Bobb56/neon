@@ -10,7 +10,7 @@
 #include "headers/dynarrays.h"
 #include "headers/gc.h"
 #include "extern/linenoise.h"
-#include "headers/printerror.h"
+#include "headers/errors.h"
 #include "headers/runtime.h"
 #include "headers/strings.h"
 #include "headers/syntaxtrees.h"

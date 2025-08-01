@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "headers/neonio.h"
-#include "headers/printerror.h"
+#include "headers/errors.h"
 #include "headers/neon.h"
 
 //creation du tableau de pointeurs generiques a liberer en cas d’erreur

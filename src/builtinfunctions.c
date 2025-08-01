@@ -10,7 +10,7 @@
 #include "headers/objects.h"
 #include "headers/operators.h"
 #include "headers/runtime.h"
-#include "headers/printerror.h"
+#include "headers/errors.h"
 #include "headers/strings.h"
 #include "headers/syntaxtrees.h"
 #include "headers/neon.h"
