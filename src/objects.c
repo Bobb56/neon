@@ -1532,7 +1532,7 @@ bool neo_equal(NeObj _op1, NeObj _op2)
     {
         if (NEO_TYPE(_op2) == TYPE_USERFUNC || NEO_TYPE(_op2) == TYPE_USERMETHOD)
         {
-            return _op1.userfunc->code == _op2.userfunc->code;
+            return _op1.userfunc->code == _op2.userfunc->code && nelist_equal(_op1.userfunc->opt_args, _op2.userfunc->opt_args);
         }
         else
         {

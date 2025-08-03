@@ -12,22 +12,97 @@
 
 = Introduction
 
+== Préambule
+
 Neon est un langage de script généraliste nativement concurrent destiné entre autres à rendre possible la programmation concurrente possible sur des machines ne disposant pas de système d'exploitation multitâches. Le langage Neon permet la description de programmes de calcul séquentiels et concurrents, l'interpréteur Neon permet de les exécuter.
 
 Neon est designé pour être facile à comprendre et facile à utiliser. Cette documentation n'a pas de vocation pédagogique mais sert à recenser de manière exhaustive l'entièreté des fonctionnalités de Neon. Ce document n'est pas non plus destiné à être lu dans l'ordre, mais à ranger les informations dans des catégories.
 
 Par Neon, on désigne à la fois le langage dans ses spécificités et à la fois son seul et unique interpréteur.
 
+== Environnement de programmation
+
+L'interpréteur Neon dispose de deux modes : un mode console, permettant d'entrer du code et des expressions, et un mode exécution permettant d'exécuter directement des fichiers.
+
+=== Le mode exécution
+
+L'extension de fichiers officiellement supportée pour les programmes Neon est l'extension `.ne`. Il est recommandé de nommer tous les programmes Neon avec cette extension. Pour lancer un programme avec le mode exécution, il suffit d'envoyer le nom du fichier en argument à l'interpréteur Neon. Le nom du fichier peut être suivi d'arguments à envoyer au programme Neon.
+
+=== Le mode console
+
+Lorsque la console est prête à recevoir une expression à évaluer, le curseur est sur une nouvelle ligne débutée par deux chevrons `>>`. Si l'on entre une expression, celle-ci sera évaluée, et son résultat ainsi que son type seront affichés sur une nouvelle ligne.
+
+Pour entrer des bloc de code, il faut garder en tête que l'appui sur ENTRÉE entraînera l'envoi du texte écrit à l'interpréteur. Il faut donc soit utiliser le retour à la ligne délimité par `;`, soit s'assurer que la ligne début par `..` indiquant que le retour à la ligne ne causera pas un envoi du texte à l'interpréteur.
 
 #outline(title : "Sommaire")
 
+= Partie 0 : Syntaxe et sémantique
+
+Lorsque l'on écrit un programme Neon, on écrit du texte. Une suite de caractères. On peut considérer que le programme est simplement cette suite de caractères, dans ce cas-là on parle de syntaxe.
+
+En revanche si on s'intéresse à comment ces suites de caractères sont interprétées par Neon, on parle de sémantique.
+
+Il est donc toujours important de distinguer ces deux points de vues. Parfois nous parlerons d'expression ; il s'agit de la suite de caractères que l'on écrit dans un programme. Une expression s'évalue en un objet pendant l'exécution, et on peut mettre en correspondance une expression avec l'objet vers lequel elle s'évalue. Par exemple, si on écrit la variable `a` dans un programme, elle s'évaluera en sa propre valeur. De même pour l'expression `123.456` qui s'évaluera en le flottant 123.456.
+
+Dans la suite, nous parlerons de variables, de noms de fonctions, de noms de champs de containers, etc. Ces noms sont désignés sous le terme identificateur. Les identificateurs doivent suivre des règles précises pour être correctement lus par Neon.
+
+Un identificateur doit obligatoirement commencer soit par une lettre minuscule, soit par une lettre majuscule, soit par un `_`. Pour les caractères suivants il est également possible d'utiliser des chiffres, un apostrophe `'` et un tilde `~`.
+
+Cependant il est recommandé de n'utiliser le caractère `~` que pour les objets de module.
+
+Enfin il existe une liste de noms de variables interdits car déjà utilisés par les mots-clés de Neon.
+
+Voici cette liste exhaustive :\
+```
+or
+do
+if
+in
+EE
+ei
+es
+tr
+xor
+and
+not
+try
+for
+end
+del
+NaN
+then
+elif
+else
+pass
+True
+None
+expt
+atmc
+break
+while
+False
+local
+await
+import
+atomic
+except
+method
+return
+foreach
+continue
+function
+Infinity
+parallel
+```
+
+La syntaxe de Neon est sensible à la casse et insensible aux espaces et aux tabulations. Les retours à la ligne sont tolérés dans les expressions après des parenthèses ouvrantes, des crochets ouvrants et des virgules.
 
 
 = Partie 1 : Les objets et les variables
 
-Tous les objets utilisables dans les programmes Neon sont regroupés au sein d'une seule et unique structure C appelée NeObject.
+Tous les objets utilisables dans les programmes Neon sont regroupés au sein d'une seule et unique structure C appelée `NeObj`.
 
-Voici la liste de tous les types de NeObjects existants :
+Voici la liste de tous les types d'objets Neon existants :
 
 `Integer`\
 `Decimal`\
@@ -48,7 +123,7 @@ Voici la liste de tous les types de NeObjects existants :
 
 Une variable une case mémoire gérée par Neon qui peut contenir un objet. La plupart des objets créés dans Neon n'ont pas d'existence persistante. Ils sont créés lors de l'évaluation d'une expression, utilisés comme argument d'une fonction ou d'un opérateur, puis supprimés.
 
-Pour conserver un objet dans la durée, il est possible de le stocker à l'intérieur d'une variable. Une variable est désignée par un nom. Son nom doit obligatoirement commencer par une lettre ou un tiret du bas `_`. Les caractères suivants peuvent être des lettres, chiffres, tirets du bas et apostrophes `'`. De nombreux opérateurs permettent de gérer les variables, modifier leur contenu, les supprimer, etc.
+Pour conserver un objet dans la durée, il est possible de le stocker à l'intérieur d'une variable. Une variable est désignée par un nom. Son nom doit suivre les règles des identificateurs. De nombreux opérateurs permettent de gérer les variables, modifier leur contenu, les supprimer, etc.
 
 Si une variable n'existe pas et qu'une expression essaie d'accéder à sa valeur, une erreur sera déclenchée. Pour créer une variable, il suffit de lui assigner une valeur comme si elle existait déjà. Exemple : `maNouvelleVariable = 12`. Ceci suffit à créer une variable qui aura pour valeur 12.
 
@@ -172,7 +247,13 @@ Voici la liste des exceptions built-in :\
 
 Ce type regroupe toutes les fonctions présentes au chargement de l'interpréteur en mémoire.
 
-Les fonctions sont des objets comme les autres, elle peuvent passer de variable en variable, être stockées dans des listes, etc. On peut appeler tout objet contenant une fonction.
+Les fonctions sont des objets comme les autres, elle peuvent passer de variable en variable, être stockées dans des listes, etc. Tout objet contenant une fonction peut être exécuté en tant que fonction.
+
+Pour exécuter une fonction, il suffit de suivre l'expression contenant la fonction par `(argument1, argument2, argument3...)` avec tous les arguments que l'on veut envoyer à la fonction.
+
+Exemple:\
+Si la variable `maFonction` contient une fonction et que l'on veut exécuter cette fonction sur les arguments `a` et `b`, il suffit d'écrire l'expression : `maFonction(a, b)`. Cette expression s'évaluera en le résultat de la fonction sur les objets dénotés par `a` et `b`.
+
 Toutes les informations sur une fonction built-in peuvent être obtenues en tapant `help(fonction)` dans le terminal.
 
 De manière générale, quand une fonction ne renvoie rien, elle renvoie en réalité None.
@@ -774,30 +855,189 @@ Le nombre d'exceptions que l'on peut spécifier pour un bloc `except` n'a aucune
 
 = Partie 4 - Définition de fonctions et méthodes
 
+En plus des fonctions définies par défaut par l'interpréteur Neon (de type Built-in function), il est possibles de définir deux autres types de fonctions : les fonctions utilisateur (de type Function), et les méthodes (de type Method).
+
+Une fonction est un bloc de code qui prend en entrée des arguments, qui produit une sortie ou un comportement, et renvoie éventuellement une sortie.
+
+La définition de fonctions est ce qui doit permettre de rendre un code Neon le plus compréhensible possible, proche d'un texte en anglais.
 
 == 4.1 Définition de procédures
 
+Les fonctions les plus simples conceptuellement sont les procédures. Ce sont des fonctions qui ne prennent aucun argument, et qui ne renvoient aucune sortie. Ces fonctions effectuent donc toujours la même action quand elles sont appelées. Définir de telles fonctions sert uniquement à rendre un code plus compréhensible et potentiellement plus concis, en faisant appel à des fonctions avec un nom clairement défini plutôt qu'exécuter directement un bloc de code.
+
+Neon ne distingue pas les procédures des fonctions à part entière. Une procédure est simplement la manière de désigner les fonctions sans arguments qui ne renvoient rien. Une procédure se définit tout simplement comme suit :
+
+```
+function maProcedure() do
+    code à exécuter
+end
+```
+
+Une procédure renvoie `None`. Toutes les fonctions ne comportant pas de `return ()` renvoie `None`.
 
 == 4.2 Fonctions basiques
 
+Voyons maintenant comment envoyer des arguments à une fonction, et renvoyer un résultat depuis une fonction.
+
+```
+function maFonction(arg1, arg2, arg3) do
+    code à exécuter
+end
+```
+
+Cette fonction prend trois valeurs en arguments, et ces valeurs sont stockées dans les variables `arg1`, `arg2` et `arg3`. Le code à l'intérieur de la fonction peut donc utiliser ces variables sachant que leur valeur est celle des arguments envoyés à la fonction.
+
+Contrairement au code que l'on écrit à n'importe quel endroit dans un programme, le code d'une fonction peut utiliser un bloc de code supplémentaire : le bloc `return ()`. Ce bloc de code peut soit contenir une expression : `return (expression)`, soit rester vide : `return ()`. L'expression peut être de n'importe quel type. Lorsqu'un bloc `return ()` est rencontré dans une fonction, celui-ci met fin à la fonction. Cela signifie que tout code situé après un bloc `return ()` n'est jamais exécuté.
+
+Lorsque le bloc `return ()` contient une expression, cette expression est évaluée au moment où on rencontre le `return ()`, et la valeur obtenue est renvoyée comme retour de la fonction.
+
+Lorsque le bloc `return ()` est vide, la valeur renvoyée est simplement `None`.
+
+Mettre un `return ()` ou un `return (None)` à la toute fin d'une fonction revient exactement à ne rien mettre.
 
 == 4.3 Variables locales et globales
 
+Afin de ne pas interférer avec les variables d'un programme et de rendre invisible le code exécuté dans une fonction aux yeux du code appelant la fonction, il existe différents niveaux de localité de variables. Ces niveaux de localité impliquent que certaines variables peuvent avoir plusieurs valeurs différentes en même temps, dont une seule de ces valeurs n'est accessible.
 
-== 4.4 Méthodes avancées de passage d'arguments
+En réalité, pendant un programme Neon, une variable est comme une pile. Lorsque l'on modifie une variable, lorsque l'on accède à sa valeur, on manipule toujours la valeur au sommet de la pile.
 
-=== 4.4.1 - Passage d'arguments dans le désordre
+Lorsque'une variable devient locale à un nouveau bloc de code, une nouvelle valeur est ajoutée sur la pile, et c'est cette valeur que va manipuler le bloc de code. À la fin du bloc de code ayant utilisé la variable comme variable locale, la valeur utilisée est dépilée, et la précédente valeur redevient la valeur principale.
 
-=== 4.4.2 - Arguments optionnels
+Les blocs de code ayant la capacité de rendre des variables locales sont :\
+- Les blocs conditionnels\
+- Les boucles `for`/`foreach`\
+- Les fonctions utilisateur\
+- Les méthodes
 
-=== 4.4.3 - Nombre illimité d'arguments
+Lorsque l'on appelle une fonction, les variables utilisées comme arguments de cette fonction sont automatiquement transformées en variables locales à cette fonction. La valeur précédente de ces variables est donc préservée.
 
-=== 4.4.4 - Arguments vraiment optionnels
+En plus des variables utilisées comme arguments, il est possible de rendre locale n'importe quelle variable locale grâce au bloc de code `local ()`. Ce bloc de code attend comme argument des variables, séparées par des virgues. Le nombre de variables n'est pas limité. `local (var1, var2, var3...)` rend local toutes les variables entre les parenthèses. Dans ce cas-là, leur valeur de ces variables sera restaurée à la fin du bloc de code le plus intérieur dans lequel était situé `local ()`.
 
-== 4.5 - Programmation d'ordre supérieur, clôtures
+Comme dit précédemment dans les sections 3.3 et 3.4, les variables utilisées comme variant dans les boucles `for` et `foreach` sont aussi automatiquement rendues locales.
+
+== 4.4 Méthodes
+
+Les méthodes sont des fonctions avec une fonctionnalité supplémentaire. Dans une fonction, si l'on modifie la valeur des variables utilisées pour récupérer les arguments, cela n'aura évidemment aucun impact sur les arguments eux-mêmes.
+
+Dans le cas d'une méthode, c'est un peu différent.
+
+À la fin d'une méthode, la valeur de la variable utilisée pour stocker le premier argument est automatiquement affectée à l'objet envoyé en premier argument. Ainsi, toute modification effectuée sur le premier argument à l'intérieur d'une méthode sera également effective à l'extérieur de la méthode.
+
+À part cette particularité, les méthodes sont exactement comme les fonctions.
+
+Pour définir une méthode, il suffit d'utiliser le mot-clé `method` au lieu du mot-clé `function` lors de la définition.
+
+== 4.5 Méthodes avancées de passage d'arguments
+
+La manière classique d'envoyer des arguments à des fonctions est de séparer les expressions des arguments par des virgules : `fonction(exp1, exp2, exp3)`. En réalité il existe des fonctionnalités bien plus avancées.
+
+=== 4.5.1 - Passage d'arguments dans le désordre
+
+Parfois, certaines fonctions prennent en entrée beaucoup d'arguments, et il est difficile de se souvenir de l'ordre exact dans lequel spécifier les arguments. De plus, l'appel à de telles fonctions peut être assez complexe à relire : prenons l'exemple hypothétique de la fonction suivante : `function drawFilledRect(x, y, width, height, fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a)`.
+
+Pour spécifier des arguments dans le désordre, il suffit d'indiquer le nom de l'argument que l'on spécifie, de le suivre par `:=` puis par sa valeur.
+
+Remarque : Il n'est pas obligatoire de donner les arguments réellement dans le désordre, il s'agit juste d'une possibilité et de la principale utilité.
+
+Lorsque certains arguments sont donnés avec leur nom comme montré plus haut, il n'est pas nécessaire de le faire pour tous les autres arguments. Ainsi, les arguments dont le nom est spécifié directement sont affectés en premier, et les valeurs restantes, spécifiées normalement sont distribuées dans l'ordre aux arguments restants.
+
+Exemple avec la fonction suivante : `function f(a, b, c)`
+
+Tous les appels suivants à la fonction `f` correspondent à l'appel classique `f(1,2,3)` :\
+f(a := 1, c := 3, b := 2)\
+f(c := 3, 1, 2)\
+f(1, c := 3, 2)\
+
+=== 4.5.2 - Arguments optionnels
+
+Les arguments optionnels permettent de définir des fonctions dont il n'est pas nécessaire de spécifier tous les arguments lorsqu'on les appelle. Lorsque l'on définit un argument optionnel, on donne au moment de la définition de la fonction une valeur par défaut, à donner à cet argument dans le cas où l'appel à la fonction n'a pas donnée de valeur à l'argument.
+
+Lorsque l'on définit une fonction attendant des arguments classiques, on se contente d'écrire : `function maFonction(arg1, arg2, arg3)` en séparant par des virgules les noms des arguments.
+
+Pour définir un argument optionnel, il suffit de suivre le nom de l'argument par `:=`, puis par l'expression qui s'évaluera en la valeur par défaut.
+
+Exemple : `function maFonction(obligatoire1, optionnel1 := expression, obligatoire2...)`
+
+=== 4.5.3 - Nombre illimité d'arguments
+
+Il est également possible de définir des fonctions attendant un nombre illimité d'arguments. Pour cela il faut utiliser l'opérateur spécial `...` à la place d'un nom d'argument.
+
+Exemple : `function maFonction(arguments normaux, ...)`
+
+Cette fois-ci, les `...` doivent réellement être écrits tels quels et ne sont par un raccourci d'écriture de ce document.
+
+Lorsqu'une fonction peut recevoir un nombre illimité d'arguments, seules les valeurs n'ayant pas pu être affectées à des arguments normaux sont comptés dans les arguments supplémentaires. En effet, dans un premier temps les arguments spécifiés dans le désordre et les arguments optionnels sont affectés aux bonnes variables, puis les valeurs seules sont d'abord affectées dans l'ordre aux arguments restants. Seules les valeurs n'ayant pas pu être affectées lors des phases précédentes seront comptabilisées dans les arguments supplémentaires.
+
+Lors de l'appel à une fonction au nombre d'arguments illimité, une variable locale spéciale est créée. Cette variable est une liste contenant toutes les valeurs n'ayant pas pu être affectées à des arguments normaux (donc les valeurs comptabilisées dans le `...`), et est accessible sous le nom `_local_args_`.
+
+=== 4.5.4 - Arguments vraiment optionnels
+
+Lorsque l'on définit une fonction attendant un nombre illimité d'arguments, il est également possible de définir des arguments après les `...`. Ces arguments doivent obligatoirement être optionnels, et on les appelle les arguments vraiment optionnels.
+
+Exemple : `function f(a, b, ..., c := 5)`
+
+Comme les `...` englobent toutes les valeurs envoyés à la fonction après les arguments normaux, la seule manière de donner une valeur à un argument vraiment optionnel est de la spécifier via la syntaxe `:=`.
+
+== 4.6 - Programmation d'ordre supérieur, clôtures
+
+Il est possible de tirer à profit la manière dont Neon évalue et définit les fonctions pour obtenir un comportement similaire aux clôtures que l'on retrouve dans la plupart des langages de programmation.
+
+Pendant la définition d'une fonction, les clôtures permettent de sauvegarder la valeur des variables non locales à cette fonction, mais locales à des fonctions à l'intérieur desquelles est définie notre fonction.
+
+Exemple :\
+```
+function plus(valeur) do
+    function maFonction(a) do
+        return (a + valeur)
+    end
+    return (maFonction)
+end
+```
+
+Cette fonction prend en argument un nombre et renvoie une fonction qui ajoute ce premier nombre à un autre nombre. Du moins, c'est ce que l'on aimerait que fasse cette fonction. Or, écrite telle quelle, cette fonction ne fonctionne pas. En effet, la fonction utilise la variable locale `valeur`, qui existe lors de la définition de la fonction `maFonction`, mais est détruite au moment ou la fonction `plus` renvoie sa valeur.
+
+Les clôtures ont été inventées afin de corriger ce problème. Pour plusieurs raisons, Neon ne dispose pas d'un tel système. La première raison est la transparence. Neon ne sauvegarde/restaure pas la valeur de variables dans le dos des programmeurs. Ensuite, Neon dispose déjà d'un système relativement lourd de traitement des arguments, et il n'était pas nécessaire de l'alourdir davantage avec un système de clôtures. Cependant, la manière dont est codée Neon permettrait si le besoin s'en fait sentir, de facilement implémenter un tel système.
+
+En revanche il est possible d'en simuler le comportement.
+
+Ainsi, un appel à la fonction renvoyée par `plus` utilisera une variable non définie et déclenchera une erreur.
+
+Cependant il est bel et bien possible de coder cette fonction en Neon, d'une manière un peu différente. Pour cela il est important de comprendre comment l'interpréteur définit les fonctions.
+
+Il y a deux stades pour définir une fonction.
+
+Le premier stade se situe au niveau de l'analyse purement syntaxique de la fonction, avant le lancement de l'exécution du programme. À ce stade-là, Neon enregistre le code de la fonction, détecte les arguments dont elle a besoin, regarde si ces arguments sont des arguments optionnels ou non, et finalement, crée un objet fonction partiel. Cet objet fonction est partiel car il ne contient pas encore la valeur par défaut des arguments optionnels. En effet, leur valeurs ne sont pas encore connues à ce stade-là.
+
+Le deuxième stade se situe pendant l'exécution du programme, au moment où l'on passe le bloc de définition de la fonction. À ce stade-là, on peut évaluer la valeur par défaut des arguments optionnels, puis les enregistrer dans un objet fonction complet qui va être affecté à la variable dont le nom est celui de la fonction.
+
+Ainsi, la valeur par défaut des arguments optionnels est évaluée une et une seule fois au moment de la définition d'une fonction, et enregistrée dans l'objet fonction. Il est donc possible d'avoir des fonctions différentes alors qu'elles proviennent du même bloc de définition de fonction, à cause du fait que les fonctions ont été définies à des moments différents et donc n'ont pas les mêmes valeurs par défaut pour leurs arguments.
+
+En exploitant cette caractéristique, voici une version correcte de la fonction `plus` évoquée plus haut :
+
+```
+function plus (valeur) do
+    function maFonction(a, valeur := valeur) do
+        return (a + valeur)
+    end
+    return (maFonction)
+end
+```
+
+Ici, nous utilisons les arguments optionnels pour capturer la valeur de la variable `valeur` au moment de la définition de la fonction. Lorsque la fonction renvoyée par `plus` sera appelée, comme l'argument optionnel ne sera pas utilisé, la variable `valeur` va automatiquement recevoir la valeur évaluée au moment de la définition de la fonction, celle qu'il fallait sauvegarder.
 
 == 4.6 - Programmation modulaire
 
+Lorsque l'on écrit des programmes de taille conséquente possédant différentes composantes bien définies, il est usuel de découper ce programme en modules. En Neon, un module est un ensemble de variables et de fonctions possédant le même préfixe.
+
+== 4.6.1 - Le caractère `~`
+
+== 4.6.2 - La fonction `loadNamepace`
+
+== 4.6.3 - Surcharge d'opérateurs et de l'affichage
+
+== 4.6.4 - Mot-clé `import`
+
+Le langage Neon fournit un bloc de code appelé `import ()` qui permet d'exécuter le contenu de programmes Neon à partir de leurs noms. Plus exactement, pour lancer le fichier `prog.ne`.
 
 = Partie 5 - Programmation concurrente
 
@@ -848,16 +1088,14 @@ La fonction `setAtomicTime` permet de modifier cette valeur (1 est la plus petit
 
 = Partie 6 - Fonctionnalités supplémentaires
 
-== 6.1 - Mot-clé `import`
+== 6.1 - Arguments de programme
 
-== 6.2 - Arguments de programme
+== 6.2 - Variables prédéfinies
 
-== 6.3 - Variables prédéfinies
+=== 6.2.1 - La variable `__name__`
 
-=== 6.3.1 - La variable `__name__`
+=== 6.2.2 - La variable `__platform__`
 
-=== 6.3.2 - La variable `__platform__`
+=== 6.2.3 - La variable `__version__`
 
-=== 6.3.3 - La variable `__version__`
-
-== 6.4 - La variable spéciale `Ans`
+== 6.3 - La variable spéciale `Ans`
