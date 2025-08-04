@@ -49,7 +49,7 @@ typedef struct NeonEnv {
     // VARIABLES RELATIVES A LA ZONE DU PROGRAMME ACTUELLEMENT INTERPRÉTÉE
     // NAME représente l'indice dans ADRESSES du NeObject représentant le nom actuel de fichier interprété
     // Cette valeur est utilisée par la variable __name__
-    int NAME; // adresse du NeObject représentant le nom actuel de fichier. A ne pas utiliser, il y a à la place la fonction updateFileName
+    Var NAME; // adresse du NeObject représentant le nom actuel de fichier. A ne pas utiliser, il y a à la place la fonction updateFileName
 
     // cette chaine de caractères représente le nom du fichier actuellement interprété
     // Ce n'est pas la même chose que NAME car ceci n'est utilisé que pour se souvenir du nom du fichier dans lequel aller lire

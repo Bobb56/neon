@@ -89,7 +89,7 @@ Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
 
     // définition de la liste des arguments
     NeObj l = neo_list_create(0);
-    updateFileName(strdup("__main__")); // nom du fichier actuel
+    update__name__(strdup("__main__")); // nom du fichier actuel
 
     #ifdef TI_EZ80
         // récupération du nom de fichier si existant
@@ -98,8 +98,7 @@ Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
 
         char* filename = argsAns();
 
-        nelist_append(ADRESSES,l);
-        strlist_append(NOMS,strdup("__args__"));
+        variable_append("__args__", l);
 
         if (filename == NULL) // lance le terminal
         {
@@ -117,10 +116,7 @@ Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
         for (int i = 2 ; i < argc ; i++)
             neo_list_append(l,neo_str_create(strdup(argv[i])));
 
-        nelist_append(global_env->ADRESSES,l);
-        strlist_append(global_env->NOMS,strdup("__args__"));
-
-        updateFileName(strdup("__main__"));
+        variable_append("__args__", l);
 
         if (argc >= 2)
         {

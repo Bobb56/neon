@@ -8,13 +8,17 @@
   )
   #v(1em) // Un petit espace après le titre pour un sous-titre si besoin
   #text(1.5em, "Documentation") // Un sous-titre optionnel
+  
+  #text(1em, "v0.9") // Un sous-titre optionnel
 ]
 
 = Introduction
 
+#emph("Cette documentation s'applique à la version 3.8.5.6-beta de Neon.")
+
 == Préambule
 
-Neon est un langage de script généraliste nativement concurrent destiné entre autres à rendre possible la programmation concurrente possible sur des machines ne disposant pas de système d'exploitation multitâches. Le langage Neon permet la description de programmes de calcul séquentiels et concurrents, l'interpréteur Neon permet de les exécuter.
+Neon est un langage de script généraliste nativement concurrent destiné entre autres à rendre possible la programmation concurrente sur des machines ne disposant pas de système d'exploitation multitâches. Le langage Neon permet la description de programmes de calcul séquentiels et concurrents, l'interpréteur Neon permet de les exécuter.
 
 Neon est designé pour être facile à comprendre et facile à utiliser. Cette documentation n'a pas de vocation pédagogique mais sert à recenser de manière exhaustive l'entièreté des fonctionnalités de Neon. Ce document n'est pas non plus destiné à être lu dans l'ordre, mais à ranger les informations dans des catégories.
 
@@ -28,11 +32,15 @@ L'interpréteur Neon dispose de deux modes : un mode console, permettant d'entre
 
 L'extension de fichiers officiellement supportée pour les programmes Neon est l'extension `.ne`. Il est recommandé de nommer tous les programmes Neon avec cette extension. Pour lancer un programme avec le mode exécution, il suffit d'envoyer le nom du fichier en argument à l'interpréteur Neon. Le nom du fichier peut être suivi d'arguments à envoyer au programme Neon.
 
+Sur la plateforme TI_EZ80, les fichier Neon sont des AppVars contenant directement le code Neon en texte. Les noms de ces AppVars sont sans extensions. Pour lancer un fichier en mode exécution, il faut mettre le nom de ce fichier dans la variable `Ans` ou `Rép`. Pour cela, écrivez le nom du fichier entre guillemets dans l'écran principal de la calculatrice, et appuyez sur ENTRÉE. Lors de son lancement, le programme NEON va détecter le nom de fichier dans cette variable et va l'exécuter.
+
 === Le mode console
 
 Lorsque la console est prête à recevoir une expression à évaluer, le curseur est sur une nouvelle ligne débutée par deux chevrons `>>`. Si l'on entre une expression, celle-ci sera évaluée, et son résultat ainsi que son type seront affichés sur une nouvelle ligne.
 
 Pour entrer des bloc de code, il faut garder en tête que l'appui sur ENTRÉE entraînera l'envoi du texte écrit à l'interpréteur. Il faut donc soit utiliser le retour à la ligne délimité par `;`, soit s'assurer que la ligne début par `..` indiquant que le retour à la ligne ne causera pas un envoi du texte à l'interpréteur.
+
+Sur la plateforme TI_EZ80, pour entrer en mode console, il faut que la variable `Ans` ou `Rép` contienne une chaîne de caractères vide, ou bien un autre type de données.
 
 #outline(title : "Sommaire")
 
@@ -243,7 +251,7 @@ Voici la liste des exceptions built-in :\
 *`DefinitionError`* : Déclenchée principalement lorsque la définition d'un container est incorrecte au regard des informations dont dispose l'interpréteur sur ce type de container\
 *`KeyboardInterrupt`* : Déclenchée par un Ctrl-C dans le terminal\
 
-=== 1.2.8 - Le type `built-in function`
+=== 1.2.8 - Le type `Built-in function`
 
 Ce type regroupe toutes les fonctions présentes au chargement de l'interpréteur en mémoire.
 
@@ -253,6 +261,10 @@ Pour exécuter une fonction, il suffit de suivre l'expression contenant la fonct
 
 Exemple:\
 Si la variable `maFonction` contient une fonction et que l'on veut exécuter cette fonction sur les arguments `a` et `b`, il suffit d'écrire l'expression : `maFonction(a, b)`. Cette expression s'évaluera en le résultat de la fonction sur les objets dénotés par `a` et `b`.
+
+En plus de cette syntaxe pour appeler des fonctions, il existe une autre syntaxe, orientée objet. Au lieu d'écrire `maFonction(arg1, arg2, arg3...)`, on peut écrire `arg1.maFonction(arg2, arg3...)`. Ces deux syntaxes sont équivalentes.
+
+Toutes les fonctions au sens général partagent la même syntaxe d'appel. Ainsi, les syntaxes présentées ici pour les fonctions de type `Built-in function` fonctionnent également pour les fonctions utilisateur et les méthodes.
 
 Toutes les informations sur une fonction built-in peuvent être obtenues en tapant `help(fonction)` dans le terminal.
 
@@ -437,10 +449,10 @@ Renvoie l'arrondi par valeur supérieure d'un nombre.
 Renvoie l'arrondi par valeur inférieure d'un nombre.
 
 *`readFile` :*\
-Prend en argument le nom d'un fichier texte et renvoie son contenu.
+Prend en argument le nom d'un fichier texte et renvoie son contenu. Sur la plateforme TI_EZ80, les fichiers ne peuvent être que des AppVars.
 
 *`writeFile` :*\
-Cette fonction prend en argument un nom de fichier et une chaîne de caractères, et écrit cette chaîne de caractères dans le fichier dont le nom a été indiqué en argument. Si le fichier existe, son contenu est remplacé.
+Cette fonction prend en argument un nom de fichier et une chaîne de caractères, et écrit cette chaîne de caractères dans le fichier dont le nom a été indiqué en argument. Si le fichier existe, son contenu est remplacé. Sur la plateforme TI_EZ80, les fichiers ne peuvent être que des AppVars.
 
 *`setFunctionDoc` :*\
 Cette fonction prend en argument une fonction utilisateur, et une chaîne de caractères, et définit cette chaîne de caractères comme message d'aide pour cette fonction. Ce message d'aide est affiché lorsque la fonction help est appelée avec cette fonction.
@@ -1031,13 +1043,50 @@ Lorsque l'on écrit des programmes de taille conséquente possédant différente
 
 == 4.6.1 - Le caractère `~`
 
-== 4.6.2 - La fonction `loadNamepace`
+Pour reconnaître toutes les fonctions et variables appartenant à un module, tous les noms de ces éléments doivent posséder le même préfixe de module. Un préfixe de module est de la forme : `NomCommencantParUneMajuscule~`.
+
+Exemple : Pour créer trois éléments `a`, `b` et `c` appartenant au module `Module`, il suffit de les appeler `Module~a`, `Module~b` et `Module~c`.
+
+Pour créer un module, il suffit de créer une variable ou une fonction dont le préfixe est le nom de ce module.
+
+Cette syntaxe par préfixes facilite la reconnaissance des module par Neon. Ainsi, en tapant `help("modules")`, la fonction `help` listera tous les modules définis, et de la même manière en tapant `help("NomModule")`, la fonction `help` listera tous les objets dont le nom commence par `NomModule~`.
+
+== 4.6.2 - La fonction `loadNamespace`
+
+La fonction `loadNamespace` prend en argument une chaîne de caractères correspondant à un nom de module, et crée une copie de tous les objets de ce module en leur enlevant le préfixe de module. Ainsi, après un appel à `loadNamespace`, il n'est plus nécessaire d'écrire les préfixes de modules devant les noms des éléments du module chargé.
+
+Cependant il est important de comprendre que `loadNamespace` n'agit que sur les éléments déjà définis au moment où elle est appelée.
 
 == 4.6.3 - Surcharge d'opérateurs et de l'affichage
 
+Neon fournit la possibilité de surcharger certains opérateurs ainsi que les fonctions d'affichage sur certains types de containers. Il est possible de configurer Neon pour que l'utilisation de certains opérateurs sur certains types de containers exécute une fonction Neon définie par l'utilisateur plutôt que l'opérateur original.
+
+Les opérateurs surchargeables sont :\
+```
++ : add
+- : sub
+/ : div
+* : mul
+% : mod
+// : eucl
+** : pow
+- (unaire) : minus
+in : in
+```
+
+Pour surcharger un opérateur sur un certain type de containers `MonContainer`, il suffit de regarder le nom que porte l'opérateur dans la liste ci-dessus, et définir la fonction `MonContainer~nom`, avec `nom` le nom de l'opérateur à surcharger dans la liste ci-dessus. C'est cette fonction qui définira l'action effectuée par l'opérateur sur ces objets.
+
+En plus des opérateurs, on peut surcharger la fonction `str` en définissant `MonContainer~str` et l'affichage (`print`, `output` et l'affichage dans la console) en définissant `MonContainer~repr`.
+
+Si au moins l'un des arguments d'un opérateur est un container d'un type pour lequel cet opérateur est surchargé, la fonction de surcharge sera appelée.
+
 == 4.6.4 - Mot-clé `import`
 
-Le langage Neon fournit un bloc de code appelé `import ()` qui permet d'exécuter le contenu de programmes Neon à partir de leurs noms. Plus exactement, pour lancer le fichier `prog.ne`.
+Le langage Neon fournit un bloc de code appelé `import ()` qui permet d'exécuter le contenu de programmes Neon à partir de leurs noms. Le mot-clé `import` ne fonctionne qu'avec des fichiers dont l'extension est `.ne`. Pour exécuter un fichier Neon dont l'extension est `.ne`, il suffit de mettre en argument du `import` une chaîne de caractères correspondant au nom du fichier sans l'extension.
+
+Pour la version TI_EZ80 de Neon, les fichiers Neon étant des AppVars sans extension, il faut écrire le nom entier du fichier pour l'importer.
+
+`import` peut recevoir un nombre illimité d'arguments. En tant que bloc de code à part entière, il doit être séparé d'autres blocs de code par un retour à la ligne ou un point virgule, au même titre qu'un `return ()`.
 
 = Partie 5 - Programmation concurrente
 
@@ -1063,13 +1112,66 @@ Ainsi, un programme Neon écrit de manière concurrente ne sera jamais plus rapi
 
 == 5.2 - L'opérateur `parallel`
 
+L'opérateur `parallel` permet de lancer une fonction en parallèle, c'est-à-dire de créer un nouveau fil d'exécution, un nouveau processus exécutant la fonction spécifiée avec les arguments spécifiés.
+
+Cet opérateur est un opérateur unaire attendant à droite un appel à une fonction utilisateur.
+
+Exemple : `parallel fonction(arg1, arg2, arg3)`
+
+L'opérateur `parallel` appliqué à un appel de fonction utilisateur va créer un nouveau processus, ajouter ce processus dans la file d'attente (c'est-à-dire que son exécution commencera quand viendra son tour), et renvoyer une promesse sur ce processus.
+
 == 5.3 - Le retour de processus via les promesses
 
-== 5.4 - Variables locales aux processus
+Les promesses sont les objets renvoyés par l'opérateur `parallel`, et sont de type `'Promise'`. Cet opérateur est l'unique manière d'obtenir des objets de type `'Promise'`.
 
-== 5.5 - Blocs atomiques
+Lorsqu'ils sont créés, tous les processus se voient affecter un identifiant. Cet identifiant est unique pour les processus en cours d'exécution, mais si un processus a terminé, son identifiant peut être réaffecté plus tard à un autre processus.
 
-== 5.6 - Attente passive
+Le lancement d'un processus avec l'opérateur `parallel` va créer une unique promesse associée à ce processus grâce à son identifiant. Cette promesse peut être utilisée pour identifier ce processus par rapport aux autres.
+
+Les promesses ne servent pas uniquement à identifier des processus, mais permettent également aux processus de renvoyer un résultat. En effet, un processus est créé à partir d'un appel de fonction. Quand le processus aura terminé, il pourra donc renvoyer la valeur de retour de la fonction sur laquelle il a été appelé. Ce renvoi se fera via la promesse récupérée lors du lancement du processus.
+
+Tant que le processus est en cours d'exécution, la promesse renvoyée est de type `"Promise"`. Une fois que le processus a terminé, toutes les promesses associées à ce processus (la promesse originale et celles obtenues à partir de la promesse originale) stockées dans des variables, des listes ou des containers vont instantanément se transformer en la valeur de retour du processus.
+
+== 5.4 - Attente passive
+
+Lorsque l'on programme à base de processus, il est fréquenr de créer des programmes qui attendent. Or, pour attendre, la seule manière de le faire est une boucle ressemblant à ceci :
+
+```
+while (not condition) do
+    pass
+end
+```
+
+Cette manière d'attendre est appelée de l'attente active, car le programme tourne activement pendant qu'il attend. Il est souvent relativement peu efficace d'attendre de cette manière ; de gaspiller du temps de calcul à ne rien faire. En effet ce genre de structure est pratiquement toujours utilisé avec de la programmation concurrente, et la condition ne peut devenir vraie que pendant l'exécution d'un autre processus.
+
+C'est pourquoi Neon fournit une deuxième manière d'attendre, mais de façon passive. Cela signifie que si la condition permettant de mettre fin à l'attente n'est pas vérifiée, l'exécution passe directement au processus suivant. L'interpréteur favorise l'exécution des autres processus sur celui qui est en train d'attendre.
+
+L'attente se fait grâce à la syntaxe `await(condition)`. L'exécution de `await(condition)` lance une attente passive *jusqu'à ce que la condition soit vraie*. La condition doit être une expression booléenne.
+
+`await()` est un bloc de code au même titre que `import()` et `return ()`. Il doit être séparé d'autres blocs de code par un retour à la ligne ou un point virgule.
+
+== 5.5 - Variables locales aux processus
+
+Afin de ne pas interférer entre eux, les processus disposent chacun d'un contexte : chaque variable n'a potentiellement pas la même valeur dans tous les processus. Lorsqu'une variable est globale, elle a la même valeur dans tous les processus, et une modification de la variable par un processus sera visible dans tous les processus.
+
+En revanche, à partir du moment où le code d'un processus localise une variable (en l'utilisant comme argument de fonction ou en faisant appel à `local`), le processus concerné manipulera une version personnelle de la variable. Quand la variable ne sera plus locale dans le processus, celui-ci manipulera de nouveau la version globale de la variable.
+
+Comme les processus de Neon sont en réalité exécutés à la suite et non en parallèle, lorsqu'une variable est locale à un processus, ce dernier doit faire un travail de sauvegarde/restauration entre le moment où vient son tour et le moment où il doit passer la main à un autre processus.
+
+Chaque processus possède une liste des variables qui lui sont locales. Au moment de reprendre son exécution, il restaure sa version locale de la variable, travaille dessus, puis remet la version globale de la variable en sauvegardant sa version locale au moment de passer au processus suivant.
+
+== 5.6 - Blocs atomiques
+
+L'entrelacement entre processus géré par l'interpréteur peut rendre imprédictible l'exécution de certaines séquences de code. En effet dans un programme, il est usuel d'effectuer des suppositions d'une ligne à l'autre en fonction des conditions déjà vérifiées. Or lorsque d'autres processus peuvent être exécutés à n'importe quel moment entre deux lignes, ce genre de code peut facilement devenir incorrect.
+
+Les blocs atomiques permettent de s'assurer qu'une certaine séquence de code s'exécute de manière atomique, c'est-à-dire ne sera interrompue à aucun moment, et s'exécutera en une seule fois, sans qu'aucun autre code ne puisse être exécuté en même temps que le code dans le bloc atomique.
+
+Un bloc atomique s'écrit de la manière suivante :
+```
+atomic
+    code à exécuter
+end
+```
 
 == 5.7 - Fonctions du système d'entrelacement
 
@@ -1090,12 +1192,32 @@ La fonction `setAtomicTime` permet de modifier cette valeur (1 est la plus petit
 
 == 6.1 - Arguments de programme
 
+Lorsque l'on appelle un programme en ligne de commande, il est possible de lui envoyer des arguments séparés par des espaces. Lorsque Neon est utilisé en mode exécution (c'est-à-dire en envoyant un nom de fichier en premier argument de l'interpréteur), les arguments suivants sur la ligne de commande sont récupérés par Neon puis stockés dans la liste `__args__`. Cette variable est ensuite accessible par le programme pour traiter les arguments.
+
 == 6.2 - Variables prédéfinies
+
+Certaines variables d'environnement sont prédéfinies par l'interpréteur afin de permettre au programme exécuté d'obtenir des informations sur son environnement.
 
 === 6.2.1 - La variable `__name__`
 
+Cette variable permet au programme de connaître le nom du fichier dans lequel il est écrit. Plus exactement, dans le programme principal (code situé dans le fichier lancé en ligne de commande), la variable `__name__` vaut `"__main__"`. Dans un fichier importé, cette variable change de nom et vaut le nom du fichier. Lorsque l'exécution revient au fichier principal, la valeur de cette varieble redevient `"__main__"`.
+
 === 6.2.2 - La variable `__platform__`
+
+Cette variable permet de connaître le système d'exploitation et l'architecture pour lesquels l'interpréteur Neon utilisé est compilé. Les différentes valeurs possibles de cette variable sont `"LINUX_AMD64"`, `"WINDOWS_AMD64"` et `"TI_EZ80"`.
+
+La valeur de cette variable est visible dans le texte affiché au lancement du mode console.
 
 === 6.2.3 - La variable `__version__`
 
+Cette variable est une chaîne de caractères représentant la version de l'interpréteur Neon utilisé. La valeur de cette variable est visible dans le texte affiché au lancement du mode console.
+
 == 6.3 - La variable spéciale `Ans`
+
+En mode console, à chaque fois qu'une expression est entrée dans le terminal, la variable `Ans` prend la valeur du résultat de cette expression.
+
+= Conclusion
+
+Cette documentation se veut être une description exhaustive des fonctionnalités du langage de programmation Neon. Si vous pensez qu'il manque des informations, que des informations sont fausses, pour une quelconque remarque/question ou encore pour signaler un bug, n'hésitez pas à rejoindre le serveur Discord de Neon : `https://discord.gg/wkBdK35w2a`.
+
+Vous pouvez également me contacter par mail à l'adresse `contact@langage-neon.raphaael.fr`.

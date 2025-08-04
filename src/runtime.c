@@ -19,11 +19,9 @@
 
 
 
-void updateFileName(char* name)
+void update__name__(char* name)
 {
-    neobject_destroy(global_env->ADRESSES->tab[global_env->NAME]);
-    global_env->ADRESSES->tab[global_env->NAME] = neo_str_create(name);
-
+    replace_var(global_env->NAME, neo_str_create(name));
     return ;
 }
 
@@ -1772,16 +1770,16 @@ int exec_aux(Tree* tree) {
                         #ifndef TI_EZ80
                             char* nomFichier = addStr(neo_to_string(nom), ".ne");
 
-                            updateFileName(strdup(neo_to_string(nom)));
+                            update__name__(strdup(neo_to_string(nom)));
 
                             importFile(nomFichier);
                             free(nomFichier);
                         #else
-                            updateFileglobal_env->NAME(strdup(neo_to_string(nom)));
+                            update__name__(strdup(neo_to_string(nom)));
                             importFile(neo_to_string(nom));
                         #endif
 
-                        updateFileName(nomAct);
+                        update__name__(nomAct);
 
                         neobject_destroy(nom);
 
