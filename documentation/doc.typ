@@ -129,7 +129,7 @@ Voici la liste de tous les types d'objets Neon existants :
 
 === 1.1.1 - Conserver des objets unitaires avec des variables
 
-Une variable une case mémoire gérée par Neon qui peut contenir un objet. La plupart des objets créés dans Neon n'ont pas d'existence persistante. Ils sont créés lors de l'évaluation d'une expression, utilisés comme argument d'une fonction ou d'un opérateur, puis supprimés.
+Une variable est une case mémoire gérée par Neon qui peut contenir un objet. La plupart des objets créés dans Neon n'ont pas d'existence persistante. Ils sont créés lors de l'évaluation d'une expression, utilisés comme argument d'une fonction ou d'un opérateur, puis supprimés.
 
 Pour conserver un objet dans la durée, il est possible de le stocker à l'intérieur d'une variable. Une variable est désignée par un nom. Son nom doit suivre les règles des identificateurs. De nombreux opérateurs permettent de gérer les variables, modifier leur contenu, les supprimer, etc.
 
