@@ -156,7 +156,7 @@ En revanche, une liste ou un container est un simple objet. Il n'a pas de nom à
 
 
 === 1.2.1 - L'organisation en mémoire, compteur de références et garbage collector
-Tous les objets sont des structures passées sur la pile de la taille d'un pointeur + un octet. Certains objets comme les nombres, les booléens, les constantes None, les exceptions et les promesses sons stockés uniquement dans cette structure. Pour les autres objets, la structure contient un pointeur vers une zone dans le tas qui contient réellement l'objet. Quand on copie ces objets, seulement la structure passée sur la pile est copiée, le bloc dans le tas est le même pour toutes les copies. Chacun de ces blocs contient un compteur qui compte le nombre de références du bloc, et le bloc est libéré quand ce compteur atteint zéro.
+Tous les objets sont des structures passées sur la pile de la taille d'un pointeur + un octet. Certains objets comme les nombres, les booléens, les constantes None, les exceptions et les promesses sont stockés uniquement dans cette structure. Pour les autres objets, la structure contient un pointeur vers une zone dans le tas qui contient réellement l'objet. Quand on copie ces objets, seulement la structure passée sur la pile est copiée, le bloc dans le tas est le même pour toutes les copies. Chacun de ces blocs contient un compteur qui compte le nombre de références du bloc, et le bloc est libéré quand ce compteur atteint zéro.
 
 Certains objets (les containers et le listes) contiennent d'autres objets. Cette situation peut créer des objets cycliques rendant le compteur de références insuffisant.
 
