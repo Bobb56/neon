@@ -288,7 +288,7 @@ Cette fonction prend un objet quelconque et renvoie sa représentation textuelle
 Cette fonction prend une liste ou une chaîne de caractères et renvoie sa longueur.
 
 *`sub` :*\
-Cette fonction attend trois arguments : une chaîne de caractères et deux entiers. sub(string, i1, i2) renvoie la sous-chaîne de string commençant au caractère numéro i2 jusqu'au caractère numéro i2 exclu.
+Cette fonction attend trois arguments : une chaîne de caractères et deux entiers. `sub(string, i1, i2)` renvoie la sous-chaîne de string commençant au caractère numéro i2 jusqu'au caractère numéro i2 exclu.
 
 *`exit` :*\
 Cette fonction n'attend aucun argument, et quitte l'interpréteur. Elle renvoie None
@@ -330,9 +330,9 @@ Cette fonction prend en argument une chaîne de caractères correspondant à une
 Cette fonction efface le terminal.
 
 *`help` :*\
-Cette fonction affiche de l'aide liée à certains objets ou certains types d'objets. Voici les arguments possibles à la fonction `help` :
-`help("modules")` #sym.arrow.r.long affiche tous les noms de modules présents dans la mémoire
-`help("variables")` #sym.arrow.r.long affiche toutes les variables définies présentes dans la mémoire ainsi que leur type
+Cette fonction affiche de l'aide liée à certains objets ou certains types d'objets. Voici les arguments possibles à la fonction `help` :\
+`help("modules")` #sym.arrow.r.long affiche tous les noms de modules présents dans la mémoire\
+`help("variables")` #sym.arrow.r.long affiche toutes les variables définies présentes dans la mémoire ainsi que leur type\
 `help("MonModule")` #sym.arrow.r.long affiche tous les objets liés au module MonModule présents dans la mémoire
 `help(mon_objet)` #sym.arrow.r.long affiche le type de l'objet mon_objet
 
