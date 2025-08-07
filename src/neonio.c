@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -8,16 +7,18 @@
 #include "headers/neonio.h"
 #include "extern/linenoise.h"
 #include "headers/neon.h"
-
-#ifndef LINUX_AMD64
+#include "headers/parser.h"
 #include "headers/strings.h"
+
+#if defined(LINUX_AMD64) || defined(WINDOWS_AMD64)
+#include <stdio.h>
+#elif defined(TI_EZ80)
+#include "extern/nio_ce.h"
 #endif
 
 
 
 #ifndef TI_EZ80
-
-
 
     char* openFile(char* filename)
     {
@@ -124,93 +125,15 @@
             return str;
         }
     #endif
-
-    bool is_integer(char* string) {
-        int i = 0;
-        if (string[0] == '-')
-            i++;
-
-        while (string[i] != '\0') {
-            if (string[i] < '0' || string[i] > '9')
-                return false;
-            i++;
-        }
-        return true;
-    }
-
-
-    // cette fonction compte le nombre de chiffres d'un entier
-    int nbdigits(intptr_t n) {
-        int count = 0;
-        while (n > 0) {
-            n -= n%10;
-            n /= 10;
-            count ++;
-        }
-        return count;
-    }
-
-
-
-
-    intptr_t str_to_int(char* string) {
-        bool negative = (string[0] == '-');
-
-        if (negative)
-            string += 1;
-
-        intptr_t n = 0;
-        int i = 0;
-
-        while (string[i] != '\0') {
-            n *= 10;
-            n += string[i++] - '0';
-        }
-
-        if (negative)
-            return -n;
-        else
-            return n;
-    }
-
-
-
-    char* int_to_str(intptr_t number)//nombre en chaine de caractère
-    {
-        if (number == 0) {
-            return strdup("0");
-        }
-        else {
-            int lenstr = nbdigits(number) + 1;
-
-            if (number < 0)
-                lenstr++;
-
-            char* strNombre = malloc(sizeof(char) * lenstr);
-            int i = lenstr - 1;
-            strNombre[i--] = '\0';
-
-            while (number > 0) {
-                strNombre[i--] = number%10 + '0';
-                number -= number%10;
-                number /= 10;
-            }
-
-            if (number < 0)
-                strNombre[0] = '-';
-
-            return strNombre;
-        }
-    }
     
 
     double str_to_double(char *string)//convertit une chaîne de caractère en nombre
     {
-        if (strcmp(string, "Infinity") == 0)
+        if (strcmp(string, get_infinity()) == 0)
             return INFINITY;
-        else if (strcmp(string, "-Infinity") == 0)
+        else if (string[0] == '-' && strcmp(string + 1, get_infinity()) == 0)
             return -INFINITY;
-        else if (strcmp(string, "NaN") == 0)
+        else if (strcmp(string, get_nan()) == 0)
             return NAN;
         else
         {
@@ -231,37 +154,26 @@
     char* double_to_str(double number)//nombre en chaine de caractère
     {
         if (isinf(number) && number > 0)
-                return strdup("Infinity");
+                return strdup(get_infinity());
         else if (isinf(number) && number < 0)
-            return strdup("-Infinity");
+            return addStr("-", get_infinity());
         else if (isnan(number))
-            return strdup("NaN");
+            return strdup(get_nan());
         else
         {
             //une fois qu'on a copié le nombre dans la chaine de caracteres, il faut le réallouer de la bonne taille
             char* strNombre = (char*)malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
             int err = snprintf(strNombre, 310, "%lf", number);//converison du nombre
             
-            if (err<0 || err!=(int)strlen(strNombre))
+            if (err < 0 || err != strlen(strNombre))
             {
                 global_env->CODE_ERROR = 66;
                 free(strNombre);
                 return 0;
             }
             
-            while (strNombre[strlen(strNombre)-1]=='0')//on enlève les zéros inutiles à la fin
-            {
-                strNombre[strlen(strNombre)-1]='\0';
-            }
-            
-            
-            if (strNombre[strlen(strNombre)-1]=='.')//si on a enlevés tous les zéros, on enlève aussi la virgule
-            {
-                strNombre[strlen(strNombre)-1]='\0';
-            }
-            
-            //ici, faire un realloc avec strlen
-            
+            removeZeros(strNombre);
+                        
             return strNombre;
         }
         
@@ -273,25 +185,9 @@
     }
     
     
-    void printInt(int n)
-    {
-        printf("%d", n);
-    }
-    
-    
-    void printDouble(double x)
-    {
-        printf("%lf", x);
-    }
-    
     void printString(char* s)
     {
         printf("%s", s);
-    }
-    
-    void newLine(void)
-    {
-        printf("\n");
     }
     
     
@@ -309,10 +205,6 @@
         #endif
     }
     
-    void printBack(void)
-    {
-        printf("\b");
-    }
     
     void clearConsole(void)
     {
@@ -468,39 +360,24 @@
 
     char* double_to_str(double number)//nombre en chaine de caractère
     {
-        if (isinf(number) && number > 0)
-                return strdup("Infinity");
-        else if (isinf(number) && number < 0)
-            return strdup("-Infinity");
-        else if (isnan(number))
-            return strdup("NaN");
-        else
-        {
-            //une fois qu'on a copié le nombre dans la chaine de caracteres, il faut le réallouer de la bonne taille
-            char* strNombre = (char*)malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
-            int err = snprintf(strNombre, 310, "%lf", number);//converison du nombre
-            
-            if (err<0 || err!=(int)strlen(strNombre))
-            {
-                global_env->CODE_ERROR = 66;
-                free(strNombre);
-                return 0;
-            }
-            
-            while (strNombre[strlen(strNombre)-1]=='0')//on enlève les zéros inutiles à la fin
-            {
-                strNombre[strlen(strNombre)-1]='\0';
-            }
-            
-            
-            if (strNombre[strlen(strNombre)-1]=='.')//si on a enlevés tous les zéros, on enlève aussi la virgule
-            {
-                strNombre[strlen(strNombre)-1]='\0';
-            }
-            
-            //ici, faire un realloc avec strlen
-            
-            return strNombre;
+        if (isnan(n)) {
+            return strdup(get_nan());
+        }
+        else if (isinf(n) && n < 0) {
+            return addStr("-", get_infinity());
+        }
+        else if (isinf(n) && n > 0) {
+            return strdup(get_infinity());
+        }
+        else {
+            real_t x = os_FloatToReal((float)num)
+            char* result = malloc(sizeof(char) * 127);
+            os_RealToStr(result, &x, 127, 1, -1);
+
+            // enlève les zéros inutiles à la fin
+            removeZeros(result);
+
+            return result;
         }
         
     }
@@ -509,31 +386,14 @@
     void flush(void) {
         nio_fflush(&console);
     }
-
-    
-    void printInt(int n)
-    {
-        nio_printf("%d", n);
-    }
     
     
-    void printDouble(double n)
-    {
-        real_t x = os_FloatToReal((float)num)
-        char* result = malloc(sizeof(char) * 127);
-        os_RealToStr(result, &x, 127, 1, -1);
-        nio_printf("%s", result);
-    }
     
     void printString(char* s)
     {
         nio_printf("%s", s);
     }
     
-    void newLine(void)
-    {
-        nio_printf("\n");
-    }
     
     
     void setColor(unsigned char color)
@@ -548,19 +408,123 @@
             nio_color(&console, NIO_COLOR_BLACK, NIO_COLOR_WHITE);
     }
     
-    void printBack(void)
-    {
-        nio_printf("\b");
-    }
     
     void clearConsole(void)
     {
         nio_clear(&console);
     }
 
-
-
-
-
-
 #endif
+
+void removeZeros(char* string) {
+    int len = strlen(string);
+
+    while (string[len - 1] == '0') { // on enlève les zéros inutiles à la fin
+        string[len - 1] = '\0';
+        len--;
+    }
+    
+    
+    if (string[len - 1] == '.') { // si on a enlevés tous les zéros, on enlève aussi la virgule
+        string[len - 1] = '\0';
+    }
+
+    return;
+}
+
+
+bool is_integer(char* string) {
+    int i = 0;
+    if (string[0] == '-')
+        i++;
+
+    while (string[i] != '\0') {
+        if (string[i] < '0' || string[i] > '9')
+            return false;
+        i++;
+    }
+    return true;
+}
+
+
+// cette fonction compte le nombre de chiffres d'un entier
+int nbdigits(intptr_t n) {
+    int count = 0;
+    while (n > 0) {
+        n -= n%10;
+        n /= 10;
+        count ++;
+    }
+    return count;
+}
+
+
+
+intptr_t str_to_int(char* string) {
+    bool negative = (string[0] == '-');
+
+    if (negative)
+        string += 1;
+
+    intptr_t n = 0;
+    int i = 0;
+
+    while (string[i] != '\0') {
+        n *= 10;
+        n += string[i++] - '0';
+    }
+
+    if (negative)
+        return -n;
+    else
+        return n;
+}
+
+
+
+char* int_to_str(intptr_t number)//nombre en chaine de caractère
+{
+    if (number == 0) {
+        return strdup("0");
+    }
+    else {
+        int lenstr = nbdigits(number) + 1;
+
+        if (number < 0)
+            lenstr++;
+
+        char* strNombre = malloc(sizeof(char) * lenstr);
+        int i = lenstr - 1;
+        strNombre[i--] = '\0';
+
+        while (number > 0) {
+            strNombre[i--] = number%10 + '0';
+            number -= number%10;
+            number /= 10;
+        }
+
+        if (number < 0)
+            strNombre[0] = '-';
+
+        return strNombre;
+    }
+}
+
+
+void printDouble(double x)
+{
+    char* xstr = double_to_str(x);
+    printString(xstr);
+    free(xstr);
+}
+
+
+void printInt(intptr_t n) {
+    char* nstr = int_to_str(n);
+    printString(nstr);
+    free(nstr);
+}
+
+void newLine(void) {
+    printString("\n");
+}

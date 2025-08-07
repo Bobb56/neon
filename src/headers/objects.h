@@ -134,6 +134,7 @@ NeList* nelist_create(int len);
 void nelist_append(NeList* list, NeObj ptr);//ajoute un élément à la fin de la liste
 NeObj* nelist_nth_addr(NeList* list, int index);
 NeObj nelist_nth(NeList* list, int index);
+NeList* nelist_reverse(NeList* list);
 void nelist_remove(NeList* list,int index);
 void nelist_aff(NeList* liste);
 void nelist_destroy(NeList* list);

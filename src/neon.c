@@ -149,14 +149,14 @@ void loadFunctions(NeonEnv* env)
             .ptr = _print_,
             .help = "Displays arguments in the terminal",
             .nbArgs = -1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_NONE
         },
         (Function) {
             .ptr = _input_,
             .help = "Displays the given argument and prompts the user to input in the terminal. Returns the entered value.",
             .nbArgs = -1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_STRING
         },
         (Function) {
@@ -164,20 +164,20 @@ void loadFunctions(NeonEnv* env)
             .help = "Converts a string into a number.",
             .nbArgs = 1,
             .typeArgs = (int[]){TYPE_STRING},
-            .typeRetour = TYPE_ANYTYPE
+            .typeRetour = TYPE_UNSPECIFIED
         },
         (Function) {
             .ptr = _str_,
             .help = "Converts any object into a string.",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_STRING
         },
         (Function) {
             .ptr = _len_,
             .help = "Returns the length of an object.",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_INTEGER
         },
         (Function) {
@@ -198,7 +198,7 @@ void loadFunctions(NeonEnv* env)
             .ptr = _append_,
             .help = "Adds an element to a list.",
             .nbArgs = 2,
-            .typeArgs = (int[]){TYPE_LIST, TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_LIST, TYPE_UNSPECIFIED},
             .typeRetour = TYPE_NONE
         },
         (Function) {
@@ -212,22 +212,22 @@ void loadFunctions(NeonEnv* env)
             .ptr = _insert_,
             .help = "Inserts an element into a list.",
             .nbArgs = 3,
-            .typeArgs = (int[]){TYPE_LIST, TYPE_ANYTYPE, TYPE_INTEGER},
+            .typeArgs = (int[]){TYPE_LIST, TYPE_UNSPECIFIED, TYPE_INTEGER},
             .typeRetour = TYPE_NONE
         },
         (Function) {
             .ptr = _type_,
             .help = "Returns the type of an object.",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_STRING
         },
         (Function) {
             .ptr = _reverse_,
-            .help = "Reverses the characters in a string of characters or reverses a list.",
+            .help = "Reverses the characters in a string or reverses a list. Returns the reversed object without modifying the original one",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_STRING},
-            .typeRetour = TYPE_STRING
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
+            .typeRetour = TYPE_UNSPECIFIED
         },
         (Function) {
             .ptr = _eval_,
@@ -247,7 +247,7 @@ void loadFunctions(NeonEnv* env)
             .ptr = _help_,
             .help = "This function displays all kinds of information on objects and modules.\nType help() for more information.",
             .nbArgs = -1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_NONE
         },
         (Function) {
@@ -282,7 +282,7 @@ void loadFunctions(NeonEnv* env)
             .ptr = _output_,
             .help = "Puts the given arguments on the terminal without spaces or \\n.",
             .nbArgs = -1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_NONE
         },
         (Function) {
@@ -324,14 +324,14 @@ void loadFunctions(NeonEnv* env)
             .ptr = _int_,
             .help = "Converts an object into an integer",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_INTEGER
         },
         (Function) {
             .ptr = _index_,
             .help = "Returns the index of an element in a list.",
             .nbArgs = 2,
-            .typeArgs = (int[]){TYPE_LIST, TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_LIST, TYPE_UNSPECIFIED},
             .typeRetour = TYPE_INTEGER
         },
         (Function) {
@@ -345,7 +345,7 @@ void loadFunctions(NeonEnv* env)
             .ptr = _count_,
             .help = "Counts the number of occurrences in a list or a string.",
             .nbArgs = 2,
-            .typeArgs = (int[]){TYPE_ANYTYPE, TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
             .typeRetour = TYPE_INTEGER
         },
         (Function) {
@@ -373,70 +373,70 @@ void loadFunctions(NeonEnv* env)
             .ptr = _sin_,
             .help = "sin: Sine function",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _cos_,
             .help = "cos: Cosine function",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _tan_,
             .help = "tan: Tangent function",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _deg_,
             .help = "deg: Convert angle from radians to degrees",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _rad_,
             .help = "rad: Convert angle from degrees to radians",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _sqrt_,
             .help = "sqrt: Square root function",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _ln_,
             .help = "ln: Natural logarithm (base e)",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _exp_,
             .help = "exp: Exponential function (e^x)",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _log_,
             .help = "log: Logarithm (base 10)",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
             .ptr = _log2_,
             .help = "log2: Logarithm (base 2)",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {
@@ -485,7 +485,7 @@ void loadFunctions(NeonEnv* env)
             .ptr = _setFunctionDoc_,
             .help = "Sets a string documentation for a user-defined function or method",
             .nbArgs = 2,
-            .typeArgs = (int[]){TYPE_ANYTYPE, TYPE_STRING},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED, TYPE_STRING},
             .typeRetour = TYPE_NONE
         },
         (Function) {
@@ -499,8 +499,8 @@ void loadFunctions(NeonEnv* env)
             .ptr = _copy_,
             .help = "Performs a deep copy of an object, preserving the pointer dependencies",
             .nbArgs = 1,
-            .typeArgs = (int[]){TYPE_ANYTYPE},
-            .typeRetour = TYPE_ANYTYPE
+            .typeArgs = (int[]){TYPE_UNSPECIFIED},
+            .typeRetour = TYPE_UNSPECIFIED
         },
         (Function) {
             .ptr = _load_namespace_,

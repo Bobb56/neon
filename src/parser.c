@@ -162,6 +162,14 @@ static strlist constant = (strlist) {
     .capacity = 2
 };
 
+char* get_infinity(void) {
+    return constant.tab[1];
+}
+
+char* get_nan(void) {
+    return constant.tab[2];
+}
+
 
 int get_operator_index(char* operator) {
     return strlist_index(&OPERATEURS, operator);

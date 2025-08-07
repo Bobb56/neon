@@ -14,8 +14,6 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 Liste des choses qui marchent pas :
 Définition de fonctions dans le terminal
 Affichage de l'infini et des nan
-
-reverse des listes
 _____________________
 
 Potentielles futures erreurs :

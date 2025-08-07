@@ -321,7 +321,7 @@ La fonction type ne renvoie jamais de type `"Container"` car elle renvoie direct
 
 
 *`reverse` :*\
-Cette fonction prend en argument une chaîne de caractères et renvoie la chaîne inversée.
+Cette fonction prend en argument une chaîne de caractères ou une liste et renvoie l'objet inversé sans modifier l'objet original.
 
 *`eval` :*\
 Cette fonction prend en argument une chaîne de caractères correspondant à une expression Neon, et renvoie le résultat de l'évaluation de l'expression.

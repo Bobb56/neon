@@ -352,7 +352,9 @@ intptr_t randint(intptr_t min, intptr_t max) {
         return 0;
     }
 
-    int result = rand()%(max-min) + min;
+    intptr_t range = max - min;
+
+    int result = rand()%range + min;
 
     return result;
 }
@@ -445,7 +447,7 @@ bool funcArgsCheck(Function* fun, NeList* args)
     {
         for (int i=0 ; i < args->len ; i++)
         {
-            if (fun->typeArgs[0] != TYPE_ANYTYPE && NEO_TYPE(args->tab[i]) != fun->typeArgs[i])
+            if (fun->typeArgs[0] != TYPE_UNSPECIFIED && NEO_TYPE(args->tab[i]) != fun->typeArgs[i])
             {
                 return false;
             }
@@ -458,7 +460,7 @@ bool funcArgsCheck(Function* fun, NeList* args)
         
         for (int i=0 ; i < args->len ; i++)
         {
-            if (fun->typeArgs[i] != TYPE_ANYTYPE && NEO_TYPE(args->tab[i]) != fun->typeArgs[i])
+            if (fun->typeArgs[i] != TYPE_UNSPECIFIED && NEO_TYPE(args->tab[i]) != fun->typeArgs[i])
             {
                 return false;
             }
@@ -746,6 +748,15 @@ void nelist_destroy_until(NeList *list, int index_max) {
     }
     free(list->tab);
     free(list);
+}
+
+
+NeList* nelist_reverse(NeList* list) {
+    NeList* reversed = nelist_create(list->len);
+    for (int i = 0 ; i < list->len ; i++) {
+        reversed->tab[i] = neo_copy(list->tab[list->len - i - 1]);
+    }
+    return reversed;
 }
 
 
@@ -1428,7 +1439,7 @@ char* type(NeObj neo)
         return "Undefined";
     }
 
-    if (NEO_TYPE(neo) == TYPE_ANYTYPE)
+    if (NEO_TYPE(neo) == TYPE_UNSPECIFIED)
         return "unspecified type";
 
     return "NoneType";

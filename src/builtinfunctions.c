@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 
+#include "headers/constants.h"
 #include "headers/neonio.h"
 #include "headers/builtinfunctions.h"
 #include "headers/dynarrays.h"
@@ -201,12 +202,18 @@ NeObj _reverse_(NeList* args)
         }
         retour[len] = '\0';
         
-        
         return neo_str_create(retour);
+    }
+    else if (NEO_TYPE(ARG(0)) == TYPE_LIST) {
+        NeList* list = neo_to_list(ARG(0));
+        // création de la liste renversée
+        NeList* reversed = nelist_reverse(list);
+        // ajout de la liste au garbage collector
+        return neo_list_convert(reversed);
     }
     else
     {
-        global_env->CODE_ERROR = 62;//unsupported types for reverse
+        global_env->CODE_ERROR = 62; // unsupported types for reverse
         return NEO_VOID;
     }
 }

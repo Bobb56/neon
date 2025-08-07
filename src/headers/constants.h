@@ -102,7 +102,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #define HEAP_ALLOCATED          128 // pour les objets n'ayant pas de dépendance sur le tas
 
 
-#define TYPE_ANYTYPE            127
+#define TYPE_UNSPECIFIED        127
 #define TYPE_FONCTION           (0 | HEAP_ALLOCATED)
 #define TYPE_LISTINDEX          1
 #define TYPE_OPERATOR           2

@@ -14,7 +14,8 @@ typedef struct Ast
     struct Ast* suiv;
 } Ast;
 
-
+char* get_infinity(void);
+char* get_nan(void);
 int get_operator_index(char* operator_string);
 int get_type_operande(char* operator_string);
 int get_type_operande_index(int index);
