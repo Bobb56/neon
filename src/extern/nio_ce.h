@@ -2,6 +2,7 @@
  * @file nio_ce.h
  * @author  Julian Mackeben aka compu <compujuckel@googlemail.com>
  * @author  Adrien Bertrand aka Adriweb (CE port and mods)
+ * @author  Raphaël Le Puillandre for Neon (removes dependencies to stdio.h)
  * @version 4.0
  *
  * @section LICENSE
@@ -38,7 +39,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
@@ -421,12 +421,14 @@ char* nio_getsn(char* str, int num);
 
 /** See [fprintf](http://www.cplusplus.com/reference/clibrary/cstdio/fprintf/)
 */
+/*
 int nio_fprintf(nio_console* c, const char* format, ...);
-
+*/
 /** See [printf](http://www.cplusplus.com/reference/clibrary/cstdio/printf/)
 */
+/*
 int nio_printf(const char* format, ...);
-
+*/
 /** See [perror](http://www.cplusplus.com/reference/clibrary/cstdio/perror/)
 */
 void nio_perror(const char* str);

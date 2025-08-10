@@ -14,7 +14,7 @@
             <Keywords name="Numbers, suffix2"></Keywords>
             <Keywords name="Numbers, range"></Keywords>
             <Keywords name="Operators1">+ * - / ** == != &lt;= &gt;= &lt; &gt; = += -= /= *= ++ -- % // &amp; -&gt; : , ; @ &lt;-</Keywords>
-            <Keywords name="Operators2">and or xor not in del EE</Keywords>
+            <Keywords name="Operators2">and or xor not in del EE parallel</Keywords>
             <Keywords name="Folders in code1, open">{</Keywords>
             <Keywords name="Folders in code1, middle"></Keywords>
             <Keywords name="Folders in code1, close">}</Keywords>
@@ -24,12 +24,12 @@
             <Keywords name="Folders in comment, open"></Keywords>
             <Keywords name="Folders in comment, middle"></Keywords>
             <Keywords name="Folders in comment, close"></Keywords>
-            <Keywords name="Keywords1">if elif else while for continue break return function method import pass local try except</Keywords>
-            <Keywords name="Keywords2">True False None</Keywords>
-            <Keywords name="Keywords3">print input nbr str len substring exit append remove insert type reverse eval clear help randint quitError time chr ord output assert list_comp create_exception exception int index replace count list sort_asc sort_desc sin cos tan deg rad sqrt ln exp log log2 round abs ceil floor</Keywords>
+            <Keywords name="Keywords1">if elif else while for continue break return function method import pass local try except atomic await foreach</Keywords>
+            <Keywords name="Keywords2">True False None Infinity NaN</Keywords>
+            <Keywords name="Keywords3">print input nbr str len substring exit append remove insert type reverse eval clear help randint failwith time chr ord output assert listComp createException raise int index replace count list sortAsc sortDesc sin cos tan deg rad sqrt ln exp log log2 round abs ceil floor readFile writeFile setFunctionDoc setAtomicTime copy loadNamespace gc setColor</Keywords>
             <Keywords name="Keywords4">do end then</Keywords>
             <Keywords name="Keywords5">SyntaxError FileNotFound UnmeasurableObject UndefinedVariable IncorrectFunctionCall MemoryError NonIndexableObject IncorrectListIndex OutOfBounds IncorrectType DivisionByZero UnknownError AssertionFailed</Keywords>
-            <Keywords name="Keywords6">pi __version__ __name__ __platform__ __args__ Infinity NegInfinity NaN</Keywords>
+            <Keywords name="Keywords6">pi __version__ __name__ __platform__ __args__</Keywords>
             <Keywords name="Keywords7"></Keywords>
             <Keywords name="Keywords8"></Keywords>
             <Keywords name="Delimiters">00&quot; 01 02&quot; 03[ 04 05] 06( 07 08) 09&apos; 10 11&apos; 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>

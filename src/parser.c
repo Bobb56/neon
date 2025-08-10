@@ -157,8 +157,8 @@ static strlist neon_boolean = (strlist) {
 };
 
 static strlist constant = (strlist) {
-    .tab = (char*[]) {"None", "Infinity", "NaN"},
-    .len = 3,
+    .tab = (char*[]) {"None", "Infinity", "NaN", "Pi"},
+    .len = 4,
     .capacity = 2
 };
 
@@ -170,6 +170,13 @@ char* get_nan(void) {
     return constant.tab[2];
 }
 
+char* get_pi(void) {
+    return constant.tab[3];
+}
+
+char* get_none(void) {
+    return constant.tab[0];
+}
 
 int get_operator_index(char* operator) {
     return strlist_index(&OPERATEURS, operator);

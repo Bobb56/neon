@@ -18,9 +18,9 @@
 
 /////////////// MANIPULATION DES VARIABLES ///////////////////
 
-void variable_append(char* name, NeObj value) {
-    nelist_append(global_env->ADRESSES, value);
-    strlist_append(global_env->NOMS, strdup(name));
+void variable_append(NeonEnv* env, char* name, NeObj value) {
+    nelist_append(env->ADRESSES, value);
+    strlist_append(env->NOMS, strdup(name));
 }
 
 NeObj* get_absolute_address(Var rel_var_addr) {
@@ -1408,7 +1408,7 @@ char* type(NeObj neo)
         return "Integer";
 
     if (NEO_TYPE(neo) == TYPE_DOUBLE)
-        return "Decimal";
+        return "Real";
 
     if (NEO_TYPE(neo) == TYPE_FONCTION)
         return "Built-in function";

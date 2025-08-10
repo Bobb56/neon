@@ -12,8 +12,6 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
-Définition de fonctions dans le terminal
-Affichage de l'infini et des nan
 _____________________
 
 Potentielles futures erreurs :
@@ -96,7 +94,7 @@ Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
 
         char* filename = argsAns();
 
-        variable_append("__args__", l);
+        variable_append(global_env, "__args__", l);
 
         if (filename == NULL) // lance le terminal
         {
@@ -114,7 +112,7 @@ Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
         for (int i = 2 ; i < argc ; i++)
             neo_list_append(l,neo_str_create(strdup(argv[i])));
 
-        variable_append("__args__", l);
+        variable_append(global_env, "__args__", l);
 
         if (argc >= 2)
         {

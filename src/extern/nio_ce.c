@@ -2,6 +2,7 @@
  * @file nio_ce.c
  * @author  Julian Mackeben aka compu <compujuckel@googlemail.com>
  * @author  Adrien Bertrand aka Adriweb (CE port and mods)
+ * @author  Raphaël Le Puillandre for Neon (removes dependencies to stdio.h)
  * @version 4.0
  *
  * @section LICENSE
@@ -855,6 +856,7 @@ int nio_puts(const char* str)
     return 1;
 }
 
+/*
 int nio_fprintf(nio_console* c, const char *format, ...)
 {
     va_list arglist;
@@ -882,6 +884,8 @@ int nio_printf(const char *format, ...)
     va_end(arglist);
     return strlen(buf);
 }
+
+*/
 
 void nio_perror(const char* str)
 {

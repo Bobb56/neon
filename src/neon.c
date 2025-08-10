@@ -63,23 +63,15 @@ void setNeonEnv(NeonEnv* env) {
 void defineVariables(NeonEnv* env)
 {
     // définition de la variable de version
-    strlist_append(env->NOMS, strdup("__version__"));
-    nelist_append(env->ADRESSES, neo_str_create(strdup(VERSION)));
+    variable_append(env, "__version__", neo_str_create(strdup(VERSION)));
 
     // définition de la variable de plateforme
+    variable_append(env, "__platform__", neo_str_create(strdup(PLATFORM)));
 
-    strlist_append(env->NOMS, strdup("__platform__"));
-    nelist_append(env->ADRESSES, neo_str_create(strdup(PLATFORM)));
-
-    strlist_append(env->NOMS, strdup("__name__"));
-    nelist_append(env->ADRESSES, NEO_VOID);
+    // le nom du fichier
+    variable_append(env, "__name__", NEO_VOID);
 
     env->NAME = env->ADRESSES->len - 1; // l'adresse de __name__ à modifier
-
-
-    // pi
-    nelist_append(env->ADRESSES, neo_double_create(PI));
-    strlist_append(env->NOMS, strdup("pi"));
 }
 
 
@@ -441,7 +433,7 @@ void loadFunctions(NeonEnv* env)
         },
         (Function) {
             .ptr = _round_,
-            .help = "round: Round to the nearest decimal number with the given precision",
+            .help = "round: Round to the nearest real number with the given precision",
             .nbArgs = 2,
             .typeArgs = (int[]){TYPE_DOUBLE, TYPE_DOUBLE},
             .typeRetour = TYPE_DOUBLE

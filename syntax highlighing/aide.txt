@@ -1,0 +1,40 @@
+Résumé de la syntaxe Neon pour définir des fichiers de configuration de coloration syntaxique
+
+Commentaires :
+
+Sur une seule ligne : #
+Sur plusieurs lignes : $...$
+
+Ouvrants/fermants :
+
+Parenthèses ()
+Crochets []
+
+Mots-clés 1 :
+do end then
+
+Mots-clés 3 :
+and or xor not in del EE parallel
+
+Mots-clés 2 :
+if elif else while for continue break return function method import pass local try except atomic await foreach
+
+Opérateurs :
++ * - / ** == != <= >= < > = += -= /= *= ++ -- % // & -> : , ; @ <- := => >> <-> ...
+
+Constantes :
+True False None Infinity NaN Pi
+
+Fonctions prédéfinies :
+print input nbr str len substring exit append remove insert type reverse eval clear help randint failwith time chr ord output assert listComp createException raise int index replace count list sortAsc sortDesc sin cos tan deg rad sqrt ln exp log log2 round abs ceil floor readFile writeFile setFunctionDoc setAtomicTime copy loadNamespace gc setColor
+
+
+Nombres :
+Décimaux ou entiers avec préfixes 0b et 0x
+
+
+Exceptions :
+SyntaxError FileNotFound UnmeasurableObject UndefinedVariable IncorrectFunctionCall MemoryError NonIndexableObject IncorrectListIndex OutOfBounds IncorrectType DivisionByZero UnknownError AssertionFailed
+
+Variables prédéfinies :
+__version__ __name__ __platform__ __args__ Ans

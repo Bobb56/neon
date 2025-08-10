@@ -268,16 +268,20 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
 
         else if (ast[0]->type == TYPE_CONST)
         {
-            if (strcmp(tokens->tab[0], "None") == 0) { // TYPE_NONE
+            if (strcmp(tokens->tab[0], get_none()) == 0) { // TYPE_NONE
                 tree->data = neo_none_create();
                 tree->type = TYPE_NONE;
             }
-            else if (strcmp(tokens->tab[0], "Infinity") == 0) {
+            else if (strcmp(tokens->tab[0], get_infinity()) == 0) {
                 tree->data = neo_double_create(INFINITY);
                 tree->type = TYPE_DOUBLE;
             }
-            else if (strcmp(tokens->tab[0], "NaN") == 0) {
+            else if (strcmp(tokens->tab[0], get_nan()) == 0) {
                 tree->data = neo_double_create(NAN);
+                tree->type = TYPE_DOUBLE;
+            }
+            else if (strcmp(tokens->tab[0], get_pi()) == 0) {
+                tree->data = neo_double_create(PI);
                 tree->type = TYPE_DOUBLE;
             }
         }

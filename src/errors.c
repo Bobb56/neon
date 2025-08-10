@@ -122,7 +122,7 @@ static const char* error_messages[NB_ERRORS] = {
     "for/foreach first argument must be a variable",
     "listComp range parameters must be integers",
     "This object cannot be converted to an integer",
-    "This function can only receive integer of decimal arguments"
+    "This function can only receive integer numbers of real numbers as arguments"
 };
 
 

@@ -125,29 +125,6 @@
             return str;
         }
     #endif
-    
-
-    double str_to_double(char *string)//convertit une chaîne de caractère en nombre
-    {
-        if (strcmp(string, get_infinity()) == 0)
-            return INFINITY;
-        else if (string[0] == '-' && strcmp(string + 1, get_infinity()) == 0)
-            return -INFINITY;
-        else if (strcmp(string, get_nan()) == 0)
-            return NAN;
-        else
-        {
-            double nombre;
-            
-            int err = sscanf(string,"%lf",&nombre);
-            if (err!=1)
-            {
-                global_env->CODE_ERROR = 66;
-                return 0;
-            }
-            return nombre;
-        }
-    }
 
 
 
@@ -305,7 +282,7 @@
         char* var=malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
         memset(var,(char)0,4001*sizeof(char));//initialise le pointeur à '\0' partout
         //on effectue l'entrée
-        nio_printf("%s",text);
+        printString(text);
     
         if (!nio_getsn(var, 4000))
         {
@@ -331,29 +308,6 @@
         }
     
         return newVar;
-    }
-
-
-    double str_to_double(char *string)//convertit une chaîne de caractère en nombre
-    {
-        if (strcmp(string, "Infinity") == 0)
-            return INFINITY;
-        else if (strcmp(string, "-Infinity") == 0)
-            return -INFINITY;
-        else if (strcmp(string, "NaN") == 0)
-            return NAN;
-        else
-        {
-            double nombre;
-            
-            int err = sscanf(string,"%lf",&nombre);
-            if (err!=1)
-            {
-                global_env->CODE_ERROR = 66;
-                return 0;
-            }
-            return nombre;
-        }
     }
 
 
@@ -391,7 +345,7 @@
     
     void printString(char* s)
     {
-        nio_printf("%s", s);
+        nio_fputs(s, &console);
     }
     
     
@@ -430,6 +384,21 @@ void removeZeros(char* string) {
     }
 
     return;
+}
+
+
+double str_to_double(char *string)//convertit une chaîne de caractère en nombre
+{
+    if (strcmp(string, get_infinity()) == 0)
+        return INFINITY;
+    else if (string[0] == '-' && strcmp(string + 1, get_infinity()) == 0)
+        return -INFINITY;
+    else if (strcmp(string, get_nan()) == 0)
+        return NAN;
+    else
+    {
+        return atof(string);
+    }
 }
 
 

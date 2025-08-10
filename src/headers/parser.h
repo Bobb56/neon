@@ -16,6 +16,8 @@ typedef struct Ast
 
 char* get_infinity(void);
 char* get_nan(void);
+char* get_pi(void);
+char* get_none(void);
 int get_operator_index(char* operator_string);
 int get_type_operande(char* operator_string);
 int get_type_operande_index(int index);

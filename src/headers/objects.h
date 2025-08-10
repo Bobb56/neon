@@ -35,7 +35,6 @@ typedef struct NeObj
 typedef int Var;
 
 
-
 struct String
 {
     int refc;
@@ -92,7 +91,7 @@ struct UserFunc
 };
 
 
-
+typedef struct NeonEnv NeonEnv;
 
 
 
@@ -104,7 +103,7 @@ struct UserFunc
 bool neo_is_void(NeObj neo);
 bool neo_exact_equal(NeObj a, NeObj b);
 
-void variable_append(char* name, NeObj value);
+void variable_append(NeonEnv* env, char* name, NeObj value);
 void free_var(Var var);
 void replace_var(Var var, NeObj object);
 void set_var(Var var, NeObj object);

@@ -12,11 +12,9 @@
   #text(1em, "v0.9") // Un sous-titre optionnel
 ]
 
-= Introduction
-
 #emph("Cette documentation s'applique à la version 3.8.5.6-beta de Neon.")
 
-== Préambule
+= Introduction
 
 Neon est un langage de script généraliste nativement concurrent destiné entre autres à rendre possible la programmation concurrente sur des machines ne disposant pas de système d'exploitation multitâches. Le langage Neon permet la description de programmes de calcul séquentiels et concurrents, l'interpréteur Neon permet de les exécuter.
 
@@ -44,7 +42,7 @@ Sur la plateforme TI_EZ80, pour entrer en mode console, il faut que la variable 
 
 #outline(title : "Sommaire")
 
-= Partie 0 : Syntaxe et sémantique
+= Préambule sur la syntaxe et la sémantique
 
 Lorsque l'on écrit un programme Neon, on écrit du texte. Une suite de caractères. On peut considérer que le programme est simplement cette suite de caractères, dans ce cas-là on parle de syntaxe.
 
@@ -106,14 +104,14 @@ parallel
 La syntaxe de Neon est sensible à la casse et insensible aux espaces et aux tabulations. Les retours à la ligne sont tolérés dans les expressions après des parenthèses ouvrantes, des crochets ouvrants et des virgules.
 
 
-= Partie 1 : Les objets et les variables
+= *Partie 1 : Les objets et les variables*
 
 Tous les objets utilisables dans les programmes Neon sont regroupés au sein d'une seule et unique structure C appelée `NeObj`.
 
 Voici la liste de tous les types d'objets Neon existants :
 
 `Integer`\
-`Decimal`\
+`Real`\
 `String`\
 `Bool`\
 `List`\
@@ -172,11 +170,11 @@ Il est possible de définir des constantes `Integer` en écriture décimale, mai
 
 Pour l'hexadécimal, les lettres peuvent être des lettres minuscules ou majuscules.
 
-=== 1.2.3 - Le type `Decimal`
+=== 1.2.3 - Le type `Real`
 
-Les objets de type `Decimal` sont des nombres flottants. Comme pour les nombre entiers, leur taille dépend du système cible. Ce sont des flottants à double précision lorsque l'OS le permet, sinon ce sont des float sur 32 bits (même pour ez80).
+Les objets de type `Real` sont des nombres flottants. Comme pour les nombre entiers, leur taille dépend du système cible. Ce sont des flottants à double précision lorsque l'OS le permet, sinon ce sont des float sur 32 bits (même pour ez80).
 
-Les `Decimal` peuvent être créés par des constantes dans le code source du programme, combinés entre avec des opérateurs pour en générer de nouveaux ou envoyés dans des fonctions built-in pour en créer de nouveaux. Voir la section sur les opérateurs et les fonction built-in pour plus d'informations.
+Les `Real` peuvent être créés par des constantes dans le code source du programme, combinés entre avec des opérateurs pour en générer de nouveaux ou envoyés dans des fonctions built-in pour en créer de nouveaux. Voir la section sur les opérateurs et les fonction built-in pour plus d'informations.
 
 
 *Note :* Les opérateurs de calcul sur les nombres ne préservent pas tous le type. En effet, alors que la multiplication, la soustraction et la somme de deux entiers reste un entier, la division de deux entiers renverra toujours un nombre décimal. Ce comportement des opérateurs est explicité plus en détails dans la section sur les opérateurs.
@@ -307,7 +305,7 @@ Cette fonction prend en argument un objet et renvoie son type. Les types d'objet
 `"Bool"` #sym.arrow.r.long booléen\
 `"String"` #sym.arrow.r.long chaîne de caractères\
 `"Integer"` #sym.arrow.r.long entier\
-`"Decimal"` #sym.arrow.r.long nombre décimal\
+`"Real"` #sym.arrow.r.long nombre décimal\
 `"Built-in function"` #sym.arrow.r.long fonction built-in\
 `"List"` #sym.arrow.r.long liste\
 `"Function"` #sym.arrow.r.long fonction utilisateur\
@@ -511,7 +509,7 @@ Quand on lance une fonction en parallèle avec `parallel fonction(arg1, arg2, ar
 La manière de gérer les processus sera détaillée dans la section dédiée.
 
 
-= Partie 2 : Les expressions
+= *Partie 2 : Les expressions*
 
 Les expressions sont à la base de tout code Neon. Une expression est une construction syntaxique qui peut être évaluée en un objet. Toute expression est évaluée en l'un des objets détaillés dans la *Partie I*. Une expression sert à décrire un calcul. Les constantes littérales sont les expressions les plus basiques. Elles sont évaluées directement en leur objet associé. Une variable (désignée par son nom) est également une expression, et est évaluée en la valeur de la variable.
 
@@ -534,8 +532,8 @@ Le produit entre une liste (ou une chaîne de caractères) et un booléen a le m
 
 *`-`* :\
 Cet opérateur effectue une soustraction entre deux nombres.\
-La soustraction entre une chaîne de caractères et un entier `n` retire le `n` derniers caractères de la chaîne.\
-La soustraction entre deux chaîne de caractères renvoie la première chaîne moins toutes les occurrences de la deuxième.
+La soustraction entre une chaîne de caractères et un entier `n` retire les `n` derniers caractères de la chaîne.\
+La soustraction entre deux chaînes de caractères renvoie la première chaîne moins toutes les occurrences de la deuxième.
 
 *`/`* :\
 Bien que cela puisse paraître étonnant, cet opérateur effectue une simple division entre deux nombres, rien d'autre. Il est vrai qu'on aurait pu imaginer des utilisations de l'opérateur `/` pour toutes sortes de types, mais il faut parfois être raisonnable.
@@ -636,7 +634,7 @@ Opérateur unaire, attend une variable, un index de liste ou un attribut de cont
 Opérateur unaire, opérande à droite. Effectue une négation logique.
 
 
-=== 2.1.3 Opérateurs spéciaux
+=== 2.1.3 - Opérateurs spéciaux
 
 
 *`parallel`* :\
@@ -648,7 +646,7 @@ Exemple : `parallel f(arg1, arg2, arg3)` lance la fonction `f` en parallèle sur
 
 *`>>`* : Cet opérateur est également un opérateur spécial qui attend à gauche un container et à droite un nom de champ de container.
 
-=== 2.1.4 Les priorités opératoires
+=== 2.1.4 - Les priorités opératoires
 
 Les priorités de tous les opérateurs sont réparties parmi 9 niveaux de priorité de 0 à 8. Le niveau le plus élevé correspond à l'opérateur le moins prioritaire, celui qui sera évalué en dernier.
 
@@ -670,7 +668,7 @@ Les fonctions sont des objets qui produisent un comportement, souvent une sortie
 Les fonctions peuvent évidemment être composées entre elles, et avec des opérateurs.
 
 
-= Partie 3 : Structure d'un programme
+= *Partie 3 : Structure d'un programme*
 
 Comme dit dans l'introduction, Neon est un langage qui permet de décrire des programmes de calcul séquentiels. Cela signifie que le langage Neon permet de décrire l'exécution d'une succession de tâches simples. On appelle également cela un programme.
 
@@ -865,7 +863,7 @@ En revanche, si une exception est levée pendant l'exécution du code à l'inté
 Le nombre d'exceptions que l'on peut spécifier pour un bloc `except` n'a aucune limite, et peut même être nul. Dans le cas où l'on ne spécifie aucune exception entre les parenthèses, le bloc `except` est exécuté quelle que soit l'exception levée.
 
 
-= Partie 4 - Définition de fonctions et méthodes
+= *Partie 4 : Définition de fonctions et méthodes*
 
 En plus des fonctions définies par défaut par l'interpréteur Neon (de type Built-in function), il est possibles de définir deux autres types de fonctions : les fonctions utilisateur (de type Function), et les méthodes (de type Method).
 
@@ -873,7 +871,7 @@ Une fonction est un bloc de code qui prend en entrée des arguments, qui produit
 
 La définition de fonctions est ce qui doit permettre de rendre un code Neon le plus compréhensible possible, proche d'un texte en anglais.
 
-== 4.1 Définition de procédures
+== 4.1 - Définition de procédures
 
 Les fonctions les plus simples conceptuellement sont les procédures. Ce sont des fonctions qui ne prennent aucun argument, et qui ne renvoient aucune sortie. Ces fonctions effectuent donc toujours la même action quand elles sont appelées. Définir de telles fonctions sert uniquement à rendre un code plus compréhensible et potentiellement plus concis, en faisant appel à des fonctions avec un nom clairement défini plutôt qu'exécuter directement un bloc de code.
 
@@ -887,7 +885,7 @@ end
 
 Une procédure renvoie `None`. Toutes les fonctions ne comportant pas de `return ()` renvoie `None`.
 
-== 4.2 Fonctions basiques
+== 4.2 - Fonctions basiques
 
 Voyons maintenant comment envoyer des arguments à une fonction, et renvoyer un résultat depuis une fonction.
 
@@ -907,7 +905,7 @@ Lorsque le bloc `return ()` est vide, la valeur renvoyée est simplement `None`.
 
 Mettre un `return ()` ou un `return (None)` à la toute fin d'une fonction revient exactement à ne rien mettre.
 
-== 4.3 Variables locales et globales
+== 4.3 - Variables locales et globales
 
 Afin de ne pas interférer avec les variables d'un programme et de rendre invisible le code exécuté dans une fonction aux yeux du code appelant la fonction, il existe différents niveaux de localité de variables. Ces niveaux de localité impliquent que certaines variables peuvent avoir plusieurs valeurs différentes en même temps, dont une seule de ces valeurs n'est accessible.
 
@@ -927,7 +925,7 @@ En plus des variables utilisées comme arguments, il est possible de rendre loca
 
 Comme dit précédemment dans les sections 3.3 et 3.4, les variables utilisées comme variant dans les boucles `for` et `foreach` sont aussi automatiquement rendues locales.
 
-== 4.4 Méthodes
+== 4.4 - Méthodes
 
 Les méthodes sont des fonctions avec une fonctionnalité supplémentaire. Dans une fonction, si l'on modifie la valeur des variables utilisées pour récupérer les arguments, cela n'aura évidemment aucun impact sur les arguments eux-mêmes.
 
@@ -939,7 +937,7 @@ Dans le cas d'une méthode, c'est un peu différent.
 
 Pour définir une méthode, il suffit d'utiliser le mot-clé `method` au lieu du mot-clé `function` lors de la définition.
 
-== 4.5 Méthodes avancées de passage d'arguments
+== 4.5 - Méthodes avancées de passage d'arguments
 
 La manière classique d'envoyer des arguments à des fonctions est de séparer les expressions des arguments par des virgules : `fonction(exp1, exp2, exp3)`. En réalité il existe des fonctionnalités bien plus avancées.
 
@@ -1088,7 +1086,7 @@ Pour la version TI_EZ80 de Neon, les fichiers Neon étant des AppVars sans exten
 
 `import` peut recevoir un nombre illimité d'arguments. En tant que bloc de code à part entière, il doit être séparé d'autres blocs de code par un retour à la ligne ou un point virgule, au même titre qu'un `return ()`.
 
-= Partie 5 - Programmation concurrente
+= *Partie 5 : Programmation concurrente*
 
 == 5.1 - Vision par processus
 
@@ -1188,27 +1186,32 @@ Par défaut, `ATOMIC_TIME` vaut 1500, c'est-à-dire que pour chaque processus, a
 La fonction `setAtomicTime` permet de modifier cette valeur (1 est la plus petite valeur possible).
 
 
-= Partie 6 - Fonctionnalités supplémentaires
+= *Partie 6 : Fonctionnalités supplémentaires*
 
 == 6.1 - Arguments de programme
 
 Lorsque l'on appelle un programme en ligne de commande, il est possible de lui envoyer des arguments séparés par des espaces. Lorsque Neon est utilisé en mode exécution (c'est-à-dire en envoyant un nom de fichier en premier argument de l'interpréteur), les arguments suivants sur la ligne de commande sont récupérés par Neon puis stockés dans la liste `__args__`. Cette variable est ensuite accessible par le programme pour traiter les arguments.
 
-== 6.2 - Variables prédéfinies
+== 6.2 - Variables et constantes prédéfinies
+
+=== 6.2.1 - La constante `Pi`
+
+Neon possède une constante `Pi` avec pour valeur le nombre `3.141592653589793`. Cette valeur est arrondie en fonction de la précision offerte par les nombres flottants.
+
 
 Certaines variables d'environnement sont prédéfinies par l'interpréteur afin de permettre au programme exécuté d'obtenir des informations sur son environnement.
 
-=== 6.2.1 - La variable `__name__`
+=== 6.2.2 - La variable `__name__`
 
 Cette variable permet au programme de connaître le nom du fichier dans lequel il est écrit. Plus exactement, dans le programme principal (code situé dans le fichier lancé en ligne de commande), la variable `__name__` vaut `"__main__"`. Dans un fichier importé, cette variable change de nom et vaut le nom du fichier. Lorsque l'exécution revient au fichier principal, la valeur de cette varieble redevient `"__main__"`.
 
-=== 6.2.2 - La variable `__platform__`
+=== 6.2.3 - La variable `__platform__`
 
 Cette variable permet de connaître le système d'exploitation et l'architecture pour lesquels l'interpréteur Neon utilisé est compilé. Les différentes valeurs possibles de cette variable sont `"LINUX_AMD64"`, `"WINDOWS_AMD64"` et `"TI_EZ80"`.
 
 La valeur de cette variable est visible dans le texte affiché au lancement du mode console.
 
-=== 6.2.3 - La variable `__version__`
+=== 6.2.4 - La variable `__version__`
 
 Cette variable est une chaîne de caractères représentant la version de l'interpréteur Neon utilisé. La valeur de cette variable est visible dans le texte affiché au lancement du mode console.
 
