@@ -1,47 +1,113 @@
 {
+  "$schema": "https://raw.githubusercontent.com/microsoft/vscode/master/extensions/json/syntaxes/json.tmLanguage.schema.json",
+  "name": "Neon",
   "scopeName": "source.neon",
   "patterns": [
-    {
-      "name": "keyword.control.neon",
-      "match": "\\b(if|elif|else|while|return|function|method|atomic|for|foreach|try|except|parallel)\\b"
-    },
-    {
-      "name": "string.quoted.double.neon",
-      "begin": "\"",
-      "end": "\"",
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#constants" },
+    { "include": "#builtins" },
+    { "include": "#exceptions" },
+    { "include": "#variables" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
       "patterns": [
         {
-          "match": "\\\\.",
-          "name": "constant.character.escape.neon"
+          "name": "comment.line.number-sign.neon",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.block.dollar.neon",
+          "begin": "\\$",
+          "end": "\\$"
         }
       ]
     },
-    {
-      "name": "string.quoted.single.neon",
-      "begin": "'",
-      "end": "'"
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.neon",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [{ "match": "\\\\.", "name": "constant.character.escape.neon" }]
+        },
+        {
+          "name": "string.quoted.single.neon",
+          "begin": "'",
+          "end": "'",
+          "patterns": [{ "match": "\\\\.", "name": "constant.character.escape.neon" }]
+        }
+      ]
     },
-    {
-      "name": "constant.numeric.neon",
-      "match": "\\b\\d+(\\.\\d+)?\\b"
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.binary.neon", "match": "\\b0b[01]+\\b" },
+        { "name": "constant.numeric.hex.neon", "match": "\\b0x[0-9a-fA-F]+\\b" },
+        { "name": "constant.numeric.decimal.neon", "match": "\\b\\d+(\\.\\d+)?\\b" }
+      ]
     },
-    {
-      "name": "variable.neon",
-      "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.neon",
+          "match": "\\b(?:do|end|then)\\b"
+        },
+        {
+          "name": "keyword.operator.logical.neon",
+          "match": "\\b(?:and|or|xor|not|in|del|EE|parallel)\\b"
+        },
+        {
+          "name": "keyword.control.conditional.neon",
+          "match": "\\b(?:if|elif|else|while|for|continue|break|return|function|method|import|pass|local|try|except|atomic|await|foreach)\\b"
+        }
+      ]
     },
-    {
-      "name": "keyword.operator.neon",
-      "match": "==|=|\\+|\\-|\\*|/|<|>|<=|>=|!=|>>|~"
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.neon",
+          "match": "\\b(?:True|False|None|Infinity|NaN|Pi)\\b"
+        }
+      ]
     },
-    {
-      "name": "comment.line.double-slash.neon",
-      "match": "//.*$"
+    "builtins": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.neon",
+          "match": "\\b(?:print|input|nbr|str|len|substring|exit|append|remove|insert|type|reverse|eval|clear|help|randint|failwith|time|chr|ord|output|assert|listComp|createException|raise|int|index|replace|count|list|sortAsc|sortDesc|sin|cos|tan|deg|rad|sqrt|ln|exp|log|log2|round|abs|ceil|floor|readFile|writeFile|setFunctionDoc|setAtomicTime|copy|loadNamespace|gc|setColor)\\b"
+        }
+      ]
+    },
+    "exceptions": {
+      "patterns": [
+        {
+          "name": "support.type.exception.neon",
+          "match": "\\b(?:SyntaxError|FileNotFound|UnmeasurableObject|UndefinedVariable|IncorrectFunctionCall|MemoryError|NonIndexableObject|IncorrectListIndex|OutOfBounds|IncorrectType|DivisionByZero|UnknownError|AssertionFailed)\\b"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.language.neon",
+          "match": "\\b(?:__version__|__name__|__platform__|__args__|Ans)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.neon",
+          "match": "(\\+\\+|--|\\*\\*|==|!=|<=|>=|<->|->|<-|:=|=>|>>|\\+=|-=|/=|\\*=|%|//|\\+|\\-|\\*|/|=|<|>|&|:|,|;|@|\\.\\.\\.)"
+        }
+      ]
     }
-  ],
-  "repository": {},
+  },
   "fileTypes": ["ne"],
-  "name": "neon",
-  "injectionSelector": "L:source.neon",
-  "uuid": "b0b6e5a0-d23e-11ee-8c99-0242ac120002"
+  "uuid": "b2f7e0ac-62df-11ee-8c99-0242ac120002"
 }
 
