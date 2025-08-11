@@ -56,8 +56,11 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 
-
-#define REG_BUFFER_SIZE 64 // taille de la zone de sauvegarde de registres dans les processus
+#if defined(LINUX_AMD64)
+    #define REG_BUFFER_SIZE 56 // taille de la zone de sauvegarde de registres dans les processus
+#elif defined(WINDOWS_AMD64)
+    #define REG_BUFFER_SIZE 232
+#endif
 
 /*constantes de couleur*/
 #define BLUE 0
