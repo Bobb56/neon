@@ -191,7 +191,7 @@ get_stack:
 
 # empile les registres sur la pile, en utilisant r8 comme registre de pile
 #define PUSH_REGISTERS()       \
-    sub     $232,     %r8;      \
+    sub     $232,     %r8;     \
     mov     %rsp,    0(%r8);   \
     mov     %rbx,    8(%r8);   \
     mov     %rbp,    16(%r8);  \
@@ -317,7 +317,7 @@ get_stack:
     mov     40(source_index), %rax;                 \
     mov     %rax,    40(dest_index);                \
     mov     48(source_index), %rax;                 \
-    mov     %rax,    48(dest_index);
+    mov     %rax,    48(dest_index);                \
     mov     56(source_index), %rax;                 \
     mov     %rax,    56(dest_index);                \
     mov     64(source_index), %rax;                 \
