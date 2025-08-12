@@ -59,7 +59,7 @@ function printLines(screen, nblines := 15, nbcolumns := 2) do
         for (j, 0, min(nbcolumns, nbrealcolumns)) do # le nombre effectif de colonnes
             printNthProg(screen, i + j*nblines)
             if (j < nbrealcolumns - 1) then
-                output('    │    ')
+                output('    |    ')
             end
         end
         print()

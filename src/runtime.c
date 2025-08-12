@@ -141,9 +141,10 @@ void local(Var var, ptrlist* var_loc)
 
 
 
+// les deux fonctions suivantes doivent obligatoirement avoir la même taille de contexte car un appel par le contexte de l'une peut
+// être amené à être démonté par l'autre
 
-
-__attribute__((noinline))
+__attribute__((noinline, optimize("O0")))
 void neon_interp_yield(void) {
     if (global_env->atomic_counter == 0) {
         global_env->atomic_counter = global_env->ATOMIC_TIME;
@@ -168,7 +169,7 @@ void neon_interp_yield(void) {
 }
 
 
-__attribute__((noinline))
+__attribute__((noinline, optimize("O0")))
 void neon_interp_next_process(void) {
     global_env->atomic_counter = global_env->ATOMIC_TIME;
 
@@ -183,9 +184,6 @@ void neon_interp_next_process(void) {
 
     return;
 }
-
-
-
 
 
 
