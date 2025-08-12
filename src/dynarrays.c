@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-
+#include <stdint.h>
 
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
@@ -226,7 +226,7 @@ void ptrlist_aff(ptrlist* l)
     else if (l->queue == NULL)
     {
         printString("[");
-        printInt((long int)l->tete);
+        printInt((intptr_t)l->tete);
         printString("]");
         newLine();
     }
@@ -237,11 +237,11 @@ void ptrlist_aff(ptrlist* l)
         ptrlist* ptr = l;
         for (int i = 1; ptr->queue != NULL; i++)
         {
-            printInt((long int)ptr->tete);
+            printInt((intptr_t)ptr->tete);
             printString(", ");
             ptr = ptr->queue;
         }
-        printInt((long int)ptr->tete);
+        printInt((intptr_t)ptr->tete);
         printString("]");
         newLine();
     }

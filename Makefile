@@ -6,7 +6,7 @@ CC = gcc
 ASM = gcc
 CFLAGS = -O3 -fno-fast-math -ftrapping-math -fsigned-zeros -frounding-math -g # -pg -fsanitize=address
 LDFLAGS = -lm -g # Flags de linkage
-ASMFLAGS = -g
+ASMFLAGS = -g -m64
 
 # Fichiers src et objets
 C_src = src/neon.c src/operators.c src/builtinfunctions.c src/strings.c src/dynarrays.c src/parser.c src/syntaxtrees.c src/neonio.c src/objects.c src/errors.c src/extern/linenoise.c src/gc.c src/runtime.c src/processcycle.c src/main.c

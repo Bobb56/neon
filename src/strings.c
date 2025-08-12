@@ -2,7 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 
-
+#include "headers/constants.h"
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
 #include "headers/strings.h"
@@ -11,11 +11,13 @@
 #include "headers/neon.h"
 #include "headers/parser.h"
 
-
+#ifdef WINDOWS_AMD64
+#include <stdio.h>
+#endif
 
 void cleanStdin(void)// vide le buffer
 {
-#ifndef LINUX_AMD64
+#ifdef WINDOWS_AMD64
     int c = 0;
     while ((c = getchar()) != '\n' && c != EOF);
 #endif

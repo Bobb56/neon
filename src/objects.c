@@ -42,7 +42,7 @@ char* var_name(NeObj obj) {
 }
 
 Var get_var_from_addr(NeObj* obj) {
-    return (int)(((long int)obj - (long int)global_env->ADRESSES->tab)/sizeof(NeObj));
+    return ((intptr_t)obj - (intptr_t)global_env->ADRESSES->tab) / sizeof(NeObj);
 }
 
 

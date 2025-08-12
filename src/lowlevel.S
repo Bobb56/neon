@@ -88,7 +88,6 @@
 
 
 .globl reset_stack_and_registers
-.type reset_stack_and_registers, @function
 # Cette fonction remet la pile d'origine ainsi que les registres d'origine
 # void reset_stack_and_registers(process_cycle->process)
 reset_stack_and_registers:
@@ -105,7 +104,6 @@ reset_stack_and_registers:
 
 
 .globl save_stack_and_registers
-.type save_stack_and_registers, @function
 # cette fonction sauvegarde la pile et les registres sauvegardés dans le processus qui tourne actuellement
 # void save_stack_and_registers(process_cycle->process)
 save_stack_and_registers:
@@ -128,7 +126,6 @@ registres à restaurer après l'ancien processus -> stockés dans le nouveau pro
 # process      -> rdi
 # prev_process -> rsi
 .globl switch_registers
-.type switch_registers, @function
 switch_registers:
     mov     %rsp,   %rdx # la pile de substitution
 
@@ -191,7 +188,7 @@ get_stack:
 
 # empile les registres sur la pile, en utilisant r8 comme registre de pile
 #define PUSH_REGISTERS()       \
-    sub     $232,     %r8;     \
+    sub     $232,    %r8;      \
     mov     %rsp,    0(%r8);   \
     mov     %rbx,    8(%r8);   \
     mov     %rbp,    16(%r8);  \
@@ -254,7 +251,7 @@ get_stack:
     movdqu  %xmm0,  200(dest_index);    \
     movdqu  216(%r8), %xmm0;            \
     movdqu  %xmm0,  216(dest_index);    \
-    add     $232,    %r8; # instruction inutile
+    add     $232,   %r8; # instruction inutile
 
 
 
@@ -281,21 +278,21 @@ get_stack:
 
 
 #define LOAD_REGISTERS(source_index)    \
-    mov     0(source_index), %rsp;      \
-    mov     8(source_index), %rbx;      \
-    mov     16(source_index), %rbp;     \
-    mov     24(source_index), %r12;     \
-    mov     32(source_index), %r13;     \
-    mov     40(source_index), %r14;     \
-    mov     48(source_index), %r15;     \
-    mov     56(source_index), %rdi;     \
-    mov     64(source_index), %rsi;     \
-    movdqu  72(source_index), %xmm6;    \
-    movdqu  88(source_index), %xmm7;    \
+    mov     0(source_index),   %rsp;    \
+    mov     8(source_index),   %rbx;    \
+    mov     16(source_index),  %rbp;    \
+    mov     24(source_index),  %r12;    \
+    mov     32(source_index),  %r13;    \
+    mov     40(source_index),  %r14;    \
+    mov     48(source_index),  %r15;    \
+    mov     56(source_index),  %rdi;    \
+    mov     64(source_index),  %rsi;    \
+    movdqu  72(source_index),  %xmm6;   \
+    movdqu  88(source_index),  %xmm7;   \
     movdqu  104(source_index), %xmm8;   \
     movdqu  120(source_index), %xmm9;   \
     movdqu  136(source_index), %xmm10;  \
-    movdqu  152(source_index), %xmm11   \
+    movdqu  152(source_index), %xmm11;  \
     movdqu  168(source_index), %xmm12;  \
     movdqu  184(source_index), %xmm13;  \
     movdqu  200(source_index), %xmm14;  \
@@ -346,7 +343,6 @@ get_stack:
 
 
 .globl reset_stack_and_registers
-.type reset_stack_and_registers, @function
 # Cette fonction remet la pile d'origine ainsi que les registres d'origine
 # void reset_stack_and_registers(process_cycle->process)
 reset_stack_and_registers:
@@ -363,7 +359,6 @@ reset_stack_and_registers:
 
 
 .globl save_stack_and_registers
-.type save_stack_and_registers, @function
 # cette fonction sauvegarde la pile et les registres sauvegardés dans le processus qui tourne actuellement
 # void save_stack_and_registers(process_cycle->process)
 save_stack_and_registers:
@@ -386,7 +381,6 @@ registres à restaurer après l'ancien processus -> stockés dans le nouveau pro
 # process      -> rcx
 # prev_process -> rdx
 .globl switch_registers
-.type switch_registers, @function
 switch_registers:
     mov     %rsp,   %r8 # la pile de substitution
 
@@ -410,6 +404,7 @@ switch_registers:
     jnz     switch_registers_skip
 
     # et on lance le processus (on fait un call pour garder l'alignement de la pile, mais il ne reviendra jamais ici)
+    sub     $32,    %rsp # allocation du shadow space
     call    launch_process
     
     switch_registers_skip:
