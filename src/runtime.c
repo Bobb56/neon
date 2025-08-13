@@ -2032,7 +2032,14 @@ void initRuntime(void) {
 // cette fonction doit obligatoirement avoir exactement le même contexte que launch_process
 __attribute__((noinline, optimize("O0")))
 void exitRuntime(void) {
-    volatile NeObj unused = NEO_VOID; // sert à avoir la même taille de pile utilisée que la fonction launch_process
+
+    // pour avoir la même taille de pile utilisée que la fonction launch_process
+    #ifdef LINUX_AMD64
+    ADD_STACK_SIZE(16);
+    #endif
+    #ifdef WINDOWS_AMD64
+    ADD_STACK_SIZE(32);
+    #endif
 
     global_env->PROCESS_FINISH.tab[global_env->process_cycle->process->id] = 1; // on a fini le processus, on libère la place
     *global_env->PROMISES_CNT.tab[0] = 0; // normalement il ne peut pas être à autre chose que zéro, vu que personne n'a jamais

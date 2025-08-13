@@ -8,7 +8,7 @@
 #include "dynarrays.h"
 
 
-
+#define ADD_STACK_SIZE(n)   volatile char dummy[n] = {0}
 
 
 
