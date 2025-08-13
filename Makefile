@@ -34,9 +34,6 @@ obj/%.o: src/%.S
 clean:
 	rm -f $(C_OBJECTS) $(ASM_OBJECTS) $(TARGET)
 
-cleanwin:
-	del $(C_OBJECTS) $(ASM_OBJECTS) $(TARGET)
-
 
 .PHONY: all clean
 
