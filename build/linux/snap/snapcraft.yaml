@@ -1,0 +1,27 @@
+name: neon-interpreter
+base: core24
+version: '4.0'
+summary: Neon programming language
+description: |
+  This is the official interpreter of the Neon programming language
+
+grade: stable
+confinement: strict
+
+parts:
+  neon:
+    plugin: dump
+    source: .
+    organize:
+      neon: bin/neon
+      neon.desktop: meta/gui/neon.desktop
+      neon.png: meta/gui/icon.png
+
+apps:
+  neon-interpreter:
+    command: bin/neon
+    desktop: meta/gui/neon.desktop
+    plugs:
+      - desktop
+      - desktop-legacy
+

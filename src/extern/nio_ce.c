@@ -26,11 +26,11 @@
  *
  * Nspire I/O (CE port) implementation file
  */
+#include "../headers/constants.h"
+
+#ifdef TI_EZ80
 
 #include "nio_ce.h"
-
-
-
 
 
 /**
@@ -1374,3 +1374,5 @@ bool queue_empty(queue* q)
 {
     return (q->count <= 0);
 }
+
+#endif

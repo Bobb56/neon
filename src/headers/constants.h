@@ -3,7 +3,10 @@
 
 #include <stdbool.h>
 
-#define VERSION "3.8.5.6-beta"
+//#define VERSION "3.8.5.6-beta"
+
+#define VERSION "4.0"
+
 /*
 Numérotation de versions :
 Ajout d'opérateur ou de fonction ou modification d'un élément de syntaxe : +0.0.1
@@ -17,8 +20,8 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 // à définir en fonction des destinations de compilation
-//#define LINUX_AMD64
-#define WINDOWS_AMD64
+#define LINUX_AMD64
+//#define WINDOWS_AMD64
 //#define TI_EZ80
 
 #ifdef LINUX_AMD64

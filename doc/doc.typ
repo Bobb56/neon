@@ -12,7 +12,7 @@
   #text(1em, "v0.9") // Un sous-titre optionnel
 ]
 
-#emph("Cette documentation s'applique à la version 3.8.5.6-beta de Neon.")
+#emph("Cette documentation s'applique à la version 4.0 de Neon.")
 
 = Introduction
 

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Neon
+Comment=Neon programming language
+GenericName=Programming language
+Exec=neon %f
+Icon=fr.raphaael.langage-neon
+Type=Application
+Categories=Development;
+Keywords=neon;
+Terminal=true
+MimeType=text/x-neon;

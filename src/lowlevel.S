@@ -2,9 +2,12 @@
 
 .extern launch_process
 
-.text
-
 #ifdef LINUX_AMD64
+
+# pour ne pas avoir de pile exécutable
+.section .note.GNU-stack
+
+.text
 
 # ce code utilise 4 registres de travail de la taille d'un pointeur : rdi, rsi, rax, rdx
 # et un registre de travail de la taille d'un octet : al
@@ -177,6 +180,8 @@ get_stack:
 #endif
 
 #ifdef WINDOWS_AMD64
+
+.text
 
 # ce code utilise 4 registres de travail de la taille d'un pointeur : rcx, rdx, rax, r8
 # et un registre de travail de la taille d'un octet : al

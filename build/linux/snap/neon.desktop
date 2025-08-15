@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Neon
+Comment=Neon programming language interpreter
+Exec=neon
+Icon=icon.png
+Terminal=true
+Categories=Development;Programming;
+
