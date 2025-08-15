@@ -29,7 +29,7 @@ NeonEnv* global_env = NULL;
 
 
 
-#if defined(LINUX_AMD64)
+#ifdef LINUX_AMD64
     #include <signal.h>
 
     void handle_signal(int sig) {
@@ -628,9 +628,6 @@ void neonInit(void)
         linenoiseSetMultiLine(1); // spécial pour linenoise
         signal(SIGINT, handle_signal);
         signal(SIGTERM, handle_signal);
-        
-        // au cas où on est lancé via snap
-        chdir(getenv("PWD"))
     #endif
     
     #ifdef WINDOWS_AMD64

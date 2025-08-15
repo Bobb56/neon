@@ -24,4 +24,6 @@ apps:
     plugs:
       - desktop
       - desktop-legacy
+      - home
+      - removable-media
 
