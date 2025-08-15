@@ -628,6 +628,9 @@ void neonInit(void)
         linenoiseSetMultiLine(1); // spécial pour linenoise
         signal(SIGINT, handle_signal);
         signal(SIGTERM, handle_signal);
+        
+        // au cas où on est lancé via snap
+        chdir(getenv("PWD"))
     #endif
     
     #ifdef WINDOWS_AMD64
