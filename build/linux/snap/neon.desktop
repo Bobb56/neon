@@ -2,8 +2,8 @@
 Type=Application
 Name=Neon
 Comment=Neon programming language interpreter
-Exec=neon
-Icon=icon.png
+Exec=neon-interpreter
+Icon=${SNAP}/meta/gui/neon.svg
 Terminal=true
 Categories=Development;Programming;
 

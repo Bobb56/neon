@@ -8,22 +8,27 @@ description: |
 grade: stable
 confinement: strict
 
+
+
+
+apps:
+  neon-interpreter:
+    command: bin/neon
+    desktop: usr/share/applications/neon.desktop
+    plugs:
+      - desktop
+      - desktop-legacy
+      - home
+      - removable-media
+
+
+
 parts:
   neon:
     plugin: dump
     source: .
     organize:
       neon: bin/neon
-      neon.desktop: meta/gui/neon.desktop
-      neon.png: meta/gui/icon.png
-
-apps:
-  neon-interpreter:
-    command: bin/neon
-    desktop: meta/gui/neon.desktop
-    plugs:
-      - desktop
-      - desktop-legacy
-      - home
-      - removable-media
+      neon.desktop: usr/share/applications/neon.desktop
+      neon.svg: meta/gui/neon.svg
 
