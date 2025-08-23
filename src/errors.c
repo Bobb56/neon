@@ -18,7 +18,7 @@ static const char* error_messages[NB_ERRORS] = {
     "Insufficient arguments in user-defined function call",
     "Call to an undefined function",
     "Call to an invalid function",
-    "Starting or ending value of the for loop is not a number",
+    "The for loop start or end value is not an integer",
     "Incorrect function definition",
     "Memory error",
     "Incorrect index for subtree deletion",

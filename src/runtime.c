@@ -1351,8 +1351,8 @@ int execStatementFor(Tree* tree) {
 
     // on évalue l'incrément de la boucle
     int incr = 0;
-    NeObj start;
-    NeObj tempMax;
+    NeObj start; // la borne inférieure de la boucle
+    NeObj tempMax; // la borne supérieure de la boucle
 
     // for(var, start, end, step)
     if (tree->sons[0]->nbSons == 4) {
@@ -1443,7 +1443,7 @@ int execStatementFor(Tree* tree) {
 
     
     int max = neo_to_integer(tempMax); // borne supérieure des valeurs atteintes par la variable
-    neobject_destroy(tempMax); // du coup le data, on le garde donc on libère que l'enveloppe
+    neobject_destroy(tempMax);
 
     intptr_t int_ret = 0;
     
