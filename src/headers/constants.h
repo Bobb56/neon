@@ -20,8 +20,8 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 // à définir en fonction des destinations de compilation
-#define LINUX_AMD64
-//#define WINDOWS_AMD64
+//#define LINUX_AMD64
+#define WINDOWS_AMD64
 //#define TI_EZ80
 
 #ifdef LINUX_AMD64
