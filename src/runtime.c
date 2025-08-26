@@ -1638,43 +1638,51 @@ int exec_aux(Tree* tree) {
 
             case TYPE_TRYEXCEPT:
             {
-                
-                intptr_t int_ret = exec_aux(tree->sons[inst]->sons[0]);
-
-                if (int_ret != EXIT_SUCCESS)
-                    return int_ret;
-
                 Tree* maintree = tree->sons[inst];
 
                 // exécution du try
+                intptr_t int_ret = exec_aux(maintree->sons[0]);
+
+                if (int_ret != EXIT_SUCCESS)
+                    return int_ret;
+                
 
                 if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) // exit() n'est pas considéré comme une erreur
                 {
+                    // on réinitialise la variable de code d'erreur pour les évaluations d'exceptions
+                    int sov_code_error = global_env->CODE_ERROR;
+                    global_env->CODE_ERROR = 0;
+
+
                     // on va parcourir la liste des exceptions jusqu'à en trouver une qui corresponde
                     int block_found = 0; // va correspondre à l'indice du sous arbre que l'on va exécuter
 
                     // parcours des différents blocs except pour trouver le bon
                     for (int fils = 1 ; fils < maintree->nbSons && block_found == 0 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
 
+                        // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
                         if (maintree->sons[fils]->sons[0]->nbSons == 0) {
-                            block_found = fils; // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
+                            block_found = fils;
                         }
 
+                        // parcourt toutes les exceptions du bloc except
                         for (int i = 0 ; i < maintree->sons[fils]->sons[0]->nbSons ; i++)
                         {
-                            NeObj obj = maintree->sons[fils]->sons[0]->sons[i]->data;
+                            // récupère l'exception pour l'évaluer
+                            Tree* exception_expr = maintree->sons[fils]->sons[0]->sons[i];
+                            NeObj exception = eval_aux(exception_expr);
 
-                            if (NEO_TYPE(obj) != TYPE_EXCEPTION)
+                            if (NEO_TYPE(exception) != TYPE_EXCEPTION)
                             {
                                 global_env->CODE_ERROR = 78;
                                 return int_ret;
                             }
                             else
                             {
-                                int code = get_exception_code(maintree->sons[fils]->sons[0]->sons[i]->data);
-                                if (get_exception_from_code_error(global_env->CODE_ERROR) == code || (global_env->CODE_ERROR < 0 && -global_env->CODE_ERROR == code)) // l'erreur correspond
+                                int code = get_exception_code(exception);
+                                if (get_exception_from_code_error(sov_code_error) == code || (sov_code_error < 0 && -sov_code_error == code)) // l'erreur correspond
                                 {
-                                    if (global_env->CODE_ERROR < 0)
+                                    if (sov_code_error < 0)
                                         global_env->EXCEPTION = NULL;
                                     
                                     block_found = fils;
@@ -1685,17 +1693,17 @@ int exec_aux(Tree* tree) {
 
                     }
 
-                    if (block_found > 0) // exécution du except
-                    {
-                        global_env->CODE_ERROR = 0; // du coup c'est bon on repart (la police a arrêté le programme, a vérifié ses papiers, et le programme est reparti)
-                        
-                        //stack_check_for(varstack, 3);
-
+                    if (block_found > 0) // exécution du bloc except trouvé
+                    {                        
                         int_ret = exec_aux(maintree->sons[block_found]->sons[1]);
 
                         if (global_env->CODE_ERROR != 0 || int_ret != EXIT_SUCCESS) {
                             return int_ret;
                         }
+                    }
+                    else // restauration du code d'erreur si aucun bloc except n'est trouvé
+                    {
+                        global_env->CODE_ERROR = sov_code_error;
                     }
                 }
 

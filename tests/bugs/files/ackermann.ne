@@ -16,5 +16,5 @@ function Factorielle(n) do
     end
 end
 
-#assert(Ackermann(3,5) == 253)
+assert(Ackermann(3,5) == 253)
 assert(Factorielle(5) == 120)

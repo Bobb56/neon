@@ -1737,7 +1737,6 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
                 if (global_env->CODE_ERROR != 0)
                 {
                     tree_destroy(try_except);
-                    tree_destroy(try_tree);
                     tree_destroy(except_tree);
                     tree_destroy(except_expr);
                     tree_destroy(except_bloc);
@@ -1753,7 +1752,6 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
                     if (global_env->CODE_ERROR != 0)
                     {
                         tree_destroy(try_except);
-                        tree_destroy(try_tree);
                         tree_destroy(except_tree);
                         tree_destroy(except_expr);
                         tree_destroy(except_bloc);
