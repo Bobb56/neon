@@ -858,7 +858,7 @@ Lorsqu'on exécute un bloc `try ... except`, le code à l'intérieur du `try` es
 
 En revanche, si une exception est levée pendant l'exécution du code à l'intérieur du `try`, l'exécution du code sera stoppée au moment de l'exception, et le premier bloc `except` dont l'une des exceptions indiquées en tête correspond à l'exception lancée sera exécuté, entièrement et normalement. Quand ce bloc `except` a terminé, l'exécution du bloc `try ... except` est également terminée. 
 
-À noter que Exception, Exception2, ... doivent être directement des objets de type Exception, pas des expressions s'évaluant en exceptions.
+À noter que Exception, Exception2, ... doivent être des expressions s'évaluant en objets de type `Exception`. Ces expressions peuvent par exemple être des constantes correspondant aux exceptions (DivisionByZero, etc) ou encore des variables contenant des exceptions...
 
 Le nombre d'exceptions que l'on peut spécifier pour un bloc `except` n'a aucune limite, et peut même être nul. Dans le cas où l'on ne spécifie aucune exception entre les parenthèses, le bloc `except` est exécuté quelle que soit l'exception levée.
 
