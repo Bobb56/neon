@@ -19,10 +19,17 @@ Ajout d'un type de données NeObject : +0.0.1
 #define INVITATION "https://discord.gg/wkBdK35w2a"
 
 
-// à définir en fonction des destinations de compilation
-#define LINUX_AMD64
-//#define WINDOWS_AMD64
-//#define TI_EZ80
+// constantes qui pilotent le code spécifique à l'OS/architecture
+// ça fonctionne sur GCC et aussi sur Clang normalement
+#if defined(__linux__) && defined(__x86_64__)
+    #define LINUX_AMD64
+#elif defined(_WIN64) && defined(__x86_64__)
+    #define WINDOWS_AMD64
+#else
+    #define TI_EZ80
+#endif
+
+
 
 #ifdef LINUX_AMD64
     #define PLATFORM "LINUX_AMD64"
