@@ -890,7 +890,7 @@ int nio_printf(const char *format, ...)
 void nio_perror(const char* str)
 {
     if (str && *str)
-        nio_printf("%s: ", str);
+        nio_puts(str);
     nio_puts(strerror(errno));
 }
 
