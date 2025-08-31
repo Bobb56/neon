@@ -1,6 +1,4 @@
-set chemin=%CD%
-cd ..\..\
-xcopy src build\ti_ez80\src /E /I /Y
-pushd C:\CEdev
-cedev.bat "%chemin%"
-popd
+cd ..\..
+C:\CEdev\bin\make.exe -f Makefile.ez80
+copy bin\NEON.8xp build\ti_ez80\
+cd build\ti_ez80\

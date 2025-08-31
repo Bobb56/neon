@@ -3,7 +3,7 @@
 # ----------------------------
 
 NAME = NEON
-ICON = icon.png
+ICON = src/assets/neon16x16.png
 DESCRIPTION = "Neon interpreter"
 COMPRESSED = YES
 COMPRESSED_MODE = zx7
