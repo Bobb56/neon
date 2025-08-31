@@ -32,6 +32,11 @@ L'extension de fichiers officiellement supportée pour les programmes Neon est l
 
 Sur la plateforme TI_EZ80, les fichier Neon sont des AppVars contenant directement le code Neon en texte. Les noms de ces AppVars sont sans extensions. Pour lancer un fichier en mode exécution, il faut mettre le nom de ce fichier dans la variable `Ans` ou `Rép`. Pour cela, écrivez le nom du fichier entre guillemets dans l'écran principal de la calculatrice, et appuyez sur ENTRÉE. Lors de son lancement, le programme NEON va détecter le nom de fichier dans cette variable et va l'exécuter.
 
+Afin de faciliter le développement en Neon, l'interpréteur est compatible avec les AppVars Python.
+
+Pour que l'application Python puisse reconnaître les appvars python par rapport à un appvar normal, ceux-ci commencent toujours par les 4 lettres PYCD et l'octet 00.
+Quand un appvar commençant par PYCD\x00 est lancé avec l'interpréteur Neon, ce dernier va simplement ignorer les 5 premiers octets.
+
 === Le mode console
 
 Lorsque la console est prête à recevoir une expression à évaluer, le curseur est sur une nouvelle ligne débutée par deux chevrons `>>`. Si l'on entre une expression, celle-ci sera évaluée, et son résultat ainsi que son type seront affichés sur une nouvelle ligne.
