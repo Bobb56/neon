@@ -879,7 +879,7 @@ void execFile(char* filename)
     if (global_env->CODE_ERROR != 0)
     {
         printError(global_env->CODE_ERROR);
-        pause("Press ENTER to leave Neon...");
+        neon_pause("Press ENTER to leave Neon...");
         global_env->CODE_ERROR = 0;
         tree_destroy(tree);
         return;
@@ -890,7 +890,7 @@ void execFile(char* filename)
     if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
     {
         printError(global_env->CODE_ERROR);
-        pause("Press ENTER to leave Neon...");
+        neon_pause("Press ENTER to leave Neon...");
     }
 
     tree_destroy(tree);

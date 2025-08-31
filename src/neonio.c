@@ -502,7 +502,7 @@ void newLine(void) {
     printString("\n");
 }
 
-void pause(char* text) {
+void neon_pause(char* text) {
     char* res = input(text);
     if (res != NULL)
         free(res);

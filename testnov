@@ -1,3 +1,0 @@
-cd tests/bugs
-./testsnov.sh $1
-cd -

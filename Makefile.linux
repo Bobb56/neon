@@ -34,6 +34,12 @@ obj/%.o: src/%.S
 clean:
 	rm -f $(C_OBJECTS) $(ASM_OBJECTS) $(TARGET)
 
+test:
+	cd tests/bugs && ./tests.sh $1 && cd -
 
-.PHONY: all clean
+test-novalgrind:
+	cd tests/bugs && ./testsnov.sh $1 && cd -
+
+
+.PHONY: all clean test
 

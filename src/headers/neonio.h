@@ -23,7 +23,7 @@ void printBack(void);
 void clearConsole(void);
 char* openFile(char* filename);
 void writeFile(char* filename, char* content);
-void pause(char* text);
+void neon_pause(char* text);
 
 #ifdef TI_EZ80
 char* argsAns(void);

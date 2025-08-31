@@ -41,6 +41,8 @@ $(RESOURCES_OBJ): $(RESOURCES_src)
 clean:
 	del $(C_OBJECTS) $(ASM_OBJECTS) $(TARGET) $(RESOURCES_OBJ)
 
+test:
+	cd tests\bugs && tests.bat %1 && cd ..\..
 
-.PHONY: all clean
+.PHONY: all clean test
 
