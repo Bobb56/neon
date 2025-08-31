@@ -144,7 +144,7 @@ void local(Var var, ptrlist* var_loc)
 // les deux fonctions suivantes doivent obligatoirement avoir la même taille de contexte car un appel par le contexte de l'une peut
 // être amené à être démonté par l'autre
 
-__attribute__((noinline, optimize("O0")))
+__attribute__((noinline, optnone))
 void neon_interp_yield(void) {
     if (global_env->atomic_counter == 0) {
         global_env->atomic_counter = global_env->ATOMIC_TIME;
@@ -169,7 +169,7 @@ void neon_interp_yield(void) {
 }
 
 
-__attribute__((noinline, optimize("O0")))
+__attribute__((noinline, optnone))
 void neon_interp_next_process(void) {
     global_env->atomic_counter = global_env->ATOMIC_TIME;
 
@@ -199,7 +199,7 @@ Quand le processus aura terminé, il retournera ici, et on pourra le supprimer d
 // cette fonction doit obligatoirement avoir exactement le même contexte que exitRuntime
 // en effet, la fonction reset_stack_and_registers va passer au contexte de la fonction exitRuntime, donc l'épilogue de launch_process
 // doit démonter correctement le contexte de exitRuntime
-__attribute__((noinline, optimize("O0")))
+__attribute__((noinline, optnone))
 void launch_process(void) {
 
     // pour être sûr d'avoir cleané le dernier processus qui a terminé
@@ -2038,7 +2038,7 @@ void initRuntime(void) {
 
 
 // cette fonction doit obligatoirement avoir exactement le même contexte que launch_process
-__attribute__((noinline, optimize("O0")))
+__attribute__((noinline, optnone))
 void exitRuntime(void) {
 
     // pour avoir la même taille de pile utilisée que la fonction launch_process
