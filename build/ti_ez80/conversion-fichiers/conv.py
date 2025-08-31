@@ -4,7 +4,7 @@ import subprocess
 
 # demande a l'utilisateur les noms des fichiers
 entree = input("Nom du fichier à convertir : ")
-sortie = input("Nom du fichier de sortie (ne contenant que des majuscules ou des chiffres, commencant par une lettre et contenant maximum 8 caractères) : ")
+sortie = input("Nom du fichier de sortie (ne contenant que des chiffres ou des lettres, commencant par une lettre et contenant maximum 8 caractères) : ")
 
 
 

@@ -256,6 +256,10 @@
         
         ti_Close(fichier);
 
+        // on enlève le préfixe propre aux appvars python s'il y en a un
+        if (memcmp(program, "PYCD\x00", 5)==0)
+            memcpy(program, "     ", 5);
+
         return program;
     }
 
@@ -279,12 +283,12 @@
 
     char* input(char *text)
     {
-        char* var=malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
-        memset(var,(char)0,4001*sizeof(char));//initialise le pointeur à '\0' partout
+        char* var=malloc(501*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
+        memset(var,(char)0,501*sizeof(char));//initialise le pointeur à '\0' partout
         //on effectue l'entrée
         printString(text);
     
-        if (!nio_getsn(var, 4000))
+        if (!nio_getsn(var, 500))
         {
             global_env->CODE_ERROR = 1;
             return NULL;
@@ -496,4 +500,10 @@ void printInt(intptr_t n) {
 
 void newLine(void) {
     printString("\n");
+}
+
+void pause(char* text) {
+    char* res = input(text);
+    if (res != NULL)
+        free(res);
 }

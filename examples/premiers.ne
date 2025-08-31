@@ -1,4 +1,4 @@
-max = 5000 # nbr(input ("Jusqu'ou voulez-vous que l'on detecte les nombres premiers ? "))
+max = 100 # nbr(input ("Jusqu'ou voulez-vous que l'on detecte les nombres premiers ? "))
 
 est_premier = False
 premiers = []
@@ -19,4 +19,5 @@ for (n, 2, max+1) do
     end
 end
 
-print(premiers)
+print("fini")
+#print(premiers)

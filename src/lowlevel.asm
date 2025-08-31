@@ -2,20 +2,20 @@ assume  adl=1
 
 section .text
 
-public  reset_stack_and_registers
-reset_stack_and_registers:
+public  _reset_stack_and_registers
+_reset_stack_and_registers:
     ret
 
-public  save_stack_and_registers
-save_stack_and_registers:
+public  _save_stack_and_registers
+_save_stack_and_registers:
     ret
 
-public  switch_registers
-switch_registers:
+public  _switch_registers
+_switch_registers:
     ret
 
-public  get_stack
-get_stack:
+public  _get_stack
+_get_stack:
     ret
 
 extern  launch_process

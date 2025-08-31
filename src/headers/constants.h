@@ -42,12 +42,20 @@ Ajout d'un type de données NeObject : +0.0.1
 #endif
 
 
-
-
 #if defined(LINUX_AMD64) || defined(TI_EZ80)
     // a définir uniquement si la console standard du système d'exploitation visé supporte les couleurs
     #define COLOR
 #endif
+
+
+// définition de certaines directives spécifiques au compilateur
+#if defined(__clang__)
+#define NO_OPT __attribute__((noinline, optnone))
+#elif defined(__GNUC__)
+#define NO_OPT __attribute__((noinline,optimize("O0")))
+#endif
+
+#define NO_INLINE __attribute__((noinline))
 
 
 
