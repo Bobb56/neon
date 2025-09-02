@@ -79,7 +79,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #elif defined(WINDOWS_AMD64)
     #define REG_BUFFER_SIZE 232
 #elif defined(TI_EZ80)
-    #define REG_BUFFER_SIZE 56
+    #define REG_BUFFER_SIZE 8
 #endif
 
 /*constantes de couleur*/
