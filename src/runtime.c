@@ -15,7 +15,6 @@
 #include "headers/syntaxtrees.h"
 #include "headers/lowlevel.h"
 #include "headers/processcycle.h"
-#include "headers/neonio.h"
 
 
 
@@ -918,7 +917,7 @@ NO_INLINE NeObj eval_aux(Tree* tree) {
         
         case TYPE_LISTINDEX:
         {
-            NeObj obj = *get_address(tree->sons[0]);
+            NeObj obj = eval_aux(tree->sons[0]);
 
             if (global_env->CODE_ERROR != 0)
                 return NEO_VOID;
@@ -939,6 +938,7 @@ NO_INLINE NeObj eval_aux(Tree* tree) {
             if (NEO_TYPE(index) != TYPE_INTEGER)
             {
                 neobject_destroy(index);
+                neobject_destroy(obj);
                 global_env->CODE_ERROR = 16;
                 return NEO_VOID;
             }
@@ -951,11 +951,13 @@ NO_INLINE NeObj eval_aux(Tree* tree) {
             if (NEO_TYPE(obj) == TYPE_EMPTY)
             {
                 global_env->CODE_ERROR = 17;
+                neobject_destroy(obj);
                 return NEO_VOID;
             }
             else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
             {
                 global_env->CODE_ERROR = 18;
+                neobject_destroy(obj);
                 return NEO_VOID;
             }
             
@@ -968,6 +970,8 @@ NO_INLINE NeObj eval_aux(Tree* tree) {
             else {
                 retour = neo_str_create(charToString(neo_to_string(obj)[index2]));
             }
+
+            neobject_destroy(obj);
 
             return retour;
 
@@ -1088,18 +1092,13 @@ NeObj* get_address(Tree* tree) {
     }
 
     else if (tree->type == TYPE_LISTINDEX) {
-        NeObj obj = *get_address(tree->sons[0]);
-
-        if (global_env->CODE_ERROR != 0)
-        {
-            return NULL;
-        }
-
+        NeObj* obj_ptr = get_address(tree->sons[0]);
 
         if (global_env->CODE_ERROR != 0) {
             return NULL;
         }
 
+        NeObj obj = *obj_ptr;
 
         NeObj index = eval_aux(tree->sons[1]);
 
