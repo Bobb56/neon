@@ -136,7 +136,7 @@ __attribute__((noinline))
 bool ProcessCycle_isActive(ProcessCycle* cycle) {
     ProcessCycle* cycle_sov = cycle;
     do {
-        if (cycle->process->state == Running)
+        if (cycle->process->state != Finished)
             return true;
         
         cycle = cycle->next;

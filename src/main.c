@@ -2,10 +2,10 @@
 
 #include "headers/neon.h"
 #include "headers/runtime.h"
-#include "headers/neonio.h"
 
 
 #ifdef TI_EZ80
+#include "headers/neonio.h"
 #include "extern/nio_ce.h"
 nio_console console;
 #endif
