@@ -10,30 +10,21 @@ section .text
 prev_process:   dl 0
 process:        dl 0
 old_stack:      dl 0
-return_address: dl 0
+ret_address:    dl 0
 
 
 public  _reset_stack_and_registers
 _reset_stack_and_registers:
-    ; récupère l'adresse de retour de la fonction
-    pop hl
-    ld (return_address), hl
-    
-    pop iy ; récupère l'adresse du buffer
     pop hl ; récupère l'adresse de retour de la fonction
+    pop iy ; récupère l'adresse du buffer
 
     ; load les registres
     ld ix, (3 + iy)
     ld iy, (iy)
     ld sp, iy
 
-    ; remet des arguments bidon pour conserver la taille de la pile
-    push hl
-    push hl
-
-    ; remet l'adresse de retour de la fonction sur le sommet de la pile
-    ld hl, (return_address)
-    push hl
+    push hl ; remet un argument bidon pour conserver la taille de la pile
+    push hl ; remet l'adresse de retour de la fonction sur le sommet de la pile
 
     ret
 
@@ -41,7 +32,7 @@ public  _save_stack_and_registers
 _save_stack_and_registers:
     ; récupère l'adresse de retour de la fonction
     pop hl
-    ld (return_address), hl
+    ld (ret_address), hl
 
     pop iy ; récupère l'adresse du buffer
 
@@ -56,7 +47,7 @@ _save_stack_and_registers:
     push hl
 
     ; remet l'adresse de retour au sommet de la pile
-    ld hl, (return_address)
+    ld hl, (ret_address)
     push hl
 
     ret
@@ -65,20 +56,20 @@ public  _switch_registers
 _switch_registers:
     ; enregistre les arguments dans des variables globales
     pop hl
-    ld (return_address), hl
+    ld (ret_address), hl
 
     pop hl
-    ld (prev_process), hl
-    pop hl
     ld (process), hl
+    pop hl
+    ld (prev_process), hl
 
     ; on sauvegarde la pile dans hl
     ld hl, $0
     add hl, sp
 
     ; on sauvegarde les registres sauvegardés sur la pile
-    push hl
     push ix
+    push hl
 
     ; on enregistre l'adresse du sommet de pile après avoir poussé hl (sp) et ix
     ld bc, $6
@@ -122,7 +113,7 @@ _switch_registers:
     push hl
 
     ; remet l'adresse de retour sur la pile
-    ld hl, (return_address)
+    ld hl, (ret_address)
     push hl
 
     ret

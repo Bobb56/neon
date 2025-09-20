@@ -15,7 +15,7 @@ typedef struct NeSave
 
 
 // état d'un processus
-#define Uninitialized   0   
+#define Uninitialized   0
 #define Running         1
 #define Finished        2
 

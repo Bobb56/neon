@@ -864,7 +864,6 @@ void execFile(char* filename)
     if (program == NULL)
         return ;
     
-    //printf("Création de l'arbre syntaxique\n");
 
     global_env->FILENAME = strdup(filename);
     
@@ -874,7 +873,6 @@ void execFile(char* filename)
     
     free(program);
 
-    //printf("Arbre syntaxique terminé\n");
 
     if (global_env->CODE_ERROR != 0)
     {

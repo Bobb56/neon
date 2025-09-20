@@ -1,0 +1,21 @@
+coller les nouvelles sources dans Sources
+
+Modifier headers.h pour windows 11, compliler pour windows 11
+fichier d'installation windows 11
+
+Modifier headers.h pour windows 10, compliler pour windows 10
+fichier d'installation windows 10
+
+fichier de syntaxe NPP
+
+programmes Neon d'exemples
+
+headers.c + WASM
+
+headers.c + TI-83 PCE
+
+redémarrer sur linux et compiler Neon et Neon.deb
+
+
+NE JAMAIS CHANGER LES NOMS DES FICHIERS D'EXEMPLES OU EN ENLEVER tant qu'il n'y a pas un autre hébergeur que TI-Planet pour les sources Neon.
+--> Peut-être les mettre séparément dans TI-Planet.

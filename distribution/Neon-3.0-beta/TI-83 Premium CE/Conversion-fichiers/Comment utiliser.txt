@@ -1,0 +1,1 @@
+Lancez simplement le programme CONVERTISSEUR.bat en vous assurant que le fichier à convertir est dans le même dossier

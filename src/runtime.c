@@ -155,13 +155,6 @@ NO_OPT void neon_interp_yield(void) {
             // on est sûrs que le processus précédent dans la chaîne était vraiment le processus précédent
             // on change les registres après les avoir sauvegardés et on change de pile
 
-            /*printString("switch ");
-            printInt(global_env->process_cycle->prev->process->id);
-            printString(" ");
-            printInt(global_env->process_cycle->process->id);
-            printString("\n");
-            neon_pause("");*/
-
             switch_registers(global_env->process_cycle->process, global_env->process_cycle->prev->process);
         }
     }
@@ -177,12 +170,6 @@ NO_OPT void neon_interp_next_process(void) {
 
     // on passe au prochain processus non terminé
     global_env->process_cycle = loadNextLivingProcess(global_env->process_cycle);
-
-    /*printString("np: switch ");
-    printInt(global_env->process_cycle->prev->process->id);
-    printString(" ");
-    printInt(global_env->process_cycle->process->id);
-    printString("\n");*/
 
     // on passe sur la pile et les registres du processus suivant
     switch_registers(global_env->process_cycle->process, global_env->process_cycle->prev->process);
@@ -208,9 +195,6 @@ Quand le processus aura terminé, il retournera ici, et on pourra le supprimer d
 // en effet, la fonction reset_stack_and_registers va passer au contexte de la fonction exitRuntime, donc l'épilogue de launch_process
 // doit démonter correctement le contexte de exitRuntime
 NO_OPT void launch_process(void) {
-    /*printString("Launch process ");
-    printInt(global_env->process_cycle->process->id);
-    newLine();*/
 
     // pour être sûr d'avoir cleané le dernier processus qui a terminé
     ProcessCycle_clean(global_env->process_cycle);
@@ -218,12 +202,6 @@ NO_OPT void launch_process(void) {
     global_env->process_cycle->process->state = Running;
 
     NeObj result = eval_aux(global_env->process_cycle->process->original_call);
-
-
-
-    //printString("End process ");
-    //printInt(global_env->process_cycle->process->id);
-    //newLine();
 
     // on marque le processus comme terminé, il sera supprimé automatiquement par neon_interp_next_process
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
@@ -2074,7 +2052,6 @@ NO_OPT void exitRuntime(void) {
     process_preRemove(global_env->process_cycle->process);
 
     if (ProcessCycle_isActive(global_env->process_cycle)) { // il reste des processus annexes à exécuter
-        printString("saut direct à eval_aux après la fin du processus principal\n");
 
         // ici, on sauvegarde les registres sauvegardés et la pile dans le processus actuel
         // comme ça quand on va passer au prochain processus, ils vont être transférés de processus en processus et restaurés à la fin

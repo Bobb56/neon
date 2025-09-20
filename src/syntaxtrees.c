@@ -1987,8 +1987,6 @@ void createSyntaxTree(Tree* tree, char* program)
     intlist lines = intlist_create(0);
     Ast** ast;
 
-    //printf("Debut cut...\n");
-
     cut(tokens, &types, program, true, &lines);
 
     if (global_env->CODE_ERROR != 0) {
@@ -2000,8 +1998,6 @@ void createSyntaxTree(Tree* tree, char* program)
 
     ast = ast_create(&types);
 
-    //printf("Debut parse...\n");
-        
     parse(tokens, types, ast, &lines, 0);
 
     if (global_env->CODE_ERROR != 0) {
@@ -2012,7 +2008,6 @@ void createSyntaxTree(Tree* tree, char* program)
         return;
     }
 
-    //printf("Debut statements...\n");
 
     statements(&types, tokens, ast, &lines, 0);
 
@@ -2024,9 +2019,6 @@ void createSyntaxTree(Tree* tree, char* program)
         return;
     }
 
-    //printf("SyntaxTreeAux\n");
-    //strlist_aff(tokens);
-    //ast_aff(ast, tokens->len);
     
     createSyntaxTreeAux(tree, ast, tokens, &lines, 0);
 
