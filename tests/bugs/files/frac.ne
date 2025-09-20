@@ -36,20 +36,21 @@ function Frac~reduced(frac) do
     return (frac2)
 end
 
-
-function Frac~mul(a, b) do
+method fractionize(a) do
     if (type(a) == 'Integer') then
         a = Frac(a)
-    elif (type(b) == 'Integer') then
-        b = Frac(b)
     end
+end
+
+
+function Frac~mul(a, b) do
+    a.fractionize()
+    b.fractionize()
     return (Frac~reduced(Frac(num: a>>num * b>>num, denom: a>>denom * b>>denom)))
 end
 
 function Frac~inv(a) do
-    if (type(a) == 'Integer') then
-        a = Frac(a)
-    end
+    a.fractionize()
     return (Frac(num: a>>denom, denom: a>>num))
 end
 
@@ -58,11 +59,15 @@ function Frac~div(a, b) do
 end
 
 function Frac~add(a, b) do
+    a.fractionize()
+    b.fractionize()
     frac = Frac(num: a>>num * b>>denom + b>>num * a>>denom, denom: b>>denom * a>>denom)
     return (Frac~reduced(frac))
 end
 
 function Frac~sub(a, b) do
+    a.fractionize()
+    b.fractionize()
     frac = Frac(num: a>>num * b>>denom - b>>num * a>>denom, denom: b>>denom * a>>denom)
     return (Frac~reduced(frac))
 end

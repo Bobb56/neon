@@ -461,14 +461,20 @@ char* int_to_str(intptr_t number)//nombre en chaine de caractère
         return strdup("0");
     }
     else {
+        // on se souvient de si le nombre est négatif ou pas, et on le met en valeur absolue
+        bool neg = number < 0;
+        if (neg)
+            number = -number;
+        
         int lenstr = nbdigits(number) + 1;
 
-        if (number < 0)
+        if (neg)
             lenstr++;
 
         char* strNombre = malloc(sizeof(char) * lenstr);
         int i = lenstr - 1;
         strNombre[i--] = '\0';
+        
 
         while (number > 0) {
             strNombre[i--] = number%10 + '0';
@@ -476,7 +482,7 @@ char* int_to_str(intptr_t number)//nombre en chaine de caractère
             number /= 10;
         }
 
-        if (number < 0)
+        if (neg)
             strNombre[0] = '-';
 
         return strNombre;
