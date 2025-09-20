@@ -2,7 +2,7 @@
  * @file nio_ce.h
  * @author  Julian Mackeben aka compu <compujuckel@googlemail.com>
  * @author  Adrien Bertrand aka Adriweb (CE port and mods)
- * @author  Raphaël Le Puillandre for Neon (removes dependencies to stdio.h)
+ * @author  Raphaël Le Puillandre for Neon (remove dependencies to stdio.h)
  * @version 4.0
  *
  * @section LICENSE

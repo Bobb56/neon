@@ -2,6 +2,7 @@
 
 #include "headers/neon.h"
 #include "headers/runtime.h"
+#include "headers/neonio.h"
 
 
 #ifdef TI_EZ80
@@ -73,7 +74,6 @@ Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
 - Les arguments optionnels sont évalués lors de la définition de la fonction et non lors de l'appel +0.0.0.1
 - Changement des plateformes : LINUX_AMD64, WINDOWS_AMD64 et TI_EZ80. Toutes les versions windows n'ont pas de couleurs par défaut
 
---> Ne pas oublier de mettre à jour la documentation de Neon avec tout ça
 */
 
 

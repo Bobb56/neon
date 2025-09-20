@@ -31,9 +31,9 @@ method Frac~reduce(frac) do
 end
 
 function Frac~reduced(frac) do
-    frac' = frac.copy()
-    frac'.Frac~reduce()
-    return (frac')
+    frac2 = frac.copy()
+    frac2.Frac~reduce()
+    return (frac2)
 end
 
 
