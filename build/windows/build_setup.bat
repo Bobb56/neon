@@ -1,5 +1,5 @@
 cd ../../
-make -f Makefile.windows
+make -f Makefile.windows_amd64
 cd build/windows
 
 iscc neon.iss
