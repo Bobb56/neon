@@ -563,18 +563,18 @@ get_stack:
     sd      s11, 96(dest_index);
 
 
-#define SAVE_FP_REGISTERS()         \
-    fsd     fs0,  104(dest_index);  \
-    fsd     fs1,  112(dest_index);  \
-    fsd     fs2,  120(dest_index);  \
-    fsd     fs3,  128(dest_index);  \
-    fsd     fs4,  136(dest_index);  \
-    fsd     fs5,  144(dest_index);  \
-    fsd     fs6,  152(dest_index);  \
-    fsd     fs7,  160(dest_index);  \
-    fsd     fs8,  168(dest_index);  \
-    fsd     fs9,  176(dest_index);  \
-    fsd     fs10, 184(dest_index);  \
+#define SAVE_FP_REGISTERS(dest_index)   \
+    fsd     fs0,  104(dest_index);      \
+    fsd     fs1,  112(dest_index);      \
+    fsd     fs2,  120(dest_index);      \
+    fsd     fs3,  128(dest_index);      \
+    fsd     fs4,  136(dest_index);      \
+    fsd     fs5,  144(dest_index);      \
+    fsd     fs6,  152(dest_index);      \
+    fsd     fs7,  160(dest_index);      \
+    fsd     fs8,  168(dest_index);      \
+    fsd     fs9,  176(dest_index);      \
+    fsd     fs10, 184(dest_index);      \
     fsd     fs11, 192(dest_index);
 
 
@@ -594,18 +594,18 @@ get_stack:
     ld      s11, 96(dest_index);
 
 
-#define LOAD_FP_REGISTERS()         \
-    fld     fs0,  104(dest_index);  \
-    fld     fs1,  112(dest_index);  \
-    fld     fs2,  120(dest_index);  \
-    fld     fs3,  128(dest_index);  \
-    fld     fs4,  136(dest_index);  \
-    fld     fs5,  144(dest_index);  \
-    fld     fs6,  152(dest_index);  \
-    fld     fs7,  160(dest_index);  \
-    fld     fs8,  168(dest_index);  \
-    fld     fs9,  176(dest_index);  \
-    fld     fs10, 184(dest_index);  \
+#define LOAD_FP_REGISTERS(dest_index)   \
+    fld     fs0,  104(dest_index);      \
+    fld     fs1,  112(dest_index);      \
+    fld     fs2,  120(dest_index);      \
+    fld     fs3,  128(dest_index);      \
+    fld     fs4,  136(dest_index);      \
+    fld     fs5,  144(dest_index);      \
+    fld     fs6,  152(dest_index);      \
+    fld     fs7,  160(dest_index);      \
+    fld     fs8,  168(dest_index);      \
+    fld     fs9,  176(dest_index);      \
+    fld     fs10, 184(dest_index);      \
     fld     fs11, 192(dest_index);
 
 
