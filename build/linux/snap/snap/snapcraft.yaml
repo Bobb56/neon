@@ -8,13 +8,6 @@ description: |
 grade: stable
 confinement: strict
 
-architectures:
-  - build-on: [amd64]
-    run-on: [amd64]
-  - build-on: [riscv64]
-    run-on: [riscv64]
-
-
 
 apps:
   neon-interpreter:
