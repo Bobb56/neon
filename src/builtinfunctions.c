@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "headers/constants.h"
+#include "headers/graphics.h"
 #include "headers/neonio.h"
 #include "headers/builtinfunctions.h"
 #include "headers/dynarrays.h"
@@ -432,6 +433,24 @@ NeObj _help_(NeList* args)
                         setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(WHITE);newLine();
                     }
                 }
+            }
+            // aide à propos d'un type de container
+            else if (NEO_TYPE(ARG(i)) == TYPE_STRING && strlist_inList(global_env->CONTAINERS, neo_to_string(ARG(i)))) {
+                int index = strlist_index(global_env->CONTAINERS, neo_to_string(ARG(i)));
+
+                printString(neo_to_string(ARG(i))); printString(" is a container type."); 
+                newLine();
+
+                printString("The required fields are : ");
+
+                NeList* fields = neo_to_list(global_env->ATTRIBUTES->tab[index]);
+                for (int j = 0 ; j < fields->len - 1 ; j++) {
+                    printString(neo_to_string(fields->tab[j]));
+                    printString(", ");
+                }
+                printString(neo_to_string(fields->tab[fields->len - 1]));
+
+                newLine();
             }
             // aide à propos d'un objet quelconque
             else {
@@ -1062,3 +1081,17 @@ NeObj _setColor_(NeList* args) {
     return neo_none_create();
 }
 
+
+NeObj _initGraphics_(NeList* args) {
+    #if !defined(LINUX)
+    global_env->CODE_ERROR = 115;
+    return NEO_VOID;
+    #else
+
+    // fonction pour charger en mémoire les fonctions graphiques définies dans graphics.c et définir les types de container utilisés
+    initGraphics();
+
+    #endif
+
+    return neo_none_create();
+}

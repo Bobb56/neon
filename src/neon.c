@@ -129,7 +129,8 @@ void loadFunctions(NeonEnv* env)
         "copy",
         "loadNamespace",
         "gc",
-        "setColor"
+        "setColor",
+        "initGraphics"
     };
 
     // built-in functions
@@ -511,6 +512,13 @@ void loadFunctions(NeonEnv* env)
             .nbArgs = 1,
             .typeArgs = (int[]){TYPE_STRING},
             .typeRetour = TYPE_NONE
+        },
+        (Function) {
+            .ptr = _initGraphics_,
+            .help = "Initializes graphic and keyboard library",
+            .nbArgs = 0,
+            .typeArgs = NULL,
+            .typeRetour = TYPE_NONE
         }
     };
 
@@ -543,10 +551,11 @@ void loadExceptions(NeonEnv* env) {
         "UnknownError",
         "AssertionFailed",
         "DefinitionError",
-        "KeyboardInterrupt"
+        "KeyboardInterrupt",
+        "NotImplemented"
     };
 
-    for (int i = 0 ; i < 15 ; i++) {
+    for (int i = 0 ; i < 16 ; i++) {
         strlist_append(env->EXCEPTIONS, strdup(exceptions[i]));
     }
 }

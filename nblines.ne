@@ -13,7 +13,10 @@ files = [
     "objects.c",
     "processcycle.c",
     "main.c",
-    "lowlevel.S",
+    "win_amd64.S",
+    "linux_amd64.S",
+    "linux_riscv64.S",
+    "ez80.asm",
     
     "headers/errors.h",
     "headers/builtinfunctions.h",

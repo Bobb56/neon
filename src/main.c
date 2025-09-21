@@ -49,30 +49,8 @@ Avancement et choses à faire :
 
 NOUVEAUTéS depuis la dernière publication :
 -------------------------------------------
-- Nouveaux algorithmes de parsing : +0.1
-    - Possibilité d'appeler des fonctions juste après l'indexation de liste, et de combiner ces schémas comme bon nous semble
-    - Meilleure gestion des parenthèses dans les expressions
-- Multiples blocs except +0.1
-- Indication de la ligne du programme où l'erreur est survenue, et affichage de la ligne, peu importe l'erreur +0.1
-- Variable Ans qui stocke le résultat des expressions dans le terminal +0.0.1
-- Multiplications entre booléens et listes/strings/nombres +0.0.1
-- Fonctionnalités étendues de la fonction help +0.0.0.1
-- Compteur de références, nouveaux algorithmes de comparaison, de copie et fonction built-in de copie +0.1
-Ajout d'un Garbage Collector et d'une fonction gc faisant appel à celui-ci
-- Possibilité d'utiliser le caractère ~ dans les noms d'identificateurs pour définir des modules (pour faire des abstractions) +0.0.1
-- Fonction loadNamespace pour pouvoir utiliser les fonctions sans les Prefix~ +0.0.1
-- Fonctionnalités étendues de la fonction help : Affichage des types des variables dans help('variables'), ajout de help('modules'), et de l'affichage de l'aide d'un module +0.0.0.1
-- Réécriture du runtime pour utiliser la pile système +0.1
-- Ajout d'une fonction setColor +0.0.1
-- Possibilité de surcharger les opérateurs add, sub, mul, div, minus, pow, mod, eucl, in ainsi que == et comparaison qui renvoie un entier +0.1
-- Amélioration de la fonction exception et renommage en fonction raise +0.0.0.1
-- Possibilité de faire des boucles for en rajoutant un pas, en enlevant la valeur de départ, et en itérant sur des listes et les chaines de caractères +0.1
-- Optimisation des multiplications de chaînes de caractères +0.0.0.1
-- Opérateurs or et and paresseux +0.0.0.1
-- Refonte du système d'objets : les objets sont maintenant (partiellement) stockés sur la pile +0.1
-- Éclatement du type Number en Integer et Real
-- Les arguments optionnels sont évalués lors de la définition de la fonction et non lors de l'appel +0.0.0.1
-- Changement des plateformes : LINUX_AMD64, WINDOWS_AMD64 et TI_EZ80. Toutes les versions windows n'ont pas de couleurs par défaut
+- Fonction initGraphics, fonction draw, nouveaux containers
+- Amélioration de la fonction help avec les containers
 
 */
 
