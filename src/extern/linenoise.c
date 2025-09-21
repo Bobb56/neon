@@ -112,7 +112,7 @@ linenoise.c -- guerrilla line editing library against the idea that a
 
 #include "../headers/constants.h"
 
-#ifdef LINUX_AMD64
+#ifdef LINUX
 
 #include "linenoise.h"
 #include "../headers/neonio.h"
