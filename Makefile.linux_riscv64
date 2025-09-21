@@ -1,9 +1,9 @@
 # Nom de l'exécutable final
-TARGET = bin/neon
+TARGET = bin/neon_rv64
 
 # Compilateur et options
-CC = gcc
-ASM = gcc
+CC = riscv64-linux-gnu-gcc
+ASM = riscv64-linux-gnu-gcc
 CFLAGS = -O3 -fno-fast-math -ftrapping-math -fsigned-zeros -frounding-math -g # -pg -fsanitize=address
 LDFLAGS = -lm -g # Flags de linkage
 ASMFLAGS = -g

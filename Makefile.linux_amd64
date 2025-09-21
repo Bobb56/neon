@@ -1,5 +1,5 @@
 # Nom de l'exécutable final
-TARGET = bin/neon
+TARGET = bin/neon_amd64
 
 # Compilateur et options
 CC = gcc

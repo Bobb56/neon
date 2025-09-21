@@ -2034,6 +2034,9 @@ NO_OPT void exitRuntime(void) {
     #ifdef LINUX_AMD64
     ADD_STACK_SIZE(16);
     #endif
+    #ifdef LINUX_RISCV64
+    ADD_STACK_SIZE(16);
+    #endif
     #ifdef WINDOWS_AMD64
     ADD_STACK_SIZE(32);
     #endif
