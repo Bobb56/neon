@@ -1,5 +1,5 @@
 # Nom de l'exécutable final
-TARGET = bin/neon_rv64
+TARGET = bin/neon
 
 # Compilateur et options
 CC = riscv64-linux-gnu-gcc
@@ -13,7 +13,7 @@ C_src = src/neon.c src/operators.c src/builtinfunctions.c src/strings.c src/dyna
 
 C_OBJECTS = $(patsubst src/%.c,obj/%.o,$(C_src))
 
-ASM_src = src/lowlevel.S
+ASM_src = src/linux_riscv64.S
 ASM_OBJECTS = $(patsubst src/%.S,obj/%.o,$(ASM_src))
 
 # Règle par défaut
