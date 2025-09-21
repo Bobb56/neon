@@ -7,10 +7,23 @@
 #include "headers/dynarrays.h"
 #include "headers/runtime.h"
 
+/*
+TODO :
+- setPixel(x, y, color)
+- getKey()
+- really implement
+
+
+Une couleur à None correspond à du transparent
+
+
+*/
+
+
 static struct ContainersAssoc graphic_containers;
 
 void initGraphics(void) {
-    int nb_types = 5;
+    int nb_types = 6;
 
     struct ContainerType container_types[] = {
         (struct ContainerType) {
@@ -42,21 +55,46 @@ void initGraphics(void) {
             .fields = (char*[]) {"x1", "y1", "x2", "y2", "color"},
             .nb_fields = 5,
             .container_assoc_index = &graphic_containers.Line
+        },
+        (struct ContainerType) {
+            .name = "Text",
+            .fields = (char*[]) {"text", "x", "y", "fgcolor", "bgcolor", "size"},
+            .nb_fields = 6,
+            .container_assoc_index = &graphic_containers.Text
         }
     };
 
     for (int i = 0 ; i < nb_types ; i++) {
-        *container_types[i].container_assoc_index = global_env->CONTAINERS->len; // on set le type de container
-        strlist_append(global_env->CONTAINERS, strdup(container_types[i].name));
-        NeList* fields = nelist_create(container_types[i].nb_fields);
+        int index = 0; // l'indice du container dans CONTAINERS
+
+        // on regarde si ce type de container existe déjà
+        if (strlist_inList(global_env->CONTAINERS, container_types[i].name)) {
+            index = strlist_index(global_env->CONTAINERS, container_types[i].name);
+        }
+        else {
+            index = global_env->CONTAINERS->len;
+            strlist_append(global_env->CONTAINERS, strdup(container_types[i].name));
+            nelist_append(global_env->ATTRIBUTES, NEO_VOID);
+        }
+
+        *container_types[i].container_assoc_index = index; // on associe le type de container à son indice dans CONTAINERS
 
         // crée la NeList des attributs
+        NeList* fields = nelist_create(container_types[i].nb_fields);
         for (int j = 0 ; j < container_types[i].nb_fields ; j++) {
             fields->tab[j] = neo_str_create(strdup(container_types[i].fields[j]));
         }
 
-        // ajout de la liste d'attributs au tableau d'attributs global
-        nelist_append(global_env->ATTRIBUTES, gc_extern_neo_list_convert(fields));
+        // et on met la liste d'attributs dans le tableau d'attributs global
+        if (!neo_is_void(global_env->ATTRIBUTES->tab[index]) && !nelist_equal(neo_to_list(global_env->ATTRIBUTES->tab[index]), fields)) {
+            // si on met pas ce garde fou, on peut overrider le type de container en silence
+            nelist_destroy(fields);
+            global_env->CODE_ERROR = 116;
+            return;
+        }
+
+        neobject_destroy(global_env->ATTRIBUTES->tab[index]);
+        global_env->ATTRIBUTES->tab[index] = gc_extern_neo_list_convert(fields);
     }
 
 
@@ -81,8 +119,9 @@ void initGraphics(void) {
     {
         Function f = functions[i];
         NeObj func = neo_fun_create(f.ptr, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
-        strlist_append(global_env->NOMS, strdup(names[i]));
-        nelist_append(global_env->ADRESSES, func);
+
+        Var var = get_var(names[i]);
+        replace_var(var, func);
     }
     return;
 
@@ -115,6 +154,9 @@ void draw_obj(NeObj obj) {
         }
         else if (c->type == graphic_containers.Line) { // draws a line
             printString("line\n");
+        }
+        else if (c->type == graphic_containers.Text) { // draws text
+            printString("text\n");
         }
         else {
             draw_nelist(c->data);

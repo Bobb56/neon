@@ -123,7 +123,8 @@ static const char* error_messages[NB_ERRORS] = {
     "listComp range parameters must be integers",
     "This object cannot be converted to an integer",
     "This function can only receive integer numbers of real numbers as arguments",
-    "This functionality has not been implemented yet"
+    "This functionality has not been implemented yet",
+    "Cannot initialize graphics without overriding an already defined type"
 };
 
 
@@ -244,7 +245,8 @@ static const int error_codes_exceptions[NB_ERRORS] = {
     9,
     9,
     9,
-    15
+    15,
+    13
 };
 
 

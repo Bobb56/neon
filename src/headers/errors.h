@@ -4,7 +4,7 @@
 #include "constants.h"
 #include "dynarrays.h"
 
-#define NB_ERRORS 116
+#define NB_ERRORS 117
 
 void printError(int code);
 void affLine(char* file, int line);

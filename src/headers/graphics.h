@@ -9,6 +9,7 @@ struct ContainersAssoc {
     int Rect, FilledRect;
     int Circle, FilledCircle;
     int Line;
+    int Text;
 };
 
 struct ContainerType {
