@@ -21,10 +21,23 @@ Ajout d'un type de données NeObject : +0.0.1
 
 // constantes qui pilotent le code spécifique à l'OS/architecture
 // ça fonctionne sur GCC et aussi sur Clang normalement
-#if defined(__linux__) && defined(__x86_64__)
-    #define LINUX_AMD64
-#elif defined(_WIN64) && defined(__x86_64__)
-    #define WINDOWS_AMD64
+#if defined(__linux__)
+    #define LINUX
+    #if defined(__x86_64__)
+        #define LINUX_AMD64
+    #elif defined(__riscv) && __riscv_xlen == 64
+        #define LINUX_RISCV64
+        #ifdef __riscv_f
+            #define RISCV_FLOATING_POINT_EXTENSION
+        #endif
+    #endif
+#elif defined(_WIN64)
+        #define WINDOWS
+        #if defined(__x86_64__)
+            #define WINDOWS_AMD64
+        #elif defined(__arm64__)
+            #define WINDOWS_ARM64
+        #endif
 #else
     #define TI_EZ80
 #endif
@@ -34,6 +47,9 @@ Ajout d'un type de données NeObject : +0.0.1
 #ifdef LINUX_AMD64
     #define PLATFORM "LINUX_AMD64"
 #endif
+#ifdef LINUX_RISCV64
+    #define PLATFORM "LINUX_RISCV64"
+#endif
 #ifdef WINDOWS_AMD64
     #define PLATFORM "WINDOWS_AMD64"
 #endif
@@ -42,7 +58,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #endif
 
 
-#if defined(LINUX_AMD64) || defined(TI_EZ80)
+#if defined(LINUX) || defined(TI_EZ80)
     // a définir uniquement si la console standard du système d'exploitation visé supporte les couleurs
     #define COLOR
 #endif
@@ -76,6 +92,8 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #if defined(LINUX_AMD64)
     #define REG_BUFFER_SIZE 56 // taille de la zone de sauvegarde de registres dans les processus
+#elif defined(LINUX_RISCV64)
+    #define REG_BUFFER_SIZE 200
 #elif defined(WINDOWS_AMD64)
     #define REG_BUFFER_SIZE 232
 #elif defined(TI_EZ80)

@@ -11,13 +11,13 @@
 #include "headers/neon.h"
 #include "headers/parser.h"
 
-#ifdef WINDOWS_AMD64
+#ifdef WINDOWS
 #include <stdio.h>
 #endif
 
 void cleanStdin(void)// vide le buffer
 {
-#ifdef WINDOWS_AMD64
+#ifdef WINDOWS
     int c = 0;
     while ((c = getchar()) != '\n' && c != EOF);
 #endif
@@ -307,7 +307,7 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non compl√©t√
 
 char* inputCode(char* text)
 {
-    #ifndef LINUX_AMD64
+    #ifndef LINUX
         setColor(BLUE);
         printString(text);
         setColor(WHITE);

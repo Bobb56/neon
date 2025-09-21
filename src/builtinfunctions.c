@@ -41,7 +41,7 @@ NeObj _print_(NeList* args)
 NeObj _input_(NeList* args)
 {
 
-    #ifndef LINUX_AMD64
+    #ifndef LINUX
 
         for (int i=0 ; i< args->len ; i++)
         {

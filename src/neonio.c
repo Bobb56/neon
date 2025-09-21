@@ -10,7 +10,7 @@
 #include "headers/parser.h"
 #include "headers/strings.h"
 
-#if defined(LINUX_AMD64) || defined(WINDOWS_AMD64)
+#if defined(LINUX) || defined(WINDOWS)
 #include <stdio.h>
 #elif defined(TI_EZ80)
 #include "extern/nio_ce.h"
@@ -74,7 +74,7 @@
         return ;
     }
 
-    #ifndef LINUX_AMD64
+    #ifndef LINUX
         char* input(char *text)
         {
             char* var=malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
@@ -185,9 +185,9 @@
     
     void clearConsole(void)
     {
-        #if defined(LINUX_AMD64)
+        #if defined(LINUX)
             int result = system("clear");
-        #elif defined(WINDOWS_AMD64)
+        #elif defined(WINDOWS)
             int result = system("cls");
         #endif
     }

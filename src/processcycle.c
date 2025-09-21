@@ -2,14 +2,14 @@
 #include <stdlib.h>
 
 #include "headers/processcycle.h"
+#include "headers/constants.h"
 #include "headers/neon.h"
 
 
 
 // dans le cas où il n'y en n'a pas, elle renvoie le même processus
 // renvoie le prochain processus en zappant ceux qui sont marqués Finished
-__attribute__((noinline))
-ProcessCycle* loadNextLivingProcess(ProcessCycle* pc) {
+NO_INLINE ProcessCycle* loadNextLivingProcess(ProcessCycle* pc) {
     do {
         pc = pc->next;
     }
@@ -21,8 +21,7 @@ ProcessCycle* loadNextLivingProcess(ProcessCycle* pc) {
 
 
 
-__attribute__((noinline))
-void unloadCurrentProcess(Process* p) {
+NO_INLINE void unloadCurrentProcess(Process* p) {
     switchGlobalLocalVariables(p->varsToSave);
 }
 
@@ -110,8 +109,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitializ
 }
 
 /*
-__attribute__((noinline))
-void ProcessCycle_print(ProcessCycle* cycle) {
+NO_INLINE void ProcessCycle_print(ProcessCycle* cycle) {
     ProcessCycle* sov = cycle;
     do {
         printString("Process n°");
@@ -132,8 +130,8 @@ void ProcessCycle_print(ProcessCycle* cycle) {
 */
 
 // renvoie vrai si et seulement si : il existe un processus dans ce cycle => ce processus a fini
-__attribute__((noinline))
-bool ProcessCycle_isActive(ProcessCycle* cycle) {
+
+NO_INLINE bool ProcessCycle_isActive(ProcessCycle* cycle) {
     ProcessCycle* cycle_sov = cycle;
     do {
         if (cycle->process->state != Finished)
@@ -151,8 +149,7 @@ bool ProcessCycle_isEmpty(ProcessCycle* pc) {
 
 
 // supprime les processus ayant terminé, ne change pas le processus actuel, même si il a terminé
-__attribute__((noinline))
-void ProcessCycle_clean(ProcessCycle* cycle) {
+NO_INLINE void ProcessCycle_clean(ProcessCycle* cycle) {
     ProcessCycle* cycle_sov = cycle;
 
     cycle = cycle->next;
@@ -168,8 +165,8 @@ void ProcessCycle_clean(ProcessCycle* cycle) {
 }
 
 
-__attribute__((noinline))
-void process_preRemove(Process* p) {
+
+NO_INLINE void process_preRemove(Process* p) {
     //printf("End process %d\n", p->id);
     p->state = Finished;
     switchGlobalLocalVariables(p->varsToSave);
@@ -180,8 +177,7 @@ void process_preRemove(Process* p) {
 /*
 Cette fonction supprime le processus actuel et passe au processus suivant
 */
-__attribute__((noinline))
-ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
+NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
     Process* p = pc->process;
 
     free(p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés

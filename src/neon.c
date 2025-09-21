@@ -26,7 +26,7 @@ NeonEnv* global_env = NULL;
 
 
 
-#ifdef LINUX_AMD64
+#ifdef LINUX
     #include <signal.h>
 
     void handle_signal(int sig) {
@@ -621,13 +621,13 @@ void NeonEnv_destroy(NeonEnv* env) {
 
 void neonInit(void)
 {
-    #ifdef LINUX_AMD64
+    #ifdef LINUX
         linenoiseSetMultiLine(1); // spécial pour linenoise
         signal(SIGINT, handle_signal);
         signal(SIGTERM, handle_signal);
     #endif
     
-    #ifdef WINDOWS_AMD64
+    #ifdef WINDOWS
         SetConsoleCtrlHandler(ctrlHandler, TRUE);
     #endif
 
