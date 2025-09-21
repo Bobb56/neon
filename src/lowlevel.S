@@ -738,7 +738,7 @@ switch_registers:
     # si le processus est un processus non encore initialisé, on saute à launch_process
     # on charge l'état du processus dans rax
     lb      t0, REG_BUFFER_SIZE(a0)
-    bnez    t0, zero, switch_registers_skip # la valeur Uninitialized correspond à zéro
+    bnez    t0, switch_registers_skip # la valeur Uninitialized correspond à zéro
 
     # et on lance le processus (on fait un call pour garder l'alignement de la pile, mais il ne reviendra jamais ici)
     call    launch_process
