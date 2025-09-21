@@ -2031,16 +2031,13 @@ void initRuntime(void) {
 NO_OPT void exitRuntime(void) {
 
     // pour avoir la même taille de pile utilisée que la fonction launch_process
-    #ifdef LINUX_AMD64
+    #if defined(LINUX_AMD64)
     ADD_STACK_SIZE(16);
-    #endif
-    #ifdef LINUX_RISCV64
+    #elif defined(LINUX_RISCV64)
     ADD_STACK_SIZE(16);
-    #endif
-    #ifdef WINDOWS_AMD64
+    #elif defined(WINDOWS_AMD64)
     ADD_STACK_SIZE(32);
-    #endif
-    #ifdef TI_EZ80
+    #elif defined(TI_EZ80)
     ADD_STACK_SIZE(14);
     #endif
 
