@@ -7,12 +7,19 @@
 #include "headers/dynarrays.h"
 #include "headers/runtime.h"
 
+#ifdef TI_EZ80
+#include <graphx.h>
+#include <ti/getcsc.h>
+#endif
+
 /*
 TODO :
 - setPixel(x, y, color)
-- getKey()
-- really implement
-
+- getPixel(x, y)
+- really implement graphic functions
+- Objet FloodFill, Triangle, FillTriangle, ellipse, polygon
+- get_string_width
+- la fonction pour afficher du texte fait grossir à tour de rôle le scaling factor pour width et height
 
 Une couleur à None correspond à du transparent
 
@@ -99,13 +106,21 @@ void initGraphics(void) {
 
 
     // functions
-    int nb_functions = 1;
+    int nb_functions = 2;
 
     char* names[] = {
+        "getKey",
         "draw"
     };
 
     Function functions[] = {
+        (Function) {
+            .ptr = getKey,
+            .help = "Returns the code of the last key pressed or 0 if no key was pressed",
+            .nbArgs = 0,
+            .typeArgs = NULL,
+            .typeRetour = TYPE_INTEGER
+        },
         (Function) {
             .ptr = draw,
             .help = "Draws anything drawable",
@@ -126,6 +141,14 @@ void initGraphics(void) {
     return;
 
 }
+
+
+NeObj getKey(NeList* args) {
+    //uint8_t key = os_GetCSC();
+    return neo_integer_create(1);
+}
+
+
 
 
 

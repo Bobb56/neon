@@ -15,7 +15,7 @@
 #include "headers/syntaxtrees.h"
 #include "headers/lowlevel.h"
 #include "headers/processcycle.h"
-
+#include "headers/neonio.h"
 
 
 void update__name__(char* name)
@@ -1063,11 +1063,12 @@ NO_INLINE NeObj eval_aux(Tree* tree) {
         default:
         {
             global_env->CODE_ERROR = 19;
+            printString("0tree->type: ");printInt(tree->type);newLine();
             return NEO_VOID;
         }
 
     }
-
+    printString("1tree->type: ");printInt(tree->type);newLine();
     global_env->CODE_ERROR = 19;
     return NEO_VOID;
 }

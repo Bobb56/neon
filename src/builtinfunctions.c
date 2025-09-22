@@ -33,7 +33,7 @@ NeObj _print_(NeList* args)
         printString(" ");
     }
     newLine();
-  
+    
     return neo_none_create();
 }
 
@@ -1083,7 +1083,7 @@ NeObj _setColor_(NeList* args) {
 
 
 NeObj _initGraphics_(NeList* args) {
-    #if !defined(LINUX)
+    #if !defined(TI_EZ80)
     global_env->CODE_ERROR = 115;
     return NEO_VOID;
     #else

@@ -23,6 +23,7 @@ void initGraphics(void);
 void draw_nelist(NeList* list);
 void draw_obj(NeObj obj);
 NeObj draw(NeList* args);
+NeObj getKey(NeList* args);
 
 
 #endif
