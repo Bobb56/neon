@@ -357,13 +357,13 @@
     void setColor(unsigned char color)
     {
         if (color == BLUE)
-            nio_color(&console, NIO_COLOR_BLACK, NIO_COLOR_LIGHTBLUE);
+            nio_color(&console, NIO_COLOR_WHITE, NIO_COLOR_LIGHTBLUE);
         else if (color == GREEN)
-            nio_color(&console, NIO_COLOR_BLACK, NIO_COLOR_GREEN);
+            nio_color(&console, NIO_COLOR_WHITE, NIO_COLOR_GREEN);
         else if (color == RED)
-            nio_color(&console, NIO_COLOR_BLACK, NIO_COLOR_RED);
+            nio_color(&console, NIO_COLOR_WHITE, NIO_COLOR_RED);
         else if (color == WHITE)
-            nio_color(&console, NIO_COLOR_BLACK, NIO_COLOR_WHITE);
+            nio_color(&console, NIO_COLOR_WHITE, NIO_COLOR_BLACK);
     }
     
     

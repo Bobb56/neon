@@ -72,7 +72,7 @@ NOUVEAUTéS depuis la dernière publication :
 
     #ifdef TI_EZ80
         // récupération du nom de fichier si existant
-        nio_init(&console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NIO_COLOR_BLACK, NIO_COLOR_WHITE, true);
+        nio_init(&console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NIO_COLOR_WHITE, NIO_COLOR_BLACK, true);
         nio_set_default(&console);
 
         char* filename = argsAns();
