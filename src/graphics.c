@@ -28,7 +28,8 @@ Une couleur à None correspond à du transparent
 
 */
 
-
+// cette variable globale statique permet d'associer à chaque type de figure son indice
+// dans la liste CONTAINERS au moment où les types sont chargés en mémoire
 static struct ContainersAssoc graphic_containers;
 
 void initGraphics(void) {
@@ -236,3 +237,6 @@ NeObj setPixel(NeList* args) {
     gfx_SetPixel(neo_to_integer(ARG(0)), neo_to_integer(ARG(1)));
     return neo_none_create();
 }
+
+
+
