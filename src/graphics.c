@@ -1,3 +1,5 @@
+// cette bibliothèque est spécifique à ez80
+
 #include <string.h>
 #include "headers/graphics.h"
 #include "headers/constants.h"
@@ -7,10 +9,10 @@
 #include "headers/dynarrays.h"
 #include "headers/runtime.h"
 
-#ifdef TI_EZ80
+
 #include <graphx.h>
 #include <ti/getcsc.h>
-#endif
+
 
 /*
 TODO :

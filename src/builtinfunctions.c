@@ -4,7 +4,6 @@
 #include <math.h>
 
 #include "headers/constants.h"
-#include "headers/graphics.h"
 #include "headers/neonio.h"
 #include "headers/builtinfunctions.h"
 #include "headers/dynarrays.h"
@@ -19,6 +18,7 @@
 
 #ifdef TI_EZ80
 #include <sys/rtc.h>
+#include "headers/graphics.h"
 #endif
 
 
