@@ -106,11 +106,12 @@ void initGraphics(void) {
 
 
     // functions
-    int nb_functions = 2;
+    int nb_functions = 3;
 
     char* names[] = {
         "getKey",
-        "draw"
+        "draw",
+        "setPixel"
     };
 
     Function functions[] = {
@@ -126,6 +127,13 @@ void initGraphics(void) {
             .help = "Draws anything drawable",
             .nbArgs = -1,
             .typeArgs = (int[]) {TYPE_UNSPECIFIED},
+            .typeRetour = TYPE_NONE
+        },
+        (Function) {
+            .ptr = setPixel,
+            .help = "Sets the indicated pixel to the specified color",
+            .nbArgs = 3,
+            .typeArgs = (int[]) {TYPE_INTEGER, TYPE_INTEGER, TYPE_INTEGER},
             .typeRetour = TYPE_NONE
         }
     };
@@ -144,8 +152,8 @@ void initGraphics(void) {
 
 
 NeObj getKey(NeList* args) {
-    //uint8_t key = os_GetCSC();
-    return neo_integer_create(1);
+    uint8_t key = os_GetCSC();
+    return neo_integer_create(key);
 }
 
 
@@ -218,4 +226,11 @@ void draw_nelist(NeList* list) {
     for (int i = 0 ; i < list->len ; i++) {
         draw_obj(list->tab[i]);
     }
+}
+
+
+NeObj setPixel(NeList* args) {
+    gfx_SetColor(neo_to_integer(ARG(2)));
+    gfx_SetPixel(neo_to_integer(ARG(0)), neo_to_integer(ARG(1)));
+    return neo_none_create();
 }

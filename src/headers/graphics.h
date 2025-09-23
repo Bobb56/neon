@@ -24,6 +24,7 @@ void draw_nelist(NeList* list);
 void draw_obj(NeObj obj);
 NeObj draw(NeList* args);
 NeObj getKey(NeList* args);
+NeObj setPixel(NeList* args);
 
 
 #endif

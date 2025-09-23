@@ -675,7 +675,7 @@ void nio_scroll(nio_console* csl)
     memmove(c->data,c->data+c->max_x,c->max_x*(c->max_y-1));
     memmove(c->color,c->color+c->max_x,c->max_x*(c->max_y-1)*2);
     memset(c->data+(c->max_x*(c->max_y-1)),0,c->max_x);
-    memset(c->color+(c->max_x*(c->max_y-1)*2),0,c->max_x*2);
+    //memset(c->color+(c->max_x*(c->max_y-1)*2),0,c->max_x*2); // pour des raisons obscures, la présence de cette ligne introduit des bugs
     if (c->drawing_enabled) {
         nio_set_global_color(c->default_background_color);
         nio_vram_scroll(c->offset_x, c->offset_y, c->max_x*NIO_CHAR_WIDTH, c->max_y*NIO_CHAR_HEIGHT, NIO_CHAR_HEIGHT);

@@ -866,14 +866,12 @@ void execFile(char* filename)
     
     char* program = openFile(filename); // fonction dépendant du système cible
     
-    if (global_env->CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0) {
         printError(global_env->CODE_ERROR);
-    global_env->CODE_ERROR = 0;
-
-    if (program == NULL)
-        return ;
+        neon_pause("Press ENTER to leave Neon...");
+        return;
+    }
     
-
     global_env->FILENAME = strdup(filename);
     
     // exécution du fichier
