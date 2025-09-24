@@ -13,7 +13,11 @@
 #if defined(LINUX) || defined(WINDOWS)
 #include <stdio.h>
 #elif defined(TI_EZ80)
-#include "extern/nio_ce.h"
+#include <ti/vars.h>
+#include <fileioc.h>
+#include "extern/nio_ce/headers/nspireio.h"
+
+extern nio_console console;
 #endif
 
 
@@ -193,12 +197,6 @@
     }
 
 #else //------------------------------------------------- PASSAGE A TI_EZ80 ---------------------------------------------
-
-    #include "extern/nio_ce.h"
-    #include <ti/vars.h>
-    #include <fileioc.h>
-
-    extern nio_console console;
 
 
 

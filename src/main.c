@@ -6,7 +6,7 @@
 
 #ifdef TI_EZ80
 #include "headers/neonio.h"
-#include "extern/nio_ce.h"
+#include "extern/nio_ce/headers/nspireio.h"
 nio_console console;
 #endif
 
