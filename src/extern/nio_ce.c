@@ -2,7 +2,6 @@
  * @file nio_ce.c
  * @author  Julian Mackeben aka compu <compujuckel@googlemail.com>
  * @author  Adrien Bertrand aka Adriweb (CE port and mods)
- * @author  Raphaël Le Puillandre for Neon (removes dependencies to stdio.h)
  * @version 4.0
  *
  * @section LICENSE
@@ -26,12 +25,16 @@
  *
  * Nspire I/O (CE port) implementation file
  */
-#include "../headers/constants.h"
-
-#ifdef TI_EZ80
 
 #include "nio_ce.h"
 
+#include <string.h>
+
+// CE-specific stuff
+#include <ti/getcsc.h>
+#include <graphx.h>
+#include <keypadc.h>
+#include <sys/rtc.h>
 
 /**
  * @file charmap.h
@@ -513,7 +516,7 @@ unsigned char nio_ascii_get(uint8_t* adaptive_cursor_state)
 
 char* nio_get_back_buffer()
 {
-    return (char*) (gfx_vram + LCD_WIDTH*LCD_HEIGHT); // back buffer since 8bpp
+    return (char*) (gfx_vram + SCREEN_WIDTH*SCREEN_HEIGHT); // back buffer since 8bpp
 }
 
 
@@ -675,7 +678,7 @@ void nio_scroll(nio_console* csl)
     memmove(c->data,c->data+c->max_x,c->max_x*(c->max_y-1));
     memmove(c->color,c->color+c->max_x,c->max_x*(c->max_y-1)*2);
     memset(c->data+(c->max_x*(c->max_y-1)),0,c->max_x);
-    //memset(c->color+(c->max_x*(c->max_y-1)*2),0,c->max_x*2); // pour des raisons obscures, la présence de cette ligne introduit des bugs
+    memset(c->color+(c->max_x*(c->max_y-1)*2),0,c->max_x*2);
     if (c->drawing_enabled) {
         nio_set_global_color(c->default_background_color);
         nio_vram_scroll(c->offset_x, c->offset_y, c->max_x*NIO_CHAR_WIDTH, c->max_y*NIO_CHAR_HEIGHT, NIO_CHAR_HEIGHT);
@@ -856,8 +859,7 @@ int nio_puts(const char* str)
     return 1;
 }
 
-/*
-int nio_fprintf(nio_console* c, const char *format, ...)
+/*int nio_fprintf(nio_console* c, const char *format, ...)
 {
     va_list arglist;
     int len = 0;
@@ -869,9 +871,9 @@ int nio_fprintf(nio_console* c, const char *format, ...)
     nio_fputs(buf,c);
     va_end(arglist);
     return strlen(buf);
-}
+}*/
 
-int nio_printf(const char *format, ...)
+/*int nio_printf(const char *format, ...)
 {
     va_list arglist;
     int len = 0;
@@ -883,16 +885,14 @@ int nio_printf(const char *format, ...)
     nio_fputs(buf, nio_default);
     va_end(arglist);
     return strlen(buf);
-}
-
-*/
-
+}*/
+/*
 void nio_perror(const char* str)
 {
     if (str && *str)
-        nio_puts(str);
+        nio_printf("%s: ", str);
     nio_puts(strerror(errno));
-}
+}*/
 
 void nio_color(nio_console* csl, unsigned char background_color, unsigned char foreground_color)
 {
@@ -1374,5 +1374,3 @@ bool queue_empty(queue* q)
 {
     return (q->count <= 0);
 }
-
-#endif

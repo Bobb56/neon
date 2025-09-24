@@ -2,7 +2,6 @@
  * @file nio_ce.h
  * @author  Julian Mackeben aka compu <compujuckel@googlemail.com>
  * @author  Adrien Bertrand aka Adriweb (CE port and mods)
- * @author  Raphaël Le Puillandre for Neon (remove dependencies to stdio.h)
  * @version 4.0
  *
  * @section LICENSE
@@ -30,6 +29,10 @@
 #ifndef NSPIREIO_H
 #define NSPIREIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
@@ -39,26 +42,17 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
-#include <errno.h>
-
-// CE-specific stuff
-#include <tice.h>
-#include <graphx.h>
-#include <keypadc.h>
 
 // Fullscreen definitions
 
 #define NIO_MAX_ROWS 30
 #define NIO_MAX_COLS 53
 
-#define SCREEN_WIDTH    GFX_LCD_WIDTH 
-#define SCREEN_HEIGHT   GFX_LCD_HEIGHT 
+#define SCREEN_WIDTH    GFX_LCD_WIDTH
+#define SCREEN_HEIGHT   GFX_LCD_HEIGHT
 
 void wait_key_pressed(void); // blocks until a key is pressed
 bool any_key_pressed(void); // non-blocking, TRUE if any key pressed
-
-#define strerror(errno) "errno"
 
 /** Initializes double buffering.
 */
@@ -421,14 +415,12 @@ char* nio_getsn(char* str, int num);
 
 /** See [fprintf](http://www.cplusplus.com/reference/clibrary/cstdio/fprintf/)
 */
-/*
 int nio_fprintf(nio_console* c, const char* format, ...);
-*/
+
 /** See [printf](http://www.cplusplus.com/reference/clibrary/cstdio/printf/)
 */
-/*
 int nio_printf(const char* format, ...);
-*/
+
 /** See [perror](http://www.cplusplus.com/reference/clibrary/cstdio/perror/)
 */
 void nio_perror(const char* str);
@@ -550,5 +542,9 @@ void nio_cursor_width(nio_console* c, int cursor_width);
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF} (a block cursor).
 */
 void nio_cursor_custom(nio_console* c, const unsigned char cursor_data[6]);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
