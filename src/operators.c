@@ -678,6 +678,11 @@ NeObj _goIn(NeObj op2, NeObj op1)
 
 NeObj _addEqual(NeObj* op1, NeObj op2)
 {
+    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+        global_env->CODE_ERROR = 5;
+        return NEO_VOID;
+    }
+
     NeObj add = _add(*op1,op2);
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
@@ -693,6 +698,11 @@ NeObj _addEqual(NeObj* op1, NeObj op2)
 
 NeObj _subEqual(NeObj* op1, NeObj op2)
 {
+    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+        global_env->CODE_ERROR = 5;
+        return NEO_VOID;
+    }
+
     NeObj sub = _sub(*op1,op2);
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
@@ -707,6 +717,11 @@ NeObj _subEqual(NeObj* op1, NeObj op2)
 
 NeObj _mulEqual(NeObj* op1, NeObj op2)
 {
+    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+        global_env->CODE_ERROR = 5;
+        return NEO_VOID;
+    }
+
     NeObj mul = _mul(*op1,op2);
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
@@ -721,6 +736,11 @@ NeObj _mulEqual(NeObj* op1, NeObj op2)
 
 NeObj _divEqual(NeObj* op1, NeObj op2)
 {
+    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+        global_env->CODE_ERROR = 5;
+        return NEO_VOID;
+    }
+
     NeObj div = _div(*op1,op2);
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
@@ -742,6 +762,10 @@ NeObj _incr(NeObj* op1)
     else if (NEO_TYPE((*op1)) == TYPE_DOUBLE) {
         new = neo_double_create(neo_to_double(*op1) + (double)1);
     }
+    else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+        global_env->CODE_ERROR = 5;
+        return NEO_VOID;
+    }
     else {
         global_env->CODE_ERROR = 40;
         return NEO_VOID;
@@ -758,6 +782,10 @@ void _incr2(NeObj* op1, int incr) {
     }
     else if (NEO_TYPE((*op1)) == TYPE_DOUBLE) {
         new = neo_double_create(neo_to_double(*op1) + (double)1);
+    }
+    else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+        global_env->CODE_ERROR = 5;
+        return ;
     }
     else {
         global_env->CODE_ERROR = 40;
@@ -778,6 +806,10 @@ NeObj _decr(NeObj* op1)
     }
     else if (NEO_TYPE((*op1)) == TYPE_DOUBLE) {
         new = neo_double_create(neo_to_double(*op1) - (double)1);
+    }
+    else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+        global_env->CODE_ERROR = 5;
+        return NEO_VOID;
     }
     else {
         global_env->CODE_ERROR = 40;
@@ -866,6 +898,10 @@ NeObj _minus(NeObj op1)
 
 NeObj _del(NeObj* op1)
 {
+    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+        global_env->CODE_ERROR = 5;
+        return NEO_VOID;
+    }
     neobject_destroy(*op1);
     *op1 = neo_empty_create();
     return neo_none_create();

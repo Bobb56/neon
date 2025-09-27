@@ -324,10 +324,11 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
 
                 while (i < argsTok.len - 2)
                 {
+                    while (argsAst[i]->type == TYPE_ENDOFLINE) i++;
+
                     Tree* t1 = tree_create(NULL, 0, TYPE_VIRGULE);
 
-                    if (global_env->CODE_ERROR != 0)
-                    {
+                    if (global_env->CODE_ERROR != 0) {
                         return ;
                     }
 

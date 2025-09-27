@@ -1,14 +1,18 @@
 initGraphics()
 
-await(getKey() == 15)
+rect = Rect(x:0, y:95, width:50, height:50, color:0, filled:True)
+blank = Rect(x:0, y:0, width:320, height:240, color:255, filled:True)
 
-for (i, 0, 240) do
-    for (j, 0, 320) do
-        setPixel(j, i, i+j+1)
+while (getKey() != 15) do
+    while (rect>>x <= 263) do
+        draw(blank, rect)
+        rect>>x += 7
+        rect>>color = (rect>>color + 1) % 256
+    end
+    
+    while (rect>>x >= 7) do
+        draw(blank, rect)
+        rect>>x -= 7
+        rect>>color = (rect>>color + 1) % 256
     end
 end
-
-await(getKey() == 15)
-
-print("Hello, World!")
-input()

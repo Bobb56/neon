@@ -11,58 +11,40 @@
 
 
 #include <graphx.h>
-#include <ti/getcsc.h>
+#include <keypadc.h>
+#include <time.h>
 
 
-/*
-TODO :
-- setPixel(x, y, color)
-- getPixel(x, y)
-- really implement graphic functions
-- Objet FloodFill, Triangle, FillTriangle, ellipse, polygon
-- get_string_width
-- la fonction pour afficher du texte fait grossir à tour de rôle le scaling factor pour width et height
-
-Une couleur à None correspond à du transparent
-
-
-*/
 
 // cette variable globale statique permet d'associer à chaque type de figure son indice
 // dans la liste CONTAINERS au moment où les types sont chargés en mémoire
 static struct ContainersAssoc graphic_containers;
 
 void initGraphics(void) {
-    int nb_types = 6;
+    int nb_types = 9;
 
     struct ContainerType container_types[] = {
         (struct ContainerType) {
+            .name = "Point",
+            .fields = (char*[]) {"x", "y"},
+            .nb_fields = 2,
+            .container_assoc_index = &graphic_containers.Point
+        },
+        (struct ContainerType) {
             .name = "Circle",
-            .fields = (char*[]) {"x", "y", "radius", "color"},
-            .nb_fields = 4,
+            .fields = (char*[]) {"x", "y", "radius", "color", "filled"},
+            .nb_fields = 5,
             .container_assoc_index = &graphic_containers.Circle
         },
         (struct ContainerType) {
-            .name = "FilledCircle",
-            .fields = (char*[]) {"x", "y", "radius", "color"},
-            .nb_fields = 4,
-            .container_assoc_index = &graphic_containers.FilledCircle
-        },
-        (struct ContainerType) {
             .name = "Rect",
-            .fields = (char*[]) {"x", "y", "width", "height", "color"},
-            .nb_fields = 5,
+            .fields = (char*[]) {"x", "y", "width", "height", "color", "filled"},
+            .nb_fields = 6,
             .container_assoc_index = &graphic_containers.Rect
         },
         (struct ContainerType) {
-            .name = "FilledRect",
-            .fields = (char*[]) {"x", "y", "width", "height", "color"},
-            .nb_fields = 5,
-            .container_assoc_index = &graphic_containers.FilledRect
-        },
-        (struct ContainerType) {
             .name = "Line",
-            .fields = (char*[]) {"x1", "y1", "x2", "y2", "color"},
+            .fields = (char*[]) {"x0", "y0", "x1", "y1", "color"},
             .nb_fields = 5,
             .container_assoc_index = &graphic_containers.Line
         },
@@ -71,6 +53,30 @@ void initGraphics(void) {
             .fields = (char*[]) {"text", "x", "y", "fgcolor", "bgcolor", "size"},
             .nb_fields = 6,
             .container_assoc_index = &graphic_containers.Text
+        },
+        (struct ContainerType) {
+            .name = "Triangle",
+            .fields = (char*[]) {"x0", "y0", "x1", "y1", "x2", "y2", "color"},
+            .nb_fields = 7,
+            .container_assoc_index = &graphic_containers.Triangle
+        },
+        (struct ContainerType) {
+            .name = "Polygon",
+            .fields = (char*[]) {"points", "color"},
+            .nb_fields = 2,
+            .container_assoc_index = &graphic_containers.Polygon
+        },
+        (struct ContainerType) {
+            .name = "Ellipse",
+            .fields = (char*[]) {"x", "y", "a", "b", "color", "filled"},
+            .nb_fields = 6,
+            .container_assoc_index = &graphic_containers.Ellipse
+        },
+        (struct ContainerType) {
+            .name = "FloodFill",
+            .fields = (char*[]) {"x", "y", "color"},
+            .nb_fields = 3,
+            .container_assoc_index = &graphic_containers.FloodFill
         }
     };
 
@@ -109,12 +115,15 @@ void initGraphics(void) {
 
 
     // functions
-    int nb_functions = 3;
+    int nb_functions = 6;
 
     char* names[] = {
         "getKey",
         "draw",
-        "setPixel"
+        "setPixel",
+        "getPixel",
+        "setTextTransparentColor",
+        "getTextWidth"
     };
 
     Function functions[] = {
@@ -138,6 +147,27 @@ void initGraphics(void) {
             .nbArgs = 3,
             .typeArgs = (int[]) {TYPE_INTEGER, TYPE_INTEGER, TYPE_INTEGER},
             .typeRetour = TYPE_NONE
+        },
+        (Function) {
+            .ptr = getPixel,
+            .help = "Returns the color of the specified pixel",
+            .nbArgs = 2,
+            .typeArgs = (int[]) {TYPE_INTEGER, TYPE_INTEGER},
+            .typeRetour = TYPE_INTEGER
+        },
+        (Function) {
+            .ptr = setTextTransparentColor,
+            .help = "Sets the color that will be used for transparent while drawing text",
+            .nbArgs = 1,
+            .typeArgs = (int[]) {TYPE_INTEGER},
+            .typeRetour = TYPE_NONE
+        },
+        (Function) {
+            .ptr = getTextWidth,
+            .help = "Returns the pixel width of a given Text object",
+            .nbArgs = 1,
+            .typeArgs = (int[]) {TYPE_CONTAINER},
+            .typeRetour = TYPE_INTEGER
         }
     };
 
@@ -155,17 +185,104 @@ void initGraphics(void) {
 
 
 NeObj getKey(NeList* args) {
-    uint8_t key = os_GetCSC();
-    return neo_integer_create(key);
+    static uint8_t last_key;
+    static clock_t local_clock;
+
+    uint8_t only_key = 0;
+
+    kb_Scan();
+    for (uint8_t key = 1, group = 7; group; --group) {
+        for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
+            if (kb_Data[group] & mask) {
+                if (only_key) {
+                    last_key = 0;
+                    return neo_integer_create(0);
+                }
+                else {
+                    only_key = key;
+                }
+            }
+        }
+    }
+
+    // processing of the key code
+
+    if (only_key == last_key) {
+        if (clock() - local_clock > 10000) {
+            return neo_integer_create(only_key);
+        }
+        else {
+            return neo_integer_create(0);
+        }
+    }
+    else {
+
+        // resets the clock since it's a new key
+        local_clock = clock();
+
+        last_key = only_key;
+        return neo_integer_create(only_key);
+    }
 }
 
 
+NeObj setPixel(NeList* args) {
+    gfx_SetColor(neo_to_integer(ARG(2)));
+    gfx_SetPixel(neo_to_integer(ARG(0)), neo_to_integer(ARG(1)));
+    return neo_none_create();
+}
 
+NeObj getPixel(NeList* args) {
+    intptr_t color = gfx_GetPixel(neo_to_integer(ARG(0)), neo_to_integer(ARG(1)));
+    return neo_integer_create(color);
+}
+
+NeObj setTextTransparentColor(NeList* args) {
+    intptr_t color = neo_to_integer(ARG(0));
+    gfx_SetTextTransparentColor(color);
+    return neo_none_create();
+}
+
+
+NeObj getTextWidth(NeList* args) {
+    Container* c = neo_to_container(ARG(0));
+
+    if (c->type != graphic_containers.Text) {
+        global_env->CODE_ERROR = 14;
+        return neo_none_create();
+    }
+
+    if (NEO_TYPE(c->data->tab[0]) != TYPE_STRING ||
+        NEO_TYPE(c->data->tab[1]) != TYPE_INTEGER ||
+        NEO_TYPE(c->data->tab[2]) != TYPE_INTEGER ||
+        NEO_TYPE(c->data->tab[3]) != TYPE_INTEGER ||
+        NEO_TYPE(c->data->tab[4]) != TYPE_INTEGER ||
+        NEO_TYPE(c->data->tab[5]) != TYPE_INTEGER) {
+            global_env->CODE_ERROR = 117;
+            return neo_none_create();
+    }
+    char* text = neo_to_string(c->data->tab[0]);
+    intptr_t size = neo_to_integer(c->data->tab[5]) - 1;
+
+    intptr_t x_width = size/2;
+    intptr_t y_width = size - x_width;
+
+    gfx_SetTextScale(x_width+1, y_width+1);
+
+    return neo_integer_create(gfx_GetStringWidth(text));
+}
 
 
 // this function draws an object
 NeObj draw(NeList* args) {
-    draw_nelist(args);
+    gfx_BlitScreen(); // copy the screen to the buffer
+    gfx_SetDrawBuffer();
+
+    draw_nelist(args); // draws to the buffer
+
+    gfx_BlitBuffer();
+    gfx_SetDrawScreen();
+
     return neo_none_create();
 }
 
@@ -173,25 +290,187 @@ void draw_obj(NeObj obj) {
     // on dessine directement l'objet
     if (NEO_TYPE(obj) == TYPE_CONTAINER) {
         Container* c = neo_to_container(obj);
+        NeList* args = c->data;
 
         if (c->type == graphic_containers.Circle) { // draws a circle
-            printString("circle\n");
-        }
-        else if (c->type == graphic_containers.FilledCircle) { // draws a filled circle
-            printString("filled circle\n");
+            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(4)) != TYPE_BOOL) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+            }
+            intptr_t x = neo_to_integer(ARG(0));
+            intptr_t y = neo_to_integer(ARG(1));
+            intptr_t radius = neo_to_integer(ARG(2));
+            intptr_t color = neo_to_integer(ARG(3));
+            bool filled = neo_to_bool(ARG(4));
+
+            gfx_SetColor(color);
+            if (filled)
+                gfx_FillCircle(x, y, radius);
+            else
+                gfx_Circle(x, y, radius);
         }
         else if (c->type == graphic_containers.Rect) { // draws a rectangle
-            printString("rectangle\n");
-        }
-        else if (c->type == graphic_containers.FilledRect) { // draws a filled rectangle
-            printString("filled rectangle\n");
+            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(5)) != TYPE_BOOL) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+            }
+            intptr_t x = neo_to_integer(ARG(0));
+            intptr_t y = neo_to_integer(ARG(1));
+            intptr_t width = neo_to_integer(ARG(2));
+            intptr_t height = neo_to_integer(ARG(3));
+            intptr_t color = neo_to_integer(ARG(4));
+            bool filled = neo_to_bool(ARG(5));
+            
+            gfx_SetColor(color);
+            if (filled)
+                gfx_FillRectangle(x, y, width, height);
+            else
+                gfx_Rectangle(x, y, width, height);
         }
         else if (c->type == graphic_containers.Line) { // draws a line
-            printString("line\n");
+            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(4)) != TYPE_INTEGER) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+            }
+            intptr_t x0 = neo_to_integer(ARG(0));
+            intptr_t y0 = neo_to_integer(ARG(1));
+            intptr_t x1 = neo_to_integer(ARG(2));
+            intptr_t y1 = neo_to_integer(ARG(3));
+            intptr_t color = neo_to_integer(ARG(4));
+            
+            gfx_SetColor(color);
+            gfx_Line(x0, y0, x1, y1);
         }
         else if (c->type == graphic_containers.Text) { // draws text
-            printString("text\n");
+            if (NEO_TYPE(ARG(0)) != TYPE_STRING ||
+                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(5)) != TYPE_INTEGER) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+            }
+            char* text = neo_to_string(ARG(0));
+            intptr_t x = neo_to_integer(ARG(1));
+            intptr_t y = neo_to_integer(ARG(2));
+            uint8_t fgcolor = (uint8_t)neo_to_integer(ARG(3));
+            uint8_t bgcolor = (uint8_t)neo_to_integer(ARG(4));
+            uint8_t size = (uint8_t)neo_to_integer(ARG(5)) - 1;
+
+            uint8_t x_width = size/2;
+            uint8_t y_width = size - x_width;
+            
+            gfx_SetTextBGColor(bgcolor);
+            gfx_SetTextFGColor(fgcolor);
+            gfx_SetTextScale(x_width+1, y_width+1);
+            gfx_PrintStringXY((const char*)text, x, y);
         }
+        else if (c->type == graphic_containers.Triangle) { // draws a triangle
+            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(5)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(6)) != TYPE_INTEGER) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+            }
+            intptr_t x0 = neo_to_integer(ARG(0));
+            intptr_t y0 = neo_to_integer(ARG(1));
+            intptr_t x1 = neo_to_integer(ARG(2));
+            intptr_t y1 = neo_to_integer(ARG(3));
+            intptr_t x2 = neo_to_integer(ARG(4));
+            intptr_t y2 = neo_to_integer(ARG(5));
+            intptr_t color = neo_to_integer(ARG(6));
+            
+            gfx_SetColor(color);
+            gfx_FillTriangle(x0, y0, x1, y1, x2, y2);
+        }
+        else if (c->type == graphic_containers.Polygon) { // draws a polygon
+            if (NEO_TYPE(ARG(0)) != TYPE_LIST ||
+                NEO_TYPE(ARG(1)) != TYPE_INTEGER) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+            }
+            NeList* points = neo_to_list(ARG(0));
+            intptr_t color = neo_to_integer(ARG(1));
+            
+            int* points_arr = malloc(sizeof(int) * points->len * 2);
+
+            for (int i = 0 ; i < points->len ; i++) {
+                if (NEO_TYPE(points->tab[i]) != TYPE_CONTAINER) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+                }
+                Container* point = neo_to_container(points->tab[i]);
+
+                if (point->type != graphic_containers.Point ||
+                    NEO_TYPE(point->data->tab[0]) != TYPE_INTEGER ||
+                    NEO_TYPE(point->data->tab[1]) != TYPE_INTEGER) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+                }
+
+                points_arr[2*i] = neo_to_integer(point->data->tab[0]);
+                points_arr[2*i+1] = neo_to_integer(point->data->tab[1]);
+            }
+
+            gfx_SetColor(color);
+            gfx_Polygon(points_arr, points->len);
+            free(points_arr);
+        }
+        else if (c->type == graphic_containers.Ellipse) { // draws an ellipse
+            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(5)) != TYPE_BOOL) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+            }
+            intptr_t x = neo_to_integer(ARG(0));
+            intptr_t y = neo_to_integer(ARG(1));
+            intptr_t a = neo_to_integer(ARG(2));
+            intptr_t b = neo_to_integer(ARG(3));
+            intptr_t color = neo_to_integer(ARG(4));
+            bool filled = neo_to_bool(ARG(5));
+            
+            gfx_SetColor(color);
+            if (filled)
+                gfx_FillEllipse(x, y, a, b);
+            else
+                gfx_Ellipse(x, y, a, b);
+        }
+        if (c->type == graphic_containers.FloodFill) { // fills an area
+            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
+                NEO_TYPE(ARG(2)) != TYPE_INTEGER) {
+                    global_env->CODE_ERROR = 117;
+                    return;
+            }
+            intptr_t x = neo_to_integer(ARG(0));
+            intptr_t y = neo_to_integer(ARG(1));
+            intptr_t color = neo_to_integer(ARG(2));
+
+            gfx_FloodFill(x, y, color);
+        }
+        
         else {
             draw_nelist(c->data);
         }
@@ -230,13 +509,5 @@ void draw_nelist(NeList* list) {
         draw_obj(list->tab[i]);
     }
 }
-
-
-NeObj setPixel(NeList* args) {
-    gfx_SetColor(neo_to_integer(ARG(2)));
-    gfx_SetPixel(neo_to_integer(ARG(0)), neo_to_integer(ARG(1)));
-    return neo_none_create();
-}
-
 
 

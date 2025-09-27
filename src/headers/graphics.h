@@ -6,10 +6,16 @@
 #define ARG(n)      args->tab[n]
 
 struct ContainersAssoc {
-    int Rect, FilledRect;
-    int Circle, FilledCircle;
+    int Rect;
+    int Circle;
+    int Triangle;
+    int Polygon;
+    int Ellipse;
+    int FloodFill;
     int Line;
     int Text;
+    int Point;
+    
 };
 
 struct ContainerType {
@@ -25,6 +31,8 @@ void draw_obj(NeObj obj);
 NeObj draw(NeList* args);
 NeObj getKey(NeList* args);
 NeObj setPixel(NeList* args);
-
+NeObj getPixel(NeList* args);
+NeObj setTextTransparentColor(NeList* args);
+NeObj getTextWidth(NeList* args);
 
 #endif
