@@ -846,7 +846,7 @@ NeObj _ref(NeObj* op1)
 {
     if (NEO_TYPE((*op1)) == TYPE_EMPTY)
     {
-        global_env->CODE_ERROR = 59;//undefined var
+        global_env->CODE_ERROR = 59; // undefined var
         return NEO_VOID;
     }
     

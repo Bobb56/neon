@@ -245,10 +245,11 @@ void createExpressionTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* li
             // le fait de manipuler des NeObj permet de pouvoir modifier le contenu (l'objet en lui-même, mais sans son adresse. Plus de liberté)
             // ajout de la variable :
 
-            // d'abord on vérifie si la variable existe déjà, sinon, on va en créer une copie inutile et qui va entrer en conflit avec la précédente, bref : c'est pas bien !
+            // d'abord on vérifie si la variable existe déjà, sinon, on va en créer une copie inutile et qui va entrer en conflit avec la précédente, bref : c'est pas bien !            
             tree->variable = get_var(tokens->tab[0]);
             tree->data = NEO_VOID;
             tree->type = TYPE_VARIABLE;
+
         }
 
         else if (ast[0]->type == TYPE_BOOL)
@@ -1474,6 +1475,7 @@ void createConditionBlockTree(Tree* tree, Ast** ast, strlist* tokens, intlist* l
             Tree* fils = tree_create(NULL, 0, TYPE_SYNTAXTREE);
             if (global_env->CODE_ERROR != 0)
             {
+                printString("b20\n");
                 return;
             }
 
@@ -1483,6 +1485,7 @@ void createConditionBlockTree(Tree* tree, Ast** ast, strlist* tokens, intlist* l
 
             if (global_env->CODE_ERROR != 0)
             {
+                printString("b21\n");
                 tree_destroy(fils);
                 return;
             }
@@ -1494,6 +1497,7 @@ void createConditionBlockTree(Tree* tree, Ast** ast, strlist* tokens, intlist* l
             Tree* fils = tree_create(NULL, 0, TYPE_SYNTAXTREE);
             if (global_env->CODE_ERROR != 0)
             {
+                printString("b22\n");
                 return;
             }
 
@@ -1502,6 +1506,7 @@ void createConditionBlockTree(Tree* tree, Ast** ast, strlist* tokens, intlist* l
             createStatementIEWFTree(fils, ast + i, &blocToks, lines, offset + i, ast[i]->type);
             if (global_env->CODE_ERROR != 0)
             {
+                printString("b23\n");
                 tree_destroy(fils);
                 return;
             }
@@ -1687,10 +1692,20 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
 
     int index = 0, index2 = 0;
 
+    printString("b15 ");
+    printInt(ast[0]->type);
+    newLine();
+
+    printString("Code d'erreur : ");
+    printInt(global_env->CODE_ERROR);
+    newLine();
+
     while (index < tokens->len) {
 
         index2 = ast[index]->fin - offset + 1; // on regarde où on va sauter, et on saute à cet endroit après
         // c'est important, car on modifie ast[index] dans le code qui suit
+
+        
 
         if (ast[index]->type == TYPE_TRYEXCEPT) {
             ast_pop(ast[index]);
@@ -1917,6 +1932,7 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
 
             if (global_env->CODE_ERROR != 0) {
                 tree_destroy(st);
+                printString("b10\n");
                 return;
             }
 
@@ -1928,6 +1944,7 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
         }
 
         else if (expression && ast[index]->type == TYPE_ENDOFLINE) { // si l'expression est terminée, on la compute
+            
             // compute an expression between exprStart and index
             strlist exprToks = (strlist) {.tab = tokens->tab + exprStart, .len = index - exprStart};
             Tree* expr = tree_create(NULL, 0, TYPE_SYNTAXTREE);
@@ -1936,6 +1953,7 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
 
             if (global_env->CODE_ERROR != 0) {
                 tree_destroy(expr);
+                printString("b11\n");
                 return;
             }
 
@@ -1946,6 +1964,7 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
         
         // pour permettre de commencer et finir des expressions durant le même tour dans le seul cas d'une expression tout à la fin
         if (expression && index2 >= tokens->len) { // on sait qu'au prochain tour on sera partis, donc on prend tout le reste
+            
             strlist exprToks = (strlist) {.tab = tokens->tab + exprStart, .len = tokens->len - exprStart};
             Tree* expr = tree_create(NULL, 0, TYPE_SYNTAXTREE);
 
@@ -1953,6 +1972,7 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
 
             if (global_env->CODE_ERROR != 0) {
                 tree_destroy(expr);
+                printString("b12\n");
                 return;
             }
 
@@ -2020,8 +2040,9 @@ void createSyntaxTree(Tree* tree, char* program)
         return;
     }
 
-    
+    printString("b0\n");
     createSyntaxTreeAux(tree, ast, tokens, &lines, 0);
+    printString("b100\n");
 
     ast_destroy(ast, tokens->len);
     strlist_destroy(tokens, true);
