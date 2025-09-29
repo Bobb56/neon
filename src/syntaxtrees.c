@@ -175,7 +175,7 @@ void tree_removeSon(Tree* tree, int index)
   if (pow(2, tree->capacity-1)==tree->nbSons-1)
   {
     tree->capacity--;
-    tmp = realloc(tree->sons, pow(2, tree->capacity)*sizeof(Tree));//réalloue un nouveau pointeur de la bonne taille
+    tmp = neon_realloc(tree->sons, pow(2, tree->capacity)*sizeof(Tree));//réalloue un nouveau pointeur de la bonne taille
     tree->sons = tmp;
   }
   tree->nbSons--;//décrémentation de la longueur

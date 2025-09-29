@@ -112,7 +112,7 @@ void listlist_append(listlist* list, intlist* ptr)//ajoute un élément à la fi
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(intlist));//réallocation de list.tab
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(intlist));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
 
@@ -145,7 +145,7 @@ void listlist_remove(listlist* list,int index)//indiquer si il faut libérer l'�
   if (pow(2, list->capacity-1)==list->len-1)
   {
     list->capacity--;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(intlist));//réalloue un nouveau pointeur de la bonne taille
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(intlist));//réalloue un nouveau pointeur de la bonne taille
     list->tab = tmp;
   }
   
@@ -504,7 +504,7 @@ void intlist_append(intlist* list,int nombre)//ajoute un élément à la fin de 
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réallocation de list.tab
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
 
@@ -523,7 +523,7 @@ void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la n
     while (pow(2, list->capacity) < newLen)
       list->capacity++;
       
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réalloue un pointeur de la nouvelle taille
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réalloue un pointeur de la nouvelle taille
     
     if (tmp == NULL)
     {
@@ -565,7 +565,7 @@ void intlist_remove(intlist* list,int index)//supprime un élément de la liste
   if (pow(2, list->capacity-1)==list->len-1)
   {
     list->capacity--;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réalloue un nouveau pointeur de la bonne taille
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réalloue un nouveau pointeur de la bonne taille
     list->tab = tmp;
   }
   
@@ -635,7 +635,7 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réallocation de list.tab
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(int));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
   
@@ -698,7 +698,7 @@ void intptrlist_append(intptrlist* list, int* ptr)//ajoute un élément à la fi
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(int*));//réallocation de list.tab
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(int*));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
 
@@ -779,7 +779,7 @@ void strlist_append(strlist* list, char *chaine)
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réallocation de list.tab
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
     
@@ -823,7 +823,7 @@ void strlist_resize(strlist* list, int newLen, bool freeElement)
     while (pow(2, list->capacity) < newLen)
       list->capacity++;
       
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réalloue un pointeur de la nouvelle taille
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réalloue un pointeur de la nouvelle taille
     
     if (tmp == NULL)
     {
@@ -868,7 +868,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
   if (pow(2, list->capacity-1)==list->len-1)
   {
     list->capacity--;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réalloue un nouveau pointeur de la bonne taille
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réalloue un nouveau pointeur de la bonne taille
     list->tab = tmp;
   }
   
@@ -944,7 +944,7 @@ void strlist_insert(strlist* list,char* chaine, int index)//ajoute un élément 
   if (pow(2, list->capacity)==list->len)
   {
     list->capacity++;
-    tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réallocation de list.tab
+    tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(char*));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
   

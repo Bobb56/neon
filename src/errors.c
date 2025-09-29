@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 
 #include "headers/neonio.h"
@@ -260,6 +261,11 @@ int get_exception_from_code_error(int code_error) {
 void* neon_malloc(size_t size) {
     memory += size;
     return malloc(size);
+}
+
+void* neon_realloc(void* ptr, size_t size) {
+    memory += size;
+    return realloc(ptr, size);
 }
 
 void neon_free(void* ptr) {

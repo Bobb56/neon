@@ -844,7 +844,7 @@ void nelist_append(NeList* list, NeObj ptr)//ajoute un élément à la fin de la
     if (pow(2, list->capacity)==list->len)
     {
         list->capacity++;
-        tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réallocation de list.tab
+        tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réallocation de list.tab
         list->tab = tmp;//affectation du pointeur de tmp vers list.tab
     }
 
@@ -875,7 +875,7 @@ void nelist_insert(NeList* list,NeObj neo, int index)//ajoute un élément à la
   
     if (pow(2, list->capacity)==list->len) {
         list->capacity++;
-        tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj)); // réallocation de list.tab
+        tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj)); // réallocation de list.tab
         list->tab = tmp; // affectation du pointeur de tmp vers list.tab
     }
   
@@ -910,7 +910,7 @@ void nelist_remove(NeList* list,int index)
     if (pow(2, list->capacity-1)==list->len-1)
     {
         list->capacity--;
-        tmp = realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réalloue un nouveau pointeur de la bonne taille
+        tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réalloue un nouveau pointeur de la bonne taille
         list->tab = tmp;
     }
   
