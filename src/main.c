@@ -2,7 +2,7 @@
 
 #include "headers/neon.h"
 #include "headers/runtime.h"
-
+#include "headers/errors.h"
 
 #ifdef TI_EZ80
 #include "headers/neonio.h"
@@ -97,7 +97,7 @@ NOUVEAUTéS depuis la dernière publication :
         else
         {
             execFile(filename);
-            free(filename);
+            neon_free(filename);
         }
         neonExit();
     #else

@@ -42,7 +42,7 @@ void deleteContext(ptrlist* var_loc)
     
     if (ctxt2->tete == NULL) // aucun élément
     {
-        free(ctxt2);
+        neon_free(ctxt2);
     }
 
     else if (ctxt2->queue == NULL) // un seul élément
@@ -50,10 +50,10 @@ void deleteContext(ptrlist* var_loc)
         //-------------
         NeSave* ns = ctxt2->tete;
         replace_var(ns->var, ns->object);
-        free(ns);
+        neon_free(ns);
         //-------------
 
-        free(ctxt2);
+        neon_free(ctxt2);
     }
     else // plusieurs éléments
     {
@@ -64,20 +64,20 @@ void deleteContext(ptrlist* var_loc)
             //-------------
             NeSave* ns = ptr->tete;
             replace_var(ns->var, ns->object);
-            free(ns);
+            neon_free(ns);
             //-------------
             
             temp = ptr->queue;
-            free(ptr);
+            neon_free(ptr);
             ptr = temp;
         }
         //-------------
         NeSave* ns = ptr->tete;
         replace_var(ns->var, ns->object);
-        free(ns);
+        neon_free(ns);
         //-------------
         
-        free(ptr);
+        neon_free(ptr);
     }
 
     ptrlist_remove(var_loc, ctxt2, true); // enlève le pointeur
@@ -125,7 +125,7 @@ bool neoIsTrue(NeObj expr)
 void local(Var var, ptrlist* var_loc)
 {
     // sauvegarde de l'object actuel
-    NeSave* ns = malloc(sizeof(NeSave));
+    NeSave* ns = neon_malloc(sizeof(NeSave));
     ns->object = get_var_value(var);
     ns->var = var;
 
@@ -458,7 +458,7 @@ NO_INLINE NeObj eval_aux(Tree* tree) {
                     Tree* maintree = tree->sons[0];
                     
                     // crée une copie de l'arbre avec une version figée de la fonction
-                    Tree* maintree_copy = (Tree*) malloc(sizeof(Tree));
+                    Tree* maintree_copy = (Tree*) neon_malloc(sizeof(Tree));
                     maintree_copy->type = maintree->type;
                     maintree_copy->label1 = maintree->label1;
                     maintree_copy->label2 = maintree->label2;
@@ -468,13 +468,13 @@ NO_INLINE NeObj eval_aux(Tree* tree) {
                     maintree_copy->data = eval_aux(maintree->sons[0]);
 
                     if (global_env->CODE_ERROR != 0) {
-                        free(maintree_copy);
+                        neon_free(maintree_copy);
                         return NEO_VOID;
                     }
                     if (NEO_TYPE(maintree_copy->data) != TYPE_USERFUNC) {
                         global_env->CODE_ERROR = 100;
                         neobject_destroy(maintree_copy->data);
-                        free(maintree_copy);
+                        neon_free(maintree_copy);
                         return NEO_VOID;
                     }
 
@@ -1027,7 +1027,7 @@ NO_INLINE NeObj eval_aux(Tree* tree) {
             if (tree->label2 == -1) // ça veut dire qu'on sait exactement où chercher la valeur
             {
                 tree->label2 = get_field_index(c, tree->label1);
-                free(tree->label1);
+                neon_free(tree->label1);
                 tree->label1 = NULL;
             }
 
@@ -1176,7 +1176,7 @@ NeObj* get_address(Tree* tree) {
         if (tree->label2 == -1) // ça veut dire qu'on sait exactement où chercher la valeur
         {
             tree->label2 = get_field_index(c, tree->label1);
-            free(tree->label1);
+            neon_free(tree->label1);
             tree->label1 = NULL;
         }
 
@@ -1769,7 +1769,7 @@ int exec_aux(Tree* tree) {
                             update__name__(strdup(neo_to_string(nom)));
 
                             importFile(nomFichier);
-                            free(nomFichier);
+                            neon_free(nomFichier);
                         #else
                             update__name__(strdup(neo_to_string(nom)));
                             importFile(neo_to_string(nom));

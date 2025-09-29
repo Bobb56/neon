@@ -5,7 +5,7 @@
 #include "headers/neon.h"
 
 //creation du tableau de pointeurs generiques a liberer en cas d’erreur
-
+static int memory = 0;
 
 static const char* error_messages[NB_ERRORS] = {
     "",// ne doit pas être utilisé
@@ -254,6 +254,20 @@ static const int error_codes_exceptions[NB_ERRORS] = {
 
 int get_exception_from_code_error(int code_error) {
     return error_codes_exceptions[code_error];
+}
+
+
+void* neon_malloc(size_t size) {
+    memory += size;
+    return malloc(size);
+}
+
+void neon_free(void* ptr) {
+    free(ptr);
+}
+
+int allocatedMem(void) {
+    return memory;
 }
 
 

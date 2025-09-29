@@ -9,6 +9,7 @@
 #include "headers/neon.h"
 #include "headers/parser.h"
 #include "headers/strings.h"
+#include "headers/errors.h"
 
 #if defined(LINUX) || defined(WINDOWS)
 #include <stdio.h>
@@ -47,7 +48,7 @@ extern nio_console console;
         }
         
         fsetpos(fichier, &pos);//remet la tête de fichier au début
-        char* program=malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
+        char* program=neon_malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
     
 
         // copie du fichier
@@ -81,7 +82,7 @@ extern nio_console console;
     #ifndef LINUX
         char* input(char *text)
         {
-            char* var=malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
+            char* var=neon_malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
             memset(var,(char)0,4001*sizeof(char));//initialise le pointeur à '\0' partout
             //on effectue l'entrée
             printf("%s",text);
@@ -92,22 +93,22 @@ extern nio_console console;
             
             if (err != 1)
             {
-                free(var);
+                neon_free(var);
                 global_env->CODE_ERROR = 104;
                 return NULL;
             }
             
             //crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
-            char* newVar = malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
+            char* newVar = neon_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
             
             void * ptrtest=strcpy(newVar,var);//copie de var dans newVar
             
-            free(var);
+            neon_free(var);
             var=NULL;
                 
             if (ptrtest==NULL)
             {
-                free(newVar);
+                neon_free(newVar);
                 global_env->CODE_ERROR = 66;
                 return NULL;
             }
@@ -143,13 +144,13 @@ extern nio_console console;
         else
         {
             //une fois qu'on a copié le nombre dans la chaine de caracteres, il faut le réallouer de la bonne taille
-            char* strNombre = (char*)malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
+            char* strNombre = (char*)neon_malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
             int err = snprintf(strNombre, 310, "%lf", number);//converison du nombre
             
             if (err < 0 || err != strlen(strNombre))
             {
                 global_env->CODE_ERROR = 66;
-                free(strNombre);
+                neon_free(strNombre);
                 return 0;
             }
             
@@ -210,19 +211,19 @@ extern nio_console console;
             return NULL;
         else if (type != OS_TYPE_STR || string->len == 0)
         {
-            free(string);
+            neon_free(string);
             return NULL;
         }
 
 
         // transforme string en chaine de caractères
-        char* ret = malloc(sizeof(char) * (string->len + 1));
+        char* ret = neon_malloc(sizeof(char) * (string->len + 1));
         for (int i=0 ; i < string->len ; i++)
             ret[i] = string->data[i];
 
         ret[string->len] = '\0';
 
-        free(string);
+        neon_free(string);
 
         return ret;
 
@@ -244,7 +245,7 @@ extern nio_console console;
         uint16_t longueur = ti_GetSize(fichier);
 
         
-        char* program=malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
+        char* program=neon_malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
     
 
         // copie du fichier
@@ -281,7 +282,7 @@ extern nio_console console;
 
     char* input(char *text)
     {
-        char* var=malloc(501*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
+        char* var=neon_malloc(501*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
         memset(var,(char)0,501*sizeof(char));//initialise le pointeur à '\0' partout
         //on effectue l'entrée
         printString(text);
@@ -295,16 +296,16 @@ extern nio_console console;
     
     
         //crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
-        char* newVar = malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
+        char* newVar = neon_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
     
         void * ptrtest=strcpy(newVar,var);//copie de var dans newVar
     
-        free(var);
+        neon_free(var);
         var=NULL;
     
         if (ptrtest==NULL)
         {
-            free(newVar);
+            neon_free(newVar);
             global_env->CODE_ERROR = 66;
             return NULL;
         }
@@ -327,7 +328,7 @@ extern nio_console console;
         }
         else {
             real_t x = os_FloatToReal((float)number);
-            char* result = malloc(sizeof(char) * 127);
+            char* result = neon_malloc(sizeof(char) * 127);
             os_RealToStr(result, &x, 127, 1, -1);
 
             // enlève les zéros inutiles à la fin
@@ -469,7 +470,7 @@ char* int_to_str(intptr_t number)//nombre en chaine de caractère
         if (neg)
             lenstr++;
 
-        char* strNombre = malloc(sizeof(char) * lenstr);
+        char* strNombre = neon_malloc(sizeof(char) * lenstr);
         int i = lenstr - 1;
         strNombre[i--] = '\0';
         
@@ -492,14 +493,14 @@ void printDouble(double x)
 {
     char* xstr = double_to_str(x);
     printString(xstr);
-    free(xstr);
+    neon_free(xstr);
 }
 
 
 void printInt(intptr_t n) {
     char* nstr = int_to_str(n);
     printString(nstr);
-    free(nstr);
+    neon_free(nstr);
 }
 
 void newLine(void) {
@@ -509,5 +510,5 @@ void newLine(void) {
 void neon_pause(char* text) {
     char* res = input(text);
     if (res != NULL)
-        free(res);
+        neon_free(res);
 }

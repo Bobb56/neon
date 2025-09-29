@@ -13,6 +13,7 @@
 #include "headers/runtime.h"
 #include "headers/strings.h"
 #include "headers/neon.h"
+#include "headers/errors.h"
 
 
 
@@ -115,7 +116,7 @@ bool neo_exact_equal(NeObj a, NeObj b) {
 
 
 Container* container_create(int type, NeList* data) {
-    Container* c = malloc(sizeof(Container));
+    Container* c = neon_malloc(sizeof(Container));
     c->type = type;
     c->data = data;
     c->myCopy = NULL;
@@ -186,7 +187,7 @@ NeObj get_container_field(Container* c, int index) {
 
 void container_destroy(Container* c) {
     nelist_destroy(c->data);
-    free(c);
+    neon_free(c);
 }
 
 void neo_container_aff(NeObj neo) {
@@ -279,7 +280,7 @@ char* neo_container_str(NeObj neo) {
 
             char* s = neobject_str(get_container_field(c, i));
             str1 = addStr2(str1, s);
-            free(s);
+            neon_free(s);
 
             if (i < c->data->len - 1)
                 str1 = addStr2(str1, ", ");
@@ -390,14 +391,14 @@ NeObj neo_fun_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const
 }
 
 void function_destroy(Function* fun) {
-    free(fun->typeArgs);
-    free(fun);
+    neon_free(fun->typeArgs);
+    neon_free(fun);
 }
 
 
 Function* function_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const int* typeArgs, int typeRetour)
 {
-    Function* fun = malloc(sizeof(Function));
+    Function* fun = neon_malloc(sizeof(Function));
     fun->ptr = ptr;
     fun->nbArgs = nbArgs;
     fun->help = help;
@@ -407,12 +408,12 @@ Function* function_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, 
     // copie de typeArgs dans le tas
     if (nbArgs == -1)
     {
-        fun->typeArgs = malloc(sizeof(int));
+        fun->typeArgs = neon_malloc(sizeof(int));
         fun->typeArgs[0] = typeArgs[0];
     }
     else
     {
-        fun->typeArgs = malloc(sizeof(int)*nbArgs);
+        fun->typeArgs = neon_malloc(sizeof(int)*nbArgs);
         for (int i = 0 ; i < nbArgs ; i++)
             fun->typeArgs[i] = typeArgs[i];
     }
@@ -486,7 +487,7 @@ UserFunc* neo_to_userfunc(NeObj neo) {
 
 NeObj userFuncCreate(Var* args, Tree* code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type)
 {
-    UserFunc* fun = malloc(sizeof(UserFunc));
+    UserFunc* fun = neon_malloc(sizeof(UserFunc));
     fun->args = args;
     fun->code = code;
     fun->nbArgs = nbArgs;
@@ -507,7 +508,7 @@ NeObj userFuncCreate(Var* args, Tree* code, int nbArgs, bool unlimited_arguments
 // qui correspond à la userfunc définie
 NeObj userFuncDefine(NeObj obj, NeList* opt_args) {
     UserFunc* fun = neo_to_userfunc(obj);
-    Var* args = malloc(sizeof(Var) * fun->nbArgs);
+    Var* args = neon_malloc(sizeof(Var) * fun->nbArgs);
 
     // copie des global_env->NOMS de variable des arguments
     for (int i = 0 ; i < fun->nbArgs ; i++)
@@ -519,11 +520,11 @@ NeObj userFuncDefine(NeObj obj, NeList* opt_args) {
 
 void userfunc_destroy(UserFunc* fun) {
     if (fun->doc != NULL)
-        free(fun->doc);
-    free(fun->args);
+        neon_free(fun->doc);
+    neon_free(fun->args);
     if (fun->opt_args != NULL)
         nelist_destroy(fun->opt_args);
-    free(fun);
+    neon_free(fun);
 }
 
 
@@ -557,10 +558,10 @@ char* neo_promise_str(NeObj neo) {
     char* s1 = strdup("<promise from process ");
     char* s2 = int_to_str(neo_to_integer(neo));
     s1 = addStr2(s1, s2);
-    free(s2);
+    neon_free(s2);
     s2 = strdup(">");
     char* ret = addStr2(s1, s2);
-    free(s2);
+    neon_free(s2);
     return ret;
 }
 
@@ -573,7 +574,7 @@ char* neo_promise_str(NeObj neo) {
 NeObj neo_str_create(char* string) // attention, la chaine de caractères passée en argument va être mise dans le NeObject directement sans être copiée. Donc elle doit être dans le tas, et ne pas être libérée par l'extérieur
 {
     NeObj neo = neobject_create(TYPE_STRING);
-    neo.string = malloc(sizeof(String));
+    neo.string = neon_malloc(sizeof(String));
     neo.string->refc = 1;
     neo.string->string = string;
     return neo;
@@ -590,20 +591,20 @@ void neo_string_aff(NeObj neo) {
     char* traite = traitementStringInverse(neo.string->string);
     printString(traite);
     printString("\"");
-    free(traite);
+    neon_free(traite);
 }
 
 char* neo_string_str(NeObj neo) {
     char* traite = traitementStringInverse(neo.string->string);
     char* str1 = addStr("\"",traite);
     char* ret = addStr(str1,"\"");
-    free(str1);free(traite);
+    neon_free(str1);neon_free(traite);
     return ret;
 }
 
 void string_destroy(String* string) {
-    free(string->string);
-    free(string);
+    neon_free(string->string);
+    neon_free(string);
 }
 
 ///////////////////// TYPE_EXCEPTION ////////////////
@@ -633,7 +634,7 @@ void neo_exception_aff(NeObj neo) {
 NeObj neo_const_create(char* string) // attention, la chaine de caractères passée en argument va être mise dans le NeObject directement sans être copiée. Donc elle doit être dans le tas, et ne pas être libérée par l'extérieur
 {
     NeObj neo = neobject_create(TYPE_CONST);
-    neo.string = malloc(sizeof(String));
+    neo.string = neon_malloc(sizeof(String));
     neo.string->refc = 1;
     neo.string->string = string;
     return neo;
@@ -708,15 +709,15 @@ char* nelist_str(NeList* list)
         {
             temp = neobject_str(nelist_nth(list, i));
             str2 = addStr(str1,temp);
-            free(temp);free(str1);
+            neon_free(temp);neon_free(str1);
             str1 = addStr(str2,", ");
-            free(str2);
+            neon_free(str2);
         }
         temp = neobject_str(nelist_nth(list, list->len-1));
         str2 = addStr(str1,temp);
-        free(str1);free(temp);
+        neon_free(str1);neon_free(temp);
         str1 = addStr(str2, "]");
-        free(str2);
+        neon_free(str2);
         return str1;
     }
     return strdup("Erreur17");
@@ -735,8 +736,8 @@ void nelist_destroy(NeList* list)
         //    printf("Suppression de %s\n", global_env->NOMS->tab[i]);
         neobject_destroy(list->tab[i]);
     }
-    free(list->tab);
-    free(list);
+    neon_free(list->tab);
+    neon_free(list);
 }
 
 
@@ -746,8 +747,8 @@ void nelist_destroy_until(NeList *list, int index_max) {
     {
         neobject_destroy(list->tab[i]);
     }
-    free(list->tab);
-    free(list);
+    neon_free(list->tab);
+    neon_free(list);
 }
 
 
@@ -818,7 +819,7 @@ NeList* nelist_dup(NeList* l)
 
 NeList* nelist_create(int len)
 {
-    NeList* list = malloc(sizeof(NeList));//crée la structure
+    NeList* list = neon_malloc(sizeof(NeList));//crée la structure
     list->myCopy = NULL;
     list->refc = 1;
     list->len = len; // initialise la bonne longueur
@@ -829,7 +830,7 @@ NeList* nelist_create(int len)
     while (pow(2, list->capacity) < list->len)
         list->capacity++;
   
-    list->tab = malloc(pow(2, list->capacity)*sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
+    list->tab = neon_malloc(pow(2, list->capacity)*sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
   
     return list;//retourne la structure
 }
@@ -988,11 +989,11 @@ NeObj neo_list_create(int len)
 
 
 // supprime totalement une liste sans libérer ses éléments, de manière respectueuse du compteur de références
-void neo_list_free(NeObj list) {
+void neo_list_neon_free(NeObj list) {
     if (*list.refc_ptr == 1) { // il ne restait plus qu'un seul pointeur sur cette NeList, donc on peut bel et bien la supprimer
         NeList* nelist = neo_to_list(list);
-        free(nelist->tab);
-        free(nelist);
+        neon_free(nelist->tab);
+        neon_free(nelist);
     }
     // si des gens pointent encore vers la liste, il restera encore le refc et la NeList, donc c'est ok
 }

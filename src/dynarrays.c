@@ -6,6 +6,7 @@
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
 #include "headers/neon.h"
+#include "headers/errors.h"
 
 // fonctions de copies. Servent à "déplacer" un tableau de la pile vers le tas
 
@@ -15,7 +16,7 @@
 void strlist_copy(strlist* list, const char** tab, int len)
 {
     // copie du tableau dans le tas
-    char** res = malloc(sizeof(char*)*len);
+    char** res = neon_malloc(sizeof(char*)*len);
     for (int i = 0 ; i < len ; i++)
     {
         res[i] = strdup(tab[i]);
@@ -35,7 +36,7 @@ void strlist_copy(strlist* list, const char** tab, int len)
 void intlist_copy(intlist* list, const int* tab, int len)
 {
     // copie du tableau dans le tas
-    int* res = malloc(sizeof(int)*len);
+    int* res = neon_malloc(sizeof(int)*len);
     for (int i = 0 ; i < len ; i++)
     {
         res[i] = tab[i];
@@ -56,12 +57,12 @@ void intlist_copy(intlist* list, const int* tab, int len)
 void listlist_copy(listlist* list, const intlist* tab, int len)
 {
     // copie du tableau dans le tas
-    intlist* res = malloc(sizeof(strlist)*len);
+    intlist* res = neon_malloc(sizeof(strlist)*len);
     intlist temp;
     for (int i = 0 ; i < len ; i++)
     {
         // ---- copie -----
-        int* res2 = malloc(sizeof(char*)*tab[i].len);
+        int* res2 = neon_malloc(sizeof(char*)*tab[i].len);
         for (int j = 0 ; j < tab[i].len ; j++)
         {
             res2[j] = tab[i].tab[j];
@@ -95,7 +96,7 @@ listlist listlist_create(int len)// crée une liste de pointeurs
   while (pow(2, list.capacity) < len)
     list.capacity++;
   
-  list.tab=malloc(pow(2, list.capacity)*sizeof(intlist));//initialise le tableau de longueur len avec de zéros
+  list.tab=neon_malloc(pow(2, list.capacity)*sizeof(intlist));//initialise le tableau de longueur len avec de zéros
   
   memset(list.tab,0,len);
   list.len=len;//initialise la bonne longueur
@@ -134,7 +135,7 @@ void listlist_remove(listlist* list,int index)//indiquer si il faut libérer l'�
     return ;
   }
   
-  free(list->tab[index].tab);
+  neon_free(list->tab[index].tab);
   
   for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];
@@ -170,9 +171,9 @@ void listlist_destroy(listlist* list)
 {
   for (int i=0;i<list->len;i++)
   {
-    free(list->tab[i].tab);
+    neon_free(list->tab[i].tab);
   }
-  free(list->tab);
+  neon_free(list->tab);
 }
 
 
@@ -183,7 +184,7 @@ void listlist_destroy(listlist* list)
 
 ptrlist* ptrlist_create(void)
 {
-    ptrlist* l = malloc(sizeof(ptrlist));
+    ptrlist* l = neon_malloc(sizeof(ptrlist));
 
     l->tete = NULL;
     l->queue = NULL;
@@ -202,7 +203,7 @@ void ptrlist_append(ptrlist* q, void* t)
     }
     else
     {
-        ptrlist* chainon = malloc(sizeof(ptrlist));//on crée une copie du premier chaînon
+        ptrlist* chainon = neon_malloc(sizeof(ptrlist));//on crée une copie du premier chaînon
         chainon->tete = q->tete;
         chainon->queue = q->queue;
         
@@ -259,14 +260,14 @@ int ptrlist_destroy(ptrlist* l, bool freeElements, bool freeTab)
     if (l->queue == NULL && (l->tete == NULL || !freeElements))  // on ne libère pas l s'il ne faut pas
     {
         if (freeTab)
-            free(l);
+            neon_free(l);
     }
     else if (l->queue == NULL && freeElements)
     {
-        free(l->tete);
+        neon_free(l->tete);
         
         if (freeTab) // on ne libère pas l s'il ne faut pas
-            free(l);
+            neon_free(l);
         
         // printString("Liberation du pointeur %p  (1)\n", l->tete);
         i=1;
@@ -280,13 +281,13 @@ int ptrlist_destroy(ptrlist* l, bool freeElements, bool freeTab)
         {
             if (freeElements)
             {
-                free(ptr->tete);
+                neon_free(ptr->tete);
                 // printString("Liberation du pointeur %p  (2)\n", ptr->tete);
             }
             tmp = ptr->queue;
             
             if (freeTab) // on ne libère pas l s'il ne faut pas
-                free(ptr);
+                neon_free(ptr);
             
             ptr=tmp;
         }
@@ -343,15 +344,15 @@ void ptrlist_direct_remove(ptrlist* list, ptrlist* ptr, ptrlist* prev) {
         list->tete = list->queue->tete; // on met le deuxième élément dans le premier
         ptrlist* sov = list->queue;
         list->queue = sov->queue; // on raccorde le premier chainon au troisième chainon
-        free(sov);
+        neon_free(sov);
     }
     else if (ptr->queue == NULL) { // ptr est à la fin de la liste
         prev->queue = NULL;
-        free(ptr);
+        neon_free(ptr);
     }
     else {
         prev->queue = ptr->queue;
-        free(ptr);
+        neon_free(ptr);
     }
 }
 
@@ -392,13 +393,13 @@ void ptrlist_remove(ptrlist* list, void* l, bool error)
         ptr->tete = (ptr->queue)->tete;
         ptr->queue = (ptr->queue)->queue;
         
-        free(ptrALiberer);
+        neon_free(ptrALiberer);
     }
     
     else //on est au milieu
     {
         ptr2->queue = ptr->queue;
-        free(ptr);
+        neon_free(ptr);
     }
     
 }
@@ -422,7 +423,7 @@ void* ptrlist_pop(ptrlist* list)
     else {
       list->tete = list->queue->tete;
       list->queue = list->queue->queue;
-      free(sov_chainon);
+      neon_free(sov_chainon);
     }
     return val;
 }
@@ -461,7 +462,7 @@ intlist intlist_create(int len)// crée une liste d'entiers
   while (pow(2, list.capacity) < len)
     list.capacity++;
   
-  list.tab=malloc(pow(2, list.capacity)*sizeof(int));//initialise le tableau de longueur len avec de zéros
+  list.tab=neon_malloc(pow(2, list.capacity)*sizeof(int));//initialise le tableau de longueur len avec de zéros
   
   memset(list.tab,0,len);
   
@@ -681,7 +682,7 @@ intptrlist intptrlist_create(int len)// crée une liste d'entiers
   while (pow(2, list.capacity) < len)
     list.capacity++;
   
-  list.tab=malloc(pow(2, list.capacity)*sizeof(int*));//initialise le tableau de longueur len avec de zéros
+  list.tab=neon_malloc(pow(2, list.capacity)*sizeof(int*));//initialise le tableau de longueur len avec de zéros
   
   memset(list.tab,0,len);
   
@@ -709,9 +710,9 @@ void intptrlist_append(intptrlist* list, int* ptr)//ajoute un élément à la fi
 void intptrlist_destroy(intptrlist* list) {
   for (int i = 0 ; i < list->len ; i++) {
     if (list->tab[i] != NULL)
-      free(list->tab[i]);
+      neon_free(list->tab[i]);
   }
-  free(list->tab);
+  neon_free(list->tab);
 }
 
 
@@ -720,14 +721,14 @@ void intptrlist_destroy(intptrlist* list) {
 
 strlist* strlist_create(int len)
 {
-  strlist* list = malloc(sizeof(strlist));
+  strlist* list = neon_malloc(sizeof(strlist));
   
   list->capacity = 0;
   
   while (pow(2, list->capacity) < len)
     list->capacity++;
   
-  list->tab=malloc(pow(2, list->capacity)*sizeof(char*));
+  list->tab=neon_malloc(pow(2, list->capacity)*sizeof(char*));
   
   memset(list->tab,0,len);
   list->len=len;
@@ -757,7 +758,7 @@ void strlist_aff(strlist* list)
         if (tmp != NULL)
             printString(tmp);
         printString("\", ");
-        //free(tmp);
+        //neon_free(tmp);
     }
 
     printString("\"");
@@ -793,11 +794,11 @@ void strlist_destroy(strlist* list, bool bo)
 {
   for (int i=0 ; i < list->len;i++)
   {
-    free(list->tab[i]);
+    neon_free(list->tab[i]);
   }
-  free(list->tab);
+  neon_free(list->tab);
   if (bo)
-    free(list);
+    neon_free(list);
 }
 
 
@@ -810,7 +811,7 @@ void strlist_resize(strlist* list, int newLen, bool freeElement)
   if (newLen < list->len && freeElement)
   {
       for (int i = newLen ; i < list->len ; i++)
-	    free(list->tab[i]);
+	    neon_free(list->tab[i]);
   }
   
   
@@ -857,7 +858,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
   }
   
   if (freeElement)
-      free(list->tab[index]);
+      neon_free(list->tab[index]);
   
   for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];

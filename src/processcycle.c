@@ -4,6 +4,7 @@
 #include "headers/processcycle.h"
 #include "headers/constants.h"
 #include "headers/neon.h"
+#include "headers/errors.h"
 
 
 
@@ -29,7 +30,7 @@ NO_INLINE void unloadCurrentProcess(Process* p) {
 
 
 void* allocate_new_stack(void) {
-    return malloc(STACK_SIZE);
+    return neon_malloc(STACK_SIZE);
 }
 
 
@@ -46,7 +47,7 @@ void set_stack_pointer(uint8_t* registers, void* stack) {
 
 
 ProcessCycle* ProcessCycle_create(void) {
-    ProcessCycle* pc = malloc(sizeof(ProcessCycle));
+    ProcessCycle* pc = neon_malloc(sizeof(ProcessCycle));
     pc->process = NULL;
     pc->next = NULL;
     pc->prev = NULL;
@@ -58,7 +59,7 @@ ProcessCycle* ProcessCycle_create(void) {
 
 Process* ProcessCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitialized) { // renvoie un pointeur vers le processus créé
     // on crée le nouveau processus
-    Process* p = malloc(sizeof(Process));
+    Process* p = neon_malloc(sizeof(Process));
     // création de la nouvelle pile
     p->var_loc = ptrlist_create();
     p->id = id;
@@ -180,22 +181,22 @@ Cette fonction supprime le processus actuel et passe au processus suivant
 NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
     Process* p = pc->process;
 
-    free(p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés
+    neon_free(p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés
     
     if (p->original_call != NULL) {
         neobject_destroy(p->original_call->data);
-        free(p->original_call);
+        neon_free(p->original_call);
     }
 
     if (p->stack != NULL) {
-        free(p->stack);
+        neon_free(p->stack);
     }
 
     // libération de la pile
 
     ptrlist_destroy(p->varsToSave, true, true);
 
-    free(p);
+    neon_free(p);
 
     ProcessCycle* next = pc->next;
 
@@ -206,14 +207,14 @@ NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
         return pc;
     }
     else if (pc->next == pc->prev) {// il y a uniquement deux processus
-        free(pc);
+        neon_free(pc);
         next->next = next;
         next->prev = next;
     }
     else {
         pc->prev->next = pc->next;
         pc->next->prev = pc->prev;
-        free(pc);
+        neon_free(pc);
     }
 
     return next;
@@ -232,7 +233,7 @@ void save_later(ptrlist* variables_a_sauvegarder, Var var) {
     }
 
     if (!bo) { // alors il faut ajouter cette variable à nos variables privatisées
-        NeSave* ns = malloc(sizeof(NeSave));
+        NeSave* ns = neon_malloc(sizeof(NeSave));
         ns->object = get_var_value(var);
         ns->var = var;
         ptrlist_append(variables_a_sauvegarder, (void*)ns);
@@ -265,7 +266,7 @@ void partialRestore(ptrlist* varsToSave, ptrlist* sov_vars_to_save) {
     while (varsToSave->tete != sov_vars_to_save) {
         save = ptrlist_pop(varsToSave);
         set_var(save->var, save->object);
-        free(save);
+        neon_free(save);
     }
 }
 
@@ -287,7 +288,7 @@ int create_new_process(Tree* tree, bool isInitialized) {
 
     if (id >= global_env->PROMISES->len) { // l'identifiant est un nouvel identifiant
         nelist_append(global_env->PROMISES, NEO_VOID);
-        intptrlist_append(&global_env->PROMISES_CNT, malloc(sizeof(int))); // on alloue un nouveau pointeur ici, il y restera jusqu'à la fin de la vie de l'interpréteur
+        intptrlist_append(&global_env->PROMISES_CNT, neon_malloc(sizeof(int))); // on alloue un nouveau pointeur ici, il y restera jusqu'à la fin de la vie de l'interpréteur
         intlist_append(&global_env->PROCESS_FINISH, 0);
     }
 

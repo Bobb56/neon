@@ -4,7 +4,7 @@
 #include "headers/objects.h"
 #include "headers/gc.h"
 #include "headers/neon.h"
-
+#include "headers/errors.h"
 
 
 // récupère l'objet d'après dans la liste chaînée
@@ -251,14 +251,14 @@ void gc_mark_and_sweep(void) {
 
             if (NEO_TYPE(ptr) == TYPE_CONTAINER) {
                 Container* c = neo_to_container(ptr);
-                free(c->data->tab);
-                free(c->data);
-                free(c);
+                neon_free(c->data->tab);
+                neon_free(c->data);
+                neon_free(c);
             }
             else if (NEO_TYPE(ptr) == TYPE_LIST) {
                 NeList* list = neo_to_list(ptr);
-                free(list->tab);
-                free(list);
+                neon_free(list->tab);
+                neon_free(list);
             }
             // du coup le pointeur prev ne change pas
         }
@@ -292,14 +292,14 @@ void gc_final_sweep(void) {
 
         if (NEO_TYPE(ptr) == TYPE_CONTAINER) {
             Container* c = neo_to_container(ptr);
-            free(c->data->tab);
-            free(c->data);
-            free(c);
+            neon_free(c->data->tab);
+            neon_free(c->data);
+            neon_free(c);
         }
         else if (NEO_TYPE(ptr) == TYPE_LIST) {
             NeList* list = neo_to_list(ptr);
-            free(list->tab);
-            free(list);
+            neon_free(list->tab);
+            neon_free(list);
         }
         // du coup le pointeur prev ne change pas
     }

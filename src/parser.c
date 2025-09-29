@@ -9,7 +9,7 @@
 #include "headers/operators.h"
 #include "headers/strings.h"
 #include "headers/parser.h"
-
+#include "headers/errors.h"
 
 
 // définition des élément modifiables de la syntaxe
@@ -213,9 +213,9 @@ int get_lkeywords_index(char* word) {
 
 
 Ast** ast_create(intlist* typeTok) {
-    Ast** ast = malloc(sizeof(Ast*) * typeTok->len);
+    Ast** ast = neon_malloc(sizeof(Ast*) * typeTok->len);
     for (int i = 0 ; i < typeTok->len ; i++) {
-        ast[i] = malloc(sizeof(Ast));
+        ast[i] = neon_malloc(sizeof(Ast));
         ast[i]->type = typeTok->tab[i];
         ast[i]->fin = i;
         ast[i]->suiv = NULL;
@@ -225,7 +225,7 @@ Ast** ast_create(intlist* typeTok) {
 
 
 void ast_push(Ast* ast) {
-    Ast* ast2 = malloc(sizeof(Ast));
+    Ast* ast2 = neon_malloc(sizeof(Ast));
     ast2->fin = ast->fin;
     ast2->type = ast->type;
     ast2->suiv = ast->suiv;
@@ -255,7 +255,7 @@ int ast_pop(Ast* ast) {
     ast->fin = sov->fin;
     ast->type = sov->type;
     ast->suiv = sov->suiv;
-    free(sov);
+    neon_free(sov);
     return 0;
 }
 
@@ -264,9 +264,9 @@ void ast_destroy(Ast ** ast, int length) {
     for (int i = 0 ; i < length ; i++) {
         while (ast[i]->suiv != NULL)
             ast_pop(ast[i]);
-        free(ast[i]);
+        neon_free(ast[i]);
     }
-    free(ast);
+    neon_free(ast);
 }
 
 
@@ -453,8 +453,8 @@ bool isFull(char* string)
     }
 
     strlist_destroy(tokens, true);
-    free(types.tab);
-    free(lines.tab);
+    neon_free(types.tab);
+    neon_free(lines.tab);
 
     
     if (global_env->CODE_ERROR == 29 || global_env->CODE_ERROR == 26 || global_env->CODE_ERROR == 11 || global_env->CODE_ERROR == 77)
@@ -662,7 +662,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
         else if (isPotentiallyNumber && char1=='.' && (i+1>=len_string || isdigit(string[i+1])))
         {
             global_env->CODE_ERROR = 2;// plusieurs virgules décimales
-            free(string);
+            neon_free(string);
             return;
         }
         
@@ -687,7 +687,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
             else
             {
                 global_env->CODE_ERROR = 73;
-                free(string);
+                neon_free(string);
                 return ;
             }
         }
@@ -698,7 +698,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
 
         if (global_env->CODE_ERROR != 0)
         {
-            free(string);
+            neon_free(string);
             return;
         }
 
@@ -712,7 +712,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
         if (!isPotentiallyHexBin && !isPotentiallyWord && !isPotentiallyString && !isPotentiallyNumber && !isPotentiallyOp && !isPotentiallyString2 && !isPotentiallyComm && !isPotentiallyLongComm && !nouvTok && char1 != ' ' && char1 != '\t')
         {
             global_env->CODE_ERROR = 25; // caractère inconnu
-            free(string);
+            neon_free(string);
             return;
         }
         
@@ -722,12 +722,12 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
             if (!isalnum(char1) && !(strlist_inList(&acceptedChars, char1_2)))
             {
                 global_env->CODE_ERROR = 25;
-                free(string);
-                free(char1_2);
+                neon_free(string);
+                neon_free(char1_2);
                 return;
             }
         }
-        free(char1_2);
+        neon_free(char1_2);
         
         nouvTok=false;
         
@@ -739,14 +739,14 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
     // si une variable de condition de détection de token est encore à True, faute de syntaxe
     if (isPotentiallyHexBin || isPotentiallyWord || isPotentiallyString || isPotentiallyNumber || isPotentiallyOp  || isPotentiallyString2 || isPotentiallyComm || isPotentiallyLongComm)
     {
-        free(string);
+        neon_free(string);
 
         global_env->CODE_ERROR = 26; // chaine de caractère, liste ou autre non terminée
         
         return;
     }
     
-    free(string);
+    neon_free(string);
 
     return ;
 }
@@ -874,7 +874,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         (*isPotentiallyOp)=false;
     }
     
-    free(sousch1);free(sousch2);
+    neon_free(sousch1);neon_free(sousch2);
     
     // elements d’un caractere
     
@@ -1017,7 +1017,7 @@ void debutTokensSimples(int i, int* debTok, char* char1, bool* isPotentiallyStri
         (*isPotentiallyOp)=true;
     }
     
-    free(char1_2);
+    neon_free(char1_2);
     
     return ;
 }
@@ -1267,7 +1267,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
         // la boucle d'après ne traite pas le premier opérateur, donc on s'occupe de lui ici
         if (ast[0]->type == TYPE_OPERATOR && strcmp(tokenAdd->tab[0], "-") == 0) {
-            free(tokenAdd->tab[0]);
+            neon_free(tokenAdd->tab[0]);
             tokenAdd->tab[0] = strdup("_");
         }
         
@@ -1300,7 +1300,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
             {
                 if (i_act == 0)
                 {
-                    free(tokenAdd->tab[i_act]);
+                    neon_free(tokenAdd->tab[i_act]);
                     tokenAdd->tab[i_act] = strdup("_"); // si j=0 (c'est-à-dire que c'est le premier token), on sait que c'est forcément un moins unaire
                 }
                 
@@ -1311,7 +1311,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
                     // on va intégrer le moins à l'unité lexicale à qui il est adressé
                     if (ast[i_act]->fin - offset < tokenAdd->len - 1) // si le moins étudié n'est pas le dernier caractère des tokens
                     {
-                        free(tokenAdd->tab[i_act]);
+                        neon_free(tokenAdd->tab[i_act]);
                         tokenAdd->tab[i_act] = strdup("_");
                     }
                 }

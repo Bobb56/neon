@@ -564,7 +564,7 @@ void loadExceptions(NeonEnv* env) {
 
 // initializes an empty environment
 NeonEnv* NeonEnv_init(void) {
-    NeonEnv* env = malloc(sizeof(NeonEnv));
+    NeonEnv* env = neon_malloc(sizeof(NeonEnv));
 
     env->NAME = 0;
     env->CODE_ERROR = 0;
@@ -598,7 +598,7 @@ NeonEnv* NeonEnv_init(void) {
 
 
 void NeonEnv_destroy(NeonEnv* env) {
-    free(env->process_cycle);
+    neon_free(env->process_cycle);
 
     strlist_destroy(env->EXCEPTIONS, true);
 
@@ -617,12 +617,12 @@ void NeonEnv_destroy(NeonEnv* env) {
 
     nelist_destroy(env->PROMISES);
     intptrlist_destroy(&env->PROMISES_CNT);
-    free(env->PROCESS_FINISH.tab);
+    neon_free(env->PROCESS_FINISH.tab);
 
     if (env->FILENAME != NULL)
-        free(env->FILENAME);
+        neon_free(env->FILENAME);
 
-    free(env);
+    neon_free(env);
 }
 
 
@@ -764,7 +764,7 @@ void terminal(void)
             global_env->CODE_ERROR = 0; // réinitialise les erreurs
 
             if (global_env->FILENAME != NULL)
-                free(global_env->FILENAME);
+                neon_free(global_env->FILENAME);
             global_env->FILENAME = NULL;
 
             exp = inputCode(SEQUENCE_ENTREE);
@@ -786,7 +786,7 @@ void terminal(void)
 
             if (strcmp(exp,"")==0) // si l'utilisateur n'a rien ecrit
             {
-                free(exp);
+                neon_free(exp);
                 continue;
             }
 
@@ -797,14 +797,14 @@ void terminal(void)
             if (global_env->CODE_ERROR != 0)
             {
                 printError(global_env->CODE_ERROR);
-                free(exp);
+                neon_free(exp);
                 continue;
             }
 
 
             createSyntaxTree(tree, exp);
 
-            free(exp);
+            neon_free(exp);
 
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
@@ -878,7 +878,7 @@ void execFile(char* filename)
     Tree* tree = tree_create(NULL, 0, 0);
     createSyntaxTree(tree, program);
     
-    free(program);
+    neon_free(program);
 
 
     if (global_env->CODE_ERROR != 0)
@@ -928,11 +928,11 @@ void importFile(char* filename)
     // exécution du fichier
     Tree* tree = tree_create(NULL, 0, 0);
     createSyntaxTree(tree, program);
-    free(program);
+    neon_free(program);
 
     if (global_env->CODE_ERROR != 0)
     {
-        free(sov);
+        neon_free(sov);
         tree_destroy(tree);
         return;
     }
@@ -940,12 +940,12 @@ void importFile(char* filename)
     exec_aux(tree);
 
     if (global_env->CODE_ERROR != 0) {
-        free(sov);
+        neon_free(sov);
         tree_destroy(tree);
         return;
     }
 
-    free(global_env->FILENAME);
+    neon_free(global_env->FILENAME);
     global_env->FILENAME = sov;
 
     tree_destroy(tree);

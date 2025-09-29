@@ -76,7 +76,7 @@ NeObj _input_(NeList* args)
         }
 
         char* entree = input(chaine);
-        free(chaine);
+        neon_free(chaine);
 
         if (global_env->CODE_ERROR != 0) {
             return NEO_VOID;
@@ -198,7 +198,7 @@ NeObj _reverse_(NeList* args)
         char* chaine = neo_to_string(ARG(0));
         int len = strlen(chaine);
         
-        char* retour = malloc((len+1)*sizeof(char));
+        char* retour = neon_malloc((len+1)*sizeof(char));
         
         for (int i=0 ; i<len ; i++)
         {
@@ -236,14 +236,14 @@ NeObj _eval_(NeList* args)
 
     if (global_env->CODE_ERROR != 0) {
         tree_destroy(tree);
-        free(sov);
+        neon_free(sov);
         return NEO_VOID;
     }
 
     NeObj res = eval_aux(tree);
 
     if (global_env->CODE_ERROR != 0)
-        free(sov);
+        neon_free(sov);
     else
         global_env->FILENAME = sov;
     
@@ -420,7 +420,7 @@ NeObj _help_(NeList* args)
                 {
                     char* temp = strdup(fun->help); // c'est pas beau, c'est juste pour ne pas avoir le warning du compilateur
                     printString(temp);
-                    free(temp);
+                    neon_free(temp);
                     newLine();
                 }
             }
@@ -540,7 +540,7 @@ NeObj _output_(NeList* args)
 NeObj _chr_(NeList* args)
 {
     int n = neo_to_integer(ARG(0));
-    char* c = malloc(sizeof(char) * 2);
+    char* c = neon_malloc(sizeof(char) * 2);
     c[0] = (char)n;
     c[1] = '\0';
     return neo_str_create(c);
@@ -583,7 +583,7 @@ NeObj _list_comp_(NeList* args)
 
     if (NEO_TYPE(ARG(1)) != TYPE_INTEGER || NEO_TYPE(ARG(2)) != TYPE_INTEGER || NEO_TYPE(ARG(3)) != TYPE_INTEGER) {
         if (sov_FILENAME != NULL)
-            free(sov_FILENAME);
+            neon_free(sov_FILENAME);
         global_env->CODE_ERROR = 112;
         return NEO_VOID;
     }
@@ -600,7 +600,7 @@ NeObj _list_comp_(NeList* args)
         tree_destroy(cond);
         tree_destroy(val);
         if (sov_FILENAME != NULL)
-            free(sov_FILENAME);
+            neon_free(sov_FILENAME);
         return NEO_VOID;
     }
 
@@ -611,7 +611,7 @@ NeObj _list_comp_(NeList* args)
         tree_destroy(cond);
         tree_destroy(val);
         if (sov_FILENAME != NULL)
-            free(sov_FILENAME);
+            neon_free(sov_FILENAME);
         return NEO_VOID;
     }
 
@@ -628,7 +628,7 @@ NeObj _list_comp_(NeList* args)
             tree_destroy(val);
             neobject_destroy(liste);
             if (sov_FILENAME != NULL)
-                free(sov_FILENAME);
+                neon_free(sov_FILENAME);
             return NEO_VOID;
         }
 
@@ -643,7 +643,7 @@ NeObj _list_comp_(NeList* args)
                 tree_destroy(cond);
                 tree_destroy(val);
                 if (sov_FILENAME != NULL)
-                    free(sov_FILENAME);
+                    neon_free(sov_FILENAME);
                 return NEO_VOID;
             }
         }
@@ -1010,7 +1010,7 @@ NeObj _setFunctionDoc_(NeList* args) {
     UserFunc* fun = neo_to_userfunc(ARG(0));
 
     if (fun->doc != NULL)
-        free(fun->doc);
+        neon_free(fun->doc);
 
     fun->doc = strdup(neo_to_string(ARG(1)));
     return neo_none_create();
@@ -1045,7 +1045,7 @@ NeObj _load_namespace_(NeList* args) {
 
             if (strlist_inList(global_env->NOMS, without_prefix)) {
                 _affect2(&global_env->ADRESSES->tab[strlist_index(global_env->NOMS, without_prefix)], global_env->ADRESSES->tab[i]);
-                free(without_prefix);
+                neon_free(without_prefix);
             }
             else {
                 strlist_append(global_env->NOMS, without_prefix);
@@ -1053,7 +1053,7 @@ NeObj _load_namespace_(NeList* args) {
             }
         }
     }
-    free(prefix);
+    neon_free(prefix);
     return neo_none_create();
 }
 

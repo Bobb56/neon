@@ -8,6 +8,7 @@
 #include "headers/objects.h"
 #include "headers/dynarrays.h"
 #include "headers/runtime.h"
+#include "headers/errors.h"
 
 
 #include <graphx.h>
@@ -410,7 +411,7 @@ void draw_obj(NeObj obj) {
             NeList* points = neo_to_list(ARG(0));
             intptr_t color = neo_to_integer(ARG(1));
             
-            int* points_arr = malloc(sizeof(int) * points->len * 2);
+            int* points_arr = neon_malloc(sizeof(int) * points->len * 2);
 
             for (int i = 0 ; i < points->len ; i++) {
                 if (NEO_TYPE(points->tab[i]) != TYPE_CONTAINER) {
@@ -432,7 +433,7 @@ void draw_obj(NeObj obj) {
 
             gfx_SetColor(color);
             gfx_Polygon(points_arr, points->len);
-            free(points_arr);
+            neon_free(points_arr);
         }
         else if (c->type == graphic_containers.Ellipse) { // draws an ellipse
             if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||

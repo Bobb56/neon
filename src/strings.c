@@ -10,6 +10,7 @@
 #include "headers/objects.h"
 #include "headers/neon.h"
 #include "headers/parser.h"
+#include "headers/errors.h"
 
 #ifdef WINDOWS
 #include <stdio.h>
@@ -90,7 +91,7 @@ char* traitementString(char* string)
 	char* string6=replace(string5,"\\t", "\t");
 	char* string7=replace(string6,"\\n", "\n");
 	char* string8=replace(string7,"\\\\", "\\");
-	free(string1);free(string2);free(string3);free(string4);free(string5);free(string6);free(string7);
+	neon_free(string1);neon_free(string2);neon_free(string3);neon_free(string4);neon_free(string5);neon_free(string6);neon_free(string7);
 	return string8;
 }
 
@@ -105,7 +106,7 @@ char* traitementStringInverse(char* string)
 	char* string5=replace(string4,"\v", "\\v");
 	char* string6=replace(string5,"\t", "\\t");
 	char* string7=replace(string6,"\n", "\\n");
-	free(string1);free(string2);free(string3);free(string4);free(string5);free(string6);free(string8);
+	neon_free(string1);neon_free(string2);neon_free(string3);neon_free(string4);neon_free(string5);neon_free(string6);neon_free(string8);
 	return string7;
 }
 
@@ -294,7 +295,7 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non complét�
         }
     }
 
-    free(string);
+    neon_free(string);
     return acc;
 
 }
@@ -324,7 +325,7 @@ char* inputCode(char* text)
     {
         if (global_env->CODE_ERROR != 0)
         {
-            free(str);
+            neon_free(str);
             return NULL;
         }
 
@@ -337,19 +338,19 @@ char* inputCode(char* text)
         
         char* newStr = input(text);
 
-        free(text);
+        neon_free(text);
 
         if (global_env->CODE_ERROR != 0 || newStr == NULL) {
-            free(str);
+            neon_free(str);
             return NULL;
         }
             
         char* temp = addStr("\n", newStr);
         char* temp2 = addStr(str, temp);
-        free(str);
-        free(newStr);
+        neon_free(str);
+        neon_free(newStr);
         str = temp2;
-        free(temp);
+        neon_free(temp);
     }
     return str;
 }
@@ -460,7 +461,7 @@ char* addStr2(char* str1, char* str2)
     la fonction libère la première str1
     */
     char* str = addStr(str1, str2);
-    free(str1);
+    neon_free(str1);
     return str;
 }
 
@@ -557,7 +558,7 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
         }
     }
 
-    free(l.tab);
+    neon_free(l.tab);
 
     return res;
 }
@@ -618,7 +619,7 @@ strlist* get_all_modules(void) {
             strlist_append(modules, prefix);
         }
         else if (prefix != NULL)
-            free(prefix);
+            neon_free(prefix);
     }
     return modules;
 }
@@ -640,7 +641,7 @@ int function_module(char* module, char* function) {
     char* functionName = addStr2(addStr(module, "~"), function);
     int n = strlist_index(global_env->NOMS, functionName);
     global_env->CODE_ERROR = 0;
-    free(functionName);
+    neon_free(functionName);
 
     if (n < 0 || (NEO_TYPE(global_env->ADRESSES->tab[n]) != TYPE_USERFUNC && NEO_TYPE(global_env->ADRESSES->tab[n]) != TYPE_USERMETHOD))
         return -1;

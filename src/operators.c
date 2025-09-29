@@ -6,6 +6,7 @@
 #include "headers/strings.h"
 #include "headers/runtime.h"
 #include "headers/neon.h"
+#include "headers/errors.h"
 
 
 //definition des fonctions attribuees aux operateurs
@@ -256,7 +257,7 @@ NeObj _mul(NeObj _op1, NeObj _op2)
     }
     
     int len_sousch = strlen(sousch);
-    char* multip = malloc(sizeof(char*)*(times*len_sousch+1));
+    char* multip = neon_malloc(sizeof(char*)*(times*len_sousch+1));
 
     for (int i=0 ; i < times*len_sousch ; i++)
     {
