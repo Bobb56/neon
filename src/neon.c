@@ -883,6 +883,9 @@ void execFile(char* filename)
 
     if (global_env->CODE_ERROR != 0)
     {
+        printString("Mémoire totale allouée : ");
+        printInt(allocatedMem());
+        newLine();
         printError(global_env->CODE_ERROR);
         neon_pause("Press ENTER to leave Neon...");
         global_env->CODE_ERROR = 0;

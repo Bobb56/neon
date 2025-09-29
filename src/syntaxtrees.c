@@ -12,8 +12,6 @@
 #include "headers/syntaxtrees.h"
 #include "headers/errors.h"
 
-static int trees = 0;
-
 
 /*
 PROCéDé : 
@@ -76,8 +74,6 @@ Tree* tree_create(char* label1, int label2, uint8_t type)
     newTree->nbSons = 0;
     newTree->data = NEO_VOID;
 
-    trees += sizeof(Tree) + sizeof(Tree*);
-
     return newTree;
 }
 
@@ -87,8 +83,6 @@ Tree* tree_create(char* label1, int label2, uint8_t type)
 void tree_appendSon(Tree* tree, Tree* son)
 {
   Tree** tmp;
-
-  trees -= sizeof(Tree*) * (1 << tree->capacity);
 
   if (pow(2, tree->capacity) == tree->nbSons)
   {
@@ -113,8 +107,6 @@ void tree_appendSon(Tree* tree, Tree* son)
     tree->sons = tmp;//affectation du pointeur de tmp vers tree.tab
   }
 
-  trees += sizeof(Tree*) * (1 << tree->capacity);
-
   tree->sons[tree->nbSons]=son;
   tree->nbSons++;
   return;
@@ -130,8 +122,6 @@ _Bool tree_isEmpty(Tree* tree) {
 
 void tree_destroy(Tree* tree)
 {
-    trees -= sizeof(Tree) + sizeof(Tree*) * (1 << tree->capacity);
-
     if (tree != NULL) {
         if (tree->label1 != NULL)
             neon_free(tree->label1);
@@ -2028,11 +2018,6 @@ void createSyntaxTree(Tree* tree, char* program)
     Ast** ast;
 
     cut(tokens, &types, program, true, &lines);
-
-    printString("Taille des tableaux :\n");
-    printInt((tokens->len) * sizeof(char*) + (types.len) * sizeof(int) + (lines.len) * sizeof(int));
-    newLine();
-    neon_pause("");
 
     if (global_env->CODE_ERROR != 0) {
         neon_free(types.tab);
