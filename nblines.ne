@@ -70,3 +70,4 @@ end
 
 
 print("Le projet Neon compte", print_number(nbLines(files)), "lignes de code sans linenoise.c, mais", print_number(nbLines(files + other_files)), "lignes en tout.")
+<
