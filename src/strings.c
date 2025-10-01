@@ -395,7 +395,7 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
     return NULL;
   }
   
-  char* newStr = malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
+  char* newStr = neon_malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
 
   if (newStr == NULL)
   {
@@ -422,7 +422,7 @@ char* sandwich(char* string, char car)
 
     /* fonction qui ajoute le caractère car avant et après la chaine de caractères string*/
     int len = strlen(string);
-    char* newStr = malloc(len + 3);
+    char* newStr = neon_malloc(len + 3);
   
     newStr[0]=car;
     newStr[len+1]=car;
@@ -439,7 +439,7 @@ char* sandwich(char* string, char car)
 
 char* addStr(char* str1, char* str2)// concatène deux chaines de caractères
 {
-  char* newStr = malloc(strlen(str1) + strlen(str2) + 1);
+  char* newStr = neon_malloc(strlen(str1) + strlen(str2) + 1);
   
   strcpy(newStr,str1);
   strcat(newStr,str2);
@@ -450,7 +450,7 @@ char* addStr(char* str1, char* str2)// concatène deux chaines de caractères
 
 char* charToString(char car)
 {
-    char* retour = malloc(2*sizeof(char));
+    char* retour = neon_malloc(2*sizeof(char));
     retour[0] = car ; retour[1] = '\0';
     return retour;
 }
@@ -485,7 +485,7 @@ char* subReplace(char* string, int len, int debut, int longueur, char* remplacem
         return 0;
     }
     
-    char* resultat = malloc(sizeof(char) * (len - longueur + len_remplacement + 1));
+    char* resultat = neon_malloc(sizeof(char) * (len - longueur + len_remplacement + 1));
 
     for (int i = 0 ; i < debut ; i++) // partie inchangée
         resultat[i] = string[i];
@@ -531,7 +531,7 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
     // création de la nouvelle chaine de caractères
 
     int new_len = len + l.len * (len_remplacement - len_aremplacer);
-    char* res = malloc(sizeof(char)*(new_len+1));
+    char* res = neon_malloc(sizeof(char)*(new_len+1));
     res[new_len] = '\0';
 
     int i_string = 0, i_res = 0;
