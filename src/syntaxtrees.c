@@ -48,7 +48,6 @@ Tree* tree_create(char* label1, int label2, uint8_t type)
 
     if (newTree == NULL)
     {
-        printString("MEMORY0: "); printInt(allocatedMem()); newLine();
         global_env->CODE_ERROR = 12;
         return NULL;
     }
@@ -64,7 +63,6 @@ Tree* tree_create(char* label1, int label2, uint8_t type)
     
     if (tmp == NULL)
     {
-        printString("MEMORY1: "); printInt(allocatedMem()); newLine();
         global_env->CODE_ERROR = 12;
         neon_free(newTree);
         return NULL;
@@ -1395,25 +1393,15 @@ void createStatementIEWFTree(Tree* tree, Ast** ast, strlist* tokens, intlist* li
     strlist exprToks = (strlist) {.tab = tokens->tab + 2, .len = ast[0]->fin - offset - 2};
     Ast** exprAst = ast + 2;
 
-    printString("erreur: ");
-    printInt(global_env->CODE_ERROR);
-    newLine();
     Tree* fils1 = tree_create(NULL, 0, TYPE_SYNTAXTREE);
-    if (global_env->CODE_ERROR != 0)
-    {
-        printString("erreur: ");
-        printInt(global_env->CODE_ERROR);
-        newLine();
-        printString("b30\n");
+    if (global_env->CODE_ERROR != 0) {
         return;
     }
     createExpressionTreeAux(fils1, exprAst, &exprToks, lines, offset + 2);
 
     
     Tree* fils2 = tree_create(NULL, 0, TYPE_SYNTAXTREE);
-    if (global_env->CODE_ERROR != 0)
-    {
-        printString("b31\n");
+    if (global_env->CODE_ERROR != 0) {
         tree_destroy(fils1);
         return;
     }
@@ -1422,7 +1410,6 @@ void createStatementIEWFTree(Tree* tree, Ast** ast, strlist* tokens, intlist* li
 
     if (global_env->CODE_ERROR != 0)
     {
-        printString("b32\n");
         tree_destroy(fils1);
         tree_destroy(fils2);
         return;
@@ -1481,9 +1468,7 @@ void createConditionBlockTree(Tree* tree, Ast** ast, strlist* tokens, intlist* l
         if (ast[i]->type == TYPE_STATEMENTELSE)
         {
             Tree* fils = tree_create(NULL, 0, TYPE_SYNTAXTREE);
-            if (global_env->CODE_ERROR != 0)
-            {
-                printString("b20\n");
+            if (global_env->CODE_ERROR != 0) {
                 return;
             }
 
@@ -1491,9 +1476,7 @@ void createConditionBlockTree(Tree* tree, Ast** ast, strlist* tokens, intlist* l
 
             createStatementElseTree(fils, ast + i, &elseToks, lines, offset + i);
 
-            if (global_env->CODE_ERROR != 0)
-            {
-                printString("b21\n");
+            if (global_env->CODE_ERROR != 0) {
                 tree_destroy(fils);
                 return;
             }
@@ -1503,18 +1486,14 @@ void createConditionBlockTree(Tree* tree, Ast** ast, strlist* tokens, intlist* l
         else if (ast[i]->type == TYPE_STATEMENTIF || ast[i]->type == TYPE_STATEMENTELIF)
         {
             Tree* fils = tree_create(NULL, 0, TYPE_SYNTAXTREE);
-            if (global_env->CODE_ERROR != 0)
-            {
-                printString("b22\n");
+            if (global_env->CODE_ERROR != 0) {
                 return;
             }
 
             strlist blocToks = (strlist) {.tab = tokens->tab + i, .len = ast[i]->fin - offset + 1 - i};
 
             createStatementIEWFTree(fils, ast + i, &blocToks, lines, offset + i, ast[i]->type);
-            if (global_env->CODE_ERROR != 0)
-            {
-                printString("b23\n");
+            if (global_env->CODE_ERROR != 0) {
                 tree_destroy(fils);
                 return;
             }
@@ -1699,14 +1678,6 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
     int exprStart = 0;
 
     int index = 0, index2 = 0;
-
-    printString("b15 ");
-    printInt(ast[0]->type);
-    newLine();
-
-    printString("Code d'erreur : ");
-    printInt(global_env->CODE_ERROR);
-    newLine();
 
     while (index < tokens->len) {
 
@@ -1925,7 +1896,6 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
             createStatementIEWFTree(fils, ast + index, &stru, lines, offset + index, ast[index]->type);
 
             if (global_env->CODE_ERROR != 0) {
-                printString("b13\n");
                 tree_destroy(fils);
                 return;
             }
@@ -1941,7 +1911,6 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
 
             if (global_env->CODE_ERROR != 0) {
                 tree_destroy(st);
-                printString("b10\n");
                 return;
             }
 
@@ -1962,7 +1931,6 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
 
             if (global_env->CODE_ERROR != 0) {
                 tree_destroy(expr);
-                printString("b11\n");
                 return;
             }
 
@@ -1981,7 +1949,6 @@ void createSyntaxTreeAux(Tree* tree, Ast** ast, strlist* tokens, intlist* lines,
 
             if (global_env->CODE_ERROR != 0) {
                 tree_destroy(expr);
-                printString("b12\n");
                 return;
             }
 
@@ -2049,9 +2016,7 @@ void createSyntaxTree(Tree* tree, char* program)
         return;
     }
 
-    printString("b0\n");
     createSyntaxTreeAux(tree, ast, tokens, &lines, 0);
-    printString("b100\n");
 
     ast_destroy(ast, tokens->len);
     strlist_destroy(tokens, true);
