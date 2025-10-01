@@ -44,7 +44,7 @@ Ajouter les nouveaux traitements pour les indices de liste et les appels de fonc
 
 Tree* tree_create(char* label1, int label2, uint8_t type)
 {
-    Tree* newTree = malloc(sizeof(Tree));
+    Tree* newTree = neon_malloc(sizeof(Tree));
 
     if (newTree == NULL)
     {
@@ -59,7 +59,7 @@ Tree* tree_create(char* label1, int label2, uint8_t type)
     // création de la liste de fils
     newTree->capacity = 0;
 
-    Tree** tmp = malloc(sizeof(Tree*));
+    Tree** tmp = neon_malloc(sizeof(Tree*));
     
     if (tmp == NULL)
     {
@@ -87,7 +87,7 @@ void tree_appendSon(Tree* tree, Tree* son)
     tree->capacity++;
     
     //réallocation
-    tmp = malloc(pow(2, tree->capacity)*sizeof(Tree*));
+    tmp = neon_malloc(pow(2, tree->capacity)*sizeof(Tree*));
 
     if (tmp == NULL) {
         global_env->CODE_ERROR = 12;
@@ -1552,7 +1552,7 @@ void createFunctionTree(Tree* tree, Ast** ast, strlist* tokens, intlist* lines, 
 
     // majorant du nombre d'arguments
     int size_liste = strlist_count(&argsTok, ",") + 1;
-    Var* liste = malloc(sizeof(Var)*size_liste); // tableau qui va contenir toutes les variables à affecter
+    Var* liste = neon_malloc(sizeof(Var)*size_liste); // tableau qui va contenir toutes les variables à affecter
     int liste_index = 0;
 
     int nbOptArgs = 0;
