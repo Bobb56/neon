@@ -1224,6 +1224,108 @@ Cette variable est une chaîne de caractères représentant la version de l'inte
 
 En mode console, à chaque fois qu'une expression est entrée dans le terminal, la variable `Ans` prend la valeur du résultat de cette expression.
 
+
+= *Partie 7 : Extensions non standard*
+
+En plus du corps du langage contenant tout ce qui est documenté jusqu'ici dans ce document et disponible sur toutes les plateformes, il est possible sur certaines plateformes d'importer des fonctions supplémentaires non disponibles sur les autres plateformes.
+
+== 7.1 - L'extension graphique pour la plateforme TI_EZ80
+
+Cette extension est mal nommée puisqu'elle n'est pas seulement graphique, mais permet à la fois de dessiner à l'écran, et de gérer les appuis du clavier.
+
+Lors du chargement de l'interpréteur, rien de ce qui est défini dans cette extension n'est accessible, il faut au préalable appeler la fonction `initGraphics` (sans paramètres) pour initialiser l'extension en mémoire.
+
+Sur les plateformes qui ne supportant pas l'extension graphique, l'appel à `initGraphics` lèvera l'exception `NotImplemented`.
+
+Cette extension définit un ensemble de fonctions et de types de containers qui permettent de créer des objets graphiques et de les afficher.
+
+La manière dont fonctionne la préféfinition de types de containers est assez spéciale, il est important de comprendre comment cela fonctionne.
+
+En effet, comme expliqué plus tôt dans cette documentation, il est normalement suffisant #emph("d'écrire") un container d'un certain type pour que ce type soit défini. Il n'est jamais nécessaire de #emph("définir") explicitement un type de container.
+
+Le type est défini en fonction du premier objet de ce type rencontré par l'interpréteur.
+
+Le problème est que certaines fonctions graphiques prennent en argument des objets graphiques (cercles, rectangles, lignes) qui suivent une définition bin précise, avec des champs précis, etc. Pour que les fonctions graphiques puissent reconnaître de manière efficace si un objet est un cercle, un triangle, etc, tous ces objets graphiques sont prédéfinis lors du chargement de l'extension.
+
+Les types de containers définis lors d'un appel à `initGraphics` sont :\
+
+- `Point(x, y)` : `x` et `y` de type `Integer`
+- `Circle(x, y, radius, color, filled)` : `x`, `y`, `radius` et `color` de type `Integer` et `filled` de type `Bool`
+- `Rect(x, y, width, height, color, filled)` : `x`, `y`, `width`, `height` et `color` de type `Integer` et `filled` de type `Bool`
+- `Line(x0, y0, x1, y1, color)` : `x0`, `y0`, `x1`, `y1` et `color` de type `Integer`
+- `Text(text, x, y, fgcolor, bgcolor, size)` : `text` de type `String`, `x`, `y`, `fgcolor`, `bgcolor` et `size` de type `Integer`
+- `Triangle(x0, y0, x1, y1, x2, y2, color)` : `x0`, `y0`, `x1`, `y1`, `x2`, `y2` et `color` de type `Integer`
+- `Polygon(points, color)` : `points` est une liste de containers de type `Point`, et `color` est un entier
+- `Ellipse(x, y, a, b, color, filled)` : `x`, `y`, `a`, `b` et `color` de type `Integer` et `filled` de type `Bool`
+- `FloodFill(x, y, color)` : `x`, `y` et `color` de type `Integer`
+
+
+Cela signifie qu'après un appel à `initGraphics`, tous les containers dont les noms sont listés au-dessus devront posséder les paramètres données au-dessus. Les types des attributs de sont pas forcés de coincider pour que la définition du container soit correcte, mais les types données ici sont les types attendus dans les champs des containers pris en argument par les fonctions graphiques.
+
+La fonction `initGraphics` peut être appelée alors que certains des types décrits ci-dessus ont déjà été définis, mais si les types déjà définis ont une définition différente de celle attendue ici, une erreur sera levée.
+
+Voici une description un peu plus explicite de l'utilité des différents champs de ces objets.
+
+- Les champs `x`, `y`, `x0`, `y0`, ... représentent des coordonnées de pixels
+- Les champs `a` et `b` des ellipses correspondent respectivement au rayon horizontal et au rayon vertical de l'ellipse
+- Les champs `color`, `fgcolor` et `bgcolor` sont des couleurs. `fgcolor` est la couleur des lettres lorsque l'on dessine du texte, et bgcolor est la couleur de remplissage autour de chaque lettre.
+- Le champ `filled` indique si la figure doit être tracée en remplissant son contour ou non. Il faut noter que les triangles sont automatiquement remplis, et que les polygones ne sont pas remplis.
+- Les champs `width` et `height` représentent respectivement la longueur et la largeur des objets. Par exemple pour dessiner un rectangle, `width` et `height` correspondent à la largeur et la hauteur du triangle. Les champs `x` et `y` du rectangle sont les coordonnées du coin supérieur droit du rectangle à dessiner.
+- `radius` est le rayon du cercle
+- `size` est la taille des caractères dessinés. Un paramètre `size` à 1 correspond à un texte de taille basique. Pour `size` = 2, la hauteur des lettres est doublée. Pour `size` = 3, la hauteur et la largeur des lettres sont doublées. Pour `size` = 4, la hauteur des lettres est triplée et la largeur est doublée. La logique est similaire pour la suite. Les valeurs de `size` impaires correspondent aux lettres dont les dimensions ont été uniformément multipliées par un ratio, et les valeurs paires correspondent à une taille intermédiaire où l'on a uniquement étiré les lettres en hauteur. Il n'est pas nécessaire de comprendre tout cela, il suffit de comprendre que plus `size` est grand, plus le texte l'est aussi.
+
+Voyons maintenant à quoi servent tous ces objets.
+
+=== 7.1.1 - L'écran
+
+L'écran de la TI-83 Premium CE / Edition Python (ou de la TI-84 Plus CE) est un rectangle de 320 pixels de large et 240 pixels de haut.
+
+Le système de coordonnées place l'origine (x=0, y=0) tout en haut à gauche. Ainsi, le pixel au coin inférieur gauche est de coordonnées (x=0, y=239), le pixel au coin supérieur droit est de coordonnées (x=319, y=0) et le pixel au coin inférieur droit est de coordonnées (x=319, y=239).
+
+Comme vous l'avez remarqué lors des définitions d'objets dans la section précédente, les couleurs sont des entiers. Plus précisément il existe 256 couleurs prédéfinies, visibles sur la palette ci-contre.
+
+#image("graphx_palette.png")
+
+Chaque couleur est définie par son index dans la palette (de 0 à 255).
+
+Pour le dessin de texte (l'objet `Text`), la couleur 255 représente la couleur transparent.
+
+*La fonction `draw`*
+
+La fonction `draw` est la fonction principale permettant de dessiner des choses à l'écran. Cette fonction permet d'afficher d'un coup un nombre illimité d'objets quelconque.
+
+Le nombre et le type des arguments attendus par cette fonction sont parfaitement libres, tout peut être envoyé à cette fonction. Si un objet envoyé à `draw` est directement affichable (container de type Rect, Line, etc) alors il sera affiché sur l'écran. Si un objet envoyé à `draw` est une liste ou un container non affichable, tous les objets affichables qu'il contient (peu importe à quelle profondeur dans l'objet) seront affichés. Les objets de type `Integer`, `Bool`, etc sont ignorés. Si un objet envoyé à `draw` contient une fonction (built-in ou définie par l'utilisateur), la fonction sera exécutée.
+
+De manière générale, la seule chose à retenir pour savoir utiliser cette fonction est : `draw` va toujours essayer de dessiner ce qui est dessinable, peu importe jusqu'où il faut chercher les objets dessinables dans les arguments qu'on lui donne.
+
+*Exemple :*\
+Supposons qu'on veuille coder un jeu de course de bateaux. Dans ce cas, on utilisera une liste `bateaux` dans laquelle on stocke tous les bateaux.
+
+Utilisons par exemple ce type de container pour représenter les bateaux : `Bateau(vitesse, nom, forme)`. Le champ `vitesse` est un nombre indiquant la vitesse du bateau et `nom` contient le nom du joueur.
+
+Le champ `forme` contient une liste d'objets affichables permettant de dessiner le bateau (exemple : un rectangle rempli pour le contour, un triangle pour l'avant, et quelques lignes pour montrer la traînée derrière le bateau).
+
+Dans un jeu utilisant de tels objet, il suffit pour dessiner tous les bateaux d'appeler `draw(bateaux)`.
+
+Le comportement de la plupart des objets lorsqu'on les dessine est assez clair : `Circle` trace un cercle, `Rect` dessine un rectangle, `Line` dessine une ligne, etc.
+
+L'objet `FloodFill` quant à lui effectue un remplissage d'une certaine zone de l'écran dont les coordonnées sont spécifiées.
+
+*La fonction `setPixel`*
+
+=== 7.1.1 - Le clavier
+
+L'accès au clavier est géré par une seule fonction : la fonction `getKey`, qui ne prend pas d'arguments.
+
+Cette fonction renvoie un entier correspondant à la dernière touche pressée, ou zéro si aucune touche n'a été pressée depuis le dernier appel à `getKey`.
+
+Chaque touche de la calculatrice possède un code unique permettant de l'identifier. Le code associé à chaque touche est montré sur le schéma ci-dessous.
+
+La touche ON (41) n'est pas utilisable avec `getKey`.
+
+#image("keycodes.png")
+
+
 = Conclusion
 
 Cette documentation se veut être une description exhaustive des fonctionnalités du langage de programmation Neon. Si vous pensez qu'il manque des informations, que des informations sont fausses, pour une quelconque remarque/question ou encore pour signaler un bug, n'hésitez pas à rejoindre le serveur Discord de Neon : `https://discord.gg/wkBdK35w2a`.
