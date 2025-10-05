@@ -17,16 +17,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
-Programme suivant sur calculatrice :
-a = 0
-while (True) do
-    k = 1
-    if (True) then
-        a++
-        print(a)
-    end
-end
-Le problème est très probablement causé lors du scroll de nio : si on affiche plus de texte d'un coup, l'erreur apparaît toujours au premier scroll
+
 _____________________
 
 Potentielles futures erreurs :
@@ -51,6 +42,8 @@ General Protection Fault = Problème d'alignement de la pile
 
 Avancement et choses à faire :
 -------------------------------
+> Continuer de créer toutes les structures pour tous les arbres différents, et les fonctions pour les créer
+> Modifier syntaxtrees pour utiliser ces arbres, puis runtime
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
 --> Faire une fonction saveVars(nom de fichier, plein de variables) et loadVars(plein de variables) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)
