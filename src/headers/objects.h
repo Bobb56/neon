@@ -5,34 +5,10 @@
 #include <stdbool.h>
 
 #include "constants.h"
-
-// définition de la structure de NeObj
-typedef struct Function Function;
-typedef struct UserFunc UserFunc;
-typedef struct Container Container;
-typedef struct NeList NeList;
-typedef struct String String;
+#include "trees.h"
 
 
-typedef struct NeObj
-{
-    union {
-        int* refc_ptr; // ce champ permet d'accéder de manière directe au premier champ de chacune des structures
-
-        Container* container;
-        NeList* nelist;
-        Function* function;
-        UserFunc* userfunc;
-        String* string;
-        double floating;
-        intptr_t integer;
-    };
-    uint8_t type;
-} NeObj;
-
-
-
-typedef int Var;
+#include "neobj.h"
 
 
 struct String
@@ -76,7 +52,6 @@ struct Function
     int typeRetour;
 };
 
-typedef struct Tree Tree;
 
 struct UserFunc
 {
@@ -85,7 +60,7 @@ struct UserFunc
     int nbArgs;
     bool unlimited_arguments;
     int nbOptArgs; // nombre d'arguments vraiment, vraiment optionnels (par définition, ceux qui sont après ...)
-    Tree * code;
+    NeTree code;
     NeList* opt_args;// valeurs par défaut des arguments optionnels
     char* doc;
 };
@@ -174,7 +149,7 @@ NeObj neo_fun_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const
 bool funcArgsCheck(Function* fun, NeList* args);
 NeObj functionCall(NeObj fun, NeList* args);
 char* type(NeObj neo);
-NeObj userFuncCreate(Var* args, Tree* code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type);
+NeObj userFuncCreate(Var* args, NeTree code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type);
 NeObj userFuncDefine(NeObj obj, NeList* opt_args);
 NeObj neo_exception_create(int index);
 int get_exception_code(NeObj exception);

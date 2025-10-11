@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -207,6 +206,19 @@ int get_lkeywords_index(char* word) {
     return strlist_index(&lkeywords, word);
 }
 
+bool is_binary(int operator) {
+    int typeOperande = get_type_operande_index(operator);
+    return typeOperande & RIGHT_LEFT || typeOperande & VAR_VAR || typeOperande & VAR_RIGHT || typeOperande & LEFT_VAR;
+}
+
+bool is_unary(int operator) {
+    int typeOperande = get_type_operande_index(operator);
+    return typeOperande & RIGHT || typeOperande & VARLEFT || typeOperande & VARRIGHT;
+}
+
+char* get_operator_string(int operator_index) {
+    return OPERATEURS.tab[operator_index];
+}
 
 
 ///////////// DÉFINITION DE LA STRUCTURE AST //////////////

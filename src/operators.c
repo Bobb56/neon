@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -396,7 +395,7 @@ NeObj _eucl(NeObj _op1, NeObj _op2)
 
 
 
-NeObj _and(Tree* tree1, Tree* tree2)
+NeObj _and(NeTree tree1, NeTree tree2)
 {
   bool b = isTrue(tree1) && global_env->CODE_ERROR == 0 && isTrue(tree2);
 
@@ -410,7 +409,7 @@ NeObj _and(Tree* tree1, Tree* tree2)
 
 
 
-NeObj _or(Tree* tree1, Tree* tree2)
+NeObj _or(NeTree tree1, NeTree tree2)
 {
   bool b = isTrue(tree1) || global_env->CODE_ERROR != 0 || isTrue(tree2);
 

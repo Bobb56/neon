@@ -5,6 +5,7 @@
 #include "headers/constants.h"
 #include "headers/neon.h"
 #include "headers/errors.h"
+#include "headers/trees.h"
 
 
 
@@ -57,7 +58,7 @@ ProcessCycle* ProcessCycle_create(void) {
 
 
 
-Process* ProcessCycle_add(ProcessCycle* pc, Tree* tree, int id, bool isInitialized) { // renvoie un pointeur vers le processus créé
+Process* ProcessCycle_add(ProcessCycle* pc, NeTree tree, int id, bool isInitialized) { // renvoie un pointeur vers le processus créé
     // on crée le nouveau processus
     Process* p = neon_malloc(sizeof(Process));
     // création de la nouvelle pile
@@ -183,9 +184,9 @@ NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
 
     neon_free(p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés
     
-    if (p->original_call != NULL) {
-        neobject_destroy(p->original_call->data);
-        neon_free(p->original_call);
+    if (!NeTree_isvoid(p->original_call)) {
+        neobject_destroy(p->original_call.fcall->function_obj);
+        neon_free(p->original_call.pointer);
     }
 
     if (p->stack != NULL) {
@@ -279,7 +280,7 @@ Crée un nouveau processus et renvoie son identifiant
 Il faut également indiquer si on doit supprimer l'arbre après avoir exécuté le processus
 Si on doit supprimer l'arbre, il doit obligatoirement avoir la forme des arbres que l'on met dans les nouvelles promesses
 */
-int create_new_process(Tree* tree, bool isInitialized) {
+int create_new_process(NeTree tree, bool isInitialized) {
     // calcul de l'identifiant du processus que l'on ajoute
     int id = 0;
 

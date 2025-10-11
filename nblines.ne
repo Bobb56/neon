@@ -13,6 +13,7 @@ files = [
     "objects.c",
     "processcycle.c",
     "main.c",
+    "trees.c",
     "win_amd64.S",
     "linux_amd64.S",
     "linux_riscv64.S",
@@ -31,7 +32,8 @@ files = [
     "headers/runtime.h",
     "headers/objects.h",
     "headers/processcycle.h",
-    "headers/lowlevel.h"
+    "headers/lowlevel.h",
+    "headers/trees.h"
 ]
 
 other_files = [
@@ -70,4 +72,3 @@ end
 
 
 print("Le projet Neon compte", print_number(nbLines(files)), "lignes de code sans linenoise.c, mais", print_number(nbLines(files + other_files)), "lignes en tout.")
-<

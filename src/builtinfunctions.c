@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
@@ -224,18 +223,15 @@ NeObj _reverse_(NeList* args)
 
 
 NeObj _eval_(NeList* args)
-{
-    Tree* tree = tree_create(NULL, 0, 0);
-    
+{    
     char* exp = neo_to_string(ARG(0));
 
     char* sov = global_env->FILENAME;
     global_env->FILENAME = NULL;
     
-    createExpressionTree(tree, exp);
+    NeTree tree = createExpressionTree(exp);
 
     if (global_env->CODE_ERROR != 0) {
-        tree_destroy(tree);
         neon_free(sov);
         return NEO_VOID;
     }
@@ -247,7 +243,7 @@ NeObj _eval_(NeList* args)
     else
         global_env->FILENAME = sov;
     
-    tree_destroy(tree);
+    NeTree_destroy(tree);
     return res;
 }
 
@@ -590,26 +586,21 @@ NeObj _list_comp_(NeList* args)
     
     _affect2(i, ARG(1)); // valeur de debut
 
-    Tree* cond = tree_create(NULL, 0, 0);
-    Tree* val = tree_create(NULL, 0, 0);
 
-    createExpressionTree(cond, neo_to_string(ARG(4)));
+    NeTree cond = createExpressionTree(neo_to_string(ARG(4)));
 
     if (global_env->CODE_ERROR != 0)
     {
-        tree_destroy(cond);
-        tree_destroy(val);
         if (sov_FILENAME != NULL)
             neon_free(sov_FILENAME);
         return NEO_VOID;
     }
 
-    createExpressionTree(val, neo_to_string(ARG(5)));
+    NeTree val = createExpressionTree(neo_to_string(ARG(5)));
 
     if (global_env->CODE_ERROR != 0)
     {
-        tree_destroy(cond);
-        tree_destroy(val);
+        NeTree_destroy(cond);
         if (sov_FILENAME != NULL)
             neon_free(sov_FILENAME);
         return NEO_VOID;
@@ -624,8 +615,8 @@ NeObj _list_comp_(NeList* args)
 
 
         if (global_env->CODE_ERROR != 0) {
-            tree_destroy(cond);
-            tree_destroy(val);
+            NeTree_destroy(cond);
+            NeTree_destroy(val);
             neobject_destroy(liste);
             if (sov_FILENAME != NULL)
                 neon_free(sov_FILENAME);
@@ -640,8 +631,8 @@ NeObj _list_comp_(NeList* args)
             if (global_env->CODE_ERROR != 0) {
                 neobject_destroy(bo);
                 neobject_destroy(liste);
-                tree_destroy(cond);
-                tree_destroy(val);
+                NeTree_destroy(cond);
+                NeTree_destroy(val);
                 if (sov_FILENAME != NULL)
                     neon_free(sov_FILENAME);
                 return NEO_VOID;
@@ -657,8 +648,8 @@ NeObj _list_comp_(NeList* args)
         *i = x;
     }
 
-    tree_destroy(cond);
-    tree_destroy(val);
+    NeTree_destroy(cond);
+    NeTree_destroy(val);
 
     global_env->FILENAME = sov_FILENAME;
     

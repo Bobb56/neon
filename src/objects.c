@@ -485,7 +485,7 @@ UserFunc* neo_to_userfunc(NeObj neo) {
 }
 
 
-NeObj userFuncCreate(Var* args, Tree* code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type)
+NeObj userFuncCreate(Var* args, NeTree code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type)
 {
     UserFunc* fun = neon_malloc(sizeof(UserFunc));
     fun->args = args;
@@ -1544,7 +1544,7 @@ bool neo_equal(NeObj _op1, NeObj _op2)
     {
         if (NEO_TYPE(_op2) == TYPE_USERFUNC || NEO_TYPE(_op2) == TYPE_USERMETHOD)
         {
-            return _op1.userfunc->code == _op2.userfunc->code && nelist_equal(_op1.userfunc->opt_args, _op2.userfunc->opt_args);
+            return _op1.userfunc->code.pointer == _op2.userfunc->code.pointer && nelist_equal(_op1.userfunc->opt_args, _op2.userfunc->opt_args);
         }
         else
         {

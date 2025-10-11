@@ -17,7 +17,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
-
+SegFault quand on tape str(_2**_5) après avoir importé peano.ne
 _____________________
 
 Potentielles futures erreurs :
@@ -42,6 +42,7 @@ General Protection Fault = Problème d'alignement de la pile
 
 Avancement et choses à faire :
 -------------------------------
+> Fonction spécifique pour créer une liste d'arbres correspondant à une expression avec des virgules (pratique pour les listes et les args de fonction)
 > Continuer de créer toutes les structures pour tous les arbres différents, et les fonctions pour les créer
 > Modifier syntaxtrees pour utiliser ces arbres, puis runtime
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement

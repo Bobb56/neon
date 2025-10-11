@@ -76,7 +76,7 @@ typedef struct NeonEnv {
     // Ceci n'est pas un arbre, mais plutot une forêt. Tous les fils de cet arbre sont les arbres syntaxiques des fonctions
     // définies par l'utilisateur. Les stocker permet de garder des versions uniques de ces arbres, même lors de la copie
     // de fonctions utilisateurs, et de tout libérer à la fin
-    Tree* FONCTIONS; // cet arbre va contenir en fils tous les arbres de fonction des fonctions et des méthodes définies par l'utilisateur
+    struct TreeList FONCTIONS; // cet arbre va contenir en fils tous les arbres de fonction des fonctions et des méthodes définies par l'utilisateur
 
     // Ce couple de variables permet de gérer les variables de Neon, c'est-à-dire les objets auxquels on peut directement accéder
     // par un nom depuis l'interpréteur.

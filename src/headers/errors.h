@@ -15,5 +15,6 @@ void* neon_malloc(size_t size);
 void* neon_realloc(void* ptr, size_t size);
 void neon_free(void* ptr);
 int allocatedMem(void);
+void segfault(void);
 
 #endif

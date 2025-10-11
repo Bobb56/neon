@@ -259,12 +259,12 @@ int get_exception_from_code_error(int code_error) {
 
 
 void* neon_malloc(size_t size) {
-    memory += size;
+    //memory += size;
     return malloc(size);
 }
 
 void* neon_realloc(void* ptr, size_t size) {
-    memory += size;
+    //memory += size;
     return realloc(ptr, size);
 }
 
@@ -276,6 +276,10 @@ int allocatedMem(void) {
     return memory;
 }
 
+void segfault(void) {
+    volatile int* p = (int*)8;
+    volatile int a = *p;
+}
 
 void printError(int code)
 {

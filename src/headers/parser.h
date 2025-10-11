@@ -26,6 +26,9 @@ bool operatorIs(int index, int mask);
 char* get_True(void);
 int get_blockword1Line_index(char* word);
 int get_lkeywords_index(char* word);
+bool is_binary(int);
+bool is_unary(int);
+char* get_operator_string(int operator_index);
 
 
 char* nomBlockLine(char* blockline);//a liberer apres
