@@ -17,7 +17,6 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
-SegFault quand on tape str(_2**_5) après avoir importé peano.ne
 _____________________
 
 Potentielles futures erreurs :
