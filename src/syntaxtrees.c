@@ -38,7 +38,7 @@ void createVirguleTree(struct TreeList* tree_list, Ast** ast, strlist* tokens, i
     int nbVirgules = ast_typeCountAst(ast, tokens->len, TYPE_VIRGULE, offset);
         
     if (nbVirgules > 0) {
-        int index = 0, len;
+        int index = 0;
         strlist sous_tokens;
         
         for (int j=0 ; j <= nbVirgules ; j++)// boucle qui parcourt toutes les virgules
@@ -65,9 +65,15 @@ void createVirguleTree(struct TreeList* tree_list, Ast** ast, strlist* tokens, i
             
         }
     }
-    else {
-        NeTree arbre = createExpressionTreeAux(ast, tokens, lines, offset);
-        TreeList_append(tree_list, arbre);
+    else { // il y a soit une expression normale, soit rien tu tout
+        int count = ast_typeCountAst(ast, tokens->len, TYPE_ENDOFLINE, offset);
+        int real_length = ast_length(ast, tokens->len, offset);
+
+        // si il y a des choses quand même
+        if (count < real_length) {
+            NeTree arbre = createExpressionTreeAux(ast, tokens, lines, offset);
+            TreeList_append(tree_list, arbre);
+        }
     }
 }
 
@@ -87,10 +93,13 @@ NeTree createExpressionTreeAux(Ast** ast, strlist* tokens, intlist* lines, int o
     
     // tous les tokens sont des retours à la ligne
     if (count == real_length) {
+        strlist_aff(tokens);
+        ast_aff(ast, tokens->len);
         global_env->LINENUMBER = lines->tab[offset];
         global_env->CODE_ERROR = 30;
         return TREE_VOID;
     }
+
     // il y a un seul token qui n'est pas un retour à la ligne
     else if (count == real_length - 1) // traitement des cas de base de la fonction récursive
     {
@@ -179,7 +188,7 @@ NeTree createExpressionTreeAux(Ast** ast, strlist* tokens, intlist* lines, int o
                 {
                     while (argsAst[i]->type == TYPE_ENDOFLINE) i++;
 
-                    NeTree t1 = NeTree_create(TypeAttributeLit, lines->tab[offset]);
+                    NeTree t1 = NeTree_create(TypeAttributeLit, lines->tab[offset + argsAst_offset + i]);
 
                     if (global_env->CODE_ERROR != 0) {
                         NeTree_destroy(tree);
@@ -312,7 +321,7 @@ NeTree createExpressionTreeAux(Ast** ast, strlist* tokens, intlist* lines, int o
                         }
 
                         // ajout de la branche au nouvel arbre réorganisé
-                        NeTree_containerlit_add_attribute(&tree, tree.container_lit->attributes.trees[k]);
+                        NeTree_containerlit_add_attribute(&tree, attributes.trees[k]);
                     }
                     if (attributes.trees != NULL)
                         neon_free(attributes.trees);
@@ -526,7 +535,7 @@ NeTree createExpressionTreeAux(Ast** ast, strlist* tokens, intlist* lines, int o
                     
                     
                     // on va rajouter en premier argument de la fonction l'opérande de gauche
-                    if (TREE_TYPE(tree) != TYPE_FONCTION)
+                    if (TREE_TYPE(tree) != TypeFunctioncall)
                     {
                         NeTree_destroy(arg0);
                         NeTree_destroy(tree);
@@ -650,7 +659,7 @@ NeTree createExpressionTreeAux(Ast** ast, strlist* tokens, intlist* lines, int o
                     return TREE_VOID;
                 }
 
-                if (operator_index == 39 && TREE_TYPE(fils) != TYPE_FONCTION) { // pour parallel
+                if (operator_index == 39 && TREE_TYPE(fils) != TypeFunctioncall) { // pour parallel
                     global_env->CODE_ERROR = 100;
                     global_env->LINENUMBER = lines->tab[offset];
                     return TREE_VOID;
@@ -973,8 +982,10 @@ NeTree createStatementForTree(Ast** ast, strlist* tokens, intlist* lines, int of
 
     createVirguleTree(&expr_tree, exprAst, &exprToks, lines, offset + 2);
 
-    if (global_env->CODE_ERROR != 0)
+    if (global_env->CODE_ERROR != 0) {
+        TreeList_destroy(&expr_tree);
         return TREE_VOID;
+    }
     
     NeTree block_tree = createSyntaxTreeAux(blocAst, &blocToks, lines, offset + ast[0]->fin - offset + 2);
 
@@ -985,7 +996,7 @@ NeTree createStatementForTree(Ast** ast, strlist* tokens, intlist* lines, int of
     }
     
 
-    return NeTree_make_for_tree(expr_tree, block_tree, lines->tab[offset]);
+    return NeTree_make_for_tree(expr_tree, block_tree, lines->tab[offset], type);
 }
 
 
@@ -1278,7 +1289,7 @@ NeTree createSyntaxTreeAux(Ast** ast, strlist* tokens, intlist* lines, int offse
 
                 }
 
-                NeTree except = NeTree_make_except_block(except_expr, except_bloc, lines->tab[offset]);
+                NeTree except = NeTree_make_except_block(except_expr, except_bloc, lines->tab[offset + i]);
                 TreeList_append(&except_blocks, except);
 
 
@@ -1287,7 +1298,7 @@ NeTree createSyntaxTreeAux(Ast** ast, strlist* tokens, intlist* lines, int offse
                     i = ast[i]->fin - offset + 1;
             }
 
-            NeTree try_except = NeTree_make_tryexcept(try_tree, except_blocks, lines->tab[offset]);
+            NeTree try_except = NeTree_make_tryexcept(try_tree, except_blocks, lines->tab[offset + index]);
             NeTree_add_syntaxtree(&tree, try_except);
         }
         else if (ast[index]->type == TYPE_ATOMICBLOCK) {
@@ -1313,10 +1324,16 @@ NeTree createSyntaxTreeAux(Ast** ast, strlist* tokens, intlist* lines, int offse
             TreeList_init(&params);
 
             createVirguleTree(&params, argsAst, &argsTok, lines, offset + index + 2);
+
+            if (global_env->CODE_ERROR != 0) {
+                NeTree_destroy(tree);
+                TreeList_destroy(&params);
+                return TREE_VOID;
+            }
             
             int code = get_blockword1Line_index(name) + 1;
 
-            NeTree fils = NeTree_make_kwparam(params, code, lines->tab[offset]);
+            NeTree fils = NeTree_make_kwparam(params, code, lines->tab[offset + index]);
             
             NeTree_add_syntaxtree(&tree, fils);
         }
@@ -1334,7 +1351,7 @@ NeTree createSyntaxTreeAux(Ast** ast, strlist* tokens, intlist* lines, int offse
             NeTree_add_syntaxtree(&tree, fils);
         }
         else if (ast[index]->type == TYPE_KEYWORD) {
-            NeTree fils = NeTree_create(TypeKeyword, lines->tab[offset]);
+            NeTree fils = NeTree_create(TypeKeyword, lines->tab[offset + index]);
             fils.keyword->code = get_lkeywords_index(tokens->tab[index]) + 1;
             
             NeTree_add_syntaxtree(&tree, fils);

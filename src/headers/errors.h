@@ -8,12 +8,20 @@
 
 #define NB_ERRORS 118
 
-void printError(int code);
-void affLine(char* file, int line);
-int get_exception_from_code_error(int code_error);
+
+#define neon_malloc     malloc
+#define neon_realloc    realloc
+#define neon_free       free
+
+/*
 void* neon_malloc(size_t size);
 void* neon_realloc(void* ptr, size_t size);
 void neon_free(void* ptr);
+*/
+
+void printError(int code);
+void affLine(char* file, int line);
+int get_exception_from_code_error(int code_error);
 int allocatedMem(void);
 void segfault(void);
 

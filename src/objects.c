@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
 
 #include "headers/neonio.h"
@@ -827,10 +826,10 @@ NeList* nelist_create(int len)
     list->next = NEO_VOID;
     list->prev = NEO_VOID;
     
-    while (pow(2, list->capacity) < list->len)
+    while ((1 << list->capacity) < list->len)
         list->capacity++;
   
-    list->tab = neon_malloc(pow(2, list->capacity)*sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
+    list->tab = neon_malloc((1 << list->capacity) * sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
   
     return list;//retourne la structure
 }
@@ -841,10 +840,10 @@ void nelist_append(NeList* list, NeObj ptr)//ajoute un élément à la fin de la
 {
     NeObj* tmp;
 
-    if (pow(2, list->capacity)==list->len)
+    if (1 << list->capacity == list->len)
     {
         list->capacity++;
-        tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réallocation de list.tab
+        tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj));//réallocation de list.tab
         list->tab = tmp;//affectation du pointeur de tmp vers list.tab
     }
 
@@ -873,9 +872,9 @@ void nelist_insert(NeList* list,NeObj neo, int index)//ajoute un élément à la
   
     NeObj* tmp;
   
-    if (pow(2, list->capacity)==list->len) {
+    if (1 << list->capacity == list->len) {
         list->capacity++;
-        tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj)); // réallocation de list.tab
+        tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj)); // réallocation de list.tab
         list->tab = tmp; // affectation du pointeur de tmp vers list.tab
     }
   
@@ -907,10 +906,10 @@ void nelist_remove(NeList* list,int index)
     
     NeObj* tmp;
   
-    if (pow(2, list->capacity-1)==list->len-1)
+    if (1 << (list->capacity - 1) == list->len-1)
     {
         list->capacity--;
-        tmp = neon_realloc(list->tab, pow(2, list->capacity)*sizeof(NeObj));//réalloue un nouveau pointeur de la bonne taille
+        tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj));//réalloue un nouveau pointeur de la bonne taille
         list->tab = tmp;
     }
   

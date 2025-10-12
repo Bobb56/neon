@@ -26,20 +26,19 @@ typedef enum {
     TypeElse = 9,
     TypeTryExcept = 10,
     TypeFunctiondef = 11,
-    TypeMethoddef = 12,
-    TypeVariable = 13,
-    TypeListindex = 14,
-    TypeFunctioncall = 15,
-    TypeAttribute = 16,
-    TypeAtomic = 17,
-    TypeConditionblock = 18,
-    TypeList = 19,
-    TypeKeyword = 20,
-    TypeKWParam = 21,
-    TypeSyntaxtree = 22,
-    TypeContainerLit = 23,
-    TypeAttributeLit = 24,
-    TypeExceptBlock = 25
+    TypeVariable = 12,
+    TypeListindex = 13,
+    TypeFunctioncall = 14,
+    TypeAttribute = 15,
+    TypeAtomic = 16,
+    TypeConditionblock = 17,
+    TypeList = 18,
+    TypeKeyword = 19,
+    TypeKWParam = 20,
+    TypeSyntaxtree = 21,
+    TypeContainerLit = 22,
+    TypeAttributeLit = 23,
+    TypeExceptBlock = 24
 } TreeType;
 
 
@@ -209,7 +208,7 @@ NeTree NeTree_make_functiondef(char* name, struct TreeList args, NeObj object, i
 NeTree NeTree_make_except_block(struct TreeList exceptions, NeTree block, int line);
 NeTree NeTree_make_tryexcept(NeTree try_tree, struct TreeList except_blocks, int line);
 NeTree NeTree_make_kwparam(struct TreeList params, int code, int line);
-NeTree NeTree_make_for_tree(struct TreeList params, NeTree block, int line);
+NeTree NeTree_make_for_tree(struct TreeList params, NeTree block, int line, TreeType type);
 bool NeTree_isexpr(NeTree tree);
 
 #endif

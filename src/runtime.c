@@ -1354,7 +1354,7 @@ int execStatementFor(NeTree tree) {
         neobject_destroy(step);
 
         // on évalue la valeur de départ de la boucle
-        start = eval_aux(FOR_ARG(tree, 3));
+        start = eval_aux(FOR_ARG(tree, 1));
 
         if (global_env->CODE_ERROR != 0)
             return 0;
@@ -1640,12 +1640,12 @@ int exec_aux(NeTree tree) {
 
 
                     // on va parcourir la liste des exceptions jusqu'à en trouver une qui corresponde
-                    int block_found = 0; // va correspondre à l'indice du sous arbre que l'on va exécuter
+                    int block_found = -1; // va correspondre à l'indice du sous arbre que l'on va exécuter
 
                     struct TreeList except_blocks = maintree.tryexcept->except_blocks;
 
                     // parcours des différents blocs except pour trouver le bon
-                    for (int fils = 0 ; fils < except_blocks.len && block_found == 0 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
+                    for (int fils = 0 ; fils < except_blocks.len && block_found == -1 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
 
                         // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
                         if (except_blocks.trees[fils].except_block->exceptions.len == 0) {
@@ -1658,6 +1658,7 @@ int exec_aux(NeTree tree) {
                             // récupère l'exception pour l'évaluer
                             NeTree exception_expr = except_blocks.trees[fils].except_block->exceptions.trees[i];
                             NeObj exception = eval_aux(exception_expr);
+
 
                             if (NEO_TYPE(exception) != TYPE_EXCEPTION)
                             {
@@ -1680,8 +1681,8 @@ int exec_aux(NeTree tree) {
 
                     }
 
-                    if (block_found > 0) // exécution du bloc except trouvé
-                    {                        
+                    if (block_found != -1) // exécution du bloc except trouvé
+                    {               
                         int_ret = exec_aux(except_blocks.trees[block_found].except_block->block);
 
                         if (global_env->CODE_ERROR != 0 || int_ret != EXIT_SUCCESS) {

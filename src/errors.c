@@ -257,20 +257,21 @@ int get_exception_from_code_error(int code_error) {
     return error_codes_exceptions[code_error];
 }
 
-
+/*
 void* neon_malloc(size_t size) {
-    //memory += size;
+    memory += size;
     return malloc(size);
 }
 
 void* neon_realloc(void* ptr, size_t size) {
-    //memory += size;
+    memory += size;
     return realloc(ptr, size);
 }
 
 void neon_free(void* ptr) {
     free(ptr);
 }
+*/
 
 int allocatedMem(void) {
     return memory;

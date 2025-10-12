@@ -2,7 +2,6 @@
 #include "headers/trees.h"
 #include "headers/dynarrays.h"
 #include "headers/errors.h"
-#include "headers/neonio.h"
 #include "headers/objects.h"
 
 
@@ -30,7 +29,6 @@ size_t type_size(TreeType type) {
         case TypeTryExcept:
             return sizeof(struct TryExcept);
         case TypeFunctiondef:
-        case TypeMethoddef:
             return sizeof(struct FunctionDef);
         case TypeVariable:
             return sizeof(struct Variable);
@@ -118,9 +116,9 @@ void NeTree_destroy(NeTree tree) {
             break;
         
         case TypeFunctiondef:
-        case TypeMethoddef:
             neon_free(tree.functiondef->name);
             neobject_destroy(tree.functiondef->object);
+            TreeList_destroy(&tree.functiondef->args);
             break;
         
         case TypeListindex:
@@ -213,8 +211,10 @@ void TreeList_insert(struct TreeList* tree_list, NeTree tree, int index) {
         tree_list->trees = neon_malloc(sizeof(NeTree));
     }
     else {
-        tree_list->trees = neon_realloc(tree_list->trees, tree_list->len + 1);
+        tree_list->trees = neon_realloc(tree_list->trees, (tree_list->len + 1) * sizeof(NeTree));
     }
+
+    tree_list->len++;
 
     for (int i = tree_list->len - 1 ; i > index ; i--) {
         tree_list->trees[i] = tree_list->trees[i-1];
@@ -331,8 +331,8 @@ NeTree NeTree_make_kwparam(struct TreeList params, int code, int line) {
     return tree;
 }
 
-NeTree NeTree_make_for_tree(struct TreeList params, NeTree block, int line) {
-    NeTree tree = NeTree_create(TypeFor, line);
+NeTree NeTree_make_for_tree(struct TreeList params, NeTree block, int line, TreeType type) {
+    NeTree tree = NeTree_create(type, line);
     tree.for_tree->params = params;
     tree.for_tree->block = block;
     return tree;
