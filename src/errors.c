@@ -126,7 +126,8 @@ static const char* error_messages[NB_ERRORS] = {
     "This function can only receive integer numbers of real numbers as arguments",
     "This functionality has not been implemented yet",
     "Cannot initialize graphics without overriding an already defined type",
-    "This figure object cannot be drawn because it was not defined correctly"
+    "This figure object cannot be drawn because it was not defined correctly",
+    "str cannot be overloaded with a function that does not return a string"
 };
 
 
@@ -249,6 +250,7 @@ static const int error_codes_exceptions[NB_ERRORS] = {
     9,
     15,
     13,
+    9,
     9
 };
 

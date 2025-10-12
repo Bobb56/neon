@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "headers/constants.h"
 #include "headers/neonio.h"
 #include "headers/objects.h"
 #include "headers/dynarrays.h"
@@ -261,6 +262,13 @@ char* neo_container_str(NeObj neo) {
             neobject_destroy(obj);
             return NULL;
         }
+        
+        if (NEO_TYPE(obj) != TYPE_STRING) {
+            neobject_destroy(obj);
+            global_env->CODE_ERROR = 118;
+            return NULL;
+        }
+
         char* ret = strdup(neo_to_string(obj));
         neobject_destroy(obj);
         return ret;
@@ -278,6 +286,11 @@ char* neo_container_str(NeObj neo) {
             str1 = addStr2(str1, ": ");
 
             char* s = neobject_str(get_container_field(c, i));
+
+            if (global_env->CODE_ERROR != 0) {
+                return NULL;
+            }
+
             str1 = addStr2(str1, s);
             neon_free(s);
 
@@ -707,12 +720,20 @@ char* nelist_str(NeList* list)
         for (int i=0 ; i < list->len - 1 ; i++)
         {
             temp = neobject_str(nelist_nth(list, i));
+
+            if (global_env->CODE_ERROR != 0)
+                return NULL;
+            
             str2 = addStr(str1,temp);
             neon_free(temp);neon_free(str1);
             str1 = addStr(str2,", ");
             neon_free(str2);
         }
         temp = neobject_str(nelist_nth(list, list->len-1));
+
+        if (global_env->CODE_ERROR != 0)
+            return NULL;
+        
         str2 = addStr(str1,temp);
         neon_free(str1);neon_free(temp);
         str1 = addStr(str2, "]");

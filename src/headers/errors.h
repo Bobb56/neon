@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "dynarrays.h"
 
-#define NB_ERRORS 118
+#define NB_ERRORS 119
 
 
 #define neon_malloc     malloc

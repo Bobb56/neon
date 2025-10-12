@@ -150,7 +150,8 @@ function main(args) do
             "lambda",
             "prog",
             "relaunch",
-            "frac"
+            "frac",
+            "peano"
         ]
     )
     screen.Screen~runTests(clearScr := args==[] or args[0] != 'log')

@@ -180,7 +180,7 @@ bool NeTree_isexpr(NeTree tree) {
                             TypeContainerLit,
                             TypeAttributeLit
                         },
-        .len = 50
+        .len = 10
     };
     return intlist_inList(&expressions, TREE_TYPE(tree));
 }
