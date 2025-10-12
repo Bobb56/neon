@@ -146,14 +146,14 @@ void initGraphics(void) {
             .ptr = setPixel,
             .help = "Sets the indicated pixel to the specified color",
             .nbArgs = 3,
-            .typeArgs = (int[]) {TYPE_INTEGER, TYPE_INTEGER, TYPE_INTEGER},
+            .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED, TYPE_INTEGER},
             .typeRetour = TYPE_NONE
         },
         (Function) {
             .ptr = getPixel,
             .help = "Returns the color of the specified pixel",
             .nbArgs = 2,
-            .typeArgs = (int[]) {TYPE_INTEGER, TYPE_INTEGER},
+            .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
             .typeRetour = TYPE_INTEGER
         },
         (Function) {
@@ -294,9 +294,9 @@ void draw_obj(NeObj obj) {
         NeList* args = c->data;
 
         if (c->type == graphic_containers.Circle) { // draws a circle
-            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
+            if (!is_number(ARG(0)) ||
+                !is_number(ARG(1)) ||
+                !is_number(ARG(2)) ||
                 NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(4)) != TYPE_BOOL) {
                     global_env->CODE_ERROR = 117;
@@ -315,10 +315,10 @@ void draw_obj(NeObj obj) {
                 gfx_Circle(x, y, radius);
         }
         else if (c->type == graphic_containers.Rect) { // draws a rectangle
-            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+            if (!is_number(ARG(0)) ||
+                !is_number(ARG(1)) ||
+                !is_number(ARG(2)) ||
+                !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_BOOL) {
                     global_env->CODE_ERROR = 117;
@@ -338,10 +338,10 @@ void draw_obj(NeObj obj) {
                 gfx_Rectangle(x, y, width, height);
         }
         else if (c->type == graphic_containers.Line) { // draws a line
-            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+            if (!is_number(ARG(0)) ||
+                !is_number(ARG(1)) ||
+                !is_number(ARG(2)) ||
+                !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER) {
                     global_env->CODE_ERROR = 117;
                     return;
@@ -357,8 +357,8 @@ void draw_obj(NeObj obj) {
         }
         else if (c->type == graphic_containers.Text) { // draws text
             if (NEO_TYPE(ARG(0)) != TYPE_STRING ||
-                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
+                !is_number(ARG(1)) ||
+                !is_number(ARG(2)) ||
                 NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_INTEGER) {
@@ -381,12 +381,12 @@ void draw_obj(NeObj obj) {
             gfx_PrintStringXY((const char*)text, x, y);
         }
         else if (c->type == graphic_containers.Triangle) { // draws a triangle
-            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(5)) != TYPE_INTEGER ||
+            if (!is_number(ARG(0)) ||
+                !is_number(ARG(1)) ||
+                !is_number(ARG(2)) ||
+                !is_number(ARG(3)) ||
+                !is_number(ARG(4)) ||
+                !is_number(ARG(5)) ||
                 NEO_TYPE(ARG(6)) != TYPE_INTEGER) {
                     global_env->CODE_ERROR = 117;
                     return;
@@ -421,8 +421,8 @@ void draw_obj(NeObj obj) {
                 Container* point = neo_to_container(points->tab[i]);
 
                 if (point->type != graphic_containers.Point ||
-                    NEO_TYPE(point->data->tab[0]) != TYPE_INTEGER ||
-                    NEO_TYPE(point->data->tab[1]) != TYPE_INTEGER) {
+                    !is_number(point->data->tab[0]) ||
+                    !is_number(point->data->tab[1])) {
                     global_env->CODE_ERROR = 117;
                     return;
                 }
@@ -436,10 +436,10 @@ void draw_obj(NeObj obj) {
             neon_free(points_arr);
         }
         else if (c->type == graphic_containers.Ellipse) { // draws an ellipse
-            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(2)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
+            if (!is_number(ARG(0)) ||
+                !is_number(ARG(1)) ||
+                !is_number(ARG(2)) ||
+                !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_BOOL) {
                     global_env->CODE_ERROR = 117;
@@ -459,8 +459,8 @@ void draw_obj(NeObj obj) {
                 gfx_Ellipse(x, y, a, b);
         }
         if (c->type == graphic_containers.FloodFill) { // fills an area
-            if (NEO_TYPE(ARG(0)) != TYPE_INTEGER ||
-                NEO_TYPE(ARG(1)) != TYPE_INTEGER ||
+            if (!is_number(ARG(0)) ||
+                !is_number(ARG(1)) ||
                 NEO_TYPE(ARG(2)) != TYPE_INTEGER) {
                     global_env->CODE_ERROR = 117;
                     return;

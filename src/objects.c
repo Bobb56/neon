@@ -389,7 +389,9 @@ double neo_to_double(NeObj neo)
     return neo.floating;
 }
 
-
+bool is_number(NeObj obj) {
+    return NEO_TYPE(obj) == TYPE_INTEGER || NEO_TYPE(obj) == TYPE_DOUBLE;
+}
 
 
 ///////////////// TYPE_FUNCTION //////////////////

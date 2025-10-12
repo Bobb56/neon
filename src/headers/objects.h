@@ -118,6 +118,7 @@ NeObj neo_double_create(double number);
 intptr_t randint(intptr_t min, intptr_t max);
 intptr_t neo_to_integer(NeObj neo);
 double neo_to_double(NeObj neo);
+bool is_number(NeObj obj);
 NeObj neo_bool_create(bool neon_boolean);
 bool neo_is_true(NeObj neo);
 NeObj neo_str_create(char* string);
