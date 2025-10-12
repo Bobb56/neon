@@ -1249,15 +1249,15 @@ Le problème est que certaines fonctions graphiques prennent en argument des obj
 
 Les types de containers définis lors d'un appel à `initGraphics` sont :\
 
-- `Point(x, y)` : `x` et `y` de type `Integer`
-- `Circle(x, y, radius, color, filled)` : `x`, `y`, `radius` et `color` de type `Integer` et `filled` de type `Bool`
-- `Rect(x, y, width, height, color, filled)` : `x`, `y`, `width`, `height` et `color` de type `Integer` et `filled` de type `Bool`
-- `Line(x0, y0, x1, y1, color)` : `x0`, `y0`, `x1`, `y1` et `color` de type `Integer`
-- `Text(text, x, y, fgcolor, bgcolor, size)` : `text` de type `String`, `x`, `y`, `fgcolor`, `bgcolor` et `size` de type `Integer`
-- `Triangle(x0, y0, x1, y1, x2, y2, color)` : `x0`, `y0`, `x1`, `y1`, `x2`, `y2` et `color` de type `Integer`
+- `Point(x, y)` : `x` et `y` de type `Integer` ou `Real`
+- `Circle(x, y, radius, color, filled)` : `x`, `y` et `radius` de type `Integer` ou `Real`, `color` de type `Integer` et `filled` de type `Bool`
+- `Rect(x, y, width, height, color, filled)` : `x`, `y`, `width` et `height` de type `Integer` ou `Real`, `color` de type `Integer` et `filled` de type `Bool`
+- `Line(x0, y0, x1, y1, color)` : `x0`, `y0`, `x1` et `y1` de type `Integer` ou `Real` et `color` de type `Integer`
+- `Text(text, x, y, fgcolor, bgcolor, size)` : `text` de type `String`, `x` et `y` de type `Integer` ou `Real`, `fgcolor`, `bgcolor` et `size` de type `Integer`
+- `Triangle(x0, y0, x1, y1, x2, y2, color)` : `x0`, `y0`, `x1`, `y1`, `x2` et `y2` de type `Integer` ou `Real`, et `color` de type `Integer`
 - `Polygon(points, color)` : `points` est une liste de containers de type `Point`, et `color` est un entier
 - `Ellipse(x, y, a, b, color, filled)` : `x`, `y`, `a`, `b` et `color` de type `Integer` et `filled` de type `Bool`
-- `FloodFill(x, y, color)` : `x`, `y` et `color` de type `Integer`
+- `FloodFill(x, y, color)` : `x` et `y` de type `Integer` ou `Real` et `color` de type `Integer`
 
 
 Cela signifie qu'après un appel à `initGraphics`, tous les containers dont les noms sont listés au-dessus devront posséder les paramètres données au-dessus. Les types des attributs de sont pas forcés de coincider pour que la définition du container soit correcte, mais les types données ici sont les types attendus dans les champs des containers pris en argument par les fonctions graphiques.
@@ -1312,6 +1312,29 @@ Le comportement de la plupart des objets lorsqu'on les dessine est assez clair :
 L'objet `FloodFill` quant à lui effectue un remplissage d'une certaine zone de l'écran dont les coordonnées sont spécifiées.
 
 *La fonction `setPixel`*
+
+La fonction `setPixel` permet de changer directement la couleur d'un pixel.
+
+`setPixel(x, y, color)` met à `color` la couleur du pixel d'abscisse `x` et d'ordonnée `y`.
+
+- `x` doit être de type `Integer` ou `Real`
+- `y` doit être de type `Integer` ou `Real`
+- `color` doit être de type `Integer`
+
+*La fonction `getPixel`*
+
+La fonction `getPixel` permet de récupérer la couleur d'un pixel.
+`getPixel(x, y)` renvoie la couleur du pixel d'abscisse `x` et d'ordonnée `y`. `x` et `y` doivent être de type `Integer` ou `Real`.
+
+*La fonction `setTextTransparentColor`*
+
+Lorsque l'on dessine un objet `Text`, on doit spécifier `fgcolor` et `bgcolor` les couleurs de premier plan et d'arrière plan du texte.
+
+La fonction `setTextTransparentColor` permet de spécifier une couleur qui sera utilisée #emph("en tant que transparent"). Par exemple, si on appelle `setTextTransparentColor` avec une certaine couleur, et qu'on utilise ensuite cette couleur en tant que paramètre `bgcolor`, le texte ne sera pas surligné.
+
+*La fonction `getTextWidth`*
+
+Cette fonction calcule la largeur en pixels d'un objet `Text` donné, en prenant en compte le paramètre `size`.
 
 === 7.1.1 - Le clavier
 

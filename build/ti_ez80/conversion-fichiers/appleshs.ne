@@ -3,7 +3,9 @@ initGraphics()
 
 
 function lose() do
-    draw(Text(text: "You lose!", x:50, y:110, fgcolor: 192, bgcolor: 255, size:7))
+    text = Text(text: "You lose!", x:0, y:100, fgcolor: 192, bgcolor: 255, size:7)
+    text>>x = 160 - text.getTextWidth()/2
+    draw(text)
     await(getKey() == 15)
     exit()
 end
