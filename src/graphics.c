@@ -151,7 +151,7 @@ void initGraphics(void) {
         },
         (Function) {
             .ptr = getPixel,
-            .help = "Returns the color of the specified pixel",
+            .help = "Returns the color of the specified pixel, None if the pixel is not within the screen boundaries",
             .nbArgs = 2,
             .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
             .typeRetour = TYPE_INTEGER
@@ -182,6 +182,10 @@ void initGraphics(void) {
     }
     return;
 
+}
+
+bool in_screen(intptr_t x, intptr_t y) {
+    return x >= 0 && x < 320 && y >= 0 && y < 240;
 }
 
 
@@ -228,14 +232,27 @@ NeObj getKey(NeList* args) {
 
 
 NeObj setPixel(NeList* args) {
+    intptr_t x = neo_to_integer(ARG(0));
+    intptr_t y = neo_to_integer(ARG(1));
+    
+    // vérification des coordonnées
+    if (!in_screen(x, y))
+        return neo_none_create();
+    
     gfx_SetColor(neo_to_integer(ARG(2)));
     gfx_SetPixel(neo_to_integer(ARG(0)), neo_to_integer(ARG(1)));
     return neo_none_create();
 }
 
 NeObj getPixel(NeList* args) {
-    intptr_t color = gfx_GetPixel(neo_to_integer(ARG(0)), neo_to_integer(ARG(1)));
-    return neo_integer_create(color);
+    intptr_t x = neo_to_integer(ARG(0));
+    intptr_t y = neo_to_integer(ARG(1));
+
+    // vérification des coordonnées
+    if (!in_screen(x, y))
+        return neo_none_create();
+    else
+        return neo_integer_create(gfx_GetPixel(x, y));
 }
 
 NeObj setTextTransparentColor(NeList* args) {
@@ -465,13 +482,13 @@ void draw_obj(NeObj obj) {
                     global_env->CODE_ERROR = 117;
                     return;
             }
-            intptr_t x = neo_to_integer(ARG(0));
-            intptr_t y = neo_to_integer(ARG(1));
-            intptr_t color = neo_to_integer(ARG(2));
+            uint24_t x = neo_to_integer(ARG(0));
+            uint8_t y = neo_to_integer(ARG(1));
+            uint8_t color = neo_to_integer(ARG(2));
 
-            gfx_FloodFill(x, y, color);
+            if (in_screen(x, y))
+                gfx_FloodFill(x%320, y%240, color%256);
         }
-        
         else {
             draw_nelist(c->data);
         }

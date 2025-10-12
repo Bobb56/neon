@@ -1650,6 +1650,7 @@ int exec_aux(NeTree tree) {
                         // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
                         if (except_blocks.trees[fils].except_block->exceptions.len == 0) {
                             block_found = fils;
+                            break;
                         }
 
                         // parcourt toutes les exceptions du bloc except
@@ -1682,7 +1683,7 @@ int exec_aux(NeTree tree) {
                     }
 
                     if (block_found != -1) // exécution du bloc except trouvé
-                    {               
+                    {
                         int_ret = exec_aux(except_blocks.trees[block_found].except_block->block);
 
                         if (global_env->CODE_ERROR != 0 || int_ret != EXIT_SUCCESS) {
@@ -1739,6 +1740,11 @@ int exec_aux(NeTree tree) {
                     }
                     else {
                         global_env->RETURN_VALUE = eval_aux(treelist.trees[inst].kwparam->params.trees[0]);
+
+                        if (global_env->CODE_ERROR != 0) {
+                            return EXIT_SUCCESS;
+                        }
+                        
                         return EXIT_RETURN;
                     }
                 }

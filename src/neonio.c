@@ -508,6 +508,7 @@ void newLine(void) {
 }
 
 void neon_pause(char* text) {
+    flush();
     char* res = input(text);
     if (res != NULL)
         neon_free(res);
