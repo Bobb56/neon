@@ -127,4 +127,37 @@ _get_stack:
     sbc hl, bc
     ret
 
+
+; Cette fonction renvoie la pile avec laquelle elle est arrivée moins l'adresse de retour
+; Elle retourne avec exactement la pile qu'on lui a envoyé en paramètre
+
+public  _floodfill_switch_stack
+_floodfill_switch_stack:
+    ; récupère l'adresse de retour
+    pop hl
+    ld (ret_address), hl
+
+    ; récupère la nouvelle pile
+    pop iy
+
+    push iy ; à ce stade-là, il ne manque plus qu'à empiler l'adresse de retour pour retrouver sp normal
+
+    ; sauvegarde sp dans old_stack
+    ld hl, $0
+    add hl, sp
+    ld (old_stack), hl
+
+    ; charge la nouvelle pile
+    ld sp, iy
+
+    ; remet l'adresse de retour sur la pile
+    ld hl, (ret_address)
+    push hl
+
+    ; on renvoie la valeur de la pile
+    ld hl, (old_stack)
+
+    ret
+
+
 extern  _launch_process

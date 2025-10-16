@@ -9,12 +9,13 @@
 #include "headers/dynarrays.h"
 #include "headers/runtime.h"
 #include "headers/errors.h"
-
+#include "headers/lowlevel.h"
 
 #include <graphx.h>
 #include <keypadc.h>
 #include <time.h>
 
+#define FLOODFILL_STACK_SIZE        3328
 
 
 // cette variable globale statique permet d'associer à chaque type de figure son indice
@@ -229,6 +230,27 @@ NeObj getKey(NeList* args) {
         return neo_integer_create(only_key);
     }
 }
+
+
+void custom_floodfill(intptr_t tempx, intptr_t tempy, intptr_t tempcolor) {
+    // on stocke les arguments en global pour les retrouver après changement de pile
+    static intptr_t x, y, color;
+    static void *buffer, *old_stack;
+    x = tempx;
+    y = tempy;
+    color = tempcolor;
+
+    // on alloue une pile toute neuve et suffisamment grande
+    buffer = malloc(FLOODFILL_STACK_SIZE);
+    old_stack = floodfill_switch_stack(buffer + FLOODFILL_STACK_SIZE - 1);
+    gfx_FloodFill(x, y, color);
+    floodfill_switch_stack(old_stack);
+    free(buffer);
+    return;
+}
+
+
+
 
 
 NeObj setPixel(NeList* args) {
@@ -482,12 +504,12 @@ void draw_obj(NeObj obj) {
                     global_env->CODE_ERROR = 117;
                     return;
             }
-            uint24_t x = neo_to_integer(ARG(0));
-            uint8_t y = neo_to_integer(ARG(1));
-            uint8_t color = neo_to_integer(ARG(2));
+            intptr_t x = neo_to_integer(ARG(0));
+            intptr_t y = neo_to_integer(ARG(1));
+            intptr_t color = neo_to_integer(ARG(2));
 
             if (in_screen(x, y))
-                gfx_FloodFill(x%320, y%240, color%256);
+                custom_floodfill(x, y, color);
         }
         else {
             draw_nelist(c->data);
