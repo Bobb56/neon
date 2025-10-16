@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -387,32 +386,34 @@ int count(char* string, char* search)//compte le nombre d'occurrences d'une cha�
 
 char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
 {
-  int longueur = fin-debut;
+    int longueur = fin-debut;
   
-  if ((unsigned) (debut+longueur) > strlen(string) || longueur < 0)
-  {
-    global_env->CODE_ERROR = 67;
-    return NULL;
-  }
+    if (longueur < 0) {
+        global_env->CODE_ERROR = 67;
+        return NULL;
+    }
   
-  char* newStr = neon_malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
+    char* newStr = neon_malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
 
-  if (newStr == NULL)
-  {
-      global_env->CODE_ERROR = 12;
-      return NULL;
-  }
+    if (newStr == NULL) {
+        global_env->CODE_ERROR = 12;
+        return NULL;
+    }
+
+    // recopie les caractères
+    for (int i=0 ; i < longueur ; i++) {
+        // si on dépasse string, on quitte avec une erreur
+        if (string[i+debut] == '\0') {
+            global_env->CODE_ERROR = 67;
+            return NULL;
+        }
+
+        newStr[i] = string[i+debut];
+    }
   
-  memset(newStr,0,longueur*sizeof(char)+1);//initialisation à 0
+    newStr[longueur]='\0';// ajoute le caractère nul
   
-  
-  for (unsigned i=0; i < (unsigned)longueur && i+(unsigned)debut<strlen(string); i++)//recopie les caractères
-    newStr[i]=string[i+debut];
-  
-  
-  newStr[longueur]='\0';// ajoute je caractère nul
-  
-  return newStr;
+    return newStr;
 }
 
 
