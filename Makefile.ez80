@@ -6,7 +6,7 @@ NAME = NEON
 ICON = src/assets/neon16x16.png
 DESCRIPTION = "Neon interpreter"
 COMPRESSED = YES
-COMPRESSED_MODE = zx7
+COMPRESSED_MODE = zx0
 CFLAGS = -Oz
 
 # ----------------------------
