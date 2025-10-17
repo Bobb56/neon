@@ -418,6 +418,7 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
 
 
 
+
 char* sandwich(char* string, char car)
 {
 

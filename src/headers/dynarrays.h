@@ -109,6 +109,7 @@ void strlist_resize(strlist* list, int newLen, bool freeElement);
 void strlist_remove(strlist* list,int index, bool freeElement);
 int strlist_count(strlist* list, char* chaine);
 bool strlist_inList(strlist* list, char* chaine);
+bool strlist_inList_sub(strlist* list, char* chaine, int debut, int fin);
 int strlist_index(strlist* list, char* chaine);
 void strlist_insert(strlist* list,char* chaine, int index);
 

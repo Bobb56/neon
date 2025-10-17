@@ -12,11 +12,25 @@
 
 
 // définition des élément modifiables de la syntaxe
-
+/*
 static strlist acceptedChars = (strlist) {
-    .tab = (char*[]){"\"", "'", "+","*","-","/","<",">","=","%","&","@","!", ",", ";", "\n", "#", "$", "[", "]", "(", ")", "{", "}", "\\", ".", "_", " ", "\t", ".", ":", "~"},
-    .len = 32,
+    .tab = (char*[]){"\"", "'", "+","*","-","/","<",">","=","%","&","@","!", ",", ";", "\n", "#", "$", "[", "]", "(", ")", "{", "}", "\\", "_", " ", "\t", ".", ":", "~"},
+    .len = 31,
     .capacity = 5
+};*/
+
+// tableau des caractères acceptés pour aller plus vite que strlist_inList
+// tableau calculé simplement en python grâce au tableau du dessus
+static bool acceptedChars_arr[] = {
+    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+    0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1
 };
 
 
@@ -65,13 +79,50 @@ static intlist types_fin = (intlist) {
 };
 
 
-
+/*
 static strlist sousop = (strlist) {
     .tab = (char*[]) {"+","*","-","/","<",">","=","%","&","@","!", ".",":"},
     .len = 13,
     .capacity = 4
-};
+};*/
 
+// pour une version plus rapide de strlist_inList(&sousop, ...)
+// sousop_arr[car-33] correspond à strlist_inList(&sousop, car)
+// tableau calculé simplement en python grâce au tableau du dessus
+static bool sousop_arr[32] = {
+    1,   // !
+    0,
+    0,
+    0,
+    1,   // %
+    1,   // &
+    0,
+    0,
+    0,
+    1,   // *
+    1,  // +
+    0,
+    1,  // -
+    1,  // .
+    1,  // /
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,  // :
+    0,
+    1,  // <
+    1,  // =
+    1,  // >
+    0,
+    1   // @
+};
 
 
 
@@ -218,6 +269,34 @@ bool is_unary(int operator) {
 
 char* get_operator_string(int operator_index) {
     return OPERATEURS.tab[operator_index];
+}
+
+bool is_sousop(char car) {
+    return car >= 33 && car <= 64 && sousop_arr[car - 33];
+}
+
+
+
+bool is_accepted_char(char car) {
+    return car >= 9 && car <= 126 && acceptedChars_arr[car - 9];
+}
+
+
+
+bool is_operateurs1(char* string, int debut, int current_index) {
+    // si un caractère n'est présent dans aucun opérateur, on quitte direct
+    for (int i = debut ; string[i] != '\0' && i <= current_index ; i++) {
+        if (!is_sousop(string[i]))
+            return false;
+    }
+    // tous les caractères correspondent à un opérateur, donc on teste tout
+    if (string[current_index + 1] == '\0') { // on est à la fin de la chaîne de caractères
+        return strlist_inList_sub(&operateurs1, string, debut, current_index + 1);
+    }
+    else {
+        return strlist_inList_sub(&operateurs1, string, debut, current_index + 1) ||
+                strlist_inList_sub(&operateurs1, string, debut, current_index + 2);
+    }
 }
 
 
@@ -405,36 +484,36 @@ void ast_aff(Ast** ast, int len) // affiche une liste d'entiers
 
 
 
-  if (len == 0)//si la liste a une longueur de zéro
-  {
-    printString("[]");
-    newLine();
-  }
-  else
-  {
-    printString("[");
-    for ( int i = 0 ; i < len -1 ; i++)//affiche les éléments du premier à l'avant-dernier
+    if (len == 0)//si la liste a une longueur de zéro
     {
-      printString("(");
-      if (ast[i]->type < 21)
-        printString(tab[ast[i]->type]);
-      else
-        printInt(ast[i]->type);
-      printString(", ");
-      printInt(ast[i]->fin);
-      printString("), ");
+        printString("[]");
+        newLine();
     }
-
-    printString("(");
-    if (ast[len-1]->type < 21)
-        printString(tab[ast[len-1]->type]);
     else
-        printInt(ast[len-1]->type);
-    printString(", ");
-    printInt(ast[len-1]->fin);
-    printString(")]");
-    newLine();
-  }
+    {
+        printString("[");
+        for ( int i = 0 ; i < len -1 ; i++)//affiche les éléments du premier à l'avant-dernier
+        {
+            printString("(");
+            if (ast[i]->type < 21)
+                printString(tab[ast[i]->type]);
+            else
+                printInt(ast[i]->type);
+            printString(", ");
+            printInt(ast[i]->fin);
+            printString("), ");
+        }
+
+        printString("(");
+        if (ast[len-1]->type < 21)
+            printString(tab[ast[len-1]->type]);
+        else
+            printInt(ast[len-1]->type);
+        printString(", ");
+        printInt(ast[len-1]->fin);
+        printString(")]");
+        newLine();
+    }
 }
 
 
@@ -728,18 +807,15 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
             return;
         }
         
-        char1_2 = charToString(char1);
         if (nouvTok) //si on a un nouveau token, on vérifie que le caractère actuel est accepté par la grammaire globale
         {
-            if (!isalnum(char1) && !(strlist_inList(&acceptedChars, char1_2)))
+            if (!isalnum(char1) && !is_accepted_char(char1))
             {
                 global_env->CODE_ERROR = 25;
                 neon_free(string);
-                neon_free(char1_2);
                 return;
             }
         }
-        neon_free(char1_2);
         
         nouvTok=false;
         
@@ -875,9 +951,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     }
     
     
-    char* sousch1 = sub(string, (*debTok), i+1);
-    char* sousch2 = (i < len_string - 1) ? sub(string, (*debTok), i+2) : strdup(sousch1);
-    if ((*isPotentiallyOp) && !strlist_inList(&operateurs1, sousch1) && !strlist_inList(&operateurs1, sousch2)) // fin operateur
+    
+    if (*isPotentiallyOp && !is_operateurs1(string, *debTok, i)) // fin operateur
     {
         strlist_append(tokenAdd,sub(string, (*debTok), i));
         (*nouvTok)=true;
@@ -885,9 +960,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyOp)=false;
     }
-    
-    neon_free(sousch1);neon_free(sousch2);
-    
+        
     // elements d’un caractere
     
     if (!(*isPotentiallyLongComm) && !(*isPotentiallyComm) && !(*isPotentiallyNumber) && !(*isPotentiallyString) && !(*isPotentiallyWord) && !(*isPotentiallyOp) && !(*isPotentiallyString2) && ((*char1)=='(' || (*char1)==')'))
@@ -1022,14 +1095,11 @@ void debutTokensSimples(int i, int* debTok, char* char1, bool* isPotentiallyStri
     
     
     
-    char *char1_2 = charToString(*char1);
-    if (strlist_inList(&sousop, char1_2) && !(*isPotentiallyHexBin) && !(*isPotentiallyWord) && !(*isPotentiallyString) && !(*isPotentiallyNumber) && !(*isPotentiallyOp)  && !(*isPotentiallyString2) && !*isPotentiallyComm && !*isPotentiallyLongComm) // debut operateur
+    if (is_sousop(*char1) && !(*isPotentiallyHexBin) && !(*isPotentiallyWord) && !(*isPotentiallyString) && !(*isPotentiallyNumber) && !(*isPotentiallyOp)  && !(*isPotentiallyString2) && !*isPotentiallyComm && !*isPotentiallyLongComm) // debut operateur
     {
         (*debTok)=i;
         (*isPotentiallyOp)=true;
     }
-    
-    neon_free(char1_2);
     
     return ;
 }

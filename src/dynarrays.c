@@ -902,14 +902,29 @@ bool strlist_inList(strlist* list, char* chaine)
   {
     if (strcmp(list->tab[i],chaine)==0)
     {
-      return 1;
+      return true;
     }
     
   }
-  return 0;
+  return false;
 }
 
+bool strlist_inList_sub(strlist* list, char* chaine, int debut, int fin)
+{
+  char value = chaine[fin];
+  chaine[fin] = '\0';
 
+  for (int i=0; i<list->len; i++)
+  {
+    if (strcmp(list->tab[i],chaine + debut)==0)
+    {
+      chaine[fin] = value;
+      return true;
+    }
+  }
+  chaine[fin] = value;
+  return false;
+}
 
 
 int strlist_index(strlist* list, char* chaine)
