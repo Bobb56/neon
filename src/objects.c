@@ -1286,7 +1286,7 @@ void neobject_aff(NeObj neo)
     if (ismarked(neo)) { // c'est le deuxième fois qu'on nous demande d'afficher cet objet
         setColor(RED);
         printString("*");
-        setColor(WHITE);
+        setColor(DEFAULT);
     }
     else {
         mark(neo);

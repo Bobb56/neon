@@ -259,9 +259,9 @@ NeObj _clear_(NeList* args)
 NeObj _help_(NeList* args)
 {
     if (args->len == 0) { // affiche l'ensemble des fonctions disponibles
-        setColor(GREEN);printString("Neon v");printString(VERSION);setColor(WHITE);printString(" for ");
+        setColor(GREEN);printString("Neon v");printString(VERSION);setColor(DEFAULT);printString(" for ");
         printString(PLATFORM);printString(", compiled on ");printString(__TIMESTAMP__);newLine();        
-        printString("Visit ");setColor(GREEN); printString("https://langage-neon.raphaael.fr"); setColor(WHITE);
+        printString("Visit ");setColor(GREEN); printString("https://langage-neon.raphaael.fr"); setColor(DEFAULT);
         printString(" for more information.");newLine();newLine();
 
         printString("Type help(\"variables\") to display all variables.");newLine();
@@ -281,7 +281,7 @@ NeObj _help_(NeList* args)
         for (int i = 0 ; i < global_env->NOMS->len ; i++) {
             if (NEO_TYPE(global_env->ADRESSES->tab[i]) != TYPE_EMPTY) {
                 bo=true;
-                printString(global_env->NOMS->tab[i]);printString(": ");setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(WHITE);
+                printString(global_env->NOMS->tab[i]);printString(": ");setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(DEFAULT);
                 newLine();
             }
         }
@@ -426,7 +426,7 @@ NeObj _help_(NeList* args)
                 for (int i=0 ; i < global_env->NOMS->len ; i++) {
                     if (has_strict_prefix(global_env->NOMS->tab[i], neo_to_string(ARG(0))) && NEO_TYPE(global_env->ADRESSES->tab[i]) != TYPE_EMPTY) {
                         printString(global_env->NOMS->tab[i]);printString(": ");
-                        setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(WHITE);newLine();
+                        setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(DEFAULT);newLine();
                     }
                 }
             }
@@ -483,7 +483,7 @@ NeObj _failwith_(NeList* args)
     printString(" An error occured: ");
     printString(neo_to_string(ARG(0)));
     newLine();
-    setColor(WHITE);
+    setColor(DEFAULT);
     affLine(global_env->FILENAME, global_env->LINENUMBER);
 
     global_env->CODE_ERROR = 1;
@@ -1060,8 +1060,8 @@ NeObj _setColor_(NeList* args) {
     if (strcmp(color, "blue") == 0) {
         setColor(BLUE);
     }
-    else if (strcmp(color, "white") == 0) {
-        setColor(WHITE);
+    else if (strcmp(color, "default") == 0) {
+        setColor(DEFAULT);
     }
     else if (strcmp(color, "green") == 0) {
         setColor(GREEN);

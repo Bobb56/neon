@@ -473,7 +473,11 @@ Cette fonction charge dans la mémoire une copie des objets du module dont le no
 Cette fonction appelle le Garbage Collector.
 
 *`setColor` :*\
-Cette fonction change la couleur du texte affiché dans le terminal après son appel. Les couleurs disponibles sont : `"blue"`, `"red"`, `"green"`, `"white"`. Sur les terminaux où c'est disponible, le rouge et le bleu sont affichés en gras.
+Cette fonction change la couleur du texte affiché dans le terminal après son appel. Les couleurs disponibles sont : `"blue"`, `"red"`, `"green"`, `"default"`.
+
+La couleur `default` est soit le blanc en mode blanc sur fond noir, soit le noir en mode noir sur fond blanc.
+
+Sur les terminaux où c'est disponible, le rouge et le bleu sont affichés en gras.
 
 
 === 1.2.9 - Le type `Function`
@@ -1282,13 +1286,24 @@ L'écran de la TI-83 Premium CE / Edition Python (ou de la TI-84 Plus CE) est un
 
 Le système de coordonnées place l'origine (x=0, y=0) tout en haut à gauche. Ainsi, le pixel au coin inférieur gauche est de coordonnées (x=0, y=239), le pixel au coin supérieur droit est de coordonnées (x=319, y=0) et le pixel au coin inférieur droit est de coordonnées (x=319, y=239).
 
-Comme vous l'avez remarqué lors des définitions d'objets dans la section précédente, les couleurs sont des entiers. Plus précisément il existe 256 couleurs prédéfinies, visibles sur la palette ci-contre.
+Comme vous l'avez remarqué lors des définitions d'objets dans la section précédente, les couleurs sont des entiers, entre 0 et 255.
 
-#image("graphx_palette.png")
+Chaque couleur est codée au format rgb sur 1 octet (8 bits) de la manière suivante :
+- 3 bits pour le rouge
+- 3 bits pour le vert
+- 2 bits pour le bleu
 
-Chaque couleur est définie par son index dans la palette (de 0 à 255).
+Ainsi, il y a 8 teintes de rouge et de vert différentes et 4 teintes de bleu différentes, et toutes les combinaisons donnent exactement 256 couleurs différentes.
+
+Parce qu'il n'est pas pratique de calculer `r * 32 + g * 4 + b` à chaque fois que l'on a besoin d'une couleur, il existe une fonction `rgb` pour convertir des couleurs du format RGB au format de Neon sur un octet.
 
 Pour le dessin de texte (l'objet `Text`), la couleur 255 représente la couleur transparent.
+
+*La fonction `rgb`*
+
+Les couleurs disponibles pour les graphiques sont des entiers entre 0 et 255. Cette représentation n'est pas très commode, aussi, la fonction `rgb` permet d'associer à une couleur RGB sa couleur en Neon. Cette fonction fait évidemment des approximations puisqu'il est impossible de stocker entre 0 et 255 autant de couleurs que 256*256*256.
+
+La fonction `rgb` prend en argument trois entiers entre 0 et 255 correspondant respectivement aux niveaux de rouge, vert et bleu.
 
 *La fonction `draw`*
 
@@ -1335,6 +1350,7 @@ La fonction `setTextTransparentColor` permet de spécifier une couleur qui sera 
 *La fonction `getTextWidth`*
 
 Cette fonction calcule la largeur en pixels d'un objet `Text` donné, en prenant en compte le paramètre `size`.
+
 
 === 7.1.1 - Le clavier
 

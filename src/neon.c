@@ -18,13 +18,14 @@
 #include "headers/processcycle.h"
 #include "headers/trees.h"
 
+#ifdef TI_EZ80
+#include "headers/graphics.h"
+#include <graphx.h>
+#endif
+
+
 // Variables d'environnement de Neon
 NeonEnv* global_env = NULL;
-
-
-
-
-
 
 
 #ifdef LINUX
@@ -631,6 +632,8 @@ void NeonEnv_destroy(NeonEnv* env) {
 
 void neonInit(void)
 {
+    srand(time(NULL));
+
     #ifdef LINUX
         linenoiseSetMultiLine(1); // spécial pour linenoise
         signal(SIGINT, handle_signal);
@@ -641,9 +644,14 @@ void neonInit(void)
         SetConsoleCtrlHandler(ctrlHandler, TRUE);
     #endif
 
-    srand(time(NULL));
-
     global_env = NeonEnv_init();
+
+    #ifdef TI_EZ80
+        gfx_Begin();
+        set_neon_palette();
+        nio_init(&global_env->console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK, true);
+        nio_set_default(&global_env->console);
+    #endif
 
     return;
 }
@@ -652,6 +660,9 @@ void neonInit(void)
 void neonExit(void)
 {
     NeonEnv_destroy(global_env);
+    #ifdef TI_EZ80
+    nio_free(&global_env->console);
+    #endif
     return;
 }
 
@@ -669,7 +680,7 @@ void printRes(NeObj res)
         printString(" (");
         setColor(GREEN);
         printString(type(res));
-        setColor(WHITE);
+        setColor(DEFAULT);
         printString(") = ");
         
         // on a besoin d'un runtime pour exécuter neobject_aff car il pourrait lancer une fonction utilisateur si surchargé
@@ -696,7 +707,7 @@ void startMessage(void)
     setColor(GREEN);    
     printString("Neon v");
     printString(VERSION);
-    setColor(WHITE);
+    setColor(DEFAULT);
 
     printString(" for ");
     printString(PLATFORM);
@@ -713,7 +724,7 @@ void startMessage(void)
     newLine();*/
     
     printString("Visit ");
-    setColor(GREEN); printString("https://langage-neon.raphaael.fr"); setColor(WHITE);
+    setColor(GREEN); printString("https://langage-neon.raphaael.fr"); setColor(DEFAULT);
     printString(" for more information.");
     newLine();
 
@@ -722,7 +733,7 @@ void startMessage(void)
         setColor(RED);
         printString("/!\\ THIS IS AN EXPERIMENTAL VERSION. IT MAY NOT WORK. /!\\");
         newLine();newLine();
-        setColor(WHITE);
+        setColor(DEFAULT);
     #endif
 
     return;

@@ -310,7 +310,7 @@ char* inputCode(char* text)
     #ifndef LINUX
         setColor(BLUE);
         printString(text);
-        setColor(WHITE);
+        setColor(DEFAULT);
         char* str = input("");
     #else
         char* str = input(SEQUENCE_ENTREE); // dans le cas Linux, input se charge lui-même de mettre le bleu

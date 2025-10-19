@@ -3,6 +3,7 @@
 
 #include "headers/processcycle.h"
 #include "headers/constants.h"
+#include "headers/dynarrays.h"
 #include "headers/neon.h"
 #include "headers/errors.h"
 #include "headers/trees.h"
@@ -83,6 +84,14 @@ Process* ProcessCycle_add(ProcessCycle* pc, NeTree tree, int id, bool isInitiali
     else if (pc->next == pc && pc->prev == pc) { // vu que c'est un cycle, la seule possibilité est qu'il n'y ait qu'un seul élément
         p->stack = allocate_new_stack();
 
+        if (p->stack == NULL) {
+            global_env->CODE_ERROR = 12;
+            neon_free(p->var_loc);
+            neon_free(p->varsToSave);
+            neon_free(p);
+            return NULL;
+        }
+
         ProcessCycle* npc = ProcessCycle_create();
         npc->process = p;
 
@@ -92,6 +101,14 @@ Process* ProcessCycle_add(ProcessCycle* pc, NeTree tree, int id, bool isInitiali
     }
     else { // aucun des deux n'est nul, donc on s'insère entre les deux
         p->stack = allocate_new_stack();
+
+        if (p->stack == NULL) {
+            global_env->CODE_ERROR = 12;
+            neon_free(p->var_loc);
+            neon_free(p->varsToSave);
+            neon_free(p);
+            return NULL;
+        }
 
         ProcessCycle* npc = ProcessCycle_create();
         npc->process = p;

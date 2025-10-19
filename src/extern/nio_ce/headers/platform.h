@@ -71,7 +71,7 @@ char* nio_get_back_buffer();
 
 // These functions are the same on all platforms...
 
-void nio_set_global_color(unsigned int color);
+void nio_set_global_color(uint8_t color);
 void nio_vram_pixel_set(unsigned int x, unsigned int y);
 void nio_vram_fill(unsigned x, unsigned y, unsigned w, unsigned h);
 void nio_vram_draw(void);

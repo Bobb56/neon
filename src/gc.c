@@ -178,7 +178,7 @@ void print_objects_list(void) {
     }
     else {
         setColor(BLUE) ; printString("Objects currently tracked by the Garbage Collector :"); newLine();
-        setColor(GREEN) ; printString("{ "); setColor(WHITE);
+        setColor(GREEN) ; printString("{ "); setColor(DEFAULT);
         NeObj next;
         for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = next) {
             next = get_next(ptr);
@@ -186,14 +186,14 @@ void print_objects_list(void) {
             neobject_aff(ptr);
 
             if (!neo_is_void(next)) {
-                setColor(GREEN) ; printString(" | "); setColor(WHITE) ;
+                setColor(GREEN) ; printString(" | "); setColor(DEFAULT) ;
             }
         }
 
         setColor(GREEN) ; printString(" }");
         newLine();
     }
-    setColor(WHITE);
+    setColor(DEFAULT);
 }
 
 

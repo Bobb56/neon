@@ -17,7 +17,6 @@
 #include "headers/neonio.h"
 #include "headers/trees.h"
 
-
 void update__name__(char* name)
 {
     replace_var(global_env->NAME, neo_str_create(name));
@@ -481,6 +480,12 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 // on ajoute le processus, et il va se faire exécuter dans la chaine de processus
                 // on met isInitialized = false pour que le processus entre dans eval_aux de manière normale
                 int id = create_new_process(maintree_copy, false);
+
+                if (global_env->CODE_ERROR != 0) {
+                    neobject_destroy(maintree_copy.fcall->function_obj);
+                    neon_free(maintree_copy.pointer);
+                    return NEO_VOID;
+                }
 
                 return neo_promise_create(id);
             }

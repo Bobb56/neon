@@ -54,51 +54,11 @@ void nio_scrbuf_free()
     gfx_End();
 }
 
-uint8_t getPaletteColorIndex(unsigned int color)
-{
-    if(color < 16)
-    {
-        // To match the nspireio colo enum
-        const uint8_t palette[16] = {
-            gfx_black,
-            gfx_red,
-            gfx_green,
-            gfx_yellow,
-            gfx_blue,
-            gfx_purple, // magenta
-            gfx_blue,   // cyan
-            gfx_white,  // grey
-            gfx_black,  // light black
-            gfx_red,    // light red
-            gfx_green,  // light green
-            gfx_yellow, // light yellow
-            gfx_blue,   // light blue
-            gfx_purple, // light magenta
-            gfx_blue,   // light cyan
-            gfx_white
-        };
-        return palette[color];
-    }
-    else if(color < 232)
-    {
-        // todo: fix me
-        const int rbtable[6] = {0,6,12,18,24,31};
-        const int gtable[6] = {0,12,25,37,50,63};
-        unsigned int d = color-16;
-        return (uint8_t) ((rbtable[d / 36] << 11) + (gtable[(d / 6) % 6] << 5) + rbtable[d % 6]);
-    }
-    else if(color < 256)
-    {
-        // todo: fix me
-        unsigned int d = color-232;
-        return (uint8_t) (((d + 1) << 11) + ((d * 2 + 2) << 5) + (d + 1));
-    }
-    return 0;
-}
 
-void nio_set_global_color(unsigned int color)
+
+void nio_set_global_color(uint8_t color)
 {
-    gfx_SetColor(getPaletteColorIndex(color));
+    gfx_SetColor(color);
 }
 
 void nio_vram_pixel_set(unsigned int x, unsigned int y)

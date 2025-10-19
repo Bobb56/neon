@@ -117,7 +117,7 @@ void initGraphics(void) {
 
 
     // functions
-    int nb_functions = 6;
+    int nb_functions = 7;
 
     char* names[] = {
         "getKey",
@@ -125,7 +125,8 @@ void initGraphics(void) {
         "setPixel",
         "getPixel",
         "setTextTransparentColor",
-        "getTextWidth"
+        "getTextWidth",
+        "rgb"
     };
 
     Function functions[] = {
@@ -170,6 +171,13 @@ void initGraphics(void) {
             .nbArgs = 1,
             .typeArgs = (int[]) {TYPE_CONTAINER},
             .typeRetour = TYPE_INTEGER
+        },
+        (Function) {
+            .ptr = rgb,
+            .help = "Returns a number in range 0-255 corresponding approximatively to the rgb color",
+            .nbArgs = 3,
+            .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
+            .typeRetour = TYPE_INTEGER
         }
     };
 
@@ -188,6 +196,17 @@ void initGraphics(void) {
 bool in_screen(intptr_t x, intptr_t y) {
     return x >= 0 && x < 320 && y >= 0 && y < 240;
 }
+
+
+NeObj rgb(NeList* args) {
+    uint8_t r = neo_to_integer(ARG(0));
+    uint8_t g = neo_to_integer(ARG(1));
+    uint8_t b = neo_to_integer(ARG(2));
+    uint8_t palette_index = (r/36) << 5 | (g/36) << 2 | (b/85);
+    return neo_integer_create(palette_index);
+}
+
+
 
 
 NeObj getKey(NeList* args) {
@@ -551,3 +570,20 @@ void draw_nelist(NeList* list) {
 }
 
 
+uint16_t rgb8_to_1555(uint8_t r, uint8_t g, uint8_t b) {
+    uint8_t new_r = 4.4 * (double)r;  // valeur sur 5 bits
+    uint8_t new_g = 4.4 * (double)g;  // valeur sur 5 bits
+    uint8_t new_b = 10.3 * (double)b; // valeur sur 5 bits
+    uint16_t color = new_r << 10 | new_g << 5 | new_b;
+    return color;
+}
+
+void set_neon_palette(void) {
+    for (uint8_t r = 0 ; r < 8 ; r++) {
+        for (uint8_t g = 0 ; g < 8 ; g++) {
+            for (uint8_t b = 0 ; b < 4 ; b++) {
+                gfx_palette[r << 5 | g << 2 | b] = rgb8_to_1555(r, g, b);
+            }
+        }
+    }
+}

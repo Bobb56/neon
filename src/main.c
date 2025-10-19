@@ -3,12 +3,7 @@
 #include "headers/neon.h"
 #include "headers/runtime.h"
 #include "headers/errors.h"
-
-#ifdef TI_EZ80
 #include "headers/neonio.h"
-#include "extern/nio_ce/headers/nspireio.h"
-nio_console console;
-#endif
 
 
 /*
@@ -75,9 +70,6 @@ NOUVEAUTéS depuis la dernière publication :
 
     #ifdef TI_EZ80
         // récupération du nom de fichier si existant
-        nio_init(&console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NIO_COLOR_WHITE, NIO_COLOR_BLACK, true);
-        nio_set_default(&console);
-
         char* filename = argsAns();
 
         variable_append(global_env, "__args__", l);
@@ -110,11 +102,6 @@ NOUVEAUTéS depuis la dernière publication :
             terminal();
         }
         neonExit();
-    #endif
-
-
-    #ifdef TI_EZ80
-        nio_free(&console);
     #endif
 
     return 0;

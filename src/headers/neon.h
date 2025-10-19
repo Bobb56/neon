@@ -7,6 +7,10 @@
 #include "dynarrays.h"
 #include "processcycle.h"
 
+#ifdef TI_EZ80
+#include "extern/nio_ce/headers/nspireio.h"
+#endif
+
 typedef struct NeonEnv {
 
     // permet de déclencher un signal d'erreur à travers toute la chaîne de traitement de Neon.
@@ -101,6 +105,12 @@ typedef struct NeonEnv {
     // passer d'un processus à l'autre dans une dans infernale. Pour ajouter un processus, il suffit d'ajouter un chaînon
     // dans ce cycle
     ProcessCycle* process_cycle;
+
+    // la console de nio_ce
+    #ifdef TI_EZ80
+    nio_console console;
+    #endif
+
 } NeonEnv;
 
 extern NeonEnv* global_env;

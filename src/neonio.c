@@ -17,8 +17,7 @@
 #include <ti/vars.h>
 #include <fileioc.h>
 #include "extern/nio_ce/headers/nspireio.h"
-
-extern nio_console console;
+#include "headers/graphics.h"
 #endif
 
 
@@ -182,7 +181,7 @@ extern nio_console console;
                 printf("\033[0;32m"); // vert
             else if (color == RED)
                 printf("\033[1;31m"); // met en rouge et gras
-            else if (color == WHITE)
+            else if (color == DEFAULT)
                 printf("\033[0;00m");
         #endif
     }
@@ -341,14 +340,14 @@ extern nio_console console;
     
     
     void flush(void) {
-        nio_fflush(&console);
+        nio_fflush(&global_env->console);
     }
     
     
     
     void printString(char* s)
     {
-        nio_fputs(s, &console);
+        nio_fputs(s, &global_env->console);
     }
     
     
@@ -356,19 +355,19 @@ extern nio_console console;
     void setColor(unsigned char color)
     {
         if (color == BLUE)
-            nio_color(&console, NIO_COLOR_WHITE, NIO_COLOR_LIGHTBLUE);
+            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_BLUE);
         else if (color == GREEN)
-            nio_color(&console, NIO_COLOR_WHITE, NIO_COLOR_GREEN);
+            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_GREEN);
         else if (color == RED)
-            nio_color(&console, NIO_COLOR_WHITE, NIO_COLOR_RED);
-        else if (color == WHITE)
-            nio_color(&console, NIO_COLOR_WHITE, NIO_COLOR_BLACK);
+            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_RED);
+        else if (color == DEFAULT)
+            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK);
     }
     
     
     void clearConsole(void)
     {
-        nio_clear(&console);
+        nio_clear(&global_env->console);
     }
 
 #endif

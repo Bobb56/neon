@@ -135,7 +135,6 @@ bool nio_init(nio_console* csl, int size_x, int size_y, int offset_x, int offset
 
 	c->history_line = -1;
 
-	if (!nio_scrbuf_init()) goto err;
 	nio_clear(csl);
 
 	return true;

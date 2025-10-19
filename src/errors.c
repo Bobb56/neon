@@ -305,9 +305,9 @@ void printError(int code)
         printString(": ");
         
         printString((char*)error_messages[code]);
-        setColor(GREEN); printString(" (");setColor(WHITE);printInt(code);setColor(GREEN);printString(")");
+        setColor(GREEN); printString(" (");setColor(DEFAULT);printInt(code);setColor(GREEN);printString(")");
     }
-    setColor(WHITE);
+    setColor(DEFAULT);
     newLine();
     affLine(global_env->FILENAME, global_env->LINENUMBER);
 }
@@ -318,21 +318,21 @@ void printError(int code)
 void affLine(char* file, int line) {
     setColor(RED);
     printString(" # ");
-    setColor(WHITE);
+    setColor(DEFAULT);
 
     if (file != NULL) {
         printString("Error happened in file ");
-        setColor(GREEN); printString(file); setColor(WHITE);
+        setColor(GREEN); printString(file); setColor(DEFAULT);
         printString(" at line ");
 
-        setColor(GREEN); printInt(line); setColor(WHITE);
+        setColor(GREEN); printInt(line); setColor(DEFAULT);
 
         printString(" :");
         newLine();
 
         setColor(RED);
         printString(" # ");
-        setColor(WHITE);
+        setColor(DEFAULT);
 
         char* program = openFile(file);
         int compt = 1, i = 0;
