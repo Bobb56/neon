@@ -255,7 +255,7 @@
         ti_Close(fichier);
 
         // on enlève le préfixe propre aux appvars python s'il y en a un
-        if (memcmp(program, "PYCD\x00", 5)==0)
+        if (memcmp(program, "PYCD\x00", 5)==0 || memcmp(program, "NEON\x00", 5)==0))
             memcpy(program, "     ", 5);
 
         return program;
