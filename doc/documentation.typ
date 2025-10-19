@@ -239,7 +239,7 @@ Les exceptions sont des objets qui désignent des types d'erreur. Quand une erre
 
 Voici la liste des exceptions built-in :\
 *`SyntaxError`* : Est déclenchée par une erreur de syntaxe\
-*`FileNotFound`* : Est déclenchée quand l'ouverture d'un fichier quelconque échoue dans l'interpréteur\
+*`FileSystemError`* : Est déclenchée lorsqu'une fonction de lecture/écriture des fichiers échoue\
 *`UnmeasurableObject`* : Déclenchée par la fonction `len` sur un objet non mesurable\
 *`UndefinedVariable`* : Lorsqu'on essaie d'utiliser un objet non défini\
 *`IncorrectFunctionCall`* : Lorsqu'un appel à une fonction échoue\
@@ -478,6 +478,9 @@ Cette fonction change la couleur du texte affiché dans le terminal après son a
 La couleur `default` est soit le blanc en mode blanc sur fond noir, soit le noir en mode noir sur fond blanc.
 
 Sur les terminaux où c'est disponible, le rouge et le bleu sont affichés en gras.
+
+*`detectFiles` :*\
+Cette fonction renvoie une liste de tous les noms de fichiers du répertoire courant commençant par une certaine chaîne de caractères. Elle prend en argument la chaîne de caractères à comparer avec le début de chaque fichier.
 
 
 === 1.2.9 - Le type `Function`

@@ -17,7 +17,19 @@
 
 #ifdef TI_EZ80
 #include <sys/rtc.h>
+#include <fileioc.h>
 #include "headers/graphics.h"
+#endif
+
+#ifdef LINUX
+#include <dirent.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#endif
+
+#ifdef WINDOWS
+#include <windows.h>
+#include <stdio.h>
 #endif
 
 
@@ -1085,4 +1097,113 @@ NeObj _initGraphics_(NeList* args) {
     #endif
 
     return neo_none_create();
+}
+
+// détecte les fichiers commençant par une certaine chaîne de caractères
+NeObj _detectFiles_(NeList* args) {
+    NeObj files = neo_list_create(0);
+    char* prefix = neo_to_string(ARG(0));
+
+    #if defined(TI_EZ80)
+
+    void* vat_ptr = NULL;
+    char* var_name;
+
+    while ((var_name = ti_Detect(&vat_ptr, prefix))) {
+        neo_list_append(files, neo_str_create(strdup(var_name)));
+    }
+
+    #elif defined(LINUX)
+
+    // this code mostly comes from ChatGPT
+    int prefix_len = strlen(prefix);
+    char* buffer = neon_malloc(prefix_len);
+
+    DIR *rep;
+    struct dirent *entree;
+    struct stat infos;
+
+    rep = opendir(".");
+    if (rep == NULL) {
+        global_env->CODE_ERROR = 119;
+        return NEO_VOID;
+    }
+
+    while ((entree = readdir(rep)) != NULL) {
+        // Ignore "." et ".."
+        if (strcmp(entree->d_name, ".") == 0 || strcmp(entree->d_name, "..") == 0)
+            continue;
+
+        // Obtenir les informations sur le fichier
+        if (stat(entree->d_name, &infos) == 0) {
+            if (S_ISREG(infos.st_mode)) {
+                // on ouvre le fichier pour vérifier le préfixe
+                FILE* file = fopen(entree->d_name, "r");
+
+                if (file == NULL) {
+                    global_env->CODE_ERROR = 119;
+                    neobject_destroy(files);
+                    neon_free(buffer);
+                    return NEO_VOID;
+                }
+                fread(buffer, 1, prefix_len, file);
+
+                if (strncmp(buffer, prefix, prefix_len) == 0)
+                    neo_list_append(files, neo_str_create(strdup(entree->d_name)));
+
+                fclose(file);
+            }
+        } else {
+            neobject_destroy(files);
+            neon_free(buffer);
+            global_env->CODE_ERROR = 119;
+            return NEO_VOID;
+        }
+    }
+
+    closedir(rep);
+    neon_free(buffer);
+
+    #elif defined(WINDOWS)
+    int prefix_len = strlen(prefix);
+    char* buffer = neon_malloc(prefix_len);
+
+    WIN32_FIND_DATA fichier;
+    HANDLE handle = FindFirstFile(".\\*", &fichier);
+
+    if (handle == INVALID_HANDLE_VALUE) {
+        global_env->CODE_ERROR = 119;
+        neobject_destroy(files);
+        neon_free(buffer);
+        return NEO_VOID;
+    }
+
+    do {
+        if (strcmp(fichier.cFileName, ".") != 0 && strcmp(fichier.cFileName, "..") != 0) {
+
+            // on ouvre le fichier pour vérifier le préfixe
+            FILE* file = fopen(fichier.cFileName, "r");
+
+            if (file == NULL) {
+                global_env->CODE_ERROR = 119;
+                neobject_destroy(files);
+                neon_free(buffer);
+                return NEO_VOID;
+            }
+            fread(buffer, 1, prefix_len, file);
+
+            if (strncmp(buffer, prefix, prefix_len) == 0)
+                neo_list_append(files, neo_str_create(strdup(fichier.cFileName)));
+
+            fclose(file);
+        }
+    } while (FindNextFile(handle, &fichier));
+
+    FindClose(handle);
+
+    neon_free(buffer);
+
+    #endif
+
+    return files;
 }

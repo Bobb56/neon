@@ -16,29 +16,16 @@ _____________________
 
 Potentielles futures erreurs :
 ------------------------------
-Pour éviter d'empiler plusieurs fois la même chose dans les ast (du fait que la construction est basée sur typeTok),
-j'ai créé une fonction qui vérifie si on essaie d'empiler deux fois la même chose à la suite.
-Cette fonction est pour le moment désactivée car je pense avoir trouvé la solution en mettant block sur debTok2 au lieu de debTok3
-On pourra la réactiver au besoin
-
-S'il y a encore un problème de lecture dans la pile allouée par malloc, et un saut à l'adresse 0x0, c'est
-probablement encore un problème d'inlinig généré par GCC (même si les fonctions concernées ont été normalement toutes
-interdites d'inlining)
-
 S'il y a des problèmes liés aux piles et tout, bien vérifier les tailles des contextes des fonctions et regarder si on gère ça correctement
 
 Peut être qu'il y a des endroits où on oublie de mettre à jour les promesses
 
-J'ai enlevé les vérifications de CODE_ERROR juste après avoir restauré les registres et la pile, ça peut causer des problèmes
-
-General Protection Fault = Problème d'alignement de la pile
+General Protection Fault => Problème d'alignement de la pile
 
 
 Avancement et choses à faire :
 -------------------------------
-> Fonction spécifique pour créer une liste d'arbres correspondant à une expression avec des virgules (pratique pour les listes et les args de fonction)
-> Continuer de créer toutes les structures pour tous les arbres différents, et les fonctions pour les créer
-> Modifier syntaxtrees pour utiliser ces arbres, puis runtime
+> Arrêt d'un programme en appuyant sur ON sur calculatrice
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
 --> Faire une fonction saveVars(nom de fichier, plein de variables) et loadVars(plein de variables) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)

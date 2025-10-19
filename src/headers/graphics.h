@@ -29,7 +29,7 @@ struct ContainerType {
 #define NEON_PALETTE_COLOR(r,g,b)       (r << 5 | g << 2 | b)
 #define NEON_PALETTE_BLACK              NEON_PALETTE_COLOR(0,0,0)
 #define NEON_PALETTE_WHITE              NEON_PALETTE_COLOR(7,7,3)
-#define NEON_PALETTE_GREEN              NEON_PALETTE_COLOR(0,7,0)
+#define NEON_PALETTE_GREEN              NEON_PALETTE_COLOR(0,5,0)
 #define NEON_PALETTE_RED                NEON_PALETTE_COLOR(7,0,0)
 #define NEON_PALETTE_BLUE               NEON_PALETTE_COLOR(0,0,3)
 

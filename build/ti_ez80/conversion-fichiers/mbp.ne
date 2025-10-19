@@ -37,26 +37,9 @@ function mandelbrot(N_iteration := 15, res := 2, x1, y1, x2, y2) do
   end
 end
 
-points = [
-            [0, 0],
-            [0, 80],
-            [0, 160],
-            [0, 240],
-            [80, 0],
-            [80, 80],
-            [80, 160],
-            [80, 240],
-            [160, 0],
-            [160, 80],
-            [160, 160],
-            [160, 240]
-]
-
-foreach (co, points) do
-  x = co[1]
-  y = co[0]
-  parallel mandelbrot(15, 4, x, y, x + 80, y + 80)
-end
+parallel mandelbrot(20, 4, 0, 0, 160, 120)
+parallel mandelbrot(20, 4, 160, 0, 320, 120)
+parallel mandelbrot(20, 4, 0, 120, 160, 240)
+parallel mandelbrot(20, 4, 160, 120, 320, 240)
 
 await(getKey() == 15)
-exit()

@@ -127,7 +127,8 @@ static const char* error_messages[NB_ERRORS] = {
     "This functionality has not been implemented yet",
     "Cannot initialize graphics without overriding an already defined type",
     "This figure object cannot be drawn because it was not defined correctly",
-    "str cannot be overloaded with a function that does not return a string"
+    "str cannot be overloaded with a function that does not return a string",
+    "File system error"
 };
 
 
@@ -251,7 +252,8 @@ static const int error_codes_exceptions[NB_ERRORS] = {
     15,
     13,
     9,
-    9
+    9,
+    1
 };
 
 

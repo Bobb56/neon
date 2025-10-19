@@ -132,7 +132,8 @@ void loadFunctions(NeonEnv* env)
         "loadNamespace",
         "gc",
         "setColor",
-        "initGraphics"
+        "initGraphics",
+        "detectFiles"
     };
 
     // built-in functions
@@ -521,6 +522,13 @@ void loadFunctions(NeonEnv* env)
             .nbArgs = 0,
             .typeArgs = NULL,
             .typeRetour = TYPE_NONE
+        },
+        (Function) {
+            .ptr = _detectFiles_,
+            .help = "Returns a list of all AppVars starting by a specific string",
+            .nbArgs = 1,
+            .typeArgs = (int[]){TYPE_STRING},
+            .typeRetour = TYPE_LIST
         }
     };
 
@@ -540,7 +548,7 @@ void loadFunctions(NeonEnv* env)
 void loadExceptions(NeonEnv* env) {
     const char* exceptions[] = {
         "SyntaxError",
-        "FileNotFound",
+        "FileSystemError",
         "UnmeasurableObject",
         "UndefinedVariable",
         "IncorrectFunctionCall",

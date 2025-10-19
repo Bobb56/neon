@@ -948,7 +948,7 @@ int linenoiseEditStart(struct linenoiseState *l, int stdin_fd, int stdout_fd, ch
     if (write(l->ofd,prompt,l->plen) == -1) return -1;
 
     if (bo) {
-        setColor(WHITE);
+        setColor(DEFAULT);
         fflush(stdout);
     }
 
