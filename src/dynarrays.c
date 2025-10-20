@@ -10,174 +10,264 @@
 // fonctions de copies. Servent à "déplacer" un tableau de la pile vers le tas
 
 
+void printToken(Token tok) {
+  char sov = stringize(tok);
+  printString(tok.debut);
+  unstringize(tok, sov);
+}
+
+char stringize(Token tok) {
+  char sov = tok.debut[tok.len];
+  tok.debut[tok.len] = '\0';
+  return sov;
+}
+
+void unstringize(Token tok, char sov) {
+  tok.debut[tok.len] = sov;
+}
 
 
-void strlist_copy(strlist* list, const char** tab, int len)
+char* tokdup(Token tok) {
+  return strndup(tok.debut, tok.len);
+}
+
+bool tokeq(Token token, char* string) {
+  return strncmp(token.debut, string, token.len) == 0 && string[token.len] == '\0';
+}
+
+
+toklist* toklist_create(int len)
 {
-    // copie du tableau dans le tas
-    char** res = neon_malloc(sizeof(char*)*len);
-    for (int i = 0 ; i < len ; i++)
-    {
-        res[i] = strdup(tab[i]);
-    }
-
-    list->tab = res;
-    list->len = len;
-    return;
+  toklist* list = neon_malloc(sizeof(toklist));
+  
+  list->capacity = 0;
+  list->source_string = NULL;
+  
+  while ((1<<list->capacity) < len)
+    list->capacity++;
+  
+  list->tab=neon_malloc((1<<list->capacity)*sizeof(Token));
+  
+  memset(list->tab,0,len);
+  list->len=len;
+  return list;
 }
 
 
 
 
 
-
-
-void intlist_copy(intlist* list, const int* tab, int len)
+void toklist_aff(toklist* list)
 {
-    // copie du tableau dans le tas
-    int* res = neon_malloc(sizeof(int)*len);
-    for (int i = 0 ; i < len ; i++)
+  if (list->len == 0)
+  {
+    printString("[]\n");
+  }
+  else
+  {
+    printString("[");
+    Token tmp;
+    for (int i = 0 ; i < list->len -1 ; i++)
     {
-        res[i] = tab[i];
-    }
-
-    list->tab = res;
-    list->len = len;
-    return;
-}
-
-
-
-
-
-
-
-
-void listlist_copy(listlist* list, const intlist* tab, int len)
-{
-    // copie du tableau dans le tas
-    intlist* res = neon_malloc(sizeof(strlist)*len);
-    intlist temp;
-    for (int i = 0 ; i < len ; i++)
-    {
-        // ---- copie -----
-        int* res2 = neon_malloc(sizeof(char*)*tab[i].len);
-        for (int j = 0 ; j < tab[i].len ; j++)
-        {
-            res2[j] = tab[i].tab[j];
-        }
+        tmp = list->tab[i];
+        //tmp = traitementStringInverse(list->tab[i]);
         
-        temp.tab = res2;
-        temp.len = tab[i].len;
-        // ---- fin copie ----
-
-        
-        res[i].tab = temp.tab;
-        res[i].len = temp.len;
+        printString("\"");
+        if (tmp.debut != NULL)
+            printToken(tmp);
+        printString("\", ");
     }
 
-    list->tab = res;
-    list->len = len;
-    return;
+    printString("\"");
+    if (list->tab[list->len-1].debut != NULL)
+        printToken(list->tab[list->len-1]);
+    printString("\"]");
+    newLine();
+    
+  }
 }
 
 
 
 
-
-//listlist
-
-listlist listlist_create(int len)// crée une liste de pointeurs
+void toklist_append(toklist* list, Token chaine)
 {
-  listlist list;//crée la structure
-  
-  list.capacity = 0;
-  while ((1<<list.capacity) < len)
-    list.capacity++;
-  
-  list.tab=neon_malloc((1<<list.capacity)*sizeof(intlist));//initialise le tableau de longueur len avec de zéros
-  
-  memset(list.tab,0,len);
-  list.len=len;//initialise la bonne longueur
-  return list;//retourne la structure
-}
-
-
-
-void listlist_append(listlist* list, intlist* ptr)//ajoute un élément à la fin de la liste
-{
-  intlist* tmp;
-
-  if ((1<<list->capacity)==list->len)
+  Token* tmp;
+  if (1<<list->capacity == list->len)
   {
     list->capacity++;
-    tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(intlist));//réallocation de list.tab
+    tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réallocation de list.tab
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
-
   
-  
-  list->tab[list->len]=*ptr;//affecte nombre au dernier élément
-  list->len++;//incrémente la longueur
+  list->tab[list->len]=chaine;
+  list->len++;
 }
 
 
 
 
-void listlist_remove(listlist* list,int index)//indiquer si il faut libérer l'élément avant de le supprimer
+void toklist_destroy(toklist* list)
 {
+  if (list->source_string != NULL)
+    neon_free(list->source_string);
+  
+  neon_free(list->tab);
+  neon_free(list);
+}
 
 
+
+
+void toklist_resize(toklist* list, int newLen)
+{
+  Token* tmp;
+  
+  if (newLen > (1<<list->capacity) || newLen <= 1 << (list->capacity - 1)) // on détermine la nouvelle capacité
+  {
+    list->capacity = 0;
+    while ((1<<list->capacity) < newLen)
+      list->capacity++;
+      
+    tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réalloue un pointeur de la nouvelle taille
+    
+    if (tmp == NULL)
+    {
+        global_env->CODE_ERROR = 12;
+        return ;
+    }
+    
+    list->tab = tmp;
+    
+  }
+  
+  list->len=newLen;
+  
+}
+
+
+
+void toklist_remove(toklist* list, int index)
+{
+  
   if (index >= list->len)
   {
     global_env->CODE_ERROR = 38;
     return ;
   }
   
-  neon_free(list->tab[index].tab);
   
   for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];
     
-  intlist* tmp;
+  Token* tmp;
   
   if (1 << (list->capacity - 1) == list->len-1)
   {
     list->capacity--;
-    tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(intlist));//réalloue un nouveau pointeur de la bonne taille
+    tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réalloue un nouveau pointeur de la bonne taille
     list->tab = tmp;
   }
   
-  
-  list->len--;
+  list->len--;//décrémentation de la longueur
   
 }
 
 
 
-void listlist_aff(listlist* liste)
+
+
+
+int toklist_count(toklist* list, char* chaine)
 {
-  for (int i=0;i<liste->len;i++)
+  int count=0;
+  
+  for (int i = 0 ; i < list->len ; i++)
   {
-    intlist_aff(&liste->tab[i]);
+    if (tokeq(list->tab[i], chaine))
+    {
+      count++;
+    }
   }
   
+  return count;
 }
 
 
-
-void listlist_destroy(listlist* list)
+bool strlist_token_inList(strlist* list, Token chaine)
 {
-  for (int i=0;i<list->len;i++)
+  for (int i=0; i<list->len; i++)
   {
-    neon_free(list->tab[i].tab);
+    if (tokeq(chaine, list->tab[i]))
+    {
+      return true;
+    }
+    
   }
-  neon_free(list->tab);
+  return false;
+}
+
+
+
+int toklist_index(toklist* list, char* chaine)
+{
+
+  for (int i=0; i<list->len; i++)
+  {
+    if (tokeq(list->tab[i], chaine))
+    {
+      return i;
+    }
+    
+  }
+  global_env->CODE_ERROR = 18;
+  return -1;
+}
+
+
+int strlist_token_index(strlist* list, Token chaine)
+{
+  for (int i=0; i<list->len; i++)
+  {
+    if (tokeq(chaine, list->tab[i]))
+    {
+      return i;
+    }
+  }
+  global_env->CODE_ERROR = 18;
+  return -1;
+}
+
+
+
+void toklist_insert(toklist* list, Token chaine, int index)//ajoute un élément à la place indiquée
+{
+  if (index > list->len)
+  {
+    global_env->CODE_ERROR = 38;
+    return ;
+  }
+  
+  Token* tmp;
+  if ((1<<list->capacity)==list->len)
+  {
+    list->capacity++;
+    tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réallocation de list.tab
+    list->tab = tmp;//affectation du pointeur de tmp vers list.tab
+  }
+  
+  for (int i = list->len ; i > index; i--)//décale tous les éléments à partir de celui à supprimer
+    list->tab[i]=list->tab[i-1];
+  
+  list->tab[index]=chaine;
+
+  list->len++;//incrémente la longueur
 }
 
 
 
 
+// ================== PTRLIST ==================
 
 
 
@@ -189,8 +279,6 @@ ptrlist* ptrlist_create(void)
     l->queue = NULL;
     return l;
 }
-
-
 
 
 
@@ -215,7 +303,7 @@ void ptrlist_append(ptrlist* q, void* t)
 
 
 
-
+/*
 void ptrlist_aff(ptrlist* l)
 {
     if (l->queue == NULL && l->tete == NULL)
@@ -249,7 +337,7 @@ void ptrlist_aff(ptrlist* l)
     return;
 }
 
-
+*/
 
 
 
@@ -296,7 +384,7 @@ int ptrlist_destroy(ptrlist* l, bool freeElements, bool freeTab)
 }
 
 
-
+/*
 void ptrlist_replace(ptrlist* liste, void* aRemplacer, void* nvlleValeur)
 {
     ptrlist* ptr = liste;
@@ -355,7 +443,7 @@ void ptrlist_direct_remove(ptrlist* list, ptrlist* ptr, ptrlist* prev) {
     }
 }
 
-
+*/
 
 
 void ptrlist_remove(ptrlist* list, void* l, bool error)
@@ -403,11 +491,11 @@ void ptrlist_remove(ptrlist* list, void* l, bool error)
     
 }
 
-
+/*
 bool ptrlist_inList(ptrlist* l, void* el) {
   return ptrlist_index(l, el) != -1;
 }
-
+*/
 
 
 
@@ -430,7 +518,7 @@ void* ptrlist_pop(ptrlist* list)
 
 
 
-
+/*
 int ptrlist_len(ptrlist* l)
 {
     if (l->tete == NULL)
@@ -442,6 +530,7 @@ int ptrlist_len(ptrlist* l)
         ptr = ptr->queue;
     return i;
 }
+*/
 
 bool ptrlist_isEmpty(ptrlist* l) {
   return l->queue == NULL && l->tete == NULL;
@@ -471,7 +560,7 @@ intlist intlist_create(int len)// crée une liste d'entiers
 
 
 
-
+/*
 void intlist_aff(intlist* list)//affiche une liste d'entiers
 {
   if (list->len == 0)//si la liste a une longueur de zéro
@@ -492,7 +581,7 @@ void intlist_aff(intlist* list)//affiche une liste d'entiers
     newLine();
   }
 }
-
+*/
 
 
 
@@ -512,7 +601,7 @@ void intlist_append(intlist* list,int nombre)//ajoute un élément à la fin de 
 }
 
 
-
+/*
 void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la nouvelle longueur
 {
   int* tmp;
@@ -543,7 +632,7 @@ void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la n
   list->len=newLen;//modification de la longueur
   
 }
-
+*/
 
 
 
@@ -621,7 +710,7 @@ int intlist_index(intlist* list, int nombre)
 }
 
 
-
+/*
 void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à la place indiquée
 {
   if (index > list->len)
@@ -645,6 +734,7 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
 
   list->len++;//incrémente la longueur
 }
+*/
 
 
 int intlist_max(intlist* list)
@@ -737,7 +827,7 @@ strlist* strlist_create(int len)
 
 
 
-
+/*
 void strlist_aff(strlist* list)
 {
   if (list->len == 0)
@@ -769,7 +859,7 @@ void strlist_aff(strlist* list)
   }
 }
 
-
+*/
 
 
 void strlist_append(strlist* list, char *chaine)
@@ -802,7 +892,7 @@ void strlist_destroy(strlist* list, bool bo)
 
 
 
-
+/*
 void strlist_resize(strlist* list, int newLen, bool freeElement)
 {
   
@@ -874,7 +964,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
   list->len--;//décrémentation de la longueur
   
 }
-
+*/
 
 
 
@@ -945,7 +1035,7 @@ int strlist_index(strlist* list, char* chaine)
 
 
 
-
+/*
 void strlist_insert(strlist* list,char* chaine, int index)//ajoute un élément à la place indiquée
 {
   if (index > list->len)
@@ -971,3 +1061,4 @@ void strlist_insert(strlist* list,char* chaine, int index)//ajoute un élément 
 }
 
 
+*/

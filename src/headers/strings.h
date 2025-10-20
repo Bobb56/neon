@@ -7,9 +7,6 @@
 #include "constants.h"
 #include "dynarrays.h"
 
-intptr_t binToDec(char* chaine, int debut, int longueur);
-intptr_t hexToDec(char* chaine, int debut, int longueur);
-bool isFull(char* string);
 bool isString(char* string, char* test, int size);
 char* inputCode(char*);
 char* sub(char* string,int debut,int fin);//a liberer après

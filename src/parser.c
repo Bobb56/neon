@@ -228,8 +228,8 @@ char* get_none(void) {
     return constant.tab[0];
 }
 
-int get_operator_index(char* operator) {
-    return strlist_index(&OPERATEURS, operator);
+int get_operator_index(Token operator) {
+    return strlist_token_index(&OPERATEURS, operator);
 }
 
 
@@ -237,7 +237,7 @@ int get_type_operande_index(int index) {
     return OPERANDES.tab[index];
 }
 
-int get_type_operande(char* operator_string) {
+int get_type_operande(Token operator_string) {
     return get_type_operande_index(get_operator_index(operator_string));
 }
 
@@ -249,12 +249,12 @@ bool operatorIs(int index, int mask) {
     return get_type_operande_index(index) & mask;
 }
 
-int get_blockword1Line_index(char* word) {
-    return strlist_index(&blockwords1Line, word);
+int get_blockword1Line_index(Token word) {
+    return strlist_token_index(&blockwords1Line, word);
 }
 
-int get_lkeywords_index(char* word) {
-    return strlist_index(&lkeywords, word);
+int get_lkeywords_index(Token word) {
+    return strlist_token_index(&lkeywords, word);
 }
 
 bool is_binary(int operator) {
@@ -364,10 +364,10 @@ void ast_destroy(Ast ** ast, int length) {
 
 
 
-bool strlist_ast_inList(strlist* list, Ast** ast, char* elt, int type, int offset) {
+bool toklist_ast_inList(toklist* list, Ast** ast, char* elt, int type, int offset) {
     int i = 0;
     while (i < list->len) {
-        if (ast[i]->type == type && strcmp(list->tab[i], elt) == 0)
+        if (ast[i]->type == type && tokeq(list->tab[i], elt))
             return true;
 
         i = ast[i]->fin + 1 - offset;
@@ -403,14 +403,14 @@ int ast_typeCountAst(Ast** ast, int len, int type, int offset) {
 
 
 
-int ast_minOp(Ast** ast, strlist* tokens, int offset) {
+int ast_minOp(Ast** ast, toklist* tokens, int offset) {
     int max = -1;
     int priomax = -1;
     int i = 0;
     while (i < tokens->len) {
 
         if (ast[i]->type == TYPE_OPERATOR) {
-            int nprio = PRIORITE.tab[strlist_index(&OPERATEURS, tokens->tab[i])];
+            int nprio = PRIORITE.tab[strlist_token_index(&OPERATEURS, tokens->tab[i])];
 
             if (nprio >= priomax) {
                 priomax = nprio;
@@ -525,7 +525,7 @@ bool isFull(char* string)
     if (strlen(string) == 0)
         return true;
 
-    strlist* tokens = strlist_create(0);
+    toklist* tokens = toklist_create(0);
     intlist types = intlist_create(0);
     intlist lines = intlist_create(0);
     Ast** ast;
@@ -543,7 +543,7 @@ bool isFull(char* string)
         ast_destroy(ast, tokens->len);
     }
 
-    strlist_destroy(tokens, true);
+    toklist_destroy(tokens);
     neon_free(types.tab);
     neon_free(lines.tab);
 
@@ -574,7 +574,7 @@ void write_libtok(char* buf, char* string, int size_string, int size)
 
 
 
-void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, intlist* lines)
+void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, intlist* lines)
 {
     /*fonction qui coupe la chaine de caractères en tokens
     traiterStatements est un booléen qui indique s'il faut regrouper les statements*/
@@ -586,7 +586,9 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
     else
         string = addStr(str, "\n");
 
-    int len_string = strlen(string);//pour utiliser la longueur de string sans appeler a chaque fois strlen
+    tokens->source_string = string;
+
+    int len_string = strlen(string); //pour utiliser la longueur de string sans appeler a chaque fois strlen
 
     //-------------------- ALGORITHME QUI REMPLACE LES DO ET END PAR DES ACCOLADES ------------------------
     #define ouvrant "do"
@@ -753,7 +755,6 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
         else if (isPotentiallyNumber && char1=='.' && (i+1>=len_string || isdigit(string[i+1])))
         {
             global_env->CODE_ERROR = 2;// plusieurs virgules décimales
-            neon_free(string);
             return;
         }
         
@@ -778,7 +779,6 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
             else
             {
                 global_env->CODE_ERROR = 73;
-                neon_free(string);
                 return ;
             }
         }
@@ -789,7 +789,6 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
 
         if (global_env->CODE_ERROR != 0)
         {
-            neon_free(string);
             return;
         }
 
@@ -803,7 +802,6 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
         if (!isPotentiallyHexBin && !isPotentiallyWord && !isPotentiallyString && !isPotentiallyNumber && !isPotentiallyOp && !isPotentiallyString2 && !isPotentiallyComm && !isPotentiallyLongComm && !nouvTok && char1 != ' ' && char1 != '\t')
         {
             global_env->CODE_ERROR = 25; // caractère inconnu
-            neon_free(string);
             return;
         }
         
@@ -812,7 +810,6 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
             if (!isalnum(char1) && !is_accepted_char(char1))
             {
                 global_env->CODE_ERROR = 25;
-                neon_free(string);
                 return;
             }
         }
@@ -827,15 +824,11 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
     // si une variable de condition de détection de token est encore à True, faute de syntaxe
     if (isPotentiallyHexBin || isPotentiallyWord || isPotentiallyString || isPotentiallyNumber || isPotentiallyOp  || isPotentiallyString2 || isPotentiallyComm || isPotentiallyLongComm)
     {
-        neon_free(string);
-
         global_env->CODE_ERROR = 26; // chaine de caractère, liste ou autre non terminée
         
         return;
     }
     
-    neon_free(string);
-
     return ;
 }
 
@@ -844,7 +837,7 @@ void cut(strlist* tokens, intlist* types, char* str, bool traiterStatements, int
 
 
 
-void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotentiallyString, bool* isPotentiallyWord, bool* isPotentiallyOp, bool* isPotentiallyLongComm, bool* isPotentiallyString2, bool* isPotentiallyComm, bool* isPotentiallyHexBin, char * char2, char* char1, bool* nouvTok, strlist* tokenAdd, intlist* typeTok, intlist* lines, int* debTok, int i, int* stepNumber, int* stepHexBin, int len_string, int* nombrePoints)
+void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotentiallyString, bool* isPotentiallyWord, bool* isPotentiallyOp, bool* isPotentiallyLongComm, bool* isPotentiallyString2, bool* isPotentiallyComm, bool* isPotentiallyHexBin, char * char2, char* char1, bool* nouvTok, toklist* tokenAdd, intlist* typeTok, intlist* lines, int* debTok, int i, int* stepNumber, int* stepHexBin, int len_string, int* nombrePoints)
 {
     /*
     fonction interne à cut permettant de mettre fin à la détection des tokens simples
@@ -855,8 +848,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     
     if ((*char2)=='"' && (*isPotentiallyString) && i-1!=(*debTok)) // fin de chaîne si le guillemet etudie n’est pas le meme que le premier de la chaine
     {
-        char* sousch = sub(string, (*debTok), i);
-        strlist_append(tokenAdd,sousch);
+        Token sousch = toksub(string, *debTok, i);
+        toklist_append(tokenAdd,sousch);
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_STRING);
         intlist_append(lines, global_env->LINENUMBER);
@@ -865,8 +858,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     
     if ((*char2)=='\'' && (*isPotentiallyString2) && i-1!=(*debTok)) // fin de chaîne si le guillemet etudie n’est pas le meme que le premier de la chaine
     {
-        char* sousch = sub(string, (*debTok), i);
-        strlist_append(tokenAdd,sousch);
+        Token sousch = toksub(string, (*debTok), i);
+        toklist_append(tokenAdd,sousch);
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_STRING);
         intlist_append(lines, global_env->LINENUMBER);
@@ -875,9 +868,9 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     
     if ((((*char1)=='.' && (*stepNumber)==2) || (!isdigit(*char1) && (*char1) != '.')) && (*isPotentiallyNumber) && !(*stepNumber==1) || (*isPotentiallyNumber && *char1=='.' && !isdigit(string[i+1]))) // fin de nombre
     {
-        char* nb = sub(string, (*debTok), i);
-        strlist_append(tokenAdd,nb);
-        (*nouvTok) = true;
+        Token nb = toksub(string, (*debTok), i);
+        toklist_append(tokenAdd, nb);
+        *nouvTok = true;
 
         if (*stepNumber == 2)
             intlist_append(typeTok, TYPE_DOUBLE);
@@ -894,15 +887,15 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     {
         // conversion en nombre décimal
 
-        intptr_t trad = (string[*debTok+1] == 'x') ? hexToDec(string, *debTok + 2, i - *debTok - 2) : binToDec(string, 2 + *debTok, i - *debTok - 2);
+        //intptr_t trad = (string[*debTok+1] == 'x') ? hexToDec(string, *debTok + 2, i - *debTok - 2) : binToDec(string, 2 + *debTok, i - *debTok - 2);
 
-        if (global_env->CODE_ERROR != 0)
-            return ;
+        //if (global_env->CODE_ERROR != 0)
+        //    return ;
         
-        char* nb = int_to_str(trad);
+        Token nb = toksub(string, *debTok, i);
 
         // ajout du nombre converti
-        strlist_append(tokenAdd,nb);
+        toklist_append(tokenAdd,nb);
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_INTEGER);
         intlist_append(lines, global_env->LINENUMBER);
@@ -915,7 +908,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     
     if ((*isPotentiallyWord) && !(isalnum(*char1) || *char1 == '_' || *char1 == '\'' || *char1 == '~')) // fin word
     {
-        strlist_append(tokenAdd,sub(string, (*debTok), i));
+        toklist_append(tokenAdd, toksub(string, *debTok, i));
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_WORD);
         intlist_append(lines, global_env->LINENUMBER);
@@ -954,22 +947,22 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     
     if (*isPotentiallyOp && !is_operateurs1(string, *debTok, i)) // fin operateur
     {
-        strlist_append(tokenAdd,sub(string, (*debTok), i));
+        toklist_append(tokenAdd,toksub(string, (*debTok), i));
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_OPERATOR);
         intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyOp)=false;
     }
-        
+    
     // elements d’un caractere
     
     if (!(*isPotentiallyLongComm) && !(*isPotentiallyComm) && !(*isPotentiallyNumber) && !(*isPotentiallyString) && !(*isPotentiallyWord) && !(*isPotentiallyOp) && !(*isPotentiallyString2) && ((*char1)=='(' || (*char1)==')'))
     {
         (*nouvTok)=true;
-        strlist_append(tokenAdd,charToString(*char1));
-        if ((*char1)=='(')
+        toklist_append(tokenAdd,toksub(string, i, i+1));
+        if (*char1 == '(')
             intlist_append(typeTok,TYPE_PARENTHESE1);
-        if ((*char1)==')')
+        if (*char1 == ')')
             intlist_append(typeTok,TYPE_PARENTHESE2);
 
         intlist_append(lines, global_env->LINENUMBER);
@@ -982,7 +975,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     
     if (!(*isPotentiallyLongComm) && !(*isPotentiallyComm) && !(*isPotentiallyNumber) && !(*isPotentiallyString) && !(*isPotentiallyWord) && !(*isPotentiallyOp) && !(*isPotentiallyString2) && ((*char1)=='{' || (*char1)=='}'))
     {
-        strlist_append(tokenAdd,charToString(*char1));
+        toklist_append(tokenAdd,toksub(string, i, i+1));
         (*nouvTok)=true;
         intlist_append(typeTok, TYPE_ACCOLADE);
         intlist_append(lines, global_env->LINENUMBER);
@@ -994,7 +987,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     
     if (!(*isPotentiallyLongComm) && !(*isPotentiallyComm) && !(*isPotentiallyNumber) && !(*isPotentiallyString) && !(*isPotentiallyWord) && !(*isPotentiallyOp) && !(*isPotentiallyString2) && ((*char1)=='[' || (*char1)==']'))
     {
-        strlist_append(tokenAdd,charToString(*char1));
+        toklist_append(tokenAdd,toksub(string, i, i+1));
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_CROCHET);
         intlist_append(lines, global_env->LINENUMBER);
@@ -1005,7 +998,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     
     if (!(*isPotentiallyLongComm) && !(*isPotentiallyComm) && !(*isPotentiallyNumber) && !(*isPotentiallyString) && !(*isPotentiallyWord) && !(*isPotentiallyOp) && !(*isPotentiallyString2) && (*char1)==',')
     {
-        strlist_append(tokenAdd,charToString(*char1));
+        toklist_append(tokenAdd,toksub(string, i, i+1));
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_VIRGULE);
         intlist_append(lines, global_env->LINENUMBER);
@@ -1022,8 +1015,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
 
         if (tokenAdd->len == 0 || typeTok->tab[typeTok->len - 1] != TYPE_ENDOFLINE)
         {
-            char* str = charToString(*char1);
-            strlist_append(tokenAdd,str);
+            Token str = toksub(string, i, i+1);
+            toklist_append(tokenAdd, str);
             intlist_append(typeTok,TYPE_ENDOFLINE);
             intlist_append(lines, global_env->LINENUMBER);
             (*isPotentiallyNumber)=false;
@@ -1119,8 +1112,7 @@ bool isAcceptedWO(int type, int typeanc) {
 
 
 // code d'erreur 30
-bool isAccepted(char* token, uint8_t type, char* tokenAnc, int typeanc) {
-
+bool isAccepted(Token token, uint8_t type, Token tokenAnc, int typeanc) {
     int gramm = 0, grammact = 0, grammanc = 0;
 
     if (FLATTEN(type) > 21 || FLATTEN(typeanc) > 21)
@@ -1149,7 +1141,7 @@ bool isAccepted(char* token, uint8_t type, char* tokenAnc, int typeanc) {
 
         //recupere l’operateur pour verifier que ca correspond
         gramm = get_type_operande(tokenAnc);
-        
+
         if (type==TYPE_OPERATOR)
             grammact = get_type_operande(token);
 
@@ -1170,9 +1162,7 @@ bool isAccepted(char* token, uint8_t type, char* tokenAnc, int typeanc) {
 
 
 
-void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int offset) {
-    //printf("Appel à parse %d %d\n", offset, tokenAdd->len);
-
+void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int offset) {
     // cette fonction a pour rôle de créer les éléments de syntaxe tels que des blocs, des blockline, des fonctions, des listes, etc
 
     int debTok = 0, debTok2 = 0, debTok3 = 0, lastDebTok = 0, gramm = 0;
@@ -1215,7 +1205,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         // savoir si on a un operateur ou un mot cle ou un booleen
         if (typeTok.tab[k] == TYPE_OPERATOR) // si il a déjà été détecté comme opérateur, on vérifie si c'est bien un opérateur valide
         {
-            if (!(strlist_inList(&OPERATEURS, tokenAdd->tab[k])))
+            if (!(strlist_token_inList(&OPERATEURS, tokenAdd->tab[k])))
             {
                 global_env->CODE_ERROR = 24; // opérateur inconnu
                 global_env->LINENUMBER = lines->tab[offset + k]; // pour indiquer la ligne du programme de l'erreur
@@ -1227,40 +1217,37 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         
         else if (typeTok.tab[k] == TYPE_WORD)
         {
-            if (strlist_inList(&operateurs2, tokenAdd->tab[k]))
+            if (strlist_token_inList(&operateurs2, tokenAdd->tab[k]))
             {
                 typeTok.tab[k] = TYPE_OPERATOR;
             }
-            else if (strlist_inList(&neon_boolean, tokenAdd->tab[k]))
+            else if (strlist_token_inList(&neon_boolean, tokenAdd->tab[k]))
             {
                 typeTok.tab[k] = TYPE_BOOL;
             }
 
-            else if (strlist_inList(global_env->EXCEPTIONS, tokenAdd->tab[k]))
+            else if (strlist_token_inList(global_env->EXCEPTIONS, tokenAdd->tab[k]))
             {
                 typeTok.tab[k] = TYPE_EXCEPTION;
             }
             
-            else if (strlist_inList(&constant, tokenAdd->tab[k]))
+            else if (strlist_token_inList(&constant, tokenAdd->tab[k]))
             {
-                /*if (strcmp(tokenAdd->tab[k], "None")==0)
-                    typeTok.tab[k] = TYPE_NONE;
-                else
-                    */typeTok.tab[k] = TYPE_CONST;
+                typeTok.tab[k] = TYPE_CONST;
             }
 
-            else if (strlist_inList(&keywordFunction, tokenAdd->tab[k]))
+            else if (strlist_token_inList(&keywordFunction, tokenAdd->tab[k]))
             {
                 typeTok.tab[k] = TYPE_KEYWORDFUNCTION;
             }
 
                 
-            else if (strlist_inList(&keywords, tokenAdd->tab[k]))
+            else if (strlist_token_inList(&keywords, tokenAdd->tab[k]))
             {
                 typeTok.tab[k] = TYPE_KEYWORD;
             }
             
-            else if (strlist_inList(&blockwords, tokenAdd->tab[k]))
+            else if (strlist_token_inList(&blockwords, tokenAdd->tab[k]))
             {
                 
                 typeTok.tab[k] = TYPE_BLOCKWORD;
@@ -1281,21 +1268,21 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         // a chaque nouveau token que l’on reçoit, on effectue les memes verifications que pour les sous tokens a savoir les verifications de grammaire pour les tokens composes
         
         //sorte de pile qui compte les accolades et les parentheses
-        if (tokenAdd->tab[k][0]=='{')
+        if (tokenAdd->tab[k].debut[0]=='{')
             nbAcc++;
-        else if (tokenAdd->tab[k][0]=='}')
+        else if (tokenAdd->tab[k].debut[0]=='}')
             nbAcc--;
         
         
-        if (tokenAdd->tab[k][0]=='(')
+        if (tokenAdd->tab[k].debut[0]=='(')
             nbPar++;
-        else if (tokenAdd->tab[k][0]==')')
+        else if (tokenAdd->tab[k].debut[0]==')')
             nbPar--;
         
         
-        if (tokenAdd->tab[k][0]=='[')
+        if (tokenAdd->tab[k].debut[0]=='[')
             nbCro++;
-        else if (tokenAdd->tab[k][0]==']')
+        else if (tokenAdd->tab[k].debut[0]==']')
             nbCro--;
         
 
@@ -1305,14 +1292,10 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
             global_env->CODE_ERROR = 68;
             return;
         }
-
-
         
         // annuler ou poursuivre les fonctions, les instructions, les index de listes....
         
         annulerOuPoursuivre(&isPotentiallyPar, &isPotentiallyFonc, &foncStep, &isPotentiallyInst, &instStep, &isPotentiallyListIndex, &listIndexStep, tokenAdd, &typeTok, k, &foncParDeb, &indexParDeb, &listeParDeb, &nbCro);
-
-
         
         // fins de fonctions, d'instructions, d'index de listes...
         
@@ -1320,8 +1303,7 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
         // fin des fins et debut des debuts (hi hi hi)
 
-        if (global_env->CODE_ERROR != 0)
-        {
+        if (global_env->CODE_ERROR != 0) {
             return;
         }
 
@@ -1334,7 +1316,6 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
     {
         //strlist_aff(tokenAdd);
         //ast_aff(ast, tokenAdd->len);
-        //printf("%d %d %d\n", nbAcc, nbCro, nbPar);
         global_env->CODE_ERROR = 26;
         global_env->LINENUMBER = lines->tab[offset + tokenAdd->len - 1];
         return;
@@ -1348,9 +1329,8 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         bool plusieursTokens = ast[0]->fin - offset < tokenAdd->len-1; // l'indice de fin du 1er token est < au dernier element
 
         // la boucle d'après ne traite pas le premier opérateur, donc on s'occupe de lui ici
-        if (ast[0]->type == TYPE_OPERATOR && strcmp(tokenAdd->tab[0], "-") == 0) {
-            neon_free(tokenAdd->tab[0]);
-            tokenAdd->tab[0] = strdup("_");
+        if (ast[0]->type == TYPE_OPERATOR && tokeq(tokenAdd->tab[0], "-")) {
+            tokenAdd->tab[0].debut[0] = '_';
         }
         
 
@@ -1371,19 +1351,14 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
 
         while (plusieursTokens) { // si on a plus d'un token composé ou simple
-
-            //printf("types : %d   %d\n", ast[i_anc]->type, ast[i_act]->type);
-
-
             // on va traiter l'opérateur moins (-) selon si c'est un unaire ou pas
 
             // ici on s'occuppe de modifier les signes '-'
-            if (ast[i_act]->type==TYPE_OPERATOR && strcmp(tokenAdd->tab[i_act], "-") == 0) // si on a un opérateur et que cet opérateur est un moins
+            if (ast[i_act]->type==TYPE_OPERATOR && tokeq(tokenAdd->tab[i_act], "-")) // si on a un opérateur et que cet opérateur est un moins
             {
                 if (i_act == 0)
                 {
-                    neon_free(tokenAdd->tab[i_act]);
-                    tokenAdd->tab[i_act] = strdup("_"); // si j=0 (c'est-à-dire que c'est le premier token), on sait que c'est forcément un moins unaire
+                    tokenAdd->tab[i_act].debut[0] = '_'; // si j=0 (c'est-à-dire que c'est le premier token), on sait que c'est forcément un moins unaire
                 }
                 
                 else if (!(ast[i_anc]->type == TYPE_DOUBLE || ast[i_anc]->type == TYPE_INTEGER || ast[i_anc]->type == TYPE_EXPRESSION || ast[i_anc]->type == TYPE_STRING || ast[i_anc]->type == TYPE_LISTINDEX || ast[i_anc]->type == TYPE_FONCTION || ast[i_anc]->type == TYPE_LIST || ast[i_anc]->type == TYPE_BOOL || ast[i_anc]->type == TYPE_CONST || ast[i_anc]->type == TYPE_NONE || ast[i_anc]->type == TYPE_EXCEPTION || ast[i_anc]->type == TYPE_PARENTHESE2 || ast[i_anc]->type == TYPE_VARIABLE || (ast[i_anc]->type==TYPE_OPERATOR && get_type_operande(tokenAdd->tab[i_anc]) & VARLEFT)) )
@@ -1393,13 +1368,10 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
                     // on va intégrer le moins à l'unité lexicale à qui il est adressé
                     if (ast[i_act]->fin - offset < tokenAdd->len - 1) // si le moins étudié n'est pas le dernier caractère des tokens
                     {
-                        neon_free(tokenAdd->tab[i_act]);
-                        tokenAdd->tab[i_act] = strdup("_");
+                        tokenAdd->tab[i_act].debut[0] = '_';
                     }
                 }
             }
-
-
 
             if (!isAccepted(tokenAdd->tab[i_act], ast[i_act]->type, tokenAdd->tab[i_anc], ast[i_anc]->type))
             {
@@ -1431,15 +1403,14 @@ void parse(strlist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
 
 
-void annulerOuPoursuivre(bool* isPotentiallyPar, bool* isPotentiallyFonc, int* foncStep, bool* isPotentiallyInst, int* instStep, bool* isPotentiallyListIndex, int* listIndexStep, strlist* tokenAdd, intlist* typeTok, int k, int *foncParDeb, int *listeParDeb, int *indexParDeb, int *nbCro)
+void annulerOuPoursuivre(bool* isPotentiallyPar, bool* isPotentiallyFonc, int* foncStep, bool* isPotentiallyInst, int* instStep, bool* isPotentiallyListIndex, int* listIndexStep, toklist* tokenAdd, intlist* typeTok, int k, int *foncParDeb, int *listeParDeb, int *indexParDeb, int *nbCro)
 {
 
     // quand on arrête un isPotentiallyTruc, c'est qu'on accepte un nouveau token
 
     if ((*isPotentiallyFonc) && (*foncStep)==1) // annuler ou poursuivre la fonction
-    {
-        
-        if (tokenAdd->tab[k][0]=='(' && strlen(tokenAdd->tab[k])==1)
+    {        
+        if (tokenAdd->tab[k].debut[0]=='(' && tokenAdd->tab[k].len == 1)
             (*foncStep)=2;
         else if (typeTok->tab[k] != TYPE_VARIABLE)
         {
@@ -1452,7 +1423,7 @@ void annulerOuPoursuivre(bool* isPotentiallyPar, bool* isPotentiallyFonc, int* f
     
     if ((*isPotentiallyInst) && (*instStep)==1) // annuler ou poursuivre l’instruction de bloc
     {
-        if (tokenAdd->tab[k][0]=='(' && strlen(tokenAdd->tab[k])==1)
+        if (tokenAdd->tab[k].debut[0]=='(' && tokenAdd->tab[k].len == 1)
             (*instStep)=2;
         else
         {
@@ -1463,7 +1434,7 @@ void annulerOuPoursuivre(bool* isPotentiallyPar, bool* isPotentiallyFonc, int* f
 
     if ((*isPotentiallyListIndex) && (*listIndexStep)==1) // annuler ou poursuivre la fonction
     {
-        if (tokenAdd->tab[k][0]=='[' && tokenAdd->tab[k][1] == '\0')
+        if (tokenAdd->tab[k].debut[0]=='[' && tokenAdd->tab[k].len == 1)
             (*listIndexStep)=2;
         else if (typeTok->tab[k] != TYPE_VARIABLE)
         {
@@ -1480,16 +1451,16 @@ void annulerOuPoursuivre(bool* isPotentiallyPar, bool* isPotentiallyFonc, int* f
 
 
 
-void debutTokensComposes(int k, intlist* typeTok, strlist* tokenAdd, int* debTok2, int* debTok3, int* lastDebTok, bool* nouvTokComp, bool* isPotentiallyList, bool* isPotentiallyPar, bool* isPotentiallyFonc, bool* isPotentiallyListIndex, bool* isPotentiallyBlock, bool* isPotentiallyInst, int* listIndexStep, int *foncStep, int *instStep, int *foncParDeb, int *listeParDeb, int *indexParDeb, int* nbPar, int* nbCro)
+void debutTokensComposes(int k, intlist* typeTok, toklist* tokenAdd, int* debTok2, int* debTok3, int* lastDebTok, bool* nouvTokComp, bool* isPotentiallyList, bool* isPotentiallyPar, bool* isPotentiallyFonc, bool* isPotentiallyListIndex, bool* isPotentiallyBlock, bool* isPotentiallyInst, int* listIndexStep, int *foncStep, int *instStep, int *foncParDeb, int *listeParDeb, int *indexParDeb, int* nbPar, int* nbCro)
 {
     
-    if (tokenAdd->tab[k][0] =='[' && !(*isPotentiallyList) && !(*isPotentiallyFonc) && !(*isPotentiallyListIndex) && !(*isPotentiallyBlock) && !(*isPotentiallyInst) && !(*isPotentiallyPar)) // debut de liste
+    if (tokenAdd->tab[k].debut[0] =='[' && !(*isPotentiallyList) && !(*isPotentiallyFonc) && !(*isPotentiallyListIndex) && !(*isPotentiallyBlock) && !(*isPotentiallyInst) && !(*isPotentiallyPar)) // debut de liste
     {
         (*debTok2) = k;
         (*isPotentiallyList)=true;
     }
 
-    if (strcmp(tokenAdd->tab[k], "(") == 0 && !(*isPotentiallyList) && !(*isPotentiallyFonc) && !(*isPotentiallyListIndex) && !(*isPotentiallyBlock) && !(*isPotentiallyInst) && !(*isPotentiallyPar)) { // début de parenthèse
+    if (tokeq(tokenAdd->tab[k], "(") && !(*isPotentiallyList) && !(*isPotentiallyFonc) && !(*isPotentiallyListIndex) && !(*isPotentiallyBlock) && !(*isPotentiallyInst) && !(*isPotentiallyPar)) { // début de parenthèse
         *debTok2 = k;
         *isPotentiallyPar = true;
         *foncParDeb = *nbPar;
@@ -1497,7 +1468,7 @@ void debutTokensComposes(int k, intlist* typeTok, strlist* tokenAdd, int* debTok
 
 
 
-    if (tokenAdd->tab[k][0] =='{' && !(*isPotentiallyList) && !(*isPotentiallyFonc) && !(*isPotentiallyListIndex) && !(*isPotentiallyBlock) && !(*isPotentiallyInst) && !(*isPotentiallyPar)) // debut de bloc d’instructions
+    if (tokenAdd->tab[k].debut[0] =='{' && !(*isPotentiallyList) && !(*isPotentiallyFonc) && !(*isPotentiallyListIndex) && !(*isPotentiallyBlock) && !(*isPotentiallyInst) && !(*isPotentiallyPar)) // debut de bloc d’instructions
     {
         (*debTok2)=k;
         (*isPotentiallyBlock)=true;
@@ -1551,22 +1522,18 @@ void debutTokensComposes(int k, intlist* typeTok, strlist* tokenAdd, int* debTok
 
 
 
-void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool *nouvTokComp, bool* isPotentiallyPar, bool *isPotentiallyFonc, int *foncStep, strlist* tokenAdd, intlist typeTok, int *nbPar, bool *isPotentiallyInst, int *instStep, int *listIndexStep, bool *isPotentiallyList, bool *isPotentiallyListIndex, int *nbCro, bool *isPotentiallyBlock, int *nbAcc, int *foncParDeb, int *listeParDeb, int *indexParDeb, Ast** ast, int offset, intlist* lines)
+void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool *nouvTokComp, bool* isPotentiallyPar, bool *isPotentiallyFonc, int *foncStep, toklist* tokenAdd, intlist typeTok, int *nbPar, bool *isPotentiallyInst, int *instStep, int *listIndexStep, bool *isPotentiallyList, bool *isPotentiallyListIndex, int *nbCro, bool *isPotentiallyBlock, int *nbAcc, int *foncParDeb, int *listeParDeb, int *indexParDeb, Ast** ast, int offset, intlist* lines)
 {
-
-    //printf("%d %d %d %d %d %d %c\n", *isPotentiallyListIndex, *listIndexStep, k, *nbCro, *indexParDeb, tokenAdd->len, tokenAdd->tab[k][0]);
-
-    if (*isPotentiallyFonc && *foncStep==2 && tokenAdd->tab[k][0] == ')' && (*nbPar - *foncParDeb)==0) // fin fonction
+    if (*isPotentiallyFonc && *foncStep==2 && tokenAdd->tab[k].debut[0] == ')' && (*nbPar - *foncParDeb)==0) // fin fonction
     {
         // on ajoute une autre unité syntaxique plus grande
-
         ast_push_check(&ast[*debTok2], k + offset, TYPE_FONCTION);
 
 
         // il ne faut parser récursivement que dans la partie que l'on a ajoutée
         
         // appel récursif sur parse
-        strlist tokens2 = (strlist) {.tab = tokenAdd->tab + *lastDebTok + 2, .len = k - *lastDebTok - 2};
+        toklist tokens2 = (toklist) {.tab = tokenAdd->tab + *lastDebTok + 2, .len = k - *lastDebTok - 2};
         intlist types2 = (intlist) {.tab = typeTok.tab + *lastDebTok + 2, .len = k - *lastDebTok - 2};
         parse(&tokens2, types2, ast + *lastDebTok + 2, lines, *lastDebTok + 2 + offset);
 
@@ -1585,21 +1552,21 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         *foncParDeb = 0;
     }
 
-    else if ((*isPotentiallyFonc) && (*foncStep)==2 && (strlist_inList(&keywords, tokenAdd->tab[k]) || strlist_inList(&blockwords, tokenAdd->tab[k])))
+    else if ((*isPotentiallyFonc) && (*foncStep)==2 && (strlist_token_inList(&keywords, tokenAdd->tab[k]) || strlist_token_inList(&blockwords, tokenAdd->tab[k])))
     {
         global_env->CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
         global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
     
-    else if (*isPotentiallyPar && strcmp(tokenAdd->tab[k], ")") == 0 && (*nbPar - *foncParDeb) == -1) { // fin de parenthèse
+    else if (*isPotentiallyPar && tokeq(tokenAdd->tab[k], ")") && (*nbPar - *foncParDeb) == -1) { // fin de parenthèse
         // appel récursif à l'intérieur de la parenthèse
         ast[*debTok2]->type = TYPE_ENDOFLINE;
         ast[k]->type = TYPE_ENDOFLINE;
 
         ast_push_check(&ast[*debTok2], k + offset, TYPE_EXPRESSION);
 
-        strlist tokens2 = {.tab = tokenAdd->tab + *debTok2 + 1, .len = k - *debTok2 - 1};
+        toklist tokens2 = {.tab = tokenAdd->tab + *debTok2 + 1, .len = k - *debTok2 - 1};
         intlist types2 = {.tab = typeTok.tab + *debTok2 + 1, .len = k - *debTok2 - 1};
         parse(&tokens2, types2, ast + *debTok2 + 1, lines, *debTok2 + 1 + offset);
 
@@ -1618,25 +1585,25 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
     }
     
     
-    else if ((*isPotentiallyInst) && (*instStep)==2 && tokenAdd->tab[k][0] == ')' && (*nbPar)==0) // fin instruction de bloc
+    else if ((*isPotentiallyInst) && (*instStep)==2 && tokenAdd->tab[k].debut[0] == ')' && (*nbPar)==0) // fin instruction de bloc
     {
         (*isPotentiallyInst)=false;
         (*instStep)=0;
         
-        if (strlist_inList(&blockwords1Line, tokenAdd->tab[*debTok2]))
+        if (strlist_token_inList(&blockwords1Line, tokenAdd->tab[*debTok2]))
             ast_push_check(&ast[*debTok2], k + offset, TYPE_BLOCKWORD1LINE);
         else
             ast_push_check(&ast[*debTok2], k + offset, TYPE_BLOCKLINE);
 
         // appel récursif
-        strlist tokens2 = (strlist) {.tab = tokenAdd->tab + *debTok2 + 2, .len = k - *debTok2 - 2};
+        toklist tokens2 = (toklist) {.tab = tokenAdd->tab + *debTok2 + 2, .len = k - *debTok2 - 2};
         intlist types2 = (intlist) {.tab = typeTok.tab + *debTok2 + 2, .len = k - *debTok2 - 2};
         parse(&tokens2, types2, ast + *debTok2 + 2, lines, offset + *debTok2 + 2);
             
         (*nouvTokComp)=true;
     }
     
-    else if ((*isPotentiallyInst) && (*instStep)==2 && (strlist_inList(&keywords, tokenAdd->tab[k]) || strlist_inList(&blockwords, tokenAdd->tab[k])))
+    else if ((*isPotentiallyInst) && (*instStep)==2 && (strlist_token_inList(&keywords, tokenAdd->tab[k]) || strlist_token_inList(&blockwords, tokenAdd->tab[k])))
     {
         global_env->CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
         global_env->LINENUMBER = lines->tab[offset + k];
@@ -1644,7 +1611,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
     }
 
 
-    else if (*isPotentiallyListIndex && *listIndexStep==2 && tokenAdd->tab[k][0] == ']' && (*nbCro - *indexParDeb)==0) // fin index de liste
+    else if (*isPotentiallyListIndex && *listIndexStep==2 && tokenAdd->tab[k].debut[0] == ']' && (*nbCro - *indexParDeb)==0) // fin index de liste
     {
         ast_push_check(&ast[*debTok2], k + offset, TYPE_LISTINDEX);
 
@@ -1659,7 +1626,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         }
 
 
-        strlist tokens2 = (strlist) {.tab = tokenAdd->tab + *lastDebTok + 2, .len = k - *lastDebTok - 2};
+        toklist tokens2 = (toklist) {.tab = tokenAdd->tab + *lastDebTok + 2, .len = k - *lastDebTok - 2};
         intlist types2 = (intlist) {.tab = typeTok.tab + *lastDebTok + 2, .len = k - *lastDebTok - 2};
         parse(&tokens2, types2, ast + *lastDebTok + 2, lines, *lastDebTok + 2 + offset);
 
@@ -1680,7 +1647,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
 
     }
       
-    else if ((*isPotentiallyListIndex) && ((*listIndexStep)==2 || (*listIndexStep)==3) && (strlist_inList(&keywords, tokenAdd->tab[k]) || strlist_inList(&blockwords, tokenAdd->tab[k])))
+    else if ((*isPotentiallyListIndex) && ((*listIndexStep)==2 || (*listIndexStep)==3) && (strlist_token_inList(&keywords, tokenAdd->tab[k]) || strlist_token_inList(&blockwords, tokenAdd->tab[k])))
     {
         global_env->CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
         global_env->LINENUMBER = lines->tab[offset + k];
@@ -1691,14 +1658,14 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
     
     
     
-    else if (tokenAdd->tab[k][0] == ']' && (*isPotentiallyList) && *nbCro == 0)// fin de liste
+    else if (tokenAdd->tab[k].debut[0] == ']' && (*isPotentiallyList) && *nbCro == 0)// fin de liste
     {
         (*isPotentiallyList)=false;
 
         ast_push_check(&ast[*debTok2], k + offset, TYPE_LIST);
 
         // appel récursif sur parse
-        strlist tokens2 = (strlist) {.tab = tokenAdd->tab + *debTok2 + 1, .len = k - *debTok2 - 1};
+        toklist tokens2 = (toklist) {.tab = tokenAdd->tab + *debTok2 + 1, .len = k - *debTok2 - 1};
         intlist types2 = (intlist) {.tab = typeTok.tab + *debTok2 + 1, .len = k - *debTok2 - 1};
         parse(&tokens2, types2, ast + *debTok2 + 1, lines, *debTok2 + 1 + offset);
 
@@ -1709,7 +1676,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         (*nouvTokComp)=true;
     }
 
-    else if ((*isPotentiallyList) && (strlist_inList(&keywords, tokenAdd->tab[k]) || strlist_inList(&blockwords, tokenAdd->tab[k])))
+    else if ((*isPotentiallyList) && (strlist_token_inList(&keywords, tokenAdd->tab[k]) || strlist_token_inList(&blockwords, tokenAdd->tab[k])))
     {
         global_env->CODE_ERROR = 28; // mot clé incompatible utilisé dans une expression
         global_env->LINENUMBER = lines->tab[offset + k];
@@ -1718,14 +1685,14 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
 
     
     
-    else if (tokenAdd->tab[k][0] =='}' && (*isPotentiallyBlock) && (*nbAcc)==0)// fin de bloc d’instructions
+    else if (tokenAdd->tab[k].debut[0] =='}' && (*isPotentiallyBlock) && (*nbAcc)==0)// fin de bloc d’instructions
     {
         (*isPotentiallyBlock)=false;
 
         ast_push_check(&ast[*debTok2], k + offset, TYPE_BLOCK);
 
         // appel récursif sur parse à l'intérieur du bloc
-        strlist tokens2 = (strlist) {.tab = tokenAdd->tab + *debTok2 + 1, .len = k - *debTok2 - 1};
+        toklist tokens2 = (toklist) {.tab = tokenAdd->tab + *debTok2 + 1, .len = k - *debTok2 - 1};
         intlist types2 = (intlist) {.tab = typeTok.tab + *debTok2 + 1, .len = k - *debTok2 - 1};
         parse(&tokens2, types2, ast + *debTok2 + 1, lines, *debTok2 + 1 + offset);
 
@@ -1777,9 +1744,8 @@ int get_type(char* token, int type) {
 
 
 
-void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int offset)
+void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int offset)
 {
-    //printf("statements :\n"); //strlist_aff(tokens);ast_aff(ast, tokens->len);
     // statements est censé être récursif
 
     bool isPotentiallyConBlock = false, isPotentiallyStat = false, isPotentiallyTE = false;
@@ -1815,14 +1781,14 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             {
                 funcMethStep = 0;
                 
-                bool isMethod = strcmp("method", tokens->tab[debFunc]) == 0;
+                bool isMethod = tokeq(tokens->tab[debFunc], "method");
 
                 // avant, c'était push à l'indice i-2
                 ast_push_check(&ast[debFunc], ast[i]->fin, (isMethod) ? TYPE_METHODDEF : TYPE_FUNCTIONDEF);
 
                 // appel récursif
                 intlist types2 = {.tab = types->tab + i + 1, .len = ast[i]->fin - 1 - offset - i};
-                strlist tokens2 = {.tab = tokens->tab + i + 1, .len = ast[i]->fin - 1 - offset - i};
+                toklist tokens2 = {.tab = tokens->tab + i + 1, .len = ast[i]->fin - 1 - offset - i};
 
                 statements(&types2, &tokens2, ast + i + 1, lines, offset + i + 1);
 
@@ -1872,12 +1838,18 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
         int nextindex = ast[i]->fin - offset + 1;
         
         // modifie le blockline pour savoir quel bloc c'est particulièrement
-        if (ast[i]->type==TYPE_BLOCKLINE || (ast[i]->type == TYPE_KEYWORD && !strlist_inList(&lkeywords, tokens->tab[i])))
-            ast[i]->type = get_type(tokens->tab[i], ast[i]->type);
+        if (ast[i]->type==TYPE_BLOCKLINE || (ast[i]->type == TYPE_KEYWORD && !strlist_token_inList(&lkeywords, tokens->tab[i]))) {
+            char sov = stringize(tokens->tab[i]);
+            ast[i]->type = get_type(tokens->tab[i].debut, ast[i]->type);
+            unstringize(tokens->tab[i], sov);
+        }
         
         // pour faire des tests sur nextindex
-        if (nextindex < tokens->len && (ast[nextindex]->type==TYPE_BLOCKLINE || (ast[nextindex]->type == TYPE_KEYWORD && !strlist_inList(&lkeywords, tokens->tab[nextindex]))))
-            ast[nextindex]->type = get_type(tokens->tab[nextindex], ast[nextindex]->type);
+        if (nextindex < tokens->len && (ast[nextindex]->type==TYPE_BLOCKLINE || (ast[nextindex]->type == TYPE_KEYWORD && !strlist_token_inList(&lkeywords, tokens->tab[nextindex])))) {
+            char sov = stringize(tokens->tab[nextindex]);
+            ast[nextindex]->type = get_type(tokens->tab[nextindex].debut, ast[nextindex]->type);
+            unstringize(tokens->tab[nextindex], sov);
+        }
 
         
         typeact=ast[i]->type;        
@@ -1895,8 +1867,6 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
         // conditions de fin de conblock
 
         // ast[ast[i]->fin - offset + 1]->type c'est pour vérifier le type du token composé d'après
-
-        //printf("i : %d, typeact : %d, conBlockStep : %d\n", i + offset, typeact, conBlockStep);
         //strlist_aff(tokens);
         //ast_aff(ast, tokens->len);
         
@@ -1905,7 +1875,6 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             ||
             (nextindex < tokens->len && ((conBlockStep == 1 && typeact != TYPE_BLOCKIF && typeact != TYPE_BLOCKELSE && typeact != TYPE_BLOCKELIF)|| (conBlockStep == 2 && typeact == TYPE_BLOCK)) && ast[nextindex]->type != TYPE_ENDOFLINE && ast[nextindex]->type != TYPE_BLOCKIF && ast[nextindex]->type != TYPE_BLOCKELSE && ast[nextindex]->type != TYPE_BLOCKELIF && ast[nextindex]->type != TYPE_BLOCK))
             ) {
-            //printf("CONDITIONBLOCK\n");
             // fin conblock si le type d'après ne correspond pas ou qu'on est à la fin
             int fin;
             if (typeact == TYPE_BLOCK)
@@ -1921,7 +1890,6 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             if (typeact == TYPE_BLOCKIF || typeact == TYPE_BLOCKELSE || typeact == TYPE_BLOCKELIF)
                 conBlockStep = 2;
             else if (typeact != TYPE_ENDOFLINE) {
-                //printf("Z0\n");
                 global_env->CODE_ERROR = 33;
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
@@ -1932,7 +1900,6 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             if (typeact == TYPE_BLOCK)
                 conBlockStep = 1;
             else if (typeact != TYPE_ENDOFLINE) {
-                //printf("Z1\n");
                 global_env->CODE_ERROR = 33;
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
@@ -1943,9 +1910,6 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
 
         // --------- TRY/EXCEPT ------------
         // condition d'arrêt : le dernier bloc en date est un statementexcept et soit c'est la fin des tokens, soit le suivant est ni un endofline, ni un blockexcept
-        //printf("%d %d %d %d %d\n", isPotentiallyTE, TEStep, nextindex, i, tokens->len);
-        //strlist_aff(tokens);
-        //ast_aff(ast, tokens->len);
 
         if (isPotentiallyTE &&
             ((nextindex >= tokens->len && (TEStep == 1 || (TEStep == 2 && typeact == TYPE_BLOCK)))
@@ -1962,7 +1926,6 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             isPotentiallyTE = false;
         }
         /*else if (ast[debStat]->type == TYPE_STATEMENTEXCEPT) {
-            //printf("Z3\n");
             global_env->CODE_ERROR = 33;
             return;
         }*/
@@ -1972,7 +1935,6 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             TEStep = 1;
         }
         else if (TEStep == 2 && typeact != TYPE_ENDOFLINE) {
-            //printf("Z4\n");
             global_env->CODE_ERROR = 33;
             global_env->LINENUMBER = lines->tab[offset + i];
             return;
@@ -2040,7 +2002,7 @@ void statements(intlist* types, strlist* tokens, Ast** ast, intlist* lines, int 
             int longueur = ast[i]->fin - offset - i - 1;
 
 
-            strlist tokens2 = (strlist) {.tab = tokens->tab + i + 1, .len = longueur};
+            toklist tokens2 = (toklist) {.tab = tokens->tab + i + 1, .len = longueur};
             intlist types2 = (intlist) {.tab = types->tab + i + 1, .len = longueur};
             Ast** ast2 = ast + i + 1;
             

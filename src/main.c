@@ -25,6 +25,8 @@ General Protection Fault => Problème d'alignement de la pile
 
 Avancement et choses à faire :
 -------------------------------
+> Alléger le code pour être en dessous des 64k en zx7
+> Mettre à jour la doc, NEON\x00
 > Arrêt d'un programme en appuyant sur ON sur calculatrice
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
 --> Faire une fonction saveVars(nom de fichier, plein de variables) et loadVars(plein de variables) qui stocke tout ça dans un fichier
@@ -34,8 +36,11 @@ Avancement et choses à faire :
 
 NOUVEAUTéS depuis la dernière publication :
 -------------------------------------------
-- Fonction initGraphics, fonction draw, nouveaux containers
+- Fonction initGraphics, fonction draw, nouveaux containers, setPixel, getPixel, rgb, getTextWidth
 - Amélioration de la fonction help avec les containers
+- Fonction detectFiles
+
+
 
 */
 
@@ -44,9 +49,9 @@ NOUVEAUTéS depuis la dernière publication :
 
 
 #ifdef TI_EZ80
-    int main(void)
+int main(void)
 #else
-    int main (int argc, char* argv[])
+int main (int argc, char* argv[])
 #endif
 {
     neonInit();

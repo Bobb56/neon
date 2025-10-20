@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "headers/neonio.h"
 #include "extern/linenoise.h"
@@ -255,7 +256,7 @@
         ti_Close(fichier);
 
         // on enlève le préfixe propre aux appvars python s'il y en a un
-        if (memcmp(program, "PYCD\x00", 5)==0 || memcmp(program, "NEON\x00", 5)==0))
+        if (memcmp(program, "PYCD\x00", 5)==0 || memcmp(program, "NEON\x00", 5)==0)
             memcpy(program, "     ", 5);
 
         return program;
@@ -404,17 +405,64 @@ double str_to_double(char *string)//convertit une chaîne de caractère en nombr
 }
 
 
+
+
+
+int unitCharToInt(char car, int base)
+{
+    if (car != '0' && car != '1' && base == 2) // le binaire n'autorise que 0 ou 1
+        global_env->CODE_ERROR = 73;
+    
+    if (isdigit(car))
+        return car - '0';
+    else if (car >= 'a' && car <= 'f')
+        return car - 'a' + 10;
+    else if (car >= 'A' && car <= 'F')
+        return car - 'A' + 10;
+
+    global_env->CODE_ERROR = 73;
+    return 0;
+}
+
+
+
 bool is_integer(char* string) {
     int i = 0;
     if (string[0] == '-')
         i++;
 
-    while (string[i] != '\0') {
-        if (string[i] < '0' || string[i] > '9')
-            return false;
-        i++;
+    if (string[i] != '\0' && string[i+1] != '\0' && !isdigit(string[i+1])) {
+        if (string[i] == '0' && string[i+1] == 'b') {
+            // nombre binaire
+            i += 2; // on passe les deux caractères
+            while (string[i] != '\0') {
+                if (string[i] < '0' || string[i] > '1')
+                    return false;
+                i++;
+            }
+            return true;
+        }
+        else if (string[i] == '0' && string[i+1] == 'x') {
+            // nombre hexa
+            i += 2; // on passe les deux caractères
+            while (string[i] != '\0') {
+                if (!((string[i] >= 'a' && string[i] <= 'f') || (string[i] >= 'A' && string[i] <= 'F') || (string[i] >= '0' && string[i] <= '9')))
+                    return false;
+                i++;
+            }
+            return true;
+        }
     }
-    return true;
+    else {
+        // nombre décimal
+        while (string[i] != '\0') {
+            if (string[i] < '0' || string[i] > '9')
+                return false;
+            i++;
+        }
+        return true;
+    }
+    return false;
 }
 
 
@@ -431,6 +479,10 @@ int nbdigits(intptr_t n) {
 
 
 
+
+
+
+// on peut supposer que la chaîne de caractère représente bien un nombre entier
 intptr_t str_to_int(char* string) {
     bool negative = (string[0] == '-');
 
@@ -438,11 +490,38 @@ intptr_t str_to_int(char* string) {
         string += 1;
 
     intptr_t n = 0;
-    int i = 0;
 
-    while (string[i] != '\0') {
-        n *= 10;
-        n += string[i++] - '0';
+    if (string[0] != '\0' && string[1] != '\0' && !isdigit(string[1])) {
+        if (string[0] == '0' && string[1] == 'b') {
+            // nombre binaire
+            int i = 2;
+            while (string[i] != '\0') {
+                n *= 2;
+                n += unitCharToInt(string[i++], 2);
+                if (global_env->CODE_ERROR != 0)
+                    return 0;
+            }
+        }
+        else if (string[0] == '0' && string[1] == 'x') {
+            // nombre hexa
+            int i = 2;
+            while (string[i] != '\0') {
+                n *= 16;
+                n += unitCharToInt(string[i++], 16);
+                if (global_env->CODE_ERROR != 0)
+                    return 0;
+            }
+        }
+    }
+    else {
+        // nombre décimal
+        int i = 0;
+        while (string[i] != '\0') {
+            n *= 10;
+            n += unitCharToInt(string[i++], 10);
+            if (global_env->CODE_ERROR != 0)
+                return 0;
+        }
     }
 
     if (negative)

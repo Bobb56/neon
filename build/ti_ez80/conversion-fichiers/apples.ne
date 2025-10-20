@@ -92,15 +92,15 @@ function main() do
     highscore = load_highscore()
     
     screen = Screen(
-        bg: Rect(x:0, y:0, width:320, height:240, color:15, filled:True),
+        bg: Rect(x:0, y:0, width:320, height:240, color:rgb(0, 150, 100), filled:True),
         pad: Rect(x:145, y:220, width:55, height:5, color:0, filled:True),
         apples: [
             Apple(
-                figure: Circle(x:randint(5, 235), y:0, radius:5, color: 192, filled:True),
+                figure: Circle(x:randint(5, 235), y:0, radius:5, color: rgb(255, 0, 0), filled:True),
                 speed: 1
             ),
             Apple(
-                figure: Circle(x:randint(5, 235), y:0, radius:5, color: 192, filled:True),
+                figure: Circle(x:randint(5, 235), y:0, radius:5, color: rgb(255, 0, 0), filled:True),
                 speed: 2
             )
         ],

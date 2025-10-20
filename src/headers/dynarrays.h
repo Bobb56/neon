@@ -47,38 +47,50 @@ typedef struct
 } listlist;
 
 
+typedef struct Token {
+  char* debut;
+  int len;
+} Token;
 
-
-void strlist_copy(strlist* list, const char** tab, int len);
-void listlist_copy(listlist* list, const intlist* tab, int len);
-void intlist_copy(intlist* list, const int* tab, int len);
-
+typedef struct toklist {
+  Token* tab;
+  char* source_string;
+  int len;
+  int capacity;
+} toklist;
 
 
 //prototypes des fonctions
 
-/**************************listlist**********************/
-listlist listlist_create(int len);
-void listlist_append(listlist* list, intlist* ptr);
-void listlist_remove(listlist* list, int index);
-void listlist_aff(listlist* list);
-void listlist_destroy(listlist* list);
-
+/***********************toklist*************************/
+#define toksub(chaine, deb, fin)        ((Token) {.debut = chaine + deb, .len = fin - deb})
+bool tokeq(Token tok, char* string);
+void printToken(Token tok);
+char stringize(Token tok);
+void unstringize(Token tok, char sov);
+char* tokdup(Token tok);
+toklist* toklist_create(int len);
+void toklist_aff(toklist* list);
+void toklist_append(toklist* list, Token chaine);
+void toklist_destroy(toklist* list);
+int toklist_count(toklist* list, char* chaine);
+bool strlist_token_inList(strlist* list, Token chaine);
+int strlist_token_index(strlist* list, Token chaine);
 
 
 /**************************ptrlist**********************/
 ptrlist* ptrlist_create(void);
 void ptrlist_append(ptrlist* list, void* ptr);
 void ptrlist_remove(ptrlist* list, void* ptr, bool error);
-int ptrlist_index(ptrlist* list, void* ptr);
-void ptrlist_aff(ptrlist* l);
-int ptrlist_len(ptrlist* l);
+//int ptrlist_index(ptrlist* list, void* ptr);
+//void ptrlist_aff(ptrlist* l);
+//int ptrlist_len(ptrlist* l);
 int ptrlist_destroy(ptrlist* l, bool freeElements, bool freeTab);
-void ptrlist_replace(ptrlist* liste, void* aRemplacer, void* nvlleValeur);
+//void ptrlist_replace(ptrlist* liste, void* aRemplacer, void* nvlleValeur);
 bool ptrlist_isEmpty(ptrlist* l);
 void* ptrlist_pop(ptrlist* list);
-bool ptrlist_inList(ptrlist* l, void* el);
-void ptrlist_direct_remove(ptrlist* list, ptrlist* ptr, ptrlist* prev);
+//bool ptrlist_inList(ptrlist* l, void* el);
+//void ptrlist_direct_remove(ptrlist* list, ptrlist* ptr, ptrlist* prev);
 
 
 /*********************intptrlist**********************/
@@ -88,9 +100,9 @@ void intptrlist_destroy(intptrlist* list);
 
 /**************************intlist**********************/
 intlist intlist_create(int len);
-void intlist_aff(intlist* list);
+//void intlist_aff(intlist* list);
 void intlist_append(intlist* list,int nombre);
-void intlist_resize(intlist* list, int newLen);
+//void intlist_resize(intlist* list, int newLen);
 void intlist_remove(intlist* list,int index);
 int intlist_count(intlist* list, int nb);
 bool intlist_inList(intlist* list, int nombre);
@@ -103,15 +115,15 @@ int intlist_max(intlist* list);
 /**************************strlist**********************/
 void strlist_destroy(strlist* list, bool bo);
 strlist* strlist_create(int len);
-void strlist_aff(strlist* list);
+//void strlist_aff(strlist* list);
 void strlist_append(strlist* list, char* chaine);
-void strlist_resize(strlist* list, int newLen, bool freeElement);
-void strlist_remove(strlist* list,int index, bool freeElement);
+//void strlist_resize(strlist* list, int newLen, bool freeElement);
+//void strlist_remove(strlist* list,int index, bool freeElement);
 int strlist_count(strlist* list, char* chaine);
 bool strlist_inList(strlist* list, char* chaine);
 bool strlist_inList_sub(strlist* list, char* chaine, int debut, int fin);
 int strlist_index(strlist* list, char* chaine);
-void strlist_insert(strlist* list,char* chaine, int index);
+//void strlist_insert(strlist* list,char* chaine, int index);
 
 
 

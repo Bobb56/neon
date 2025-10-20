@@ -117,56 +117,6 @@ bool isidentifier(char c) {
 
 
 
-int unitCharToInt(char car, const char base)
-{
-    if (car != '0' && car != '1' && base == 'b') // le binaire n'autorise que 0 ou 1
-        global_env->CODE_ERROR = 73;
-    
-    if (isdigit(car))
-        return car - '0';
-    else if (car >= 'a' && car <= 'f')
-        return car - 'a' + 10;
-    else if (car >= 'A' && car <= 'F')
-        return car - 'A' + 10;
-
-    global_env->CODE_ERROR = 73;
-    return 0;
-}
-
-
-intptr_t binToDec(char* chaine, int debut, int longueur)
-{
-    int res = 0;
-    for (int i = debut ; i < debut + longueur ; i++)
-    {
-        res *= 2;
-        res += unitCharToInt(chaine[i], 'b');
-
-        if (global_env->CODE_ERROR != 0)
-            return 0;
-        
-    }
-    return res;
-}
-
-
-
-
-intptr_t hexToDec(char* chaine, int debut, int longueur)
-{
-    int res = 0;
-    for (int i = debut ; i < debut + longueur ; i++)
-    {
-        res *= 16;
-        res += unitCharToInt(chaine[i], 'h');
-        
-        if (global_env->CODE_ERROR != 0)
-            return 0;
-    }
-    return res;
-}
-
-
 
 bool isString(char* string, char* test, int size)
 {
