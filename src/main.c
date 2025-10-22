@@ -25,9 +25,9 @@ General Protection Fault => Problème d'alignement de la pile
 
 Avancement et choses à faire :
 -------------------------------
-> Alléger le code pour être en dessous des 64k en zx7
 > Mettre à jour la doc, NEON\x00
 > Arrêt d'un programme en appuyant sur ON sur calculatrice
+> Lancement automatique de LAUNCHER
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
 --> Faire une fonction saveVars(nom de fichier, plein de variables) et loadVars(plein de variables) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)
