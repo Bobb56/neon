@@ -18,6 +18,7 @@ ASM_OBJECTS = $(patsubst src/%.S,obj/%.o,$(ASM_src))
 
 # Règle par défaut
 all: $(TARGET)
+	mkdir obj obj/assets obj/extern
 
 # Compilation de l'exécutable
 $(TARGET): $(C_OBJECTS) $(ASM_OBJECTS)
