@@ -25,11 +25,11 @@ General Protection Fault => Problème d'alignement de la pile
 
 Avancement et choses à faire :
 -------------------------------
-> Mettre à jour la doc, NEON\x00
+> Faire en sorte de pouvoir catcher un appel à exit via try/except
 > Arrêt d'un programme en appuyant sur ON sur calculatrice
 > Lancement automatique de LAUNCHER
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
---> Faire une fonction saveVars(nom de fichier, plein de variables) et loadVars(plein de variables) qui stocke tout ça dans un fichier
+--> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
 

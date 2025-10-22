@@ -26,7 +26,7 @@ Par Neon, on désigne à la fois le langage dans ses spécificités et à la foi
 
 L'interpréteur Neon dispose de deux modes : un mode console, permettant d'entrer du code et des expressions, et un mode exécution permettant d'exécuter directement des fichiers.
 
-=== Le mode exécution
+=== Le mode exécution directe
 
 L'extension de fichiers officiellement supportée pour les programmes Neon est l'extension `.ne`. Il est recommandé de nommer tous les programmes Neon avec cette extension. Pour lancer un programme avec le mode exécution, il suffit d'envoyer le nom du fichier en argument à l'interpréteur Neon. Le nom du fichier peut être suivi d'arguments à envoyer au programme Neon.
 
@@ -34,8 +34,23 @@ Sur la plateforme TI_EZ80, les fichier Neon sont des AppVars contenant directeme
 
 Afin de faciliter le développement en Neon, l'interpréteur est compatible avec les AppVars Python.
 
-Pour que l'application Python puisse reconnaître les appvars python par rapport à un appvar normal, ceux-ci commencent toujours par les 4 lettres PYCD et l'octet 00.
-Quand un appvar commençant par PYCD\\x00 est lancé avec l'interpréteur Neon, ce dernier va simplement ignorer les 5 premiers octets.
+Pour que l'application Python puisse reconnaître les AppVars python par rapport à un appvar normal, ceux-ci commencent toujours par les 4 lettres `PYCD` suivies de l'octet `00` (noté `PYCD\x00`).
+Quand un appvar commençant par `PYCD\x00` est lancé avec l'interpréteur Neon, ce dernier va simplement ignorer les 5 premiers octets.
+
+Afin de pouvoir identifier spécifiquement des programmes Neon par rapport à des programmes Python ou simplement des AppVars quelconques, il est également possible de faire commencer un AppVar Neon par les 4 lettres `NEON` suivies de l'octet `00`. 
+
+Exactement dans le cas de `PYCD\x00`, l'interpréteur lance le fichier en ignorant les cinq premiers octets correspondant à `NEON\x00`.
+
+Cette extension spécifique à Neon pourrait notamment permettre d'implémenter un IDE à Neon qui encoderait automatiquement `NEON\x00` au début des fichiers, exactement comme le fait l'application Python avec `PYCD\x00`.
+
+=== Le mode launcher
+
+Ce mode est disponible uniquement sur plateforme `TI_EZ80`.
+
+Ce mode permet notamment d'implémenter en Neon des shells et des launchers en interface graphique pour lancer des programmes Neon.
+
+Si la calculatrice contient un AppVar nommé `LAUNCHER` et commençant par les caractères `#NEON` ou `NEON\x00`, l'interpréteur lancera automatiquement l'exécution de ce programme en tant que programme Neon.
+
 
 === Le mode console
 
@@ -252,7 +267,7 @@ Voici la liste des exceptions built-in :\
 *`UnknownError`* : Déclenchée lorsqu'il n'y a pas assez d'informations sur l'erreur\
 *`AssertionFailed`* : Déclenchée lorsque la fonction `assert` échoue\
 *`DefinitionError`* : Déclenchée principalement lorsque la définition d'un container est incorrecte au regard des informations dont dispose l'interpréteur sur ce type de container\
-*`KeyboardInterrupt`* : Déclenchée par un Ctrl-C dans le terminal\
+*`KeyboardInterrupt`* : Déclenchée par un Ctrl-C dans le terminal. Sur plateforme `TI_EZ80`, cette erreur est déclenchée en appuyant sur la touche `ON`\
 
 === 1.2.8 - Le type `Built-in function`
 
@@ -1363,7 +1378,7 @@ Cette fonction renvoie un entier correspondant à la dernière touche pressée, 
 
 Chaque touche de la calculatrice possède un code unique permettant de l'identifier. Le code associé à chaque touche est montré sur le schéma ci-dessous.
 
-La touche ON (41) n'est pas utilisable avec `getKey`.
+La touche ON (41) n'est pas utilisable avec `getKey`. L'appui sur cette touche déclenche l'erreur *`KeyboardInterrupt`*.
 
 #image("keycodes.png")
 
