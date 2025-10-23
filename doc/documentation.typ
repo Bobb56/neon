@@ -30,7 +30,7 @@ L'interpréteur Neon dispose de deux modes : un mode console, permettant d'entre
 
 L'extension de fichiers officiellement supportée pour les programmes Neon est l'extension `.ne`. Il est recommandé de nommer tous les programmes Neon avec cette extension. Pour lancer un programme avec le mode exécution, il suffit d'envoyer le nom du fichier en argument à l'interpréteur Neon. Le nom du fichier peut être suivi d'arguments à envoyer au programme Neon.
 
-Sur la plateforme TI_EZ80, les fichier Neon sont des AppVars contenant directement le code Neon en texte. Les noms de ces AppVars sont sans extensions. Pour lancer un fichier en mode exécution, il faut mettre le nom de ce fichier dans la variable `Ans` ou `Rép`. Pour cela, écrivez le nom du fichier entre guillemets dans l'écran principal de la calculatrice, et appuyez sur ENTRÉE. Lors de son lancement, le programme NEON va détecter le nom de fichier dans cette variable et va l'exécuter.
+Sur la plateforme `TI_EZ80`, les fichier Neon sont des AppVars contenant directement le code Neon en texte. Les noms de ces AppVars sont sans extensions. Pour lancer un fichier en mode exécution, il faut mettre le nom de ce fichier dans la variable `Ans` ou `Rép`. Pour cela, écrivez le nom du fichier entre guillemets dans l'écran principal de la calculatrice, et appuyez sur ENTRÉE. Lors de son lancement, le programme NEON va détecter le nom de fichier dans cette variable et va l'exécuter.
 
 Afin de faciliter le développement en Neon, l'interpréteur est compatible avec les AppVars Python.
 
@@ -45,11 +45,13 @@ Cette extension spécifique à Neon pourrait notamment permettre d'implémenter 
 
 === Le mode launcher
 
-Ce mode est disponible uniquement sur plateforme `TI_EZ80`.
+Ce mode permet notamment d'implémenter en Neon des shells et des launchers en interface graphique pour lancer des programmes Neon sur plateforme `TI_EZ80`. Cette fonctionnalité est présente sur toutes les plateformes, mais est surtout utile sur la plateforme `TI_EZ80`.
 
-Ce mode permet notamment d'implémenter en Neon des shells et des launchers en interface graphique pour lancer des programmes Neon.
-
+Sur plateforme `TI_EZ80` :\
 Si la calculatrice contient un AppVar nommé `LAUNCHER` et commençant par les caractères `#NEON` ou `NEON\x00`, l'interpréteur lancera automatiquement l'exécution de ce programme en tant que programme Neon.
+
+Sur les autres plateformes :\
+Si le dossier courant contient un fichier nommé `__launcher__.ne`, celui-ci sera automatiquement exécuté au lancement de l'interpréteur.
 
 
 === Le mode console
@@ -58,7 +60,7 @@ Lorsque la console est prête à recevoir une expression à évaluer, le curseur
 
 Pour entrer des bloc de code, il faut garder en tête que l'appui sur ENTRÉE entraînera l'envoi du texte écrit à l'interpréteur. Il faut donc soit utiliser le retour à la ligne délimité par `;`, soit s'assurer que la ligne début par `..` indiquant que le retour à la ligne ne causera pas un envoi du texte à l'interpréteur.
 
-Sur la plateforme TI_EZ80, pour entrer en mode console, il faut que la variable `Ans` ou `Rép` contienne une chaîne de caractères vide, ou bien un autre type de données.
+Sur la plateforme `TI_EZ80`, pour entrer en mode console, il faut que la variable `Ans` ou `Rép` contienne une chaîne de caractères vide, ou bien un autre type de données.
 
 #outline(title : "Sommaire")
 

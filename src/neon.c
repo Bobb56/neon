@@ -562,10 +562,11 @@ void loadExceptions(NeonEnv* env) {
         "AssertionFailed",
         "DefinitionError",
         "KeyboardInterrupt",
-        "NotImplemented"
+        "NotImplemented",
+        "ExitSignal"
     };
 
-    for (int i = 0 ; i < 16 ; i++) {
+    for (int i = 0 ; i < 17 ; i++) {
         strlist_append(env->EXCEPTIONS, strdup(exceptions[i]));
     }
 }
@@ -581,7 +582,7 @@ NeonEnv* NeonEnv_init(void) {
     env->LINENUMBER = 0;
     env->FILENAME = NULL;
     env->EXCEPTION = NULL;
-    env->ATOMIC_TIME = 1500;
+    env->ATOMIC_TIME = PLATFORM_SPECIFIC_ATOMIC_TIME;
     env->atomic_counter = 0;
     env->RETURN_VALUE = NEO_VOID;
     env->OBJECTS_LIST = NEO_VOID;
@@ -595,7 +596,6 @@ NeonEnv* NeonEnv_init(void) {
     env->PROCESS_FINISH = intlist_create(0);
     env->PROMISES_CNT = intptrlist_create(0);
     TreeList_init(&env->FONCTIONS);
-
 
     loadFunctions(env);
     loadExceptions(env);
@@ -655,6 +655,7 @@ void neonInit(void)
     global_env = NeonEnv_init();
 
     #ifdef TI_EZ80
+        kb_EnableOnLatch();
         gfx_Begin();
         set_neon_palette();
         nio_init(&global_env->console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK, true);
@@ -670,6 +671,8 @@ void neonExit(void)
     NeonEnv_destroy(global_env);
     #ifdef TI_EZ80
     nio_free(&global_env->console);
+    gfx_End();
+    kb_DisableOnLatch();
     #endif
     return;
 }

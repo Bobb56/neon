@@ -65,6 +65,17 @@
     }
 
 
+    // cette fonction teste l'existence d'un launcher
+    bool launcher(char* filename) {
+        FILE* fichier = fopen(filename, "rt");//lit le fichier
+        if (fichier == NULL) {
+            return false;
+        }
+        fclose(fichier);
+        return true;
+    }
+
+
     void writeFile(char* filename, char* content)
     {
         FILE* fichier = fopen(filename, "w+");
@@ -200,7 +211,6 @@
 #else //------------------------------------------------- PASSAGE A TI_EZ80 ---------------------------------------------
 
 
-
     char* argsAns(void)
     {
         // récupère le contenu de Ans
@@ -245,7 +255,7 @@
         uint16_t longueur = ti_GetSize(fichier);
 
         
-        char* program=neon_malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
+        char* program = neon_malloc(longueur + 1);// crée le tableau de caractères qui va contenir le programme
     
 
         // copie du fichier
@@ -262,6 +272,28 @@
         return program;
     }
 
+
+    // cette fonction teste l'existence d'un launcher
+    bool launcher(char* filename) {
+        uint8_t fichier = ti_Open(filename, "r"); //ouvre l'AppVar
+
+        if (fichier == 0) {
+            ti_Close(fichier);
+            return false;
+        }
+
+        if (ti_GetSize(fichier) < 5) {
+            ti_Close(fichier);
+            return false;
+        }
+
+        char buffer[5];
+
+        ti_Read(buffer, sizeof(char), 5, fichier);
+
+        ti_Close(fichier);
+        return memcmp(buffer, "NEON\x00", 5) == 0 || memcmp(buffer, "#NEON", 5) == 0;
+    }
 
 
     void writeFile(char* filename, char* content)
@@ -292,8 +324,7 @@
             global_env->CODE_ERROR = 1;
             return NULL;
         }
-    
-    
+
     
         //crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
         char* newVar = neon_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul

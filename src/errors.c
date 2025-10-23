@@ -6,11 +6,11 @@
 #include "headers/neon.h"
 
 //creation du tableau de pointeurs generiques a liberer en cas d’erreur
-static int memory = 0;
+//static int memory = 0;
 
 static const char* error_messages[NB_ERRORS] = {
     "",// ne doit pas être utilisé
-    "",// ne doit pas être utilisé
+    "",// ne doit pas être utilisé, correspond au code d'erreur d'exit
     "Multiple decimal points in the same number",
     "File doesn't exist",
     "This object has no length",
@@ -135,7 +135,7 @@ static const char* error_messages[NB_ERRORS] = {
 
 static const int error_codes_exceptions[NB_ERRORS] = {
     0,// ne doit pas être utilisé
-    0,// ne doit pas être utilisé
+    16,//ExitSignal
     0,
     1,
     2,
@@ -276,15 +276,16 @@ void neon_free(void* ptr) {
     free(ptr);
 }
 */
-
+/*
 int allocatedMem(void) {
     return memory;
 }
 
+
 void segfault(void) {
     volatile int* p = (int*)8;
     volatile int a = *p;
-}
+}*/
 
 void printError(int code)
 {

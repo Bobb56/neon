@@ -64,6 +64,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #endif
 
 
+
 // définition de certaines directives spécifiques au compilateur
 #if defined(__clang__)
 #define NO_OPT __attribute__((noinline, optnone))
@@ -83,9 +84,13 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 #ifdef TI_EZ80
+    #define LAUNCHER_NAME "LAUNCHER"
     #define STACK_SIZE (4*1024)
+    #define PLATFORM_SPECIFIC_ATOMIC_TIME 300
 #else
+    #define LAUNCHER_NAME "__launcher__.ne"
     #define STACK_SIZE (8*1024*1024) // taille de la pile par défaut à 8 Mio, ça peut changer en fonction de la plateforme
+    #define PLATFORM_SPECIFIC_ATOMIC_TIME 1500
 #endif
 
 

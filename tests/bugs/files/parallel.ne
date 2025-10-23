@@ -20,4 +20,4 @@ end
 
 await(p1 == None and p2 == None)
 
-assert(l == ["abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789"])
+assert(l == ["Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz", "Hello, World !", "0123456789", "abcdefghijklmnopqrstuvwxyz"])

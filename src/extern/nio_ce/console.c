@@ -592,7 +592,5 @@ void nio_free(nio_console* csl)
 		free(c);
 		*csl = NULL;
 		--csl_count;
-		if (!csl_count)
-			nio_scrbuf_free();
 	}
 }

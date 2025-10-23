@@ -76,10 +76,14 @@ NeObj _input_(NeList* args)
 
         for (int i=0 ; i< args->len ; i++)
         {
-            if (NEO_TYPE(ARG(i)) == TYPE_STRING)
+            if (NEO_TYPE(ARG(i)) == TYPE_STRING) {
                 chaine = addStr2(chaine, neo_to_string(ARG(i)));
-            else
-                chaine = addStr2(chaine,neobject_str(ARG(i)));
+            }
+            else {
+                char* tempstring = neobject_str(ARG(i));
+                chaine = addStr2(chaine,tempstring);
+                neon_free(tempstring);
+            }
             
             
             if (i < args->len - 1)

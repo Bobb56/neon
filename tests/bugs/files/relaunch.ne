@@ -8,11 +8,10 @@ p2 = None
 
 function atexit() do
     await(p1 == 0 and p2 == 0)
-    assert( l == ["p1", "p1", "p1", "p2", "p1", "p2", "p1", "main", "p2", "p1", "main", "p2", "p1", "main", "p2", "p1", "main", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "This is the end", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p2", "p2"])
+    assert(l == ["main", "p2", "p1", "main", "p2", "p1", "main", "p2", "p1", "main", "This is the end", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1", "p2", "p1"])
 end
 
 parallel atexit()
-
 
 
 function process(name, bound) do

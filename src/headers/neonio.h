@@ -21,6 +21,7 @@ void newLine(void);
 void setColor(uint8_t color);
 void printBack(void);
 void clearConsole(void);
+bool launcher(char* filename);
 char* openFile(char* filename);
 void writeFile(char* filename, char* content);
 void neon_pause(char* text);

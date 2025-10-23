@@ -742,7 +742,7 @@ char* nelist_str(NeList* list)
         neon_free(str2);
         return str1;
     }
-    return strdup("Erreur17");
+    return NULL;
 }
 
 

@@ -138,28 +138,21 @@ void local(Var var, ptrlist* var_loc)
 
 
 
+
 // les deux fonctions suivantes doivent obligatoirement avoir la même taille de contexte car un appel par le contexte de l'une peut
 // être amené à être démonté par l'autre
 
 NO_OPT void neon_interp_yield(void) {
-    if (global_env->atomic_counter == 0) {
-        global_env->atomic_counter = global_env->ATOMIC_TIME;
+    if (global_env->process_cycle->next != global_env->process_cycle) {
+        // on passe au prochain processus non terminé, et on supprime tous ceux qui ont fini
+        unloadCurrentProcess(global_env->process_cycle->process);
+        global_env->process_cycle = loadNextLivingProcess(global_env->process_cycle);
 
-        if (global_env->process_cycle->next != global_env->process_cycle) {
-            // on passe au prochain processus non terminé, et on supprime tous ceux qui ont fini
-            unloadCurrentProcess(global_env->process_cycle->process);
-            global_env->process_cycle = loadNextLivingProcess(global_env->process_cycle);
+        // on est sûrs que le processus précédent dans la chaîne était vraiment le processus précédent
+        // on change les registres après les avoir sauvegardés et on change de pile
 
-            // on est sûrs que le processus précédent dans la chaîne était vraiment le processus précédent
-            // on change les registres après les avoir sauvegardés et on change de pile
-
-            switch_registers(global_env->process_cycle->process, global_env->process_cycle->prev->process);
-        }
+        switch_registers(global_env->process_cycle->process, global_env->process_cycle->prev->process);
     }
-
-    global_env->atomic_counter--;
-
-    return;
 }
 
 
@@ -177,6 +170,24 @@ NO_OPT void neon_interp_next_process(void) {
 
     return;
 }
+
+
+
+
+// Cette fonction est régulièrement appelée pendant l'interprétation d'un programme Neon
+void interrupt(void) {
+    neon_interp_yield();
+
+    #ifdef TI_EZ80
+    bool key_state = kb_On;
+    kb_ClearOnLatch();
+    if (key_state) {
+        global_env->CODE_ERROR = 104;
+        return;
+    }
+    #endif
+}
+
 
 
 
@@ -432,8 +443,6 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
 
 // cette fonction est tellement grosse que de toute façon gcc n'aurait jamais l'idée de l'inliner
 NO_INLINE NeObj eval_aux(NeTree tree) {
-
-    neon_interp_yield();
 
     // il est possible qu'entre temps un processus ait lancé une erreur
     if (global_env->CODE_ERROR != 0)
@@ -1193,14 +1202,6 @@ NeObj* get_address(NeTree tree) {
 
 
 
-
-
-
-
-
-
-
-
 int execConditionBlock(NeTree maintree) {
     intptr_t int_ret = 0;
     int bloc = 0;
@@ -1613,7 +1614,7 @@ int execStatementForeachString(NeTree tree, NeObj neo_string) {
 
 int exec_aux(NeTree tree) {
 
-    neon_interp_yield();
+    MAY_INTERRUPT();
 
     if (global_env->CODE_ERROR != 0)
         return 0;
@@ -1637,7 +1638,7 @@ int exec_aux(NeTree tree) {
                     return int_ret;
                 
 
-                if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) // exit() n'est pas considéré comme une erreur
+                if (global_env->CODE_ERROR != 0) // on peut catcher un exit()
                 {
                     // on réinitialise la variable de code d'erreur pour les évaluations d'exceptions
                     int sov_code_error = global_env->CODE_ERROR;
@@ -1837,7 +1838,6 @@ int exec_aux(NeTree tree) {
                         }
                         else {
                             // schedule
-                            global_env->atomic_counter = 0;
                             neon_interp_yield();
                         }
 
