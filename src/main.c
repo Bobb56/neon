@@ -13,6 +13,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
+RAM RESET quand on lance APPLES depuis Neon launcher
 _____________________
 
 Potentielles futures erreurs :
@@ -26,9 +27,10 @@ General Protection Fault => Problème d'alignement de la pile
 
 Avancement et choses à faire :
 -------------------------------
+Ajouter dans la doc que les objets sont affichés par draw dans l'ordre naturel de parcours en profondeur des objets
+PLUS TARD
 > Ajouter une fonction menu qui prend en entrée une liste de listes d'objets MenuItems(id, inactive, hover), un objet pour le background et qui renvoie l'id de l'élément sélectionné ou None si l'utilisateur a quitté
 Les touches supportées sont [<,>,v,^,Enter,Clear]
-PLUS TARD
 > Changer le mode d'allocation de la pile, changer éventuellement le mode d'allocation des arbres syntaxiques
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
 --> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier
