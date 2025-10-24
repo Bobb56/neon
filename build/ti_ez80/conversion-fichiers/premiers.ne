@@ -1,3 +1,4 @@
+#NEON
 max = 500 # nbr(input ("Jusqu'ou voulez-vous que l'on detecte les nombres premiers ? "))
 
 est_premier = False

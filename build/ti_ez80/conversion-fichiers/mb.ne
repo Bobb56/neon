@@ -1,3 +1,4 @@
+#NEON
 # This script draws a Mandelbrot fractal set
 initGraphics()
 

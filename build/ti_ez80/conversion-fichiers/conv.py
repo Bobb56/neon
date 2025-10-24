@@ -2,11 +2,16 @@ import sys
 import os
 import subprocess
 
-# demande a l'utilisateur les noms des fichiers
-entree = input("Nom du fichier à convertir : ")
-sortie = input("Nom du fichier de sortie (ne contenant que des chiffres ou des lettres, commencant par une lettre et contenant maximum 8 caractères) : ")
-
-
+if len(sys.argv) < 3:
+    # demande a l'utilisateur les noms des fichiers
+    entree = input("Nom du fichier à convertir : ")
+    sortie = input("Nom du fichier de sortie (ne contenant que des chiffres ou des lettres, commencant par une lettre et contenant maximum 8 caractères) : ")
+elif len(sys.argv) < 2:
+    entree = sys.argv[1]
+    sortie = input("Nom du fichier de sortie (ne contenant que des chiffres ou des lettres, commencant par une lettre et contenant maximum 8 caractères) : ")
+else:
+    entree = sys.argv[1]
+    sortie = sys.argv[2]
 
 
 def enlever(texte):
