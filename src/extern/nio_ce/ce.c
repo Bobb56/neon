@@ -27,6 +27,7 @@
 
 #include "headers/platform.h"
 #include "headers/nspireio.h"
+#include "../../headers/graphics.h"
 
 bool any_key_pressed(void)
 {
@@ -113,7 +114,7 @@ unsigned nio_time_get() {
 unsigned char nio_ascii_get(uint8_t* adaptive_cursor_state)
 {
     static bool second = false, alpha = false;
-    sk_key_t key = os_GetCSC();
+    sk_key_t key = neon_getKey();
 
     if (key == sk_2nd) {
         second = (bool)!second;

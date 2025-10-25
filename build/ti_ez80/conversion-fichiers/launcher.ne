@@ -21,6 +21,7 @@ end
 
 
 function getmenu(files, i) do
+  print("z0")
   if (len(files) <= vertical_limit//2) then
     i1 = 0
     i2 = len(files)-1
@@ -34,14 +35,19 @@ function getmenu(files, i) do
     i1 = i+vertical_limit//2-vertical_limit+1
     i2 = i+vertical_limit//2
   end
+  input("z1")
+  input("z1.1")
   objects = []
+  input("z1.2")
   for (j,i1,i2+1) do
+    input(j, i1, i2)
     if (i==j) then
       objects.append(make_cursor(j-i1, files[j]))
     else
       objects.append(make_item(j-i1, files[j]))
     end
   end
+  input("z2")
   return (objects)
 end
 
@@ -72,17 +78,17 @@ function Launcher~main() do
     i = 0
     refresh=True
     while ((getKey()->key) != 15) do
-      if (key==1) then
+      if (key==1 or key==3) then
         i = (i+1)%len(files)
         refresh=True
-      elif (key==4) then
+      elif (key==4 or key==2) then
         i = (len(files)+i-1)%len(files)
         refresh=True
       elif (key==9) then
         Launcher~launch(files[i])
         refresh=True
       end
-      if (refresh) then print("aaaaaaaaaaaaa\n") ; draw(header,back,getmenu(files,i)) ; print("aaaaaaaaaaaaa\n"); refresh=False end
+      if (refresh) then draw(header,back,getmenu(files,i)) ; refresh=False end
     end
   end
 end

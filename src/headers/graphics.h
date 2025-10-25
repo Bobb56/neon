@@ -35,6 +35,7 @@ struct ContainerType {
 
 
 void initGraphics(void);
+int neon_getKey(void);
 void draw_nelist(NeList* list);
 void draw_obj(NeObj obj);
 void set_neon_palette(void);

@@ -209,7 +209,7 @@ NeObj rgb(NeList* args) {
 
 
 
-NeObj getKey(NeList* args) {
+int neon_getKey(void) {
     static uint8_t last_key;
     static clock_t local_clock;
 
@@ -221,7 +221,7 @@ NeObj getKey(NeList* args) {
             if (kb_Data[group] & mask) {
                 if (only_key) {
                     last_key = 0;
-                    return neo_integer_create(0);
+                    return 0;
                 }
                 else {
                     only_key = key;
@@ -234,10 +234,10 @@ NeObj getKey(NeList* args) {
 
     if (only_key == last_key) {
         if (clock() - local_clock > 10000) {
-            return neo_integer_create(only_key);
+            return only_key;
         }
         else {
-            return neo_integer_create(0);
+            return 0;
         }
     }
     else {
@@ -246,8 +246,12 @@ NeObj getKey(NeList* args) {
         local_clock = clock();
 
         last_key = only_key;
-        return neo_integer_create(only_key);
+        return only_key;
     }
+}
+
+NeObj getKey(NeList* args) {
+    return neo_integer_create(neon_getKey());
 }
 
 
