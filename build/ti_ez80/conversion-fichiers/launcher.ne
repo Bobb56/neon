@@ -82,7 +82,7 @@ function Launcher~main() do
         Launcher~launch(files[i])
         refresh=True
       end
-      if (refresh) then draw(header,back,getmenu(files,i)) end
+      if (refresh) then print("aaaaaaaaaaaaa\n") ; draw(header,back,getmenu(files,i)) ; print("aaaaaaaaaaaaa\n"); refresh=False end
     end
   end
 end

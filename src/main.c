@@ -13,7 +13,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
-RAM RESET quand on lance APPLES depuis Neon launcher
+Freeze quand on revient dans Neon launcher après avoir exécuté PREMIERS
 _____________________
 
 Potentielles futures erreurs :

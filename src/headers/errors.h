@@ -8,6 +8,8 @@
 
 #define NB_ERRORS 120
 
+#define return_on_error(value)      if (global_env->CODE_ERROR != 0) return value
+#define if_error                    if (global_env->CODE_ERROR != 0)
 
 #define neon_malloc     malloc
 #define neon_realloc    realloc
