@@ -3,9 +3,7 @@
 
 #include <stdbool.h>
 
-//#define VERSION "3.8.5.6-beta"
-
-#define VERSION "4.0"
+#define VERSION "4.1"
 
 /*
 Numérotation de versions :

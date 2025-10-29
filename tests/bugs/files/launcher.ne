@@ -1,7 +1,8 @@
-#NEON
+# Fichier de test issu du launcher Neon pour calculatrice
 
-keys = [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 9, 0, 0, 4, 0, 0, 4]
+keys = [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 9, 0, 0, 4, 0, 0, 4, 0, 0, 15]
 function getKey() do
+  if (keys == []) then return (0) end
   k = keys[0]
   keys.remove(0)
   return (k)
@@ -33,8 +34,6 @@ end
 
 
 function getmenu(files, i) do
-  #print("z0")
-  print(3,files)
   if (len(files) <= vertical_limit//2) then
     i1 = 0
     i2 = len(files)-1
@@ -68,7 +67,9 @@ function Launcher~launch(file) do
   draw(Rect(x:100,y:100,width:100,height:20,color:green,filled:True),Text(text:"Please wait...",x:105,y:105,fgcolor:white,bgcolor:green,size:1))
   local(i,files,header,white,green,black,vertical_limit,key,refresh,texty,make_item,make_cursor,getmenu)
   try
-    import(file)
+    # on n'importe pas de fichier
+    # mais on appelle le garbage collector
+    gc()
   except(ExitSignal) do
     pass
   end
@@ -94,9 +95,7 @@ function Launcher~main() do
         i = (len(files)+i-1)%len(files)
         refresh=True
       elif (key==9) then
-        print(1,files)
         Launcher~launch(files[i])
-        print(2,files)
         refresh=True
       end
       if (refresh) then draw(header, back, getmenu(files,i)) ; refresh=False end

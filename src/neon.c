@@ -133,7 +133,8 @@ void loadFunctions(NeonEnv* env)
         "gc",
         "setColor",
         "initGraphics",
-        "detectFiles"
+        "detectFiles",
+        "safeExec"
     };
 
     // built-in functions
@@ -529,6 +530,13 @@ void loadFunctions(NeonEnv* env)
             .nbArgs = 1,
             .typeArgs = (int[]){TYPE_STRING},
             .typeRetour = TYPE_LIST
+        },
+        (Function) {
+            .ptr = _safeExec_,
+            .help = "Executes a Neon file with the given arguments in a separate environment",
+            .nbArgs = 2,
+            .typeArgs = (int[]){TYPE_STRING, TYPE_LIST},
+            .typeRetour = TYPE_NONE
         }
     };
 
@@ -601,8 +609,21 @@ NeonEnv* NeonEnv_init(void) {
     loadExceptions(env);
 
     defineVariables(env);
+
+    #ifdef TI_EZ80
+    nio_init(&env->console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK, true);
+    #endif
     
     return env;
+}
+
+NeonEnv* NeonEnv_set(NeonEnv* new_env) {
+    NeonEnv* global_env_sov = global_env;
+    global_env = new_env;
+    #ifdef TI_EZ80
+    nio_set_default(&global_env->console);
+    #endif
+    return global_env_sov;
 }
 
 
@@ -631,6 +652,10 @@ void NeonEnv_destroy(NeonEnv* env) {
 
     if (env->FILENAME != NULL)
         neon_free(env->FILENAME);
+    
+    #ifdef TI_EZ80
+    nio_free(&global_env->console);
+    #endif
 
     neon_free(env);
 }
@@ -652,14 +677,12 @@ void neonInit(void)
         SetConsoleCtrlHandler(ctrlHandler, TRUE);
     #endif
 
-    global_env = NeonEnv_init();
+    NeonEnv_set(NeonEnv_init());
 
     #ifdef TI_EZ80
         kb_EnableOnLatch();
         gfx_Begin();
         set_neon_palette();
-        nio_init(&global_env->console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK, true);
-        nio_set_default(&global_env->console);
     #endif
 
     return;
@@ -670,7 +693,6 @@ void neonExit(void)
 {
     NeonEnv_destroy(global_env);
     #ifdef TI_EZ80
-    nio_free(&global_env->console);
     gfx_End();
     kb_DisableOnLatch();
     #endif
@@ -889,6 +911,7 @@ void execFile(char* filename)
     
     if (global_env->CODE_ERROR != 0) {
         printError(global_env->CODE_ERROR);
+        global_env->CODE_ERROR = 0;
         neon_pause("Press ENTER to leave Neon...");
         return;
     }
@@ -904,6 +927,7 @@ void execFile(char* filename)
     if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
     {
         printError(global_env->CODE_ERROR);
+        global_env->CODE_ERROR = 0;
         neon_pause("Press ENTER to leave Neon...");
     }
 

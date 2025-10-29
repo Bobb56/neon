@@ -118,6 +118,7 @@ extern NeonEnv* global_env;
 /*NEON.C*/
 void NeonEnv_destroy(NeonEnv* env);
 NeonEnv* NeonEnv_init(void);
+NeonEnv* NeonEnv_set(NeonEnv* new_env);
 void setNeonEnv(NeonEnv* env);
 void printRes(NeObj res);
 void execFile(char* filename);

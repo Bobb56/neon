@@ -138,6 +138,7 @@ function main(args) do
             "gc",
             "join",
             "lambda",
+            "launcher",
             "liste-n-ieme",
             "local_parallel",
             "mat",

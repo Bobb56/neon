@@ -4,7 +4,7 @@
 #include "constants.h"
 #include "objects.h"
 
-#define NBBUILTINFUNC 56
+#define NBBUILTINFUNC 57
 
 #define ARG(n)      args->tab[n]
 NeObj _print_(NeList* args);
@@ -63,5 +63,6 @@ NeObj _gc_(NeList* args);
 NeObj _setColor_(NeList* args);
 NeObj _initGraphics_(NeList* args);
 NeObj _detectFiles_(NeList* args);
+NeObj _safeExec_(NeList* args);
 
 #endif

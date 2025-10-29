@@ -7,7 +7,7 @@ white=rgb(255,255,255)
 green = rgb(0,100,0)
 black = rgb(0,0,0)
 vertical_limit = 15
-header = [Rect(x:0,y:0,width:320,height:20,color:green,filled:True),Text(text:"Neon launcher",x:10,y:5,fgcolor:white,bgcolor:1,size:1)]
+header = [Rect(x:0,y:0,width:320,height:20,color:green,filled:True),Text(text:"Neon launcher 1.0",x:10,y:5,fgcolor:white,bgcolor:1,size:1)]
 back = Rect(x:0,y:20,width:320,height:220,color:white,filled:True)
 
 function texty(i) do return (28+i*14) end
@@ -54,12 +54,7 @@ end
 
 function Launcher~launch(file) do
   draw(Rect(x:100,y:100,width:100,height:20,color:green,filled:True),Text(text:"Please wait...",x:105,y:105,fgcolor:white,bgcolor:green,size:1))
-  local(i,files,header,white,green,black,vertical_limit,key,refresh,texty,make_item,make_cursor,getmenu)
-  try
-    import(file)
-  except(ExitSignal) do
-    pass
-  end
+  safeExec(file, ["Neon_launcher 1.0"])
 end
 
 

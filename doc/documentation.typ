@@ -1333,6 +1333,8 @@ Le nombre et le type des arguments attendus par cette fonction sont parfaitement
 
 De manière générale, la seule chose à retenir pour savoir utiliser cette fonction est : `draw` va toujours essayer de dessiner ce qui est dessinable, peu importe jusqu'où il faut chercher les objets dessinables dans les arguments qu'on lui donne.
 
+Souvent lorsque l'on dessine plusieurs objets à l'écran, l'ordre de dessin est important. Certains objets doivent être par-dessus d'autres objets, d'autres tout au fond, etc. La fonction `draw` dessine toujours les objets de la gauche vers la droite.
+
 *Exemple :*\
 Supposons qu'on veuille coder un jeu de course de bateaux. Dans ce cas, on utilisera une liste `bateaux` dans laquelle on stocke tous les bateaux.
 

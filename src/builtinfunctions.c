@@ -1210,3 +1210,19 @@ NeObj _detectFiles_(NeList* args) {
 
     return files;
 }
+
+
+NeObj _safeExec_(NeList* args) {
+    NeonEnv* global_env_sov = NeonEnv_set(NeonEnv_init());
+
+    // définition de la liste des arguments
+    update__name__(strdup(neo_to_string(ARG(0)))); // nom du fichier actuel
+    variable_append(global_env, "__args__", neo_copy(ARG(1)));
+
+    execFile(neo_to_string(ARG(0)));
+
+    NeonEnv_destroy(global_env);
+    NeonEnv_set(global_env_sov);
+
+    return neo_none_create();
+}
