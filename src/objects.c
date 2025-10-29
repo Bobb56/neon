@@ -580,7 +580,7 @@ char* neo_promise_str(NeObj neo) {
 }
 
 
-///////////////////// TYPE_STRING ////////////////////
+///////////////////// TYPE_STRING /////////////////////
 
 
 
@@ -1242,7 +1242,8 @@ void neobject_destroy(NeObj neo)
             mark(neo);
 
             if (NEO_TYPE(neo) == TYPE_STRING) {
-                string_destroy(neo.string);
+                //printString(neo.string->string);printString("  ");printInt((intptr_t)neo.string);newLine();
+                //string_destroy(neo.string);
             }
 
             else if (NEO_TYPE(neo) == TYPE_LIST) {

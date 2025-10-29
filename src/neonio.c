@@ -314,8 +314,14 @@
 
     char* input(char *text)
     {
-        char* var=neon_malloc(501*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
-        memset(var,(char)0,501*sizeof(char));//initialise le pointeur à '\0' partout
+        char* var = neon_malloc(501*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
+        
+        if (var == NULL) {
+            global_env->CODE_ERROR = 12;
+            return NULL;
+        }
+        
+        memset(var, (char)0, 501*sizeof(char)); //initialise le pointeur à '\0' partout
         //on effectue l'entrée
         printString(text);
     
@@ -325,17 +331,20 @@
             return NULL;
         }
 
-    
-        //crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
+        // crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
         char* newVar = neon_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
+
+        if (newVar == NULL) {
+            global_env->CODE_ERROR = 12;
+            neon_free(var);
+            return NULL;
+        }
     
-        void * ptrtest=strcpy(newVar,var);//copie de var dans newVar
+        void* ptrtest = strcpy(newVar, var); //copie de var dans newVar
     
         neon_free(var);
-        var=NULL;
     
-        if (ptrtest==NULL)
-        {
+        if (ptrtest == NULL) {
             neon_free(newVar);
             global_env->CODE_ERROR = 66;
             return NULL;

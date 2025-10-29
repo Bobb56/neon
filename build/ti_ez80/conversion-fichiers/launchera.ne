@@ -1,8 +1,19 @@
 #NEON
 
-initGraphics()
+keys = [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 9, 0, 0, 4, 0, 0, 4]
+function getKey() do
+  k = keys[0]
+  keys.remove(0)
+  return (k)
+end
+
+function draw(...) do
+  pass
+end
+
+rgb = draw
+
 # global definitions
-setTextTransparentColor(1)
 white=rgb(255,255,255)
 green = rgb(0,100,0)
 black = rgb(0,0,0)
@@ -23,6 +34,7 @@ end
 
 function getmenu(files, i) do
   #print("z0")
+  print(3,files)
   if (len(files) <= vertical_limit//2) then
     i1 = 0
     i2 = len(files)-1
@@ -64,10 +76,9 @@ end
 
 
 
+
 function Launcher~main() do
-  files=detectFiles("#NEON")+detectFiles("NEON"+chr(0))
-  files.remove(files.index("LAUNCHER"))
-  files.sortAsc()
+  files=["APPLES", "MB", "PREMIERS", "RGB"]
   
   if (len(files)==0) then
     draw(Text(text:"No Neon script found",x:90,y:120,fgcolor:black,bgcolor:255,size:1))
@@ -83,7 +94,9 @@ function Launcher~main() do
         i = (len(files)+i-1)%len(files)
         refresh=True
       elif (key==9) then
+        print(1,files)
         Launcher~launch(files[i])
+        print(2,files)
         refresh=True
       end
       if (refresh) then draw(header, back, getmenu(files,i)) ; refresh=False end

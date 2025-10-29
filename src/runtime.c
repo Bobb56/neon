@@ -1760,26 +1760,19 @@ int exec_aux(NeTree tree) {
                 {
                     for (int ext_index = 0 ; ext_index < treelist.trees[inst].kwparam->params.len ; ext_index++)
                     {
-                        // on empile inst et ext_index
-                        //stack_check_for(varstack, 4);
-
                         NeObj nom = eval_aux(treelist.trees[inst].kwparam->params.trees[ext_index]);
 
-                        if (global_env->CODE_ERROR != 0) {
-                            return 0;
-                        }
+                        return_on_error(0);
 
                         char* nomAct = strdup(neo_to_string(nelist_nth(global_env->ADRESSES, global_env->NAME))); // pour restaurer le nom de fichier actuel
+                        update__name__(strdup(neo_to_string(nom)));
 
                         #ifndef TI_EZ80
                             char* nomFichier = addStr(neo_to_string(nom), ".ne");
 
-                            update__name__(strdup(neo_to_string(nom)));
-
                             importFile(nomFichier);
                             neon_free(nomFichier);
                         #else
-                            update__name__(strdup(neo_to_string(nom)));
                             importFile(neo_to_string(nom));
                         #endif
 
@@ -1787,9 +1780,7 @@ int exec_aux(NeTree tree) {
 
                         neobject_destroy(nom);
 
-                        if (global_env->CODE_ERROR != 0) {
-                            return 0;
-                        }
+                        return_on_error(0);
                         
                         // en général un import fait pas mal de choses avec la mémoire, et on n'en fait pas souvent
                         // c'est donc un bon endroit pour faire un garbage collection
@@ -2006,11 +1997,10 @@ int exec_aux(NeTree tree) {
             default:
             {
                 NeObj res = eval_aux(treelist.trees[inst]);
-        
+
                 neobject_destroy(res); // sinon, évaluation de l'expression, en la libérant juste après
 
-                if (global_env->CODE_ERROR != 0)
-                    return 0;
+                return_on_error(0);
 
                 break;
             }
@@ -2018,9 +2008,7 @@ int exec_aux(NeTree tree) {
         }
         
 
-        if (global_env->CODE_ERROR != 0) { // ben oui sinon les erreurs ne seront pas captées au bon endroit
-            return 0;
-        }
+        return_on_error(0);
     
     }
 

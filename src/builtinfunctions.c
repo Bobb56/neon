@@ -65,10 +65,9 @@ NeObj _input_(NeList* args)
             
             if (i < args->len - 1)
                 printString(" ");
-        
         }
 
-        char *entree=input("");
+        char *entree = input("");
 
     #else
         // à cause de linenoise, il faut mettre tout le texte dans une seule chaine de caractères
@@ -97,7 +96,7 @@ NeObj _input_(NeList* args)
             return NEO_VOID;
         }
 
-    #endif    
+    #endif
     return neo_str_create(entree);
 }
 

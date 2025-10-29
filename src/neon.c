@@ -923,8 +923,7 @@ void importFile(char* filename)
 {
     char* program = openFile(filename); // fonction dépendant du système cible
     
-    if (global_env->CODE_ERROR != 0)
-        return;
+    return_on_error();
 
     if (program == NULL) {
         global_env->CODE_ERROR = 67;
