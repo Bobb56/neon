@@ -1242,8 +1242,7 @@ void neobject_destroy(NeObj neo)
             mark(neo);
 
             if (NEO_TYPE(neo) == TYPE_STRING) {
-                //printString(neo.string->string);printString("  ");printInt((intptr_t)neo.string);newLine();
-                //string_destroy(neo.string);
+                string_destroy(neo.string);
             }
 
             else if (NEO_TYPE(neo) == TYPE_LIST) {
@@ -1332,6 +1331,9 @@ void neobject_aff(NeObj neo)
         }
         else if (NEO_TYPE(neo) == TYPE_PROMISE) {
             neo_promise_aff(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_EMPTY) {
+            printString("<empty>");
         }
 
         unmark(neo);

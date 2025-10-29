@@ -115,7 +115,7 @@ int intlist_max(intlist* list);
 /**************************strlist**********************/
 void strlist_destroy(strlist* list, bool bo);
 strlist* strlist_create(int len);
-//void strlist_aff(strlist* list);
+void strlist_aff(strlist* list);
 void strlist_append(strlist* list, char* chaine);
 //void strlist_resize(strlist* list, int newLen, bool freeElement);
 //void strlist_remove(strlist* list,int index, bool freeElement);

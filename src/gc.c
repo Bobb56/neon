@@ -1,10 +1,11 @@
-#include <stdlib.h>
-
 #include "headers/neonio.h"
 #include "headers/objects.h"
 #include "headers/gc.h"
 #include "headers/neon.h"
 #include "headers/errors.h"
+
+#include "headers/dynarrays.h"
+#include "headers/processcycle.h"
 
 
 // récupère l'objet d'après dans la liste chaînée
@@ -171,6 +172,40 @@ void gc_mark(NeObj obj) {
     }
 }
 
+// il faut aussi parcourir les contextes pour marquer les variables sauvegardées à d'autres niveaux
+void gc_context_mark(ptrlist* context) {
+    while (context != NULL && context->tete != NULL) {
+        NeSave* ns = context->tete;
+        gc_mark(ns->object);
+
+        if (context != NULL)
+            context = context->queue;
+    }
+}
+
+void gc_var_loc_mark(ptrlist* var_loc) {
+    while (var_loc != NULL) {
+        ptrlist* context = var_loc->tete;
+        gc_context_mark(context);
+
+        if (var_loc != NULL)
+            var_loc = var_loc->queue;
+    }
+}
+
+// on parcourt tous les contextes de tous les processus pour marquer les variables qu'ils ont sauvegardés
+void gc_processes_var_loc_mark(ProcessCycle* pc) {
+    ProcessCycle* ptr = pc;
+    do {
+        gc_var_loc_mark(ptr->process->var_loc);
+        ptr = ptr->next;
+    } while (ptr != pc);
+}
+
+
+
+
+
 // affiche l'ensemble des objets traqués par le GC
 void print_objects_list(void) {
     if (neo_is_void(global_env->OBJECTS_LIST)) {
@@ -205,6 +240,7 @@ void gc_mark_and_sweep(void) {
 
     // on marque tous les objets accessibles depuis les variables
     gc_nelist_mark(global_env->ADRESSES);
+    gc_processes_var_loc_mark(global_env->process_cycle);
 
     // on parcourt maintenant tous les containers et listes
     // on fait une première passe dans laquelle on supprime de manière non récursive les objets présents
@@ -218,6 +254,7 @@ void gc_mark_and_sweep(void) {
             // - sinon, pas besoin d'être récursif car il est à un autre endroit dans la global_env->OBJECTS_LIST et on va le supprimer aussi
             // a l'issue de cette suppression, les seuls objets restants à supprimer sont les NeObjects*, data et les refc des
             // containers et listes contenues dans global_env->OBJECTS_LISTS
+            neobject_aff(ptr);newLine();
             neobject_partial_destroy(ptr);
         }
     }
@@ -273,8 +310,7 @@ void gc_mark_and_sweep(void) {
 void gc_final_sweep(void) {
     if (neo_is_void(global_env->OBJECTS_LIST))
         return;
-
-
+    
     // on parcourt maintenant tous les containers et listes
     // on fait une première passe dans laquelle on supprime de manière non récursive les objets présents
     for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = get_next(ptr)) {

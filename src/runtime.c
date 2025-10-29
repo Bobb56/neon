@@ -37,7 +37,6 @@ void deleteContext(ptrlist* var_loc)
 {
     //suppression du contexte
     ptrlist* ctxt2 = (ptrlist*)var_loc->tete;
-
     
     if (ctxt2->tete == NULL) // aucun élément
     {
@@ -281,7 +280,6 @@ NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args) {
 
     // ouvre un nouveau contexte pour sauvegarder les variables locales de cet appel
     newContext(global_env->process_cycle->process->var_loc);
-
 
     // on sauvegarde les "variables à sauvegarder" de ce processus avant d'en ajouter d'autres
     ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
@@ -640,9 +638,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
             NeList* l = treeToList(&tree.syntaxtree->treelist);
 
 
-            if (global_env->CODE_ERROR != 0) {
-                return NEO_VOID;
-            }
+            return_on_error(NEO_VOID);
 
             return neo_list_convert(l);
         }

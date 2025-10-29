@@ -827,7 +827,7 @@ strlist* strlist_create(int len)
 
 
 
-/*
+
 void strlist_aff(strlist* list)
 {
   if (list->len == 0)
@@ -859,7 +859,7 @@ void strlist_aff(strlist* list)
   }
 }
 
-*/
+
 
 
 void strlist_append(strlist* list, char *chaine)
