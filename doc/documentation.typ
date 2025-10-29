@@ -1369,6 +1369,8 @@ Lorsque l'on dessine un objet `Text`, on doit spécifier `fgcolor` et `bgcolor` 
 
 La fonction `setTextTransparentColor` permet de spécifier une couleur qui sera utilisée #emph("en tant que transparent"). Par exemple, si on appelle `setTextTransparentColor` avec une certaine couleur, et qu'on utilise ensuite cette couleur en tant que paramètre `bgcolor`, le texte ne sera pas surligné.
 
+Par défaut, la couleur utilisée pour le transparent est la couleur `255`.
+
 *La fonction `getTextWidth`*
 
 Cette fonction calcule la largeur en pixels d'un objet `Text` donné, en prenant en compte le paramètre `size`.

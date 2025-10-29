@@ -375,6 +375,9 @@ char* sandwich(char* string, char car)
     /* fonction qui ajoute le caractère car avant et après la chaine de caractères string*/
     int len = strlen(string);
     char* newStr = neon_malloc(len + 3);
+
+    if (newStr == NULL)
+        return NULL;
   
     newStr[0]=car;
     newStr[len+1]=car;
@@ -392,6 +395,9 @@ char* sandwich(char* string, char car)
 char* addStr(char* str1, char* str2)// concatène deux chaines de caractères
 {
   char* newStr = neon_malloc(strlen(str1) + strlen(str2) + 1);
+
+  if (newStr == NULL)
+    return NULL;
   
   strcpy(newStr,str1);
   strcat(newStr,str2);

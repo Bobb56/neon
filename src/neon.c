@@ -612,6 +612,7 @@ NeonEnv* NeonEnv_init(void) {
 
     #ifdef TI_EZ80
     nio_init(&env->console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK, true);
+    env->text_transparent_color = 255;
     #endif
     
     return env;
@@ -622,6 +623,7 @@ NeonEnv* NeonEnv_set(NeonEnv* new_env) {
     global_env = new_env;
     #ifdef TI_EZ80
     nio_set_default(&global_env->console);
+    gfx_SetTextTransparentColor(global_env->text_transparent_color);
     #endif
     return global_env_sov;
 }
@@ -677,13 +679,13 @@ void neonInit(void)
         SetConsoleCtrlHandler(ctrlHandler, TRUE);
     #endif
 
-    NeonEnv_set(NeonEnv_init());
-
     #ifdef TI_EZ80
         kb_EnableOnLatch();
         gfx_Begin();
         set_neon_palette();
     #endif
+
+    NeonEnv_set(NeonEnv_init());
 
     return;
 }
@@ -909,31 +911,35 @@ void execFile(char* filename)
     
     char* program = openFile(filename); // fonction dépendant du système cible
     
-    if (global_env->CODE_ERROR != 0) {
-        printError(global_env->CODE_ERROR);
-        global_env->CODE_ERROR = 0;
-        neon_pause("Press ENTER to leave Neon...");
-        return;
+    if_error {
+        goto handle_error;
     }
-    
+
     global_env->FILENAME = strdup(filename);
     
     NeTree tree = createSyntaxTree(program);
     
     neon_free(program);
 
+    if_error {
+        goto handle_error;
+    }
+
     exec(tree);
     
-    if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
-    {
-        printError(global_env->CODE_ERROR);
-        global_env->CODE_ERROR = 0;
-        neon_pause("Press ENTER to leave Neon...");
+    if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
+        NeTree_destroy(tree);
+        goto handle_error;
     }
 
     NeTree_destroy(tree);
     
     return ;
+
+handle_error:
+    printError(global_env->CODE_ERROR);
+    neon_pause("Press ENTER to leave Neon...");
+    return;
 }
 
 

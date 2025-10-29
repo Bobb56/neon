@@ -1544,6 +1544,14 @@ NeTree createSyntaxTree(char* program)
 
     ast = ast_create(&types);
 
+    if (ast == NULL) {
+        global_env->CODE_ERROR = 12;
+        neon_free(types.tab);
+        neon_free(lines.tab);
+        toklist_destroy(tokens);
+        return TREE_VOID;
+    }
+
     parse(tokens, types, ast, &lines, 0);
 
     if_error {
@@ -1553,7 +1561,6 @@ NeTree createSyntaxTree(char* program)
         toklist_destroy(tokens);
         return TREE_VOID;
     }
-
 
     statements(&types, tokens, ast, &lines, 0);
 
@@ -1574,5 +1581,3 @@ NeTree createSyntaxTree(char* program)
 
     return tree;
 }
-
-

@@ -9,6 +9,7 @@
 
 #ifdef TI_EZ80
 #include "extern/nio_ce/headers/nspireio.h"
+#include "graphics.h"
 #endif
 
 typedef struct NeonEnv {
@@ -109,6 +110,11 @@ typedef struct NeonEnv {
     // la console de nio_ce
     #ifdef TI_EZ80
     nio_console console;
+    uint8_t text_transparent_color;
+
+    // cette variable permet d'associer à chaque type de figure son indice
+    // dans la liste CONTAINERS au moment où les types sont chargés en mémoire
+    struct ContainersAssoc graphic_containers;
     #endif
 
 } NeonEnv;

@@ -18,10 +18,6 @@
 #define FLOODFILL_STACK_SIZE        3328
 
 
-// cette variable globale statique permet d'associer à chaque type de figure son indice
-// dans la liste CONTAINERS au moment où les types sont chargés en mémoire
-static struct ContainersAssoc graphic_containers;
-
 void initGraphics(void) {
     int nb_types = 9;
 
@@ -30,55 +26,55 @@ void initGraphics(void) {
             .name = "Point",
             .fields = (char*[]) {"x", "y"},
             .nb_fields = 2,
-            .container_assoc_index = &graphic_containers.Point
+            .container_assoc_index = &global_env->graphic_containers.Point
         },
         (struct ContainerType) {
             .name = "Circle",
             .fields = (char*[]) {"x", "y", "radius", "color", "filled"},
             .nb_fields = 5,
-            .container_assoc_index = &graphic_containers.Circle
+            .container_assoc_index = &global_env->graphic_containers.Circle
         },
         (struct ContainerType) {
             .name = "Rect",
             .fields = (char*[]) {"x", "y", "width", "height", "color", "filled"},
             .nb_fields = 6,
-            .container_assoc_index = &graphic_containers.Rect
+            .container_assoc_index = &global_env->graphic_containers.Rect
         },
         (struct ContainerType) {
             .name = "Line",
             .fields = (char*[]) {"x0", "y0", "x1", "y1", "color"},
             .nb_fields = 5,
-            .container_assoc_index = &graphic_containers.Line
+            .container_assoc_index = &global_env->graphic_containers.Line
         },
         (struct ContainerType) {
             .name = "Text",
             .fields = (char*[]) {"text", "x", "y", "fgcolor", "bgcolor", "size"},
             .nb_fields = 6,
-            .container_assoc_index = &graphic_containers.Text
+            .container_assoc_index = &global_env->graphic_containers.Text
         },
         (struct ContainerType) {
             .name = "Triangle",
             .fields = (char*[]) {"x0", "y0", "x1", "y1", "x2", "y2", "color"},
             .nb_fields = 7,
-            .container_assoc_index = &graphic_containers.Triangle
+            .container_assoc_index = &global_env->graphic_containers.Triangle
         },
         (struct ContainerType) {
             .name = "Polygon",
             .fields = (char*[]) {"points", "color"},
             .nb_fields = 2,
-            .container_assoc_index = &graphic_containers.Polygon
+            .container_assoc_index = &global_env->graphic_containers.Polygon
         },
         (struct ContainerType) {
             .name = "Ellipse",
             .fields = (char*[]) {"x", "y", "a", "b", "color", "filled"},
             .nb_fields = 6,
-            .container_assoc_index = &graphic_containers.Ellipse
+            .container_assoc_index = &global_env->graphic_containers.Ellipse
         },
         (struct ContainerType) {
             .name = "FloodFill",
             .fields = (char*[]) {"x", "y", "color"},
             .nb_fields = 3,
-            .container_assoc_index = &graphic_containers.FloodFill
+            .container_assoc_index = &global_env->graphic_containers.FloodFill
         }
     };
 
@@ -303,6 +299,7 @@ NeObj getPixel(NeList* args) {
 NeObj setTextTransparentColor(NeList* args) {
     intptr_t color = neo_to_integer(ARG(0));
     gfx_SetTextTransparentColor(color);
+    global_env->text_transparent_color = color;
     return neo_none_create();
 }
 
@@ -310,7 +307,7 @@ NeObj setTextTransparentColor(NeList* args) {
 NeObj getTextWidth(NeList* args) {
     Container* c = neo_to_container(ARG(0));
 
-    if (c->type != graphic_containers.Text) {
+    if (c->type != global_env->graphic_containers.Text) {
         global_env->CODE_ERROR = 14;
         return neo_none_create();
     }
@@ -355,7 +352,7 @@ void draw_obj(NeObj obj) {
         Container* c = neo_to_container(obj);
         NeList* args = c->data;
 
-        if (c->type == graphic_containers.Circle) { // draws a circle
+        if (c->type == global_env->graphic_containers.Circle) { // draws a circle
             if (!is_number(ARG(0)) ||
                 !is_number(ARG(1)) ||
                 !is_number(ARG(2)) ||
@@ -376,7 +373,7 @@ void draw_obj(NeObj obj) {
             else
                 gfx_Circle(x, y, radius);
         }
-        else if (c->type == graphic_containers.Rect) { // draws a rectangle
+        else if (c->type == global_env->graphic_containers.Rect) { // draws a rectangle
             if (!is_number(ARG(0)) ||
                 !is_number(ARG(1)) ||
                 !is_number(ARG(2)) ||
@@ -399,7 +396,7 @@ void draw_obj(NeObj obj) {
             else
                 gfx_Rectangle(x, y, width, height);
         }
-        else if (c->type == graphic_containers.Line) { // draws a line
+        else if (c->type == global_env->graphic_containers.Line) { // draws a line
             if (!is_number(ARG(0)) ||
                 !is_number(ARG(1)) ||
                 !is_number(ARG(2)) ||
@@ -417,7 +414,7 @@ void draw_obj(NeObj obj) {
             gfx_SetColor(color);
             gfx_Line(x0, y0, x1, y1);
         }
-        else if (c->type == graphic_containers.Text) { // draws text
+        else if (c->type == global_env->graphic_containers.Text) { // draws text
             if (NEO_TYPE(ARG(0)) != TYPE_STRING ||
                 !is_number(ARG(1)) ||
                 !is_number(ARG(2)) ||
@@ -442,7 +439,7 @@ void draw_obj(NeObj obj) {
             gfx_SetTextScale(x_width+1, y_width+1);
             gfx_PrintStringXY((const char*)text, x, y);
         }
-        else if (c->type == graphic_containers.Triangle) { // draws a triangle
+        else if (c->type == global_env->graphic_containers.Triangle) { // draws a triangle
             if (!is_number(ARG(0)) ||
                 !is_number(ARG(1)) ||
                 !is_number(ARG(2)) ||
@@ -464,7 +461,7 @@ void draw_obj(NeObj obj) {
             gfx_SetColor(color);
             gfx_FillTriangle(x0, y0, x1, y1, x2, y2);
         }
-        else if (c->type == graphic_containers.Polygon) { // draws a polygon
+        else if (c->type == global_env->graphic_containers.Polygon) { // draws a polygon
             if (NEO_TYPE(ARG(0)) != TYPE_LIST ||
                 NEO_TYPE(ARG(1)) != TYPE_INTEGER) {
                     global_env->CODE_ERROR = 117;
@@ -482,7 +479,7 @@ void draw_obj(NeObj obj) {
                 }
                 Container* point = neo_to_container(points->tab[i]);
 
-                if (point->type != graphic_containers.Point ||
+                if (point->type != global_env->graphic_containers.Point ||
                     !is_number(point->data->tab[0]) ||
                     !is_number(point->data->tab[1])) {
                     global_env->CODE_ERROR = 117;
@@ -497,7 +494,7 @@ void draw_obj(NeObj obj) {
             gfx_Polygon(points_arr, points->len);
             neon_free(points_arr);
         }
-        else if (c->type == graphic_containers.Ellipse) { // draws an ellipse
+        else if (c->type == global_env->graphic_containers.Ellipse) { // draws an ellipse
             if (!is_number(ARG(0)) ||
                 !is_number(ARG(1)) ||
                 !is_number(ARG(2)) ||
@@ -520,7 +517,7 @@ void draw_obj(NeObj obj) {
             else
                 gfx_Ellipse(x, y, a, b);
         }
-        if (c->type == graphic_containers.FloodFill) { // fills an area
+        if (c->type == global_env->graphic_containers.FloodFill) { // fills an area
             if (!is_number(ARG(0)) ||
                 !is_number(ARG(1)) ||
                 NEO_TYPE(ARG(2)) != TYPE_INTEGER) {

@@ -312,13 +312,31 @@ void printError(int code)
     }
     setColor(DEFAULT);
     newLine();
-    affLine(global_env->FILENAME, global_env->LINENUMBER);
+    printErrSource(global_env->FILENAME, global_env->LINENUMBER);
+}
+
+
+// renvoie l'indice dans la chaîne de caractères correspondant à la ligne demandée
+int getFileIndex(char* program, int line) {
+    int compt = 1, i = 0;
+    while (compt < line && program[i] != '\0') {
+        if (program[i] == '\n')
+            compt++;
+        i++;
+    }
+
+    if (program[i] == '\0')
+        return -1;
+
+    // passe tous les espaces du début
+    while (program[i] == ' ') i++;
+    return i;
 }
 
 
 
 
-void affLine(char* file, int line) {
+void printErrSource(char* file, int line) {
     setColor(RED);
     printString(" # ");
     setColor(DEFAULT);
@@ -326,38 +344,30 @@ void affLine(char* file, int line) {
     if (file != NULL) {
         printString("Error happened in file ");
         setColor(GREEN); printString(file); setColor(DEFAULT);
-        printString(" at line ");
-
-        setColor(GREEN); printInt(line); setColor(DEFAULT);
-
-        printString(" :");
-        newLine();
-
-        setColor(RED);
-        printString(" # ");
-        setColor(DEFAULT);
 
         char* program = openFile(file);
-        int compt = 1, i = 0;
+        int debut = getFileIndex(program, line);
+        if (debut != -1) {
+            printString(" at line ");
 
-        // cherche le début de la ligne
-        while (compt < line && program[i] != '\0') {
-            if (program[i] == '\n')
-                compt++;
-            i++;
+            setColor(GREEN); printInt(line); setColor(DEFAULT);
+
+            printString(" :");
+            newLine();
+
+            setColor(RED);
+            printString(" # ");
+            setColor(DEFAULT);
+
+            // marque la fin de la ligne par '\0'
+            int i = debut;
+            while (program[i] != '\0' && program[i] != '\n') i++;
+
+            program[i] = '\0';
+
+            printString(program + debut);
         }
 
-        // passe tous les espaces du début
-        while (program[i] == ' ') i++;
-
-        // marque la fin de la ligne
-        int debut = i;
-        while (program[i] != '\0' && program[i] != '\n')
-            i++;
-
-        program[i] = '\0';
-
-        printString(program + debut);
         free(program);
     }
     else {

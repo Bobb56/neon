@@ -499,7 +499,7 @@ NeObj _failwith_(NeList* args)
     printString(neo_to_string(ARG(0)));
     newLine();
     setColor(DEFAULT);
-    affLine(global_env->FILENAME, global_env->LINENUMBER);
+    printErrSource(global_env->FILENAME, global_env->LINENUMBER);
 
     global_env->CODE_ERROR = 1;
     

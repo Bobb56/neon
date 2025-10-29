@@ -22,7 +22,7 @@ void neon_free(void* ptr);
 */
 
 void printError(int code);
-void affLine(char* file, int line);
+void printErrSource(char* file, int line);
 int get_exception_from_code_error(int code_error);
 int allocatedMem(void);
 void segfault(void);

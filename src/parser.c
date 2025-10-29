@@ -305,8 +305,23 @@ bool is_operateurs1(char* string, int debut, int current_index) {
 
 Ast** ast_create(intlist* typeTok) {
     Ast** ast = neon_malloc(sizeof(Ast*) * typeTok->len);
+
+    if (ast == NULL) {
+        global_env->CODE_ERROR = 12;
+        return NULL;
+    }
+
     for (int i = 0 ; i < typeTok->len ; i++) {
         ast[i] = neon_malloc(sizeof(Ast));
+
+        if (ast[i] == NULL) {
+            global_env->CODE_ERROR = 12;
+            for (int j=0 ; j < i ; j++)
+                neon_free(ast[j]);
+            neon_free(ast);
+            return NULL;
+        }
+
         ast[i]->type = typeTok->tab[i];
         ast[i]->fin = i;
         ast[i]->suiv = NULL;
@@ -317,6 +332,12 @@ Ast** ast_create(intlist* typeTok) {
 
 void ast_push(Ast* ast) {
     Ast* ast2 = neon_malloc(sizeof(Ast));
+
+    if (ast2 == NULL) {
+        global_env->CODE_ERROR = 12;
+        return;
+    }
+
     ast2->fin = ast->fin;
     ast2->type = ast->type;
     ast2->suiv = ast->suiv;
@@ -330,8 +351,11 @@ void ast_push_check(Ast** ast, int fin, int type) {
     //if (ast[0]->fin != fin || ast[0]->type != type)
     //{
         ast_push(ast[0]);
-        ast[0]->type = type;
-        ast[0]->fin = fin;
+
+        if (global_env->CODE_ERROR == 0) {
+            ast[0]->type = type;
+            ast[0]->fin = fin;
+        }
     //}
 }
 
@@ -526,8 +550,29 @@ bool isFull(char* string)
         return true;
 
     toklist* tokens = toklist_create(0);
+
+    if (tokens == NULL) {
+        global_env->CODE_ERROR = 12;
+        return false;
+    }
+
     intlist types = intlist_create(0);
+
+    if_error {
+        global_env->CODE_ERROR = 12;
+        toklist_destroy(tokens);
+        return false;
+    }
+
     intlist lines = intlist_create(0);
+
+    if_error {
+        global_env->CODE_ERROR = 12;
+        toklist_destroy(tokens);
+        neon_free(types.tab);
+        return false;
+    }
+
     Ast** ast;
 
     cut(tokens, &types, string, true, &lines);
@@ -547,6 +592,7 @@ bool isFull(char* string)
     neon_free(types.tab);
     neon_free(lines.tab);
 
+    global_env->LINENUMBER = -1;
     
     if (global_env->CODE_ERROR == 29 || global_env->CODE_ERROR == 26 || global_env->CODE_ERROR == 11 || global_env->CODE_ERROR == 77)
     {
@@ -585,6 +631,11 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
         string = sandwich(str, '\n');
     else
         string = addStr(str, "\n");
+
+    if (string == NULL) {
+        global_env->CODE_ERROR = 12;
+        return ;
+    }
 
     tokens->source_string = string;
 
@@ -787,11 +838,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
         //fins tokens simples
         finTokensSimples(string, &isPotentiallyNumber, &isPotentiallyString, &isPotentiallyWord, &isPotentiallyOp, &isPotentiallyLongComm, &isPotentiallyString2, &isPotentiallyComm, &isPotentiallyHexBin, &char2, &char1, &nouvTok, tokens, types, lines, &debTok, i, &stepNumber, &stepHexBin, len_string, &nombrePoints);
 
-        if (global_env->CODE_ERROR != 0)
-        {
-            return;
-        }
-
+        return_on_error();
 
         
         //debut tokens simples
@@ -864,6 +911,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         intlist_append(typeTok,TYPE_STRING);
         intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyString2)=false;
+
+        return_on_error();
     }
     
     if ((((*char1)=='.' && (*stepNumber)==2) || (!isdigit(*char1) && (*char1) != '.')) && (*isPotentiallyNumber) && !(*stepNumber==1) || (*isPotentiallyNumber && *char1=='.' && !isdigit(string[i+1]))) // fin de nombre
@@ -881,20 +930,13 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         (*isPotentiallyNumber)=false;
         *stepNumber = 0;
         *nombrePoints = 0;
+
+        return_on_error();
     }
 
     if (*isPotentiallyHexBin && *stepHexBin == 2 && !isdigit(*char1) && !(*char1 >= 'a' && *char1 <= 'f') && !(*char1 >= 'A' && *char1 <= 'F')) // fin hex-bin
-    {
-        // conversion en nombre décimal
-
-        //intptr_t trad = (string[*debTok+1] == 'x') ? hexToDec(string, *debTok + 2, i - *debTok - 2) : binToDec(string, 2 + *debTok, i - *debTok - 2);
-
-        //if (global_env->CODE_ERROR != 0)
-        //    return ;
-        
+    {        
         Token nb = toksub(string, *debTok, i);
-
-        // ajout du nombre converti
         toklist_append(tokenAdd,nb);
         (*nouvTok)=true;
         intlist_append(typeTok,TYPE_INTEGER);
@@ -902,6 +944,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         (*isPotentiallyHexBin)=false;
         *stepHexBin = 0;
         *nombrePoints = 0;
+
+        return_on_error();
     }
     
     
@@ -913,6 +957,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         intlist_append(typeTok,TYPE_WORD);
         intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyWord)=false;
+
+        return_on_error();
     }
     
     
@@ -952,6 +998,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         intlist_append(typeTok,TYPE_OPERATOR);
         intlist_append(lines, global_env->LINENUMBER);
         (*isPotentiallyOp)=false;
+
+        return_on_error();
     }
     
     // elements d’un caractere
@@ -970,6 +1018,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         (*isPotentiallyNumber)=false;
         (*isPotentiallyWord)=false;
         (*isPotentiallyOp)=false;
+
+        return_on_error();
     }
     
     
@@ -982,6 +1032,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         (*isPotentiallyNumber)=false;
         (*isPotentiallyWord)=false;
         (*isPotentiallyOp)=false;
+
+        return_on_error();
     }
     
     
@@ -994,6 +1046,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         (*isPotentiallyNumber)=false;
         (*isPotentiallyWord)=false;
         (*isPotentiallyOp)=false;
+
+        return_on_error();
     }
     
     if (!(*isPotentiallyLongComm) && !(*isPotentiallyComm) && !(*isPotentiallyNumber) && !(*isPotentiallyString) && !(*isPotentiallyWord) && !(*isPotentiallyOp) && !(*isPotentiallyString2) && (*char1)==',')
@@ -1005,6 +1059,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         (*isPotentiallyNumber)=false;
         (*isPotentiallyWord)=false;
         (*isPotentiallyOp)=false;
+
+        return_on_error();
     }
     
     
@@ -1032,6 +1088,8 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         (*isPotentiallyWord)=false;
         (*isPotentiallyOp)=false;
         (*isPotentiallyComm)=false;
+
+        return_on_error();
     }
     return ;
 }
@@ -1303,9 +1361,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
         // fin des fins et debut des debuts (hi hi hi)
 
-        if (global_env->CODE_ERROR != 0) {
-            return;
-        }
+        return_on_error();
 
         
         debutTokensComposes(k, &typeTok, tokenAdd, &debTok2, &debTok3, &lastDebTok, &nouvTokComp, &isPotentiallyList, &isPotentiallyPar, &isPotentiallyFonc, &isPotentiallyListIndex, &isPotentiallyBlock, &isPotentiallyInst, &listIndexStep, &foncStep, &instStep, &foncParDeb, &indexParDeb, &listeParDeb, &nbPar, &nbCro);
@@ -1418,7 +1474,6 @@ void annulerOuPoursuivre(bool* isPotentiallyPar, bool* isPotentiallyFonc, int* f
             *isPotentiallyFonc = 0;
         }
     }
-    
     
     
     if ((*isPotentiallyInst) && (*instStep)==1) // annuler ou poursuivre l’instruction de bloc
