@@ -1,6 +1,7 @@
 #ifndef DYNARRAYS_H
 #define DYNARRAYS_H
 
+#include <stdint.h>
 #include "constants.h"
 
 typedef struct ChainonPtr
@@ -11,12 +12,11 @@ typedef struct ChainonPtr
 
 
 
-
 typedef struct
 {
   int* tab;
-  int len;
-  int capacity;
+  unsigned len;
+  uint8_t capacity;
     
 } intlist;
 
@@ -49,7 +49,7 @@ typedef struct
 
 typedef struct Token {
   char* debut;
-  int len;
+  uint16_t len;
 } Token;
 
 typedef struct toklist {

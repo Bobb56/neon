@@ -254,7 +254,6 @@ void gc_mark_and_sweep(void) {
             // - sinon, pas besoin d'être récursif car il est à un autre endroit dans la global_env->OBJECTS_LIST et on va le supprimer aussi
             // a l'issue de cette suppression, les seuls objets restants à supprimer sont les NeObjects*, data et les refc des
             // containers et listes contenues dans global_env->OBJECTS_LISTS
-            neobject_aff(ptr);newLine();
             neobject_partial_destroy(ptr);
         }
     }

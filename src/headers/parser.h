@@ -10,7 +10,7 @@
 typedef struct Ast
 {
     uint8_t type;
-    int fin;
+    unsigned fin;
     struct Ast* suiv;
 } Ast;
 
@@ -40,7 +40,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
 void verificationGrammaire(toklist* tokens, Ast** ast, bool* isPotentiallyExpr, int* debExpr);
 void compConditionBlock(int cas, bool* isPotentiallyConBlock, int *conBlockStep, toklist* tokens, intlist* types, int *i, char* typeact, int* debConBlock);
 void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int offset);
-void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, intlist* lines);
+void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, intlist* lines, bool free_original_string);
 void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int offset);
 Ast** ast_create(intlist* typeTok);
 void ast_push(Ast* ast);

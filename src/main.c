@@ -67,43 +67,34 @@ int main (int argc, char* argv[])
     #ifdef TI_EZ80
         variable_append(global_env, "__args__", l);
 
-        // on regarde s'il y a un launcher Neon
-        if (launcher(LAUNCHER_NAME)) {
+        char* filename = argsAns();
+        if (filename != NULL) {
+            execFile(filename);
+            neon_free(filename);
+        }
+        else if (launcher(LAUNCHER_NAME)) {
             execFile(LAUNCHER_NAME);
         }
         else {
-            // récupération du nom de fichier si existant
-            char* filename = argsAns();
-            if (filename == NULL) // lance le terminal
-            {
-                startMessage();
-                terminal();
-            }
-            else
-            {
-                execFile(filename);
-                neon_free(filename);
-            }
+            startMessage();
+            terminal();
         }
     #else
         // ajout des arguments dans le tableau contenant les arguments du programme
         for (int i = 2 ; i < argc ; i++)
-            neo_list_append(l,neo_str_create(strdup(argv[i])));
+            neo_list_append(l, neo_str_create(strdup(argv[i])));
 
         variable_append(global_env, "__args__", l);
-        if (launcher(LAUNCHER_NAME)) {
+
+        if (argc >= 2) {
+            execFile(argv[1]);
+        }
+        else if (launcher(LAUNCHER_NAME)) {
             execFile(LAUNCHER_NAME);
         }
         else {
-            if (argc >= 2)
-            {
-                execFile(argv[1]);
-            }
-            else
-            {
-                startMessage();
-                terminal();
-            }
+            startMessage();
+            terminal();
         }
     #endif
 

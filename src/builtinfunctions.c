@@ -244,7 +244,7 @@ NeObj _eval_(NeList* args)
     char* sov = global_env->FILENAME;
     global_env->FILENAME = NULL;
     
-    NeTree tree = createExpressionTree(exp);
+    NeTree tree = createExpressionTree(exp, false);
 
     if (global_env->CODE_ERROR != 0) {
         neon_free(sov);
@@ -602,7 +602,7 @@ NeObj _list_comp_(NeList* args)
     _affect2(i, ARG(1)); // valeur de debut
 
 
-    NeTree cond = createExpressionTree(neo_to_string(ARG(4)));
+    NeTree cond = createExpressionTree(neo_to_string(ARG(4)), false);
 
     if (global_env->CODE_ERROR != 0)
     {
@@ -611,7 +611,7 @@ NeObj _list_comp_(NeList* args)
         return NEO_VOID;
     }
 
-    NeTree val = createExpressionTree(neo_to_string(ARG(5)));
+    NeTree val = createExpressionTree(neo_to_string(ARG(5)), false);
 
     if (global_env->CODE_ERROR != 0)
     {

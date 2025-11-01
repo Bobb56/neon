@@ -203,7 +203,6 @@ void neo_container_aff(NeObj neo) {
         
         NeObj neo_fun = global_env->ADRESSES->tab[index];
         UserFunc* fun = neo_fun.userfunc;
-        bool isMethod = NEO_TYPE(neo_fun) == TYPE_USERMETHOD;
         
         NeList args = (NeList) {
             .tab = (NeObj[]) {neo},
@@ -249,7 +248,6 @@ char* neo_container_str(NeObj neo) {
 
         NeObj neo_fun = global_env->ADRESSES->tab[index];
         UserFunc* fun = neo_fun.userfunc;
-        bool isMethod = NEO_TYPE(neo_fun) == TYPE_USERMETHOD;
 
         NeList args = (NeList) {
             .tab = (NeObj[]) {neo},
@@ -1488,7 +1486,6 @@ bool neo_equal(NeObj _op1, NeObj _op2)
         if (index >= 0) {
             NeObj neo_fun = global_env->ADRESSES->tab[index];
             UserFunc* fun = neo_fun.userfunc;
-            bool isMethod = NEO_TYPE(neo_fun) == TYPE_USERMETHOD;
 
             NeList args = (NeList) {
                 .tab = (NeObj[]) {_op1, _op2},
@@ -1626,7 +1623,6 @@ int neo_compare(NeObj a, NeObj b)
         if (index >= 0) {
             NeObj neo_fun = global_env->ADRESSES->tab[index];
             UserFunc* fun = neo_fun.userfunc;
-            bool isMethod = NEO_TYPE(neo_fun) == TYPE_USERMETHOD;
 
             NeList args = (NeList) {
                 .tab = (NeObj[]) {a, b},
@@ -1759,7 +1755,6 @@ NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname) {
     else {
         NeObj neo_fun = global_env->ADRESSES->tab[index];
         UserFunc* fun = neo_fun.userfunc;
-        bool isMethod = NEO_TYPE(neo_fun) == TYPE_USERMETHOD;
 
         NeList args = (NeList) {
             .tab = (NeObj[]) {op1, op2},
@@ -1787,7 +1782,6 @@ NeObj callOverloadedUnaryOperator(NeObj op1, char* opname) {
     else {
         NeObj neo_fun = global_env->ADRESSES->tab[index];
         UserFunc* fun = neo_fun.userfunc;
-        bool isMethod = NEO_TYPE(neo_fun) == TYPE_USERMETHOD;
 
         NeList args = (NeList) {
             .tab = (NeObj[]) {op1},

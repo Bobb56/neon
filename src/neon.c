@@ -847,9 +847,7 @@ void terminal(void)
         }
 
 
-        tree = createSyntaxTree(exp);
-
-        neon_free(exp);
+        tree = createSyntaxTree(exp, true);
 
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
         {
@@ -917,10 +915,8 @@ void execFile(char* filename)
 
     global_env->FILENAME = strdup(filename);
     
-    NeTree tree = createSyntaxTree(program);
+    NeTree tree = createSyntaxTree(program, true);
     
-    neon_free(program);
-
     if_error {
         goto handle_error;
     }
@@ -964,8 +960,7 @@ void importFile(char* filename)
     global_env->FILENAME = strdup(filename);
     
     // exécution du fichier
-    NeTree tree = createSyntaxTree(program);
-    neon_free(program);
+    NeTree tree = createSyntaxTree(program, true);
 
     if (global_env->CODE_ERROR != 0)
     {

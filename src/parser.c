@@ -575,7 +575,7 @@ bool isFull(char* string)
 
     Ast** ast;
 
-    cut(tokens, &types, string, true, &lines);
+    cut(tokens, &types, string, true, &lines, false);
 
     if (global_env->CODE_ERROR == 0) {
         ast = ast_create(&types);
@@ -620,7 +620,7 @@ void write_libtok(char* buf, char* string, int size_string, int size)
 
 
 
-void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, intlist* lines)
+void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, intlist* lines, bool free_original_str)
 {
     /*fonction qui coupe la chaine de caractères en tokens
     traiterStatements est un booléen qui indique s'il faut regrouper les statements*/
@@ -631,6 +631,9 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
         string = sandwich(str, '\n');
     else
         string = addStr(str, "\n");
+
+    if (free_original_str)
+        free(str);
 
     if (string == NULL) {
         global_env->CODE_ERROR = 12;
@@ -783,7 +786,6 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
     
     char char2=0; // va contenir le caractere precedent
     char char1=0; // va contenir le caractère actuel
-    char* char1_2; // peut servir d'intermédiaire quand on veut transformer char1 en chaine de caractères
     
     int nombrePoints=0; // nombre de points comptes apres le debut d’un nombre
 
@@ -2009,7 +2011,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             
             // ici, il faut créer le STATEMENTTYPE
 
-            int typeChoisi;
+            int typeChoisi = TYPE_UNSPECIFIED;
             
             switch (ast[debStat]->type)
             {

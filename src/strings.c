@@ -528,7 +528,7 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
 
 // sert à savoir si une variable commence par prefix~
 bool has_strict_prefix(char* string, char* prefix) {
-    int len = strlen(prefix);
+    unsigned len = strlen(prefix);
     if (len >= strlen(string))
         return false;
 

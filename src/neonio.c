@@ -158,7 +158,7 @@
             char* strNombre = (char*)neon_malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
             int err = snprintf(strNombre, 310, "%lf", number);//converison du nombre
             
-            if (err < 0 || err != strlen(strNombre))
+            if (err < 0 || (unsigned)err != strlen(strNombre))
             {
                 global_env->CODE_ERROR = 66;
                 neon_free(strNombre);
@@ -202,9 +202,9 @@
     void clearConsole(void)
     {
         #if defined(LINUX)
-            int result = system("clear");
+            system("clear");
         #elif defined(WINDOWS)
-            int result = system("cls");
+            system("cls");
         #endif
     }
 

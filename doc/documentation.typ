@@ -9,10 +9,10 @@
   #v(1em) // Un petit espace après le titre pour un sous-titre si besoin
   #text(1.5em, "Documentation") // Un sous-titre optionnel
   
-  #text(1em, "v1.0") // Un sous-titre optionnel
+  #text(1em, "v1.1") // Un sous-titre optionnel
 ]
 
-#emph("Cette documentation s'applique à la version 4.0 de Neon.")
+#emph("Cette documentation s'applique à la version 4.1 de Neon.")
 
 = Introduction
 
@@ -31,6 +31,8 @@ L'interpréteur Neon dispose de deux modes : un mode console, permettant d'entre
 L'extension de fichiers officiellement supportée pour les programmes Neon est l'extension `.ne`. Il est recommandé de nommer tous les programmes Neon avec cette extension. Pour lancer un programme avec le mode exécution, il suffit d'envoyer le nom du fichier en argument à l'interpréteur Neon. Le nom du fichier peut être suivi d'arguments à envoyer au programme Neon.
 
 Sur la plateforme `TI_EZ80`, les fichier Neon sont des AppVars contenant directement le code Neon en texte. Les noms de ces AppVars sont sans extensions. Pour lancer un fichier en mode exécution, il faut mettre le nom de ce fichier dans la variable `Ans` ou `Rép`. Pour cela, écrivez le nom du fichier entre guillemets dans l'écran principal de la calculatrice, et appuyez sur ENTRÉE. Lors de son lancement, le programme NEON va détecter le nom de fichier dans cette variable et va l'exécuter.
+
+Depuis les mises à jour bloquant l'assembleur sur calculatrices TI, on ne peut plus lancer directement de programmes assembleur, et il est nécessaire d'utiliser des hacks comme `arTIfiCE` (https://yvantt.github.io/arTIfiCE) par exemple. arTIfiCE utilisant une faille de l'interpréteur du TI-Basic, il écrase la valeur de la variable `Ans` (ou `Rép`), ce qui rend impossible le lancement direct de programmes. Je recommande donc l'installation de shells comme `Cesium` (https://github.com/mateoconlechuga/cesium) ou encore du hook `asmhook` de Jacobly (https://tipla.net/a2643391) afin de contourner `arTIfiCE` après une première utilisation de celui-ci.
 
 Afin de faciliter le développement en Neon, l'interpréteur est compatible avec les AppVars Python.
 
@@ -53,6 +55,7 @@ Si la calculatrice contient un AppVar nommé `LAUNCHER` et commençant par les c
 Sur les autres plateformes :\
 Si le dossier courant contient un fichier nommé `__launcher__.ne`, celui-ci sera automatiquement exécuté au lancement de l'interpréteur.
 
+À noter que si `Ans` (ou `Rép`) contient un nom de fichier, Neon préférera toujours lancer ce fichier directement plutôt que de lancer le launcher.
 
 === Le mode console
 
@@ -1318,6 +1321,10 @@ Ainsi, il y a 8 teintes de rouge et de vert différentes et 4 teintes de bleu di
 Parce qu'il n'est pas pratique de calculer `r * 32 + g * 4 + b` à chaque fois que l'on a besoin d'une couleur, il existe une fonction `rgb` pour convertir des couleurs du format RGB au format de Neon sur un octet.
 
 Pour le dessin de texte (l'objet `Text`), la couleur 255 représente la couleur transparent.
+
+Voici néanmoins une représentation de toutes les couleurs accessibles en Neon :
+
+#image("neon_palette.png")
 
 *La fonction `rgb`*
 

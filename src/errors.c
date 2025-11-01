@@ -21,7 +21,7 @@ static const char* error_messages[NB_ERRORS] = {
     "Call to an invalid function",
     "The for loop start or end value is not an integer",
     "Incorrect function definition",
-    "Memory error",
+    "Not enough memory to continue. Try running the program without a shell",
     "Incorrect index for subtree deletion",
     "Invalid arguments provided in function call",
     "This object is not indexable",

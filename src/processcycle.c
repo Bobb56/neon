@@ -315,7 +315,7 @@ int create_new_process(NeTree tree, bool isInitialized) {
     *global_env->PROMISES_CNT.tab[id] = 1;
     global_env->PROCESS_FINISH.tab[id] = 0;
 
-    Process* p = ProcessCycle_add(global_env->process_cycle, tree, id, isInitialized); // le processus principal a un id de zéro
+    ProcessCycle_add(global_env->process_cycle, tree, id, isInitialized); // le processus principal a un id de zéro
 
     return id;
 }

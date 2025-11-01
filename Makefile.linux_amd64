@@ -37,6 +37,9 @@ clean:
 test:
 	cd tests/bugs && ./tests.sh $1 && cd -
 
+test-log:
+	cd tests/bugs && ./tests.sh log $1 && cd -
+
 test-novalgrind:
 	cd tests/bugs && ./testsnov.sh $1 && cd -
 

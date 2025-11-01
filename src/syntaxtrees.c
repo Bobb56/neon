@@ -729,8 +729,8 @@ NeTree createExpressionTreeAux(Ast** ast, toklist* tokens, intlist* lines, int o
 
 
 
-
-NeTree createExpressionTree(char* string)
+// Cette fonction libère dès qu'elle n'en n'a plus besoin la chaîne de caractères donnée en argument
+NeTree createExpressionTree(char* string, bool free_string)
 {
     toklist* tokens = toklist_create(0);
     intlist types = intlist_create(0);
@@ -739,7 +739,7 @@ NeTree createExpressionTree(char* string)
 
     //printf("Début cut\n");
 
-    cut(tokens, &types, string, true, &lines);
+    cut(tokens, &types, string, true, &lines, free_string);
 
     if_error {
         neon_free(types.tab);
@@ -1526,14 +1526,14 @@ NeTree createSyntaxTreeAux(Ast** ast, toklist* tokens, intlist* lines, int offse
 Cette fonction prend en argument une chaine de caractères représentant un programme, et un pointeur vers un arbre initialisé
 Elle construit dans ce pointeur l'arbre syntaxique associé à la chaine de caractères
 */
-NeTree createSyntaxTree(char* program)
+NeTree createSyntaxTree(char* program, bool free_after)
 {
     toklist* tokens = toklist_create(0);
     intlist types = intlist_create(0);
     intlist lines = intlist_create(0);
     Ast** ast;
 
-    cut(tokens, &types, program, true, &lines);
+    cut(tokens, &types, program, true, &lines, free_after);
 
     if_error {
         neon_free(types.tab);

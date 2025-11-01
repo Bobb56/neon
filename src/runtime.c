@@ -954,7 +954,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
             }
             
             // on récupère le véritable index
-            long int index2 = neo_to_integer(index);
+            uintptr_t index2 = neo_to_integer(index);
             neobject_destroy(index);
             
             // vérifications supplémentaires
@@ -1124,7 +1124,7 @@ NeObj* get_address(NeTree tree) {
                 return NULL;
             }
             
-            long int index2 = neo_to_integer(index);
+            uintptr_t index2 = neo_to_integer(index);
             neobject_destroy(index);
             
 

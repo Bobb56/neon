@@ -6,6 +6,51 @@
 #include "headers/runtime.h"
 #include "headers/neon.h"
 #include "headers/errors.h"
+#include "headers/operators.h"
+
+
+void* operators_functions[NBOPERATEURS] = {
+    (void*)_and,
+    (void*)_or,
+    (void*)_xor,
+    (void*)_add,
+    (void*)_mul,
+    (void*)_sub,
+    (void*)_div,
+    (void*)_pow,
+    (void*)_equal,
+    (void*)_notEq,
+    (void*)_infEqual,
+    (void*)_supEqual,
+    (void*)_inf,
+    (void*)_sup,
+    (void*)_affectNone,
+    (void*)_addEqual,
+    (void*)_subEqual,
+    (void*)_mulEqual,
+    (void*)_divEqual,
+    (void*)_incr,
+    (void*)_decr,
+    (void*)_not,
+    (void*)_mod,
+    (void*)_eucl,
+    (void*)_ref,
+    (void*)_goIn,
+    (void*)_deref,
+    (void*)_minus,
+    (void*)_del,
+    (void*)_affect,
+    NULL,
+    (void*)_exponent,
+    (void*)_implique,
+    (void*)_in,
+    NULL,
+    NULL,
+    (void*)_swap,
+    NULL,
+    NULL,
+    NULL
+};
 
 
 //definition des fonctions attribuees aux operateurs
