@@ -21,7 +21,6 @@ def free(ARG):
     T3[T2[ARG]] = T3[PTR]
     T3[PTR] = temp
     
-    
     T2[T3[T2[ARG]]] = T2[ARG]
     T2[ARG] = PTR
 

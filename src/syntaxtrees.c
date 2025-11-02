@@ -93,9 +93,6 @@ NeTree createExpressionTreeAux(Ast** ast, toklist* tokens, intlist* lines, int o
     
     // tous les tokens sont des retours à la ligne
     if (count == real_length) {
-        printString("z0\n");
-        toklist_aff(tokens);
-        ast_aff(ast, tokens->len);
         global_env->LINENUMBER = lines->tab[offset];
         global_env->CODE_ERROR = 30;
         return TREE_VOID;
@@ -264,9 +261,9 @@ NeTree createExpressionTreeAux(Ast** ast, toklist* tokens, intlist* lines, int o
                                                    tree.container_lit->attributes.trees[j].attribute_lit->name
                                             ) == 0) //doublon
                             {
-                                NeTree_destroy(tree);
                                 global_env->CODE_ERROR = 86;
                                 global_env->LINENUMBER = tree.container_lit->attributes.trees[i].attribute_lit->line;
+                                NeTree_destroy(tree);
                                 return TREE_VOID;
                             }
                         }
@@ -295,9 +292,9 @@ NeTree createExpressionTreeAux(Ast** ast, toklist* tokens, intlist* lines, int o
 
                     if (noms->len != tree.container_lit->attributes.len)
                     {
-                        NeTree_destroy(tree);
                         global_env->CODE_ERROR = 83;
                         global_env->LINENUMBER = tree.container_lit->line;
+                        NeTree_destroy(tree);
                         return TREE_VOID;
                     }
 

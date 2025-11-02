@@ -1,12 +1,13 @@
 #ifndef TREES_H
 #define TREES_H
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "neobj.h"
 
 
-#define GENERAL_INFO            TreeType type; unsigned int line;
+#define GENERAL_INFO            TreeType type; uint16_t line;
 #define TREE_TYPE(tree)         (tree.general_info->type)
 #define TREE_LINE(tree)         (tree.general_info->line)
 
@@ -15,30 +16,30 @@
 
 
 typedef enum {
-    TypeBinaryOp = 1,
-    TypeUnaryOp = 2,
-    TypeConst = 3,
-    TypeFor = 4,
-    TypeForeach = 5,
-    TypeWhile = 6,
-    TypeIf = 7,
-    TypeElif = 8,
-    TypeElse = 9,
-    TypeTryExcept = 10,
-    TypeFunctiondef = 11,
-    TypeVariable = 12,
-    TypeListindex = 13,
-    TypeFunctioncall = 14,
-    TypeAttribute = 15,
-    TypeAtomic = 16,
-    TypeConditionblock = 17,
-    TypeList = 18,
-    TypeKeyword = 19,
-    TypeKWParam = 20,
-    TypeSyntaxtree = 21,
-    TypeContainerLit = 22,
-    TypeAttributeLit = 23,
-    TypeExceptBlock = 24
+    TypeBinaryOp        = 1,
+    TypeUnaryOp         = 2,
+    TypeConst           = 3,
+    TypeFor             = 4,
+    TypeForeach         = 5,
+    TypeWhile           = 6,
+    TypeIf              = 7,
+    TypeElif            = 8,
+    TypeElse            = 9,
+    TypeTryExcept       = 10,
+    TypeFunctiondef     = 11,
+    TypeVariable        = 12,
+    TypeListindex       = 13,
+    TypeFunctioncall    = 14,
+    TypeAttribute       = 15,
+    TypeAtomic          = 16,
+    TypeConditionblock  = 17,
+    TypeList            = 18,
+    TypeKeyword         = 19,
+    TypeKWParam         = 20,
+    TypeSyntaxtree      = 21,
+    TypeContainerLit    = 22,
+    TypeAttributeLit    = 23,
+    TypeExceptBlock     = 24
 } TreeType;
 
 
@@ -75,7 +76,7 @@ typedef union NeTree {
 
 struct TreeList {
     NeTree* trees;
-    int len;
+    uint16_t len;
 };
 
 struct BinaryOp {

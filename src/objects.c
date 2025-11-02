@@ -645,14 +645,10 @@ void neo_exception_aff(NeObj neo) {
 
 NeObj neo_const_create(char* string) // attention, la chaine de caractères passée en argument va être mise dans le NeObject directement sans être copiée. Donc elle doit être dans le tas, et ne pas être libérée par l'extérieur
 {
-    NeObj neo = neobject_create(TYPE_CONST);
-    neo.string = neon_malloc(sizeof(String));
-    neo.string->refc = 1;
-    neo.string->string = string;
+    NeObj neo = neo_str_create(string);
+    neo.type = TYPE_CONST;
     return neo;
 }
-
-
 
 
 
@@ -1239,7 +1235,7 @@ void neobject_destroy(NeObj neo)
             
             mark(neo);
 
-            if (NEO_TYPE(neo) == TYPE_STRING) {
+            if (NEO_TYPE(neo) == TYPE_STRING || NEO_TYPE(neo) == TYPE_CONST) {
                 string_destroy(neo.string);
             }
 
@@ -1428,6 +1424,9 @@ char* type(NeObj neo)
     if (NEO_TYPE(neo) == TYPE_STRING)
         return "String";
 
+    if (NEO_TYPE(neo) == TYPE_CONST)
+        return "Const";
+
     if (NEO_TYPE(neo) == TYPE_INTEGER)
         return "Integer";
 
@@ -1514,6 +1513,18 @@ bool neo_equal(NeObj _op1, NeObj _op2)
     else if (NEO_TYPE(_op1)==TYPE_STRING)
     {
         if (NEO_TYPE(_op2)==TYPE_STRING)
+        {
+            return strcmp(neo_to_string(_op1),neo_to_string(_op2)) == 0;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    else if (NEO_TYPE(_op1)==TYPE_CONST)
+    {
+        if (NEO_TYPE(_op2)==TYPE_CONST)
         {
             return strcmp(neo_to_string(_op1),neo_to_string(_op2)) == 0;
         }
@@ -1653,7 +1664,7 @@ int neo_compare(NeObj a, NeObj b)
             return 0;
     }
     
-    else if (NEO_TYPE(a) == TYPE_STRING && NEO_TYPE(b) == TYPE_STRING)
+    else if ((NEO_TYPE(a) == TYPE_STRING && NEO_TYPE(b) == TYPE_STRING) || (NEO_TYPE(a) == TYPE_CONST && NEO_TYPE(b) == TYPE_CONST))
     {
         return strcmp(neo_to_string(a), neo_to_string(b));
     }

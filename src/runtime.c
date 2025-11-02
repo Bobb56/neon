@@ -1047,6 +1047,12 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
             NeObj value = get_var_value(tree.variable->var);
 
             if (NEO_TYPE(value) == TYPE_EMPTY) {
+                // CONSTEST {
+                // char* name = get_name(tree.variable->var);
+                // NeObj const_value = neo_const_create(strdup(name));
+                // replace_var(tree.variable->var, const_value);
+                // return neo_copy(const_value);
+                // CONSTEST }
                 global_env->CODE_ERROR = 5;
                 return NEO_VOID;
             }

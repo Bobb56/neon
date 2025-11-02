@@ -1,1 +1,0 @@
-gcc -g main.c opfonc.c builtinfonc.c errfonc.c libstr.c liblist.c libtok.c libtree.c headers.c neonio.c numbers.c varlib.c affprog.c linenoise.c -lm -o Neon
