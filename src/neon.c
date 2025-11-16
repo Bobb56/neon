@@ -603,7 +603,7 @@ NeonEnv* NeonEnv_init(void) {
     env->process_cycle = ProcessCycle_create();
     env->PROCESS_FINISH = intlist_create(0);
     env->PROMISES_CNT = intptrlist_create(0);
-    TreeList_init(&env->FONCTIONS);
+    env->FONCTIONS = TreeBuffer_init();
 
     loadFunctions(env);
     loadExceptions(env);
@@ -637,7 +637,7 @@ void NeonEnv_destroy(NeonEnv* env) {
 
     neobject_destroy(env->RETURN_VALUE);
 
-    TreeList_destroy(&env->FONCTIONS);
+    TreeBuffer_destroy(&env->FONCTIONS, TREE_VOID);
 
     strlist_destroy(env->CONTAINERS, true);
     nelist_destroy(env->ATTRIBUTES);
@@ -804,7 +804,9 @@ void storeAns(NeObj res) {
 void terminal(void)
 {
     char* exp;
-    NeObj res ; NeTree tree;
+    NeObj res ;
+    TreeBuffer tb;
+    TreeBufferIndex tree;
         
     while (true)
     {
@@ -846,31 +848,31 @@ void terminal(void)
             continue;
         }
 
-
-        tree = createSyntaxTree(exp, true);
+        tb = TreeBuffer_init();
+        tree = createSyntaxTree(&tb, exp, true);
 
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
         {
             printError(global_env->CODE_ERROR);
-            NeTree_destroy(tree);
+            TreeBuffer_destroy(&tb, tree);
             continue;
         }
 
         
         // s'il n'y a qu'une expression, alors, on affiche le résultat de l'expression
-        if (tree.syntaxtree->treelist.len == 1 && NeTree_isexpr(tree.syntaxtree->treelist.trees[0]))
+        if (treeSntxTree(&tb, tree)->treelist.length == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tree)->treelist)[0]))
         {
-            res = eval(tree.syntaxtree->treelist.trees[0]);
+            res = eval(&tb, treelistGet(&tb, treeSntxTree(&tb, tree)->treelist)[0]);
 
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
                 printError(global_env->CODE_ERROR);
-                NeTree_destroy(tree);
+                TreeBuffer_destroy(&tb, tree);
                 continue;
             }
             else if (global_env->CODE_ERROR == 1) // quitte le terminal
             {
-                NeTree_destroy(tree);
+                TreeBuffer_destroy(&tb, tree);
                 return ;
             }
             
@@ -878,22 +880,22 @@ void terminal(void)
 
             storeAns(res); // stocke le résultat dans une variable au lieu de le supprimer
         }
-        else if (tree.syntaxtree->treelist.len > 0)
+        else if (treeSntxTree(&tb, tree)->treelist.length > 0)
         {
-            exec(tree);
+            exec(&tb, tree);
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
                 printError(global_env->CODE_ERROR);
-                NeTree_destroy(tree);
+                TreeBuffer_destroy(&tb, tree);
                 continue;
             }
             else if (global_env->CODE_ERROR == 1) // quitte le terminal
             {
-                NeTree_destroy(tree);
+                TreeBuffer_destroy(&tb, tree);
                 return ;
             }
         }
-        NeTree_destroy(tree);
+        TreeBuffer_destroy(&tb, tree);
 
     }
 
@@ -915,20 +917,21 @@ void execFile(char* filename)
 
     global_env->FILENAME = strdup(filename);
     
-    NeTree tree = createSyntaxTree(program, true);
+    TreeBuffer tb = TreeBuffer_init();
+    TreeBufferIndex tree = createSyntaxTree(&tb, program, true);
     
     if_error {
         goto handle_error;
     }
 
-    exec(tree);
+    exec(&tb, tree);
     
     if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
-        NeTree_destroy(tree);
+        TreeBuffer_destroy(&tb, tree);
         goto handle_error;
     }
 
-    NeTree_destroy(tree);
+    TreeBuffer_destroy(&tb, tree);
     
     return ;
 
@@ -960,26 +963,27 @@ void importFile(char* filename)
     global_env->FILENAME = strdup(filename);
     
     // exécution du fichier
-    NeTree tree = createSyntaxTree(program, true);
+    TreeBuffer tb = TreeBuffer_init();
+    TreeBufferIndex tree = createSyntaxTree(&tb, program, true);
 
     if (global_env->CODE_ERROR != 0)
     {
         neon_free(sov);
-        NeTree_destroy(tree);
+        TreeBuffer_destroy(&tb, tree);
         return;
     }
 
-    exec_aux(tree);
+    exec_aux(&tb, tree);
 
     if (global_env->CODE_ERROR != 0) {
         neon_free(sov);
-        NeTree_destroy(tree);
+        TreeBuffer_destroy(&tb, tree);
         return;
     }
 
     neon_free(global_env->FILENAME);
     global_env->FILENAME = sov;
 
-    NeTree_destroy(tree);
+    TreeBuffer_destroy(&tb, tree);
     return ;
 }

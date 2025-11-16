@@ -84,8 +84,8 @@ void deleteContext(ptrlist* var_loc)
 }
 
 
-bool isTrue(NeTree tree) {
-    NeObj obj = eval_aux(tree);
+bool isTrue(TreeBuffer* tb, TreeBufferIndex tree) {
+    NeObj obj = eval_aux(tb, tree);
 
     if (global_env->CODE_ERROR != 0)
         return false;
@@ -209,7 +209,7 @@ NO_OPT void launch_process(void) {
 
     global_env->process_cycle->process->state = Running;
 
-    NeObj result = eval_aux(global_env->process_cycle->process->original_call);
+    NeObj result = eval_aux(&global_env->FONCTIONS, global_env->process_cycle->process->original_call);
 
     // on marque le processus comme terminé, il sera supprimé automatiquement par neon_interp_next_process
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
@@ -251,13 +251,13 @@ NO_OPT void launch_process(void) {
 
 
 // transforme une liste d'arbres en une liste de NeObj en les évaluant tous
-NeList* treeToList(struct TreeList* tree_list) {
-    NeList* l = nelist_create(tree_list->len);
+NeList* treeToList(TreeBuffer* tb, struct TreeList* tree_list) {
+    NeList* l = nelist_create(tree_list->length);
 
-    for (int index = 0 ; index < tree_list->len ; index++)
+    for (int index = 0 ; index < tree_list->length ; index++)
     {
-        if (!NeTree_isvoid(tree_list->trees[index])) {
-            l->tab[index] = eval_aux(tree_list->trees[index]);
+        if (!TREE_ISVOID(treelistGet(tb, *tree_list)[index])) {
+            l->tab[index] = eval_aux(tb, treelistGet(tb, *tree_list)[index]);
             
             if (global_env->CODE_ERROR != 0)
             {
@@ -326,7 +326,7 @@ NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args) {
 
     // on stocke fun et args
     
-    int int_ret = exec_aux(fun->code);
+    int int_ret = exec_aux(&global_env->FONCTIONS, fun->code);
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
@@ -407,7 +407,7 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
 
     // on stocke fun et args
     
-    int int_ret = exec_aux(fun->code);
+    int int_ret = exec_aux(&global_env->FONCTIONS, fun->code);
 
     if (global_env->CODE_ERROR != 0) {
         deleteContext(global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
@@ -440,7 +440,7 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
 
 
 // cette fonction est tellement grosse que de toute façon gcc n'aurait jamais l'idée de l'inliner
-NO_INLINE NeObj eval_aux(NeTree tree) {
+NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
     // il est possible qu'entre temps un processus ait lancé une erreur
     if (global_env->CODE_ERROR != 0)
@@ -448,24 +448,24 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
     // =================== EVALUATION =====================
 
-    global_env->LINENUMBER = TREE_LINE(tree);
+    global_env->LINENUMBER = TREE_LINE(tb, tree);
 
-    switch (tree.general_info->type) {
+    switch (TREE_TYPE(tb, tree)) {
 
         case TypeUnaryOp:
         {
 
-            if (tree.unary_op->op == 39) // opérateur parallel
+            if (treeUnOp(tb, tree)->op == 39) // opérateur parallel
             {
 
-                NeTree maintree = tree.unary_op->expr;
+                TreeBufferIndex maintree = treeUnOp(tb, tree)->expr;
 
-                if (TREE_TYPE(maintree) != TypeFunctioncall) {
+                if (TREE_TYPE(tb, maintree) != TypeFunctioncall) {
                     global_env->CODE_ERROR = 100;
                     return NEO_VOID;
                 }
 
-                NeObj fixed_func = eval_aux(maintree.fcall->function);
+                NeObj fixed_func = eval_aux(tb, treeFCall(tb, maintree)->function);
 
                 if (global_env->CODE_ERROR != 0) {
                     return NEO_VOID;
@@ -478,10 +478,13 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 }
                 
                 // crée une copie de l'arbre avec une version figée de la fonction
-                NeTree maintree_copy = NeTree_create(TypeFunctioncall, maintree.fcall->line);
-                maintree_copy.fcall->args = maintree.fcall->args;
-                maintree_copy.fcall->function = maintree.fcall->function;
-                maintree_copy.fcall->function_obj = fixed_func;
+                TreeBuffer* func_buf = &global_env->FONCTIONS;
+                TreeBufferIndex maintree_copy = NeTree_create(func_buf, TypeFunctioncall, TREE_LINE(tb, maintree));
+                TreeBuffer_remember(func_buf, maintree_copy);
+                
+                treeFCall(func_buf, maintree_copy)->args = treeFCall(tb, maintree)->args;
+                treeFCall(func_buf, maintree_copy)->function = treeFCall(tb, maintree)->function;
+                treeFCall(func_buf, maintree_copy)->function_obj = fixed_func;
 
 
                 // on ajoute le processus, et il va se faire exécuter dans la chaine de processus
@@ -489,8 +492,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 int id = create_new_process(maintree_copy, false);
 
                 if (global_env->CODE_ERROR != 0) {
-                    neobject_destroy(maintree_copy.fcall->function_obj);
-                    neon_free(maintree_copy.pointer);
+                    neobject_destroy(treeFCall(tb, maintree_copy)->function_obj);
                     return NEO_VOID;
                 }
 
@@ -499,33 +501,33 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
 
             // opérateur paresseux
-            else if (operatorIs(tree.unary_op->op, LAZY)) {
-                NeObj (*func)(NeTree) = operators_functions[tree.unary_op->op];
-                return func(tree.unary_op->expr);
+            else if (operatorIs(treeUnOp(tb, tree)->op, LAZY)) {
+                NeObj (*func)(TreeBuffer*, TreeBufferIndex) = operators_functions[treeUnOp(tb, tree)->op];
+                return func(tb, treeUnOp(tb, tree)->expr);
             }
             else {
                 // opérateur qui prend directement des objets/global_env->ADRESSES en argument
 
-                if (operatorIs(tree.unary_op->op, VARRIGHT) || operatorIs(tree.unary_op->op, VARLEFT))
+                if (operatorIs(treeUnOp(tb, tree)->op, VARRIGHT) || operatorIs(treeUnOp(tb, tree)->op, VARLEFT))
                 {
-                    NeObj* op1 = get_address(tree.unary_op->expr); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
+                    NeObj* op1 = get_address(tb, treeUnOp(tb, tree)->expr); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
                     
                     if (global_env->CODE_ERROR != 0) {
                         return NEO_VOID;
                     }
 
-                    NeObj (*func) (NeObj*) = operators_functions[tree.unary_op->op];
+                    NeObj (*func) (NeObj*) = operators_functions[treeUnOp(tb, tree)->op];
                     return func(op1);
                 }
                 else
                 {
-                    NeObj op1 = eval_aux(tree.unary_op->expr);
+                    NeObj op1 = eval_aux(tb, treeUnOp(tb, tree)->expr);
 
                     if (global_env->CODE_ERROR != 0) {
                         return NEO_VOID;
                     }
 
-                    NeObj (*func) (NeObj) = operators_functions[tree.unary_op->op];
+                    NeObj (*func) (NeObj) = operators_functions[treeUnOp(tb, tree)->op];
                     NeObj retour = func(op1);
                     neobject_destroy(op1);
                     return retour;
@@ -537,74 +539,74 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
         case TypeBinaryOp: // operateur binaire
         {
             // opérateur paresseux
-            if (operatorIs(tree.binary_op->op, LAZY)) {
-                NeObj (*func) (NeTree, NeTree) = operators_functions[tree.binary_op->op];
-                return func(tree.binary_op->left, tree.binary_op->right);
+            if (operatorIs(treeBinOp(tb, tree)->op, LAZY)) {
+                NeObj (*func) (TreeBuffer*, TreeBufferIndex, TreeBufferIndex) = operators_functions[treeBinOp(tb, tree)->op];
+                return func(tb, treeBinOp(tb, tree)->left, treeBinOp(tb, tree)->right);
             }
             else {
                 // opérateur normal qui prend des objets en arguments
 
-                if (tree.binary_op->op == 37) { // opérateur :=
+                if (treeBinOp(tb, tree)->op == 37) { // opérateur :=
                     global_env->CODE_ERROR = 95;
                     return NEO_VOID;
-                } else if (tree.binary_op->op == 35) { // opérateur :
+                } else if (treeBinOp(tb, tree)->op == 35) { // opérateur :
                     global_env->CODE_ERROR = 92;
                     return NEO_VOID;
                 }
                                     
-                if (operatorIs(tree.binary_op->op, VAR_RIGHT))
+                if (operatorIs(treeBinOp(tb, tree)->op, VAR_RIGHT))
                 {
-                    NeObj* op1 = get_address(tree.binary_op->left);
+                    NeObj* op1 = get_address(tb, treeBinOp(tb, tree)->left);
 
                     if (global_env->CODE_ERROR != 0)
                         return NEO_VOID;
                     
-                    NeObj op2 = eval_aux(tree.binary_op->right);
+                    NeObj op2 = eval_aux(tb, treeBinOp(tb, tree)->right);
 
                     if (global_env->CODE_ERROR != 0)
                         return NEO_VOID;
 
-                    NeObj (*func)(NeObj*, NeObj) = operators_functions[tree.binary_op->op];
+                    NeObj (*func)(NeObj*, NeObj) = operators_functions[treeBinOp(tb, tree)->op];
                     NeObj result = func(op1, op2);
                     neobject_destroy(op2);
                     return result;
                 }
-                else if (operatorIs(tree.binary_op->op, LEFT_VAR))
+                else if (operatorIs(treeBinOp(tb, tree)->op, LEFT_VAR))
                 {                    
-                    NeObj op1 = eval_aux(tree.binary_op->left);
+                    NeObj op1 = eval_aux(tb, treeBinOp(tb, tree)->left);
                     
                     if (global_env->CODE_ERROR != 0)
                         return NEO_VOID;
                 
-                    NeObj* op2 = get_address(tree.binary_op->right);
+                    NeObj* op2 = get_address(tb, treeBinOp(tb, tree)->right);
 
                     if (global_env->CODE_ERROR != 0)
                         return NEO_VOID;
 
-                    NeObj (*func)(NeObj, NeObj*) = operators_functions[tree.binary_op->op];
+                    NeObj (*func)(NeObj, NeObj*) = operators_functions[treeBinOp(tb, tree)->op];
                     NeObj result = func(op1, op2);
                     neobject_destroy(op1);
                     return result;
                 }
-                else if (operatorIs(tree.binary_op->op, VAR_VAR))
+                else if (operatorIs(treeBinOp(tb, tree)->op, VAR_VAR))
                 {
-                    NeObj* op1 = get_address(tree.binary_op->left);
+                    NeObj* op1 = get_address(tb, treeBinOp(tb, tree)->left);
 
                     if (global_env->CODE_ERROR != 0)
                         return NEO_VOID;
                     
-                    NeObj* op2 = get_address(tree.binary_op->right);
+                    NeObj* op2 = get_address(tb, treeBinOp(tb, tree)->right);
 
                     if (global_env->CODE_ERROR != 0)
                         return NEO_VOID;
 
-                    NeObj (*func)(NeObj*, NeObj*) = operators_functions[tree.binary_op->op];
+                    NeObj (*func)(NeObj*, NeObj*) = operators_functions[treeBinOp(tb, tree)->op];
                     NeObj result = func(op1, op2);
                     return result;
                 }
                 else
                 {
-                    NeObj op1 = eval_aux(tree.binary_op->left);
+                    NeObj op1 = eval_aux(tb, treeBinOp(tb, tree)->left);
 
                     if (global_env->CODE_ERROR != 0)
                     {
@@ -612,7 +614,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                         return NEO_VOID;
                     }
 
-                    NeObj op2 = eval_aux(tree.binary_op->right);
+                    NeObj op2 = eval_aux(tb, treeBinOp(tb, tree)->right);
 
                     if (global_env->CODE_ERROR != 0)
                     {
@@ -620,7 +622,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                         neobject_destroy(op2);
                         return NEO_VOID;
                     }
-                    NeObj (*func)(NeObj, NeObj) = operators_functions[tree.binary_op->op];
+                    NeObj (*func)(NeObj, NeObj) = operators_functions[treeBinOp(tb, tree)->op];
                     NeObj result = func(op1, op2);
 
                     neobject_destroy(op1);
@@ -635,7 +637,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
         case TypeList:
         {
             // donc les enfants de tree sont les éléments de la liste
-            NeList* l = treeToList(&tree.syntaxtree->treelist);
+            NeList* l = treeToList(tb, &treeSntxTree(tb, tree)->treelist);
 
 
             return_on_error(NEO_VOID);
@@ -650,8 +652,8 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
 
             // si le champ data de la fonction est déjà occuppé, on n'a pas besoin d'évaluer la fonction
-            if (neo_is_void(tree.fcall->function_obj)) {
-                tree.fcall->function_obj = eval_aux(tree.fcall->function);
+            if (neo_is_void(treeFCall(tb, tree)->function_obj)) {
+                treeFCall(tb, tree)->function_obj = eval_aux(tb, treeFCall(tb, tree)->function);
 
                 if (global_env->CODE_ERROR != 0) { // erreur lors de l'évaluation de la fonction
                     return NEO_VOID;
@@ -660,18 +662,18 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
             // ensuite, pour évaluer les arguments, on fait bien la boucle sur tree->sons[1]
             
-            if (NEO_TYPE(tree.fcall->function_obj) == TYPE_FONCTION)
+            if (NEO_TYPE(treeFCall(tb, tree)->function_obj) == TYPE_FONCTION)
             {
-                NeObj tree_data_sov = tree.fcall->function_obj;
-                Function* fun = neo_to_function(tree.fcall->function_obj);
+                NeObj tree_data_sov = treeFCall(tb, tree)->function_obj;
+                Function* fun = neo_to_function(treeFCall(tb, tree)->function_obj);
 
-                tree.fcall->function_obj = NEO_VOID;
-                NeList* args = treeToList(&tree.fcall->args);
-                tree.fcall->function_obj = tree_data_sov;
+                treeFCall(tb, tree)->function_obj = NEO_VOID;
+                NeList* args = treeToList(tb, &treeFCall(tb, tree)->args);
+                treeFCall(tb, tree)->function_obj = tree_data_sov;
 
                 if (global_env->CODE_ERROR != 0) {
-                    neobject_destroy(tree.fcall->function_obj);
-                    tree.fcall->function_obj = NEO_VOID;
+                    neobject_destroy(treeFCall(tb, tree)->function_obj);
+                    treeFCall(tb, tree)->function_obj = NEO_VOID;
                     return NEO_VOID;
                 }            
                 
@@ -680,38 +682,38 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 {
                     global_env->CODE_ERROR = 14;
                     nelist_destroy(args);
-                    neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                    tree.fcall->function_obj = NEO_VOID;
+                    neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                    treeFCall(tb, tree)->function_obj = NEO_VOID;
                     return NEO_VOID;
                 }
                     
-                NeObj retour = functionCall(tree.fcall->function_obj, args);
+                NeObj retour = functionCall(treeFCall(tb, tree)->function_obj, args);
 
                 nelist_destroy(args);
-                neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                tree.fcall->function_obj = NEO_VOID;
+                neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                treeFCall(tb, tree)->function_obj = NEO_VOID;
                 
                 if (global_env->CODE_ERROR != 0) {
                     neobject_destroy(retour);
                     return NEO_VOID;
                 }
 
-                global_env->LINENUMBER = tree.fcall->line; // certaines fonctions modifient le numéro de ligne
+                global_env->LINENUMBER = treeFCall(tb, tree)->line; // certaines fonctions modifient le numéro de ligne
 
                 return retour;
             }
 
-            else if (NEO_TYPE(tree.fcall->function_obj) == TYPE_USERFUNC || NEO_TYPE(tree.fcall->function_obj) == TYPE_USERMETHOD)
+            else if (NEO_TYPE(treeFCall(tb, tree)->function_obj) == TYPE_USERFUNC || NEO_TYPE(treeFCall(tb, tree)->function_obj) == TYPE_USERMETHOD)
             {
-                UserFunc* fun = neo_to_userfunc(tree.fcall->function_obj);
+                UserFunc* fun = neo_to_userfunc(treeFCall(tb, tree)->function_obj);
 
-                NeObj tree_data_sov = tree.fcall->function_obj;
+                NeObj tree_data_sov = treeFCall(tb, tree)->function_obj;
 
-                if (tree.fcall->args.len > fun->nbArgs && ! fun->unlimited_arguments)
+                if (treeFCall(tb, tree)->args.length > fun->nbArgs && ! fun->unlimited_arguments)
                 {
                     global_env->CODE_ERROR = 6;
-                    neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                    tree.fcall->function_obj = NEO_VOID;
+                    neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                    treeFCall(tb, tree)->function_obj = NEO_VOID;
                     return NEO_VOID;
                 }
 
@@ -720,10 +722,10 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 // on compte le nombre d'arguments très facultatifs
                 int given_nbOptArgs = 0;
 
-                for (int i = 0 ; i < tree.fcall->args.len ; i++) {
-                    if (TREE_TYPE(tree.fcall->args.trees[i]) == TypeBinaryOp && tree.fcall->args.trees[i].binary_op->op == 37) { // on est sur du :=
+                for (int i = 0 ; i < treeFCall(tb, tree)->args.length ; i++) {
+                    if (TREE_TYPE(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i]) == TypeBinaryOp && treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->op == 37) { // on est sur du :=
                         int index = 0;
-                        while (index < fun->nbArgs && fun->args[index] != tree.fcall->args.trees[i].binary_op->left.variable->var) index++;
+                        while (index < fun->nbArgs && fun->args[index] != treeVar(tb, treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->left)->var) index++;
 
                         if (index >= fun->nbArgs - fun->nbOptArgs && index < fun->nbArgs)
                             given_nbOptArgs ++;
@@ -738,7 +740,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
 
                 // calcule le nombre d'arguments de cet appel de fonction
-                int nb_arguments = (fun->unlimited_arguments && tree.fcall->args.len > fun->nbArgs - fun->nbOptArgs) ? tree.fcall->args.len + fun->nbOptArgs - given_nbOptArgs : fun->nbArgs;
+                int nb_arguments = (fun->unlimited_arguments && treeFCall(tb, tree)->args.length > fun->nbArgs - fun->nbOptArgs) ? treeFCall(tb, tree)->args.length + fun->nbOptArgs - given_nbOptArgs : fun->nbArgs;
                 
                 // et on crée la liste qui va contenir ces arguments
                 NeList* arguments = nelist_create(nb_arguments);
@@ -755,11 +757,11 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 // on peut commencer par mettre à leur valeur par défaut les variables définies après ...
                 // Ainsi elles ne seront pas remplacés sauf si on l'indique explicitement
                 for (int i = fun->nbArgs - fun->nbOptArgs ; i < fun -> nbArgs ; i++) {
-                    if (i == 0 && NEO_TYPE(tree.fcall->function_obj) == TYPE_USERMETHOD) {
+                    if (i == 0 && NEO_TYPE(treeFCall(tb, tree)->function_obj) == TYPE_USERMETHOD) {
                         global_env->CODE_ERROR = 110;
                         nelist_destroy(arguments);
-                        neobject_destroy(tree.fcall->function_obj);
-                        tree.fcall->function_obj = NEO_VOID;
+                        neobject_destroy(treeFCall(tb, tree)->function_obj);
+                        treeFCall(tb, tree)->function_obj = NEO_VOID;
                         return NEO_VOID;
                     }
                     arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
@@ -767,51 +769,51 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
 
                 // 1ère boucle pour placer les arguments à des endroits où ils ne bougeront pas
-                for (int i = 0 ; i < tree.fcall->args.len ; i++) {
+                for (int i = 0 ; i < treeFCall(tb, tree)->args.length ; i++) {
                     // on commence par remplir les éléments donnés dans le mauvais ordre (avec :=)
-                    if (TREE_TYPE(tree.fcall->args.trees[i]) == TypeBinaryOp && tree.fcall->args.trees[i].binary_op->op == 37) { // on est sur du :=
+                    if (TREE_TYPE(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i]) == TypeBinaryOp && treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->op == 37) { // on est sur du :=
                         // on regarde la variable de gauche, et on met le truc au bon endroit
                         // on récupère l'index du vrai argument dans fun->args, et on le met au bon endroit dans arguments
                         int index = 0;
 
-                        if (TREE_TYPE(tree.fcall->args.trees[i].binary_op->left) != TypeVariable) {
+                        if (TREE_TYPE(tb, treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->left) != TypeVariable) {
                             nelist_destroy(arguments);
-                            neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                            tree.fcall->function_obj = NEO_VOID;
+                            neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                            treeFCall(tb, tree)->function_obj = NEO_VOID;
                             global_env->CODE_ERROR = 93;
                             return NEO_VOID;
                         }
 
-                        while (index < fun->nbArgs && fun->args[index] != tree.fcall->args.trees[i].binary_op->left.variable->var) index++;
+                        while (index < fun->nbArgs && fun->args[index] != treeVar(tb, treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->left)->var) index++;
 
                         if (index == fun->nbArgs) {
                             nelist_destroy(arguments);
-                            neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                            tree.fcall->function_obj = NEO_VOID;
+                            neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                            treeFCall(tb, tree)->function_obj = NEO_VOID;
                             global_env->CODE_ERROR = 93;
                             return NEO_VOID;
                         }
                         
                         if (index < fun->nbArgs - fun->nbOptArgs && !neo_is_void(arguments->tab[index])) {
                             nelist_destroy(arguments);
-                            neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                            tree.fcall->function_obj = NEO_VOID;
+                            neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                            treeFCall(tb, tree)->function_obj = NEO_VOID;
                             global_env->CODE_ERROR = 94;
                             return NEO_VOID;
                         }
                         // et on évalue l'argument envoyé
-                        tree.fcall->function_obj = NEO_VOID;
-                        arguments->tab[index] = eval_aux(tree.fcall->args.trees[i].binary_op->right);
-                        tree.fcall->function_obj = tree_data_sov;
+                        treeFCall(tb, tree)->function_obj = NEO_VOID;
+                        arguments->tab[index] = eval_aux(tb, treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->right);
+                        treeFCall(tb, tree)->function_obj = tree_data_sov;
 
                         if (global_env->CODE_ERROR != 0) {
                             nelist_destroy(arguments);
-                            neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                            tree.fcall->function_obj = NEO_VOID;
+                            neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                            treeFCall(tb, tree)->function_obj = NEO_VOID;
                             return NEO_VOID;
                         }
-                        else if (index == 0 && NEO_TYPE(tree.fcall->function_obj) == TYPE_USERMETHOD) {
-                            self = get_address(tree.fcall->args.trees[i].binary_op->right); // on vient d'évaluer le premier argument
+                        else if (index == 0 && NEO_TYPE(treeFCall(tb, tree)->function_obj) == TYPE_USERMETHOD) {
+                            self = get_address(tb, treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->right); // on vient d'évaluer le premier argument
                         }
                     }
                 }
@@ -820,21 +822,21 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 int index = 0; // on remplit petit à petit arguments avec les arguments restants
                 while (index < arguments->len && !neo_is_void(arguments->tab[index])) index++;
 
-                for (int i = 0 ; index < arguments->len && i < tree.fcall->args.len ; i++) {
+                for (int i = 0 ; index < arguments->len && i < treeFCall(tb, tree)->args.length ; i++) {
                     
-                    if (TREE_TYPE(tree.fcall->args.trees[i]) != TypeBinaryOp || tree.fcall->args.trees[i].binary_op->op != 37) {
-                        tree.fcall->function_obj = NEO_VOID;
-                        arguments->tab[index] = eval_aux(tree.fcall->args.trees[i]);
-                        tree.fcall->function_obj = tree_data_sov;
+                    if (TREE_TYPE(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i]) != TypeBinaryOp || treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->op != 37) {
+                        treeFCall(tb, tree)->function_obj = NEO_VOID;
+                        arguments->tab[index] = eval_aux(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i]);
+                        treeFCall(tb, tree)->function_obj = tree_data_sov;
 
                         if (global_env->CODE_ERROR != 0) {
                             nelist_destroy(arguments);
-                            neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                            tree.fcall->function_obj = NEO_VOID;
+                            neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                            treeFCall(tb, tree)->function_obj = NEO_VOID;
                             return NEO_VOID;
                         }
-                        else if (index == 0 && NEO_TYPE(tree.fcall->function_obj) == TYPE_USERMETHOD) { // on vient d'évaluer le premier argument
-                            self = get_address(tree.fcall->args.trees[i]);
+                        else if (index == 0 && NEO_TYPE(treeFCall(tb, tree)->function_obj) == TYPE_USERMETHOD) { // on vient d'évaluer le premier argument
+                            self = get_address(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i]);
                         }
 
                         while (index < arguments->len && !neo_is_void(arguments->tab[index])) index++;
@@ -843,7 +845,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 // c'est un choix philosophique : si f attend x, y facultatif et z, alors f(1,2) ne fonctionnera pas car il manque z
                 // pour mettre uniquement le x et le z, il y a une syntaxe pour le faire
 
-                if (tree.fcall->args.len < fun->nbArgs) {
+                if (treeFCall(tb, tree)->args.length < fun->nbArgs) {
                     // à ce stade-là, certains champs de arguments sont encore vides, on va donc parcourir une dernière fois afin de lui associer les expressions définies lors de la définition de la fonction
                     for (int i = 0 ; i < fun->nbArgs ; i++) {
                         if (neo_is_void(arguments->tab[i])) { // c'est précisément le cas où l'utilisateur n'a rien mis
@@ -851,8 +853,8 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
                             if (neo_is_void(arguments->tab[i])) {
                                 global_env->CODE_ERROR = 7;
-                                neobject_destroy(tree.fcall->function_obj); // on supprime la fonction que l'on vient de créer
-                                tree.fcall->function_obj = NEO_VOID;
+                                neobject_destroy(treeFCall(tb, tree)->function_obj); // on supprime la fonction que l'on vient de créer
+                                treeFCall(tb, tree)->function_obj = NEO_VOID;
                                 nelist_destroy(arguments);
                                 return NEO_VOID;
                             }
@@ -860,8 +862,8 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                             if (i == 0) { // le premier argument d'une méthode ne peut pas être un argument optionnel
                                 global_env->CODE_ERROR = 110;
                                 nelist_destroy(arguments);
-                                neobject_destroy(tree.fcall->function_obj);
-                                tree.fcall->function_obj = NEO_VOID;
+                                neobject_destroy(treeFCall(tb, tree)->function_obj);
+                                treeFCall(tb, tree)->function_obj = NEO_VOID;
                                 return NEO_VOID;
                             }
                         }
@@ -885,7 +887,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
                 // exécution de la fonction
 
-                tree.fcall->function_obj = NEO_VOID;
+                treeFCall(tb, tree)->function_obj = NEO_VOID;
 
                 NeObj ret;
                 if (NEO_TYPE(tree_data_sov) == TYPE_USERMETHOD)
@@ -893,9 +895,9 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 else
                     ret = callUserFunc(fun, arguments, neo_local_args);
 
-                tree.fcall->function_obj = tree_data_sov;
-                neobject_destroy(tree.fcall->function_obj);
-                tree.fcall->function_obj = NEO_VOID;
+                treeFCall(tb, tree)->function_obj = tree_data_sov;
+                neobject_destroy(treeFCall(tb, tree)->function_obj);
+                treeFCall(tb, tree)->function_obj = NEO_VOID;
 
                 nelist_destroy(arguments);
 
@@ -908,18 +910,18 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                 
             }
 
-            else if (NEO_TYPE(tree.fcall->function_obj) == TYPE_EMPTY)
+            else if (NEO_TYPE(treeFCall(tb, tree)->function_obj) == TYPE_EMPTY)
             {
                 global_env->CODE_ERROR = 8;
-                neobject_destroy(tree.fcall->function_obj);
-                tree.fcall->function_obj = NEO_VOID;
+                neobject_destroy(treeFCall(tb, tree)->function_obj);
+                treeFCall(tb, tree)->function_obj = NEO_VOID;
                 return NEO_VOID;
             }
             else
             {
                 global_env->CODE_ERROR = 9;
-                neobject_destroy(tree.fcall->function_obj);
-                tree.fcall->function_obj = NEO_VOID;
+                neobject_destroy(treeFCall(tb, tree)->function_obj);
+                treeFCall(tb, tree)->function_obj = NEO_VOID;
                 return NEO_VOID;
             }
             
@@ -927,12 +929,12 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
         
         case TypeListindex:
         {
-            NeObj obj = eval_aux(tree.listindex->object);
+            NeObj obj = eval_aux(tb, treeLstIndx(tb, tree)->object);
 
             if (global_env->CODE_ERROR != 0)
                 return NEO_VOID;
 
-            NeObj index = eval_aux(tree.listindex->index);
+            NeObj index = eval_aux(tb, treeLstIndx(tb, tree)->index);
 
             if (global_env->CODE_ERROR != 0)
                 return NEO_VOID;
@@ -990,12 +992,12 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
         case TypeContainerLit:
         {
 
-            NeList* val = nelist_create(tree.container_lit->attributes.len);
+            NeList* val = nelist_create(treeContLit(tb, tree)->attributes.length);
 
-            for (int i = 0 ; i < tree.container_lit->attributes.len ; i++)
+            for (int i = 0 ; i < treeContLit(tb, tree)->attributes.length ; i++)
             {
 
-                val->tab[i] = eval_aux(tree.container_lit->attributes.trees[i].attribute_lit->expr);
+                val->tab[i] = eval_aux(tb, treeAttrLit(tb, treelistGet(tb, treeContLit(tb, tree)->attributes)[i])->expr);
 
                 if (global_env->CODE_ERROR != 0)
                 {
@@ -1003,7 +1005,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
                     return NEO_VOID;
                 }
             }
-            NeObj ret = neo_container_create(tree.container_lit->container_type, val);
+            NeObj ret = neo_container_create(treeContLit(tb, tree)->container_type, val);
             
             return ret;
         }
@@ -1011,7 +1013,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
         case TypeAttribute:
         {
 
-            NeObj neo = eval_aux(tree.attribute->object);
+            NeObj neo = eval_aux(tb, treeAttr(tb, tree)->object);
 
             if (global_env->CODE_ERROR != 0) {
                 return NEO_VOID;
@@ -1028,15 +1030,15 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
             Container* c = neo_to_container(neo);
 
             // si l'indice a été invalidé
-            if (tree.attribute->index == -1 || tree.attribute->last_cont_type != c->type)
+            if (treeAttr(tb, tree)->index == -1 || treeAttr(tb, tree)->last_cont_type != c->type)
             {
-                tree.attribute->index = get_field_index(c, tree.attribute->name);
-                neon_free(tree.attribute->name);
-                tree.attribute->name = NULL;
-                tree.attribute->last_cont_type = c->type;
+                treeAttr(tb, tree)->index = get_field_index(c, treeAttr(tb, tree)->name);
+                neon_free(treeAttr(tb, tree)->name);
+                treeAttr(tb, tree)->name = NULL;
+                treeAttr(tb, tree)->last_cont_type = c->type;
             }
 
-            NeObj ret = neo_copy(get_container_field(c, tree.attribute->index));
+            NeObj ret = neo_copy(get_container_field(c, treeAttr(tb, tree)->index));
             neobject_destroy(neo);
             return ret;
         }
@@ -1044,13 +1046,13 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
         case TypeVariable:
         {
-            NeObj value = get_var_value(tree.variable->var);
+            NeObj value = get_var_value(treeVar(tb, tree)->var);
 
             if (NEO_TYPE(value) == TYPE_EMPTY) {
                 // CONSTEST {
-                // char* name = get_name(tree.variable->var);
+                // char* name = get_name(treeVar(tb, tree)->var);
                 // NeObj const_value = neo_const_create(strdup(name));
-                // replace_var(tree.variable->var, const_value);
+                // replace_var(treeVar(tb, tree)->var, const_value);
                 // return neo_copy(const_value);
                 // CONSTEST }
                 global_env->CODE_ERROR = 5;
@@ -1062,7 +1064,7 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
         case TypeConst:
         {
-            return neo_copy(tree.const_obj->obj);
+            return neo_copy(treeConst(tb, tree)->obj);
         }
 
         default:
@@ -1083,24 +1085,20 @@ NO_INLINE NeObj eval_aux(NeTree tree) {
 
 
 
-
-
-
-
 // cette fonction renvoie l'adresse de l'objet correspondant à une expression permettant d'effectuer une affectation sur l'objet pointé
-NeObj* get_address(NeTree tree) {
+NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
 
-    switch (TREE_TYPE(tree)) {
+    switch (TREE_TYPE(tb, tree)) {
     
         case TypeVariable:
         {
-            NeObj* addr = get_absolute_address(tree.variable->var);
+            NeObj* addr = get_absolute_address(treeVar(tb, tree)->var);
             return addr;
         }
 
         case TypeListindex:
         {
-            NeObj* obj_ptr = get_address(tree.listindex->object);
+            NeObj* obj_ptr = get_address(tb, treeLstIndx(tb, tree)->object);
 
             if (global_env->CODE_ERROR != 0) {
                 return NULL;
@@ -1108,7 +1106,7 @@ NeObj* get_address(NeTree tree) {
 
             NeObj obj = *obj_ptr;
 
-            NeObj index = eval_aux(tree.listindex->index);
+            NeObj index = eval_aux(tb, treeLstIndx(tb, tree)->index);
 
 
             if (global_env->CODE_ERROR != 0) {
@@ -1158,7 +1156,7 @@ NeObj* get_address(NeTree tree) {
 
         case TypeAttribute:
         {
-            NeObj neo = eval_aux(tree.attribute->object);
+            NeObj neo = eval_aux(tb, treeAttr(tb, tree)->object);
 
             if (global_env->CODE_ERROR != 0) {
                 return NULL;
@@ -1174,15 +1172,15 @@ NeObj* get_address(NeTree tree) {
 
             Container* c = neo_to_container(neo);
 
-            if (tree.attribute->index == -1 || tree.attribute->last_cont_type != c->type) // ça veut dire qu'on sait exactement où chercher la valeur
+            if (treeAttr(tb, tree)->index == -1 || treeAttr(tb, tree)->last_cont_type != c->type) // ça veut dire qu'on sait exactement où chercher la valeur
             {
-                tree.attribute->index = get_field_index(c, tree.attribute->name);
-                neon_free(tree.attribute->name);
-                tree.attribute->name = NULL;
-                tree.attribute->last_cont_type = c->type;
+                treeAttr(tb, tree)->index = get_field_index(c, treeAttr(tb, tree)->name);
+                neon_free(treeAttr(tb, tree)->name);
+                treeAttr(tb, tree)->name = NULL;
+                treeAttr(tb, tree)->last_cont_type = c->type;
             }
 
-            NeObj* ret = get_container_field_addr(c, tree.attribute->index);
+            NeObj* ret = get_container_field_addr(c, treeAttr(tb, tree)->index);
             neobject_destroy(neo);
             return ret;
         }
@@ -1204,7 +1202,7 @@ NeObj* get_address(NeTree tree) {
 
 
 
-int execConditionBlock(NeTree maintree) {
+int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {
     intptr_t int_ret = 0;
     int bloc = 0;
     NeObj expr;
@@ -1214,9 +1212,9 @@ int execConditionBlock(NeTree maintree) {
 
     // on a comme variables locales : int_ret, bloc, inst : d'ailleurs inst doit être empilé partout
 
-    while (bloc < maintree.syntaxtree->treelist.len)
+    while (bloc < treeSntxTree(tb, maintree)->treelist.length)
     {
-        expr = eval_aux(maintree.syntaxtree->treelist.trees[bloc].iew->expression);
+        expr = eval_aux(tb, treeIEW(tb, treelistGet(tb, treeSntxTree(tb, maintree)->treelist)[bloc])->expression);
 
 
         if (global_env->CODE_ERROR != 0) {
@@ -1235,7 +1233,7 @@ int execConditionBlock(NeTree maintree) {
             // on s'apprete à exécuter du code, on peut donc ouvrir un nouveau contexte
             newContext(global_env->process_cycle->process->var_loc);
 
-            int_ret = exec_aux(maintree.syntaxtree->treelist.trees[bloc].iew->code);
+            int_ret = exec_aux(tb, treeIEW(tb, treelistGet(tb, treeSntxTree(tb, maintree)->treelist)[bloc])->code);
 
             deleteContext(global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
@@ -1250,12 +1248,12 @@ int execConditionBlock(NeTree maintree) {
             
             
             bloc++;
-            while (bloc < maintree.syntaxtree->treelist.len && TREE_TYPE(maintree.syntaxtree->treelist.trees[bloc]) != TypeIf)
+            while (bloc < treeSntxTree(tb, maintree)->treelist.length && TREE_TYPE(tb, treelistGet(tb, treeSntxTree(tb, maintree)->treelist)[bloc]) != TypeIf)
                 bloc++;
 
             // on vient d'exécuter le if, donc on a fini ce if, on peut supprimer le contexte
 
-            if (bloc == maintree.syntaxtree->treelist.len) {
+            if (bloc == treeSntxTree(tb, maintree)->treelist.length) {
                 break;
             }
             else
@@ -1266,10 +1264,10 @@ int execConditionBlock(NeTree maintree) {
 
 
         bool elif = false;
-        while (bloc < maintree.syntaxtree->treelist.len && TREE_TYPE(maintree.syntaxtree->treelist.trees[bloc]) == TypeElif)
+        while (bloc < treeSntxTree(tb, maintree)->treelist.length && TREE_TYPE(tb, treelistGet(tb, treeSntxTree(tb, maintree)->treelist)[bloc]) == TypeElif)
         {
 
-            expr = eval_aux(maintree.syntaxtree->treelist.trees[bloc].iew->expression);
+            expr = eval_aux(tb, treeIEW(tb, treelistGet(tb, treeSntxTree(tb, maintree)->treelist)[bloc])->expression);
 
             cond = neoIsTrue(expr);
             neobject_destroy(expr);
@@ -1284,7 +1282,7 @@ int execConditionBlock(NeTree maintree) {
                 // on s'apprete à exécuter du code, on peut donc ouvrir un nouveau contexte
                 newContext(global_env->process_cycle->process->var_loc);
 
-                int_ret = exec_aux(maintree.syntaxtree->treelist.trees[bloc].iew->code);
+                int_ret = exec_aux(tb, treeIEW(tb, treelistGet(tb, treeSntxTree(tb, maintree)->treelist)[bloc])->code);
 
                 deleteContext(global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
@@ -1304,13 +1302,13 @@ int execConditionBlock(NeTree maintree) {
         }
 
 
-        if (bloc < maintree.syntaxtree->treelist.len && TREE_TYPE(maintree.syntaxtree->treelist.trees[bloc]) == TypeElse) // s'il y a un bloc else
+        if (bloc < treeSntxTree(tb, maintree)->treelist.length && TREE_TYPE(tb, treelistGet(tb, treeSntxTree(tb, maintree)->treelist)[bloc]) == TypeElse) // s'il y a un bloc else
         {
             if (!elif) // si on a le droit d'y aller
             {
                 newContext(global_env->process_cycle->process->var_loc);
 
-                int_ret = exec_aux(maintree.syntaxtree->treelist.trees[bloc]);
+                int_ret = exec_aux(tb, treelistGet(tb, treeSntxTree(tb, maintree)->treelist)[bloc]);
 
                 deleteContext(global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
@@ -1338,7 +1336,7 @@ int execConditionBlock(NeTree maintree) {
 
 
 
-int execStatementFor(NeTree tree) {
+int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
 
     // on évalue l'incrément de la boucle
     int incr = 0;
@@ -1346,8 +1344,8 @@ int execStatementFor(NeTree tree) {
     NeObj tempMax; // la borne supérieure de la boucle
 
     // for(var, start, end, step)
-    if (FOR_NBARGS(tree) == 4) {
-        NeObj step = eval_aux(FOR_ARG(tree, 3));
+    if (FOR_NBARGS(tb, tree) == 4) {
+        NeObj step = eval_aux(tb, FOR_ARG(tb, tree, 3));
 
         if (global_env->CODE_ERROR != 0)
             return 0;
@@ -1362,35 +1360,35 @@ int execStatementFor(NeTree tree) {
         neobject_destroy(step);
 
         // on évalue la valeur de départ de la boucle
-        start = eval_aux(FOR_ARG(tree, 1));
+        start = eval_aux(tb, FOR_ARG(tb, tree, 1));
 
         if (global_env->CODE_ERROR != 0)
             return 0;
 
-        tempMax = eval_aux(FOR_ARG(tree, 2));
+        tempMax = eval_aux(tb, FOR_ARG(tb, tree, 2));
     }
 
     // for(var, start, end)
-    else if (FOR_NBARGS(tree) == 3) {
+    else if (FOR_NBARGS(tb, tree) == 3) {
         incr = 1;
         // on évalue la valeur de départ de la boucle
-        start = eval_aux(FOR_ARG(tree, 1));
+        start = eval_aux(tb, FOR_ARG(tb, tree, 1));
 
         if (global_env->CODE_ERROR != 0)
             return 0;
 
-        tempMax = eval_aux(FOR_ARG(tree, 2));
+        tempMax = eval_aux(tb, FOR_ARG(tb, tree, 2));
     }
 
     // for(var, end)
-    else if (FOR_NBARGS(tree) == 2) {
+    else if (FOR_NBARGS(tb, tree) == 2) {
         incr = 1;
         start = neo_integer_create(0);
 
         if (global_env->CODE_ERROR != 0)
             return 0;
 
-        tempMax = eval_aux(FOR_ARG(tree, 1));
+        tempMax = eval_aux(tb, FOR_ARG(tb, tree, 1));
     }
     else {
         global_env->CODE_ERROR = 108;
@@ -1416,13 +1414,13 @@ int execStatementFor(NeTree tree) {
 
 
     // on récupère le variant de boucle
-    if (TREE_TYPE(FOR_ARG(tree, 0)) != TypeVariable) {
+    if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
         global_env->CODE_ERROR = 111;
         neobject_destroy(tempMax);
         return 0;
     }
     
-    Var var = FOR_ARG(tree, 0).variable->var; // variable à incrémenter lors de la boucle
+    Var var = treeVar(tb, FOR_ARG(tb, tree, 0))->var; // variable à incrémenter lors de la boucle
 
     // ouverture du nouveau contexte, sauvegarde du variant
     newContext(global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
@@ -1443,7 +1441,7 @@ int execStatementFor(NeTree tree) {
         // on restaure la valeur de l'indice au début du corps de la boucle
         replace_var(var, neo_integer_create(ext_index));
 
-        int_ret = exec_aux(tree.for_tree->block);
+        int_ret = exec_aux(tb, treeFor(tb, tree)->block);
 
         if (global_env->CODE_ERROR != 0)
         {
@@ -1484,17 +1482,17 @@ int execStatementFor(NeTree tree) {
 
 
 
-int execStatementForeachList(NeTree tree, NeObj neo_list) {
+int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_list) {
 
     NeList* list = neo_to_list(neo_list);
 
     // on récupère le variant de boucle
-    if (TREE_TYPE(FOR_ARG(tree, 0)) != TypeVariable) {
+    if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
         global_env->CODE_ERROR = 111;
         return 0;
     }
 
-    Var var = FOR_ARG(tree, 0).variable->var; // variable à incrémenter lors de la boucle
+    Var var = treeVar(tb, FOR_ARG(tb, tree, 0))->var; // variable à incrémenter lors de la boucle
 
     newContext(global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
     ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
@@ -1513,7 +1511,7 @@ int execStatementForeachList(NeTree tree, NeObj neo_list) {
         // on restaure la valeur de l'indice au début du corps de la boucle
         replace_var(var, neo_copy(nelist_nth(list, ext_index)));
 
-        int_ret = exec_aux(tree.for_tree->block);
+        int_ret = exec_aux(tb, treeFor(tb, tree)->block);
 
         if (global_env->CODE_ERROR != 0)
         {
@@ -1542,18 +1540,18 @@ int execStatementForeachList(NeTree tree, NeObj neo_list) {
 
 
 
-int execStatementForeachString(NeTree tree, NeObj neo_string) {
+int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_string) {
 
     char* string = neo_to_string(neo_string);
     int string_length = strlen(string);
 
     // on récupère le variant de boucle
-    if (TREE_TYPE(FOR_ARG(tree, 0)) != TypeVariable) {
+    if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
         global_env->CODE_ERROR = 111;
         return 0;
     }
 
-    Var var = FOR_ARG(tree, 0).variable->var; // variable à incrémenter lors de la boucle
+    Var var = treeVar(tb, FOR_ARG(tb, tree, 0))->var; // variable à incrémenter lors de la boucle
 
     newContext(global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
     ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
@@ -1573,7 +1571,7 @@ int execStatementForeachString(NeTree tree, NeObj neo_string) {
         // on restaure la valeur de l'indice au début du corps de la boucle
         replace_var(var, neo_str_create(charToString(string[ext_index])));
 
-        int_ret = exec_aux(tree.for_tree->block);
+        int_ret = exec_aux(tb, treeFor(tb, tree)->block);
 
         if (global_env->CODE_ERROR != 0)
         {
@@ -1614,27 +1612,27 @@ int execStatementForeachString(NeTree tree, NeObj neo_string) {
 
 
 
-int exec_aux(NeTree tree) {
+int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
     MAY_INTERRUPT();
 
     if (global_env->CODE_ERROR != 0)
         return 0;
 
-    struct TreeList treelist = tree.syntaxtree->treelist;
+    struct TreeList treelist = treeSntxTree(tb, tree)->treelist;
 
-    for (int inst=0 ; inst < treelist.len ; inst++)
+    for (int inst=0 ; inst < treelist.length ; inst++)
     {
-        global_env->LINENUMBER = TREE_LINE(treelist.trees[inst]);
+        global_env->LINENUMBER = TREE_LINE(tb, treelistGet(tb, treelist)[inst]);
 
-        switch (TREE_TYPE(treelist.trees[inst])) {
+        switch (TREE_TYPE(tb, treelistGet(tb, treelist)[inst])) {
 
             case TypeTryExcept:
             {
-                NeTree maintree = treelist.trees[inst];
+                TreeBufferIndex maintree = treelistGet(tb, treelist)[inst];
 
                 // exécution du try
-                intptr_t int_ret = exec_aux(maintree.tryexcept->try_tree);
+                intptr_t int_ret = exec_aux(tb, treeTE(tb, maintree)->try_tree);
 
                 if (int_ret != EXIT_SUCCESS)
                     return int_ret;
@@ -1650,23 +1648,23 @@ int exec_aux(NeTree tree) {
                     // on va parcourir la liste des exceptions jusqu'à en trouver une qui corresponde
                     int block_found = -1; // va correspondre à l'indice du sous arbre que l'on va exécuter
 
-                    struct TreeList except_blocks = maintree.tryexcept->except_blocks;
+                    struct TreeList except_blocks = treeTE(tb, maintree)->except_blocks;
 
                     // parcours des différents blocs except pour trouver le bon
-                    for (int fils = 0 ; fils < except_blocks.len && block_found == -1 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
+                    for (int fils = 0 ; fils < except_blocks.length && block_found == -1 ; fils++) { // on arrête dès que bo correspond à un vrai sous arbre except
 
                         // si le bloc except ne spécifie aucune exception, on peut directement l'exécuter
-                        if (except_blocks.trees[fils].except_block->exceptions.len == 0) {
+                        if (treeExpt(tb, treelistGet(tb, except_blocks)[fils])->exceptions.length == 0) {
                             block_found = fils;
                             break;
                         }
 
                         // parcourt toutes les exceptions du bloc except
-                        for (int i = 0 ; i < except_blocks.trees[fils].except_block->exceptions.len ; i++)
+                        for (int i = 0 ; i < treeExpt(tb, treelistGet(tb, except_blocks)[fils])->exceptions.length ; i++)
                         {
                             // récupère l'exception pour l'évaluer
-                            NeTree exception_expr = except_blocks.trees[fils].except_block->exceptions.trees[i];
-                            NeObj exception = eval_aux(exception_expr);
+                            TreeBufferIndex exception_expr = treelistGet(tb, treeExpt(tb, treelistGet(tb, except_blocks)[fils])->exceptions)[i];
+                            NeObj exception = eval_aux(tb, exception_expr);
 
 
                             if (NEO_TYPE(exception) != TYPE_EXCEPTION)
@@ -1692,7 +1690,7 @@ int exec_aux(NeTree tree) {
 
                     if (block_found != -1) // exécution du bloc except trouvé
                     {
-                        int_ret = exec_aux(except_blocks.trees[block_found].except_block->block);
+                        int_ret = exec_aux(tb, treeExpt(tb, treelistGet(tb, except_blocks)[block_found])->block);
 
                         if (global_env->CODE_ERROR != 0 || int_ret != EXIT_SUCCESS) {
                             return int_ret;
@@ -1714,7 +1712,7 @@ int exec_aux(NeTree tree) {
                 int temp = global_env->atomic_counter;
                 global_env->atomic_counter = -1; // tant qu'on n'a pas remis une valeur positive, on ne passera pas à un autre processus
                 
-                intptr_t int_ret = exec_aux(treelist.trees[inst]);
+                intptr_t int_ret = exec_aux(tb, treelistGet(tb, treelist)[inst]);
 
                 // s'il reste des crédits à ce processus, on les lui rend, sinon on passe au suivant
                 global_env->atomic_counter = (global_env->atomic_counter + temp > 0) ? global_env->atomic_counter + temp : 0;
@@ -1728,9 +1726,9 @@ int exec_aux(NeTree tree) {
             
             case TypeKWParam:
             {
-                if (treelist.trees[inst].kwparam->code == RETURN) // action de return
+                if (treeKWParam(tb, treelistGet(tb, treelist)[inst])->code == RETURN) // action de return
                 {
-                    if (treelist.trees[inst].kwparam->params.len > 1)
+                    if (treeKWParam(tb, treelistGet(tb, treelist)[inst])->params.length > 1)
                     {
                         global_env->CODE_ERROR = 21;
                         return 0;
@@ -1742,12 +1740,12 @@ int exec_aux(NeTree tree) {
                         return 0;
                     }
 
-                    if (treelist.trees[inst].kwparam->params.len == 0) {
+                    if (treeKWParam(tb, treelistGet(tb, treelist)[inst])->params.length == 0) {
                         global_env->RETURN_VALUE = neo_none_create();
                         return EXIT_RETURN;
                     }
                     else {
-                        global_env->RETURN_VALUE = eval_aux(treelist.trees[inst].kwparam->params.trees[0]);
+                        global_env->RETURN_VALUE = eval_aux(tb, treelistGet(tb, treeKWParam(tb, treelistGet(tb, treelist)[inst])->params)[0]);
 
                         if (global_env->CODE_ERROR != 0) {
                             return EXIT_SUCCESS;
@@ -1758,11 +1756,11 @@ int exec_aux(NeTree tree) {
                 }
 
                 
-                else if (treelist.trees[inst].kwparam->code == IMPORT) // action de import
+                else if (treeKWParam(tb, treelistGet(tb, treelist)[inst])->code == IMPORT) // action de import
                 {
-                    for (int ext_index = 0 ; ext_index < treelist.trees[inst].kwparam->params.len ; ext_index++)
+                    for (int ext_index = 0 ; ext_index < treeKWParam(tb, treelistGet(tb, treelist)[inst])->params.length ; ext_index++)
                     {
-                        NeObj nom = eval_aux(treelist.trees[inst].kwparam->params.trees[ext_index]);
+                        NeObj nom = eval_aux(tb, treelistGet(tb, treeKWParam(tb, treelistGet(tb, treelist)[inst])->params)[ext_index]);
 
                         return_on_error(0);
 
@@ -1790,9 +1788,9 @@ int exec_aux(NeTree tree) {
                     }
                 }
 
-                else if (treelist.trees[inst].kwparam->code == LOCAL)
+                else if (treeKWParam(tb, treelistGet(tb, treelist)[inst])->code == LOCAL)
                 {
-                    if (treelist.trees[inst].kwparam->params.len == 0) // il faut au moins un argument
+                    if (treeKWParam(tb, treelistGet(tb, treelist)[inst])->params.length == 0) // il faut au moins un argument
                     {
                         global_env->CODE_ERROR = 69;
                         return 0;
@@ -1803,25 +1801,25 @@ int exec_aux(NeTree tree) {
                         return 0;
                     }
 
-                    for (int i = 0 ; i < treelist.trees[inst].kwparam->params.len ; i++) // pour toutes les variables
+                    for (int i = 0 ; i < treeKWParam(tb, treelistGet(tb, treelist)[inst])->params.length ; i++) // pour toutes les variables
                     {
                         // va traiter la variable comme étant locale
-                        save_later(global_env->process_cycle->process->varsToSave, treelist.trees[inst].kwparam->params.trees[i].variable->var);
-                        local(treelist.trees[inst].kwparam->params.trees[i].variable->var, global_env->process_cycle->process->var_loc);
+                        save_later(global_env->process_cycle->process->varsToSave, treeVar(tb, treelistGet(tb, treeKWParam(tb, treelistGet(tb, treelist)[inst])->params)[i])->var);
+                        local(treeVar(tb, treelistGet(tb, treeKWParam(tb, treelistGet(tb, treelist)[inst])->params)[i])->var, global_env->process_cycle->process->var_loc);
                     }
                     
                 }
 
-                else if (treelist.trees[inst].kwparam->code == AWAIT)
+                else if (treeKWParam(tb, treelistGet(tb, treelist)[inst])->code == AWAIT)
                 {
 
-                    if (treelist.trees[inst].kwparam->params.len > 1)
+                    if (treeKWParam(tb, treelistGet(tb, treelist)[inst])->params.length > 1)
                     {
                         global_env->CODE_ERROR = 101;
                         return 0;
                     }
 
-                    while (!isTrue(treelist.trees[inst].kwparam->params.trees[0]))
+                    while (!isTrue(tb, treelistGet(tb, treeKWParam(tb, treelistGet(tb, treelist)[inst])->params)[0]))
                     {
                         if (global_env->CODE_ERROR != 0)
                             return 0;
@@ -1847,8 +1845,8 @@ int exec_aux(NeTree tree) {
             
             case TypeKeyword:
             {
-                if (treelist.trees[inst].keyword->code != PASS) {
-                    return treelist.trees[inst].keyword->code;
+                if (treeKW(tb, treelistGet(tb, treelist)[inst])->code != PASS) {
+                    return treeKW(tb, treelistGet(tb, treelist)[inst])->code;
                 }
                 break;
             }
@@ -1857,7 +1855,7 @@ int exec_aux(NeTree tree) {
         
             case TypeConditionblock:
             {
-                int int_ret = execConditionBlock(treelist.trees[inst]);
+                int int_ret = execConditionBlock(tb, treelistGet(tb, treelist)[inst]);
                 
                 if (int_ret != 0 || global_env->CODE_ERROR != 0) {
                     return int_ret;
@@ -1875,7 +1873,7 @@ int exec_aux(NeTree tree) {
                 //stack_check_for(varstack, 4);
                 // évaluation de la condition
 
-                NeObj expr = eval_aux(treelist.trees[inst].iew->expression);
+                NeObj expr = eval_aux(tb, treeIEW(tb, treelistGet(tb, treelist)[inst])->expression);
 
                 if (global_env->CODE_ERROR != 0) {
                     return 0;
@@ -1887,7 +1885,7 @@ int exec_aux(NeTree tree) {
                 while (cond)
                 {
 
-                    int_ret = exec_aux(treelist.trees[inst].iew->code);
+                    int_ret = exec_aux(tb, treeIEW(tb, treelistGet(tb, treelist)[inst])->code);
 
                     if (global_env->CODE_ERROR != 0) {
                         return 0;
@@ -1898,7 +1896,7 @@ int exec_aux(NeTree tree) {
 
                     // réévaluation de la condition
 
-                    expr = eval_aux(treelist.trees[inst].iew->expression);
+                    expr = eval_aux(tb, treeIEW(tb, treelistGet(tb, treelist)[inst])->expression);
 
                     if (global_env->CODE_ERROR != 0) {
                         return 0;
@@ -1921,13 +1919,13 @@ int exec_aux(NeTree tree) {
             case TypeFor:
             {
                 
-                if (TREE_TYPE(FOR_ARG(treelist.trees[inst], 0)) != TypeVariable)
+                if (TREE_TYPE(tb, FOR_ARG(tb, treelistGet(tb, treelist)[inst], 0)) != TypeVariable)
                 {
                     global_env->CODE_ERROR = 22;
                     return 0;
                 }
 
-                int int_ret = execStatementFor(treelist.trees[inst]);
+                int int_ret = execStatementFor(tb, treelistGet(tb, treelist)[inst]);
 
                 if (global_env->CODE_ERROR != 0 || int_ret != 0)
                     return int_ret;
@@ -1938,19 +1936,19 @@ int exec_aux(NeTree tree) {
             case TypeForeach:
             {
                 
-                if (TREE_TYPE(FOR_ARG(treelist.trees[inst], 0)) != TypeVariable)
+                if (TREE_TYPE(tb, FOR_ARG(tb, treelistGet(tb, treelist)[inst], 0)) != TypeVariable)
                 {
                     global_env->CODE_ERROR = 22;
                     return 0;
                 }
 
-                if (FOR_NBARGS(treelist.trees[inst]) != 2) {
+                if (FOR_NBARGS(tb, treelistGet(tb, treelist)[inst]) != 2) {
                     global_env->CODE_ERROR = 109;
                     return 0;
                 }
 
 
-                NeObj iterable = eval_aux(FOR_ARG(treelist.trees[inst], 1));
+                NeObj iterable = eval_aux(tb, FOR_ARG(tb, treelistGet(tb, treelist)[inst], 1));
 
                 if (global_env->CODE_ERROR != 0) {
                     return 0;
@@ -1959,10 +1957,10 @@ int exec_aux(NeTree tree) {
                 int int_ret = 0;
 
                 if (NEO_TYPE(iterable) == TYPE_LIST) {
-                    int_ret = execStatementForeachList(treelist.trees[inst], iterable);
+                    int_ret = execStatementForeachList(tb, treelistGet(tb, treelist)[inst], iterable);
                 }
                 else if (NEO_TYPE(iterable) == TYPE_STRING) {
-                    int_ret = execStatementForeachString(treelist.trees[inst], iterable);
+                    int_ret = execStatementForeachString(tb, treelistGet(tb, treelist)[inst], iterable);
                 }
                 else {
                     neobject_destroy(iterable);
@@ -1984,21 +1982,23 @@ int exec_aux(NeTree tree) {
             {
                 // définition de fonction en cours d'exécution
 
+                struct FunctionDef* maintree = treeFDef(tb, treelistGet(tb, treelist)[inst]);
+
                 // il faut d'abord évaluer les arguments optionnels
-                NeList* opt_args = treeToList(&treelist.trees[inst].functiondef->args);
+                NeList* opt_args = treeToList(tb, &maintree->args);
 
                 // on crée la nouvelle fonction avec ces arguments optionnels
-                NeObj function = userFuncDefine(treelist.trees[inst].functiondef->object, opt_args);
+                NeObj function = userFuncDefine(maintree->object, opt_args);
 
                 // et on la met dans la variable qui porte son nom
-                Var var = get_var(treelist.trees[inst].functiondef->name);
+                Var var = get_var(maintree->name);
                 replace_var(var, function);
                 break;
             }
 
             default:
             {
-                NeObj res = eval_aux(treelist.trees[inst]);
+                NeObj res = eval_aux(tb, treelistGet(tb, treelist)[inst]);
 
                 neobject_destroy(res); // sinon, évaluation de l'expression, en la libérant juste après
 
@@ -2067,16 +2067,16 @@ NO_OPT void exitRuntime(void) {
 
 
 
-void exec(NeTree tree) {
+void exec(TreeBuffer* tb, TreeBufferIndex tree) {
     initRuntime();
-    exec_aux(tree);
+    exec_aux(tb, tree);
     exitRuntime();
     return;
 }
 
-NeObj eval(NeTree tree) {
+NeObj eval(TreeBuffer* tb, TreeBufferIndex tree) {
     initRuntime();
-    NeObj res = eval_aux(tree);
+    NeObj res = eval_aux(tb, tree);
     exitRuntime();
     return res;
 }

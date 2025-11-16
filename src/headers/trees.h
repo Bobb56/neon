@@ -7,12 +7,53 @@
 #include "neobj.h"
 
 
-#define GENERAL_INFO            TreeType type; uint16_t line;
-#define TREE_TYPE(tree)         (tree.general_info->type)
-#define TREE_LINE(tree)         (tree.general_info->line)
+typedef uint16_t TreeBufferIndex;
 
-#define FOR_NBARGS(tree)        (tree.for_tree->params.len)
-#define FOR_ARG(tree, n)        (tree.for_tree->params.trees[n])
+struct TreeListTemp {
+    TreeBufferIndex* trees;
+    uint16_t len;
+};
+
+typedef struct TreeBuffer {
+    int size;
+    int n_blocks;
+    int block_size;
+    void* pointer;
+    struct TreeListTemp remember;
+} TreeBuffer;
+
+
+
+#define GENERAL_INFO                TreeType type; uint16_t line;
+#define TREE_TYPE(tb, tbi)          ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->type
+#define TREE_LINE(tb, tbi)          ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->line
+#define TREE_ISVOID(tbi)            (tbi == (uint16_t)-1)
+#define TREE_VOID                   ((TreeBufferIndex)-1)
+
+#define treelistGet(tb, tl)         ((TreeBufferIndex*)(((tb)->pointer) + (tl).indices))
+#define treeBinOp(tb, tbi)          ((struct BinaryOp*)(((tb)->pointer) + tbi))
+#define treeUnOp(tb, tbi)           ((struct UnaryOp*)(((tb)->pointer) + tbi))
+#define treeVar(tb, tbi)            ((struct Variable*)(((tb)->pointer) + tbi))
+#define treeConst(tb, tbi)          ((struct ConstObj*)(((tb)->pointer) + tbi))
+#define treeIEW(tb, tbi)            ((struct StatementIEW*)(((tb)->pointer) + tbi))
+#define treeFor(tb, tbi)            ((struct StatementFor*)(((tb)->pointer) + tbi))
+#define treeSntxTree(tb, tbi)       ((struct SyntaxTree*)(((tb)->pointer) + tbi))
+#define treeFCall(tb, tbi)          ((struct FunctionCall*)(((tb)->pointer) + tbi))
+#define treeTE(tb, tbi)             ((struct TryExcept*)(((tb)->pointer) + tbi))
+#define treeFDef(tb, tbi)           ((struct FunctionDef*)(((tb)->pointer) + tbi))
+#define treeLstIndx(tb, tbi)        ((struct ListIndex*)(((tb)->pointer) + tbi))
+#define treeAttr(tb, tbi)           ((struct Attribute*)(((tb)->pointer) + tbi))
+#define treeKW(tb, tbi)             ((struct Keyword*)(((tb)->pointer) + tbi))
+#define treeKWParam(tb, tbi)        ((struct KWParam*)(((tb)->pointer) + tbi))
+#define treeContLit(tb, tbi)        ((struct ContainerLit*)(((tb)->pointer) + tbi))
+#define treeAttrLit(tb, tbi)        ((struct AttributeLit*)(((tb)->pointer) + tbi))
+#define treeExpt(tb, tbi)           ((struct ExceptBlock*)(((tb)->pointer) + tbi))
+
+
+
+
+#define FOR_NBARGS(tb,tbi)        (treeFor(tb,tbi)->params.length)
+#define FOR_ARG(tb,tbi, n)        (treelistGet(tb, treeFor(tb,tbi)->params)[n])
 
 
 typedef enum {
@@ -43,47 +84,17 @@ typedef enum {
 } TreeType;
 
 
-typedef union NeTree {
-    void* pointer;                          // pour accéder au pointeur brut
-    struct {GENERAL_INFO} *general_info;    // pour accéder aux deux champs communs à toutes les structures
-
-    // structures spécifiques à chaque type d'arbres, à utiliser en fonction du type
-    struct BinaryOp* binary_op;
-    struct UnaryOp* unary_op;
-    struct Variable* variable;
-    struct ConstObj* const_obj;
-    struct StatementIEW* iew;
-    struct StatementFor* for_tree;
-    struct SyntaxTree* syntaxtree;
-    struct FunctionCall* fcall;
-    struct TryExcept* tryexcept;
-    struct Enum* enum_tree;
-    struct FunctionDef* functiondef;
-    struct ListIndex* listindex;
-    struct Attribute* attribute;
-    struct Keyword* keyword;
-    struct KWParam* kwparam;
-    struct ContainerLit* container_lit;
-    struct AttributeLit* attribute_lit;
-    struct ExceptBlock* except_block;
-} NeTree;
-
-
-
-#define TREE_VOID               ((NeTree) {.pointer = NULL})
-
-
 
 struct TreeList {
-    NeTree* trees;
-    uint16_t len;
+    TreeBufferIndex indices; /* Pointeur vers le début du tableau dans le TreeBuffer*/
+    uint16_t length;
 };
 
 struct BinaryOp {
     GENERAL_INFO
     int op;
-    NeTree left;
-    NeTree right;
+    TreeBufferIndex left;
+    TreeBufferIndex right;
 };
 
 struct Variable {
@@ -93,8 +104,8 @@ struct Variable {
 
 struct ListIndex {
     GENERAL_INFO
-    NeTree object;
-    NeTree index;
+    TreeBufferIndex object;
+    TreeBufferIndex index;
 };
 
 struct ContainerLit {
@@ -106,12 +117,12 @@ struct ContainerLit {
 struct AttributeLit {
     GENERAL_INFO
     char* name;
-    NeTree expr;
+    TreeBufferIndex expr;
 };
 
 struct Attribute {
     GENERAL_INFO
-    NeTree object;
+    TreeBufferIndex object;
     int index;
     int last_cont_type;
     char* name;
@@ -120,7 +131,7 @@ struct Attribute {
 struct UnaryOp {
     GENERAL_INFO
     int op;
-    NeTree expr;
+    TreeBufferIndex expr;
 };
 
 struct ConstObj {
@@ -130,20 +141,20 @@ struct ConstObj {
 
 struct StatementIEW {
     GENERAL_INFO
-    NeTree expression;
-    NeTree code;
+    TreeBufferIndex expression;
+    TreeBufferIndex code;
 };
 
 struct StatementFor {
     GENERAL_INFO
-    NeTree block;
+    TreeBufferIndex block;
     struct TreeList params;
 };
 
 
 struct FunctionCall {
     GENERAL_INFO
-    NeTree function;
+    TreeBufferIndex function;
     NeObj function_obj;
     struct TreeList args;
 };
@@ -151,7 +162,7 @@ struct FunctionCall {
 
 struct TryExcept {
     GENERAL_INFO
-    NeTree try_tree;
+    TreeBufferIndex try_tree;
     struct TreeList except_blocks;
 };
 
@@ -181,35 +192,35 @@ struct SyntaxTree {
 struct ExceptBlock {
     GENERAL_INFO
     struct TreeList exceptions;
-    NeTree block;
+    TreeBufferIndex block;
 };
 
+TreeBuffer TreeBuffer_init(void);
+void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree);
+void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point);
+TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size);
+void TreeList_destroy(TreeBuffer* tb, struct TreeList* treelist);
+void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree);
 
+TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line);
+void TreeListTemp_init(struct TreeListTemp* tree_list);
+void TreeListTemp_destroy(struct TreeListTemp* list);
+void TreeListTemp_append(struct TreeListTemp* tree_list, TreeBufferIndex tree);
+void TreeListTemp_insert(struct TreeListTemp* tree_list, TreeBufferIndex tree, int index);
+void TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list, struct TreeList* list);
 
-bool NeTree_isvoid(NeTree tree);
-NeTree NeTree_create(TreeType type, int line);
-void NeTree_destroy(NeTree tree);
-void TreeList_init(struct TreeList* tree_list);
-void TreeList_append(struct TreeList* tree_list, NeTree tree);
-void TreeList_insert(struct TreeList* tree_list, NeTree tree, int index);
-void TreeList_destroy(struct TreeList* tree_list);
-NeTree NeTree_make_syntaxtree(TreeType type, int line);
-void NeTree_add_syntaxtree(NeTree* tree, NeTree son);
-NeTree NeTree_make_binaryOp(int op, NeTree left, NeTree right, int line);
-NeTree NeTree_make_unaryOp(int op, NeTree expr, int line);
-NeTree NeTree_make_variable(Var variable, int line);
-NeTree NeTree_make_const(NeObj const_obj, int line);
-NeTree NeTree_make_containerlit(int line);
-NeTree NeTree_make_IEWF_tree(NeTree expr, NeTree block, TreeType type, int line);
-void NeTree_containerlit_add_attribute(NeTree* tree, NeTree attr);
-NeTree NeTree_make_fcall(int line);
-void NeTree_fcall_add_arg(NeTree* tree, NeTree arg);
-NeTree NeTree_make_attribute(NeTree object, char* name, int line);
-NeTree NeTree_make_functiondef(char* name, struct TreeList args, NeObj object, int line);
-NeTree NeTree_make_except_block(struct TreeList exceptions, NeTree block, int line);
-NeTree NeTree_make_tryexcept(NeTree try_tree, struct TreeList except_blocks, int line);
-NeTree NeTree_make_kwparam(struct TreeList params, int code, int line);
-NeTree NeTree_make_for_tree(struct TreeList params, NeTree block, int line, TreeType type);
-bool NeTree_isexpr(NeTree tree);
+TreeBufferIndex NeTree_make_binaryOp(TreeBuffer* tb, int op, TreeBufferIndex left, TreeBufferIndex right, int line);
+TreeBufferIndex NeTree_make_unaryOp(TreeBuffer* tb, int op, TreeBufferIndex expr, int line);
+TreeBufferIndex NeTree_make_variable(TreeBuffer* tb, Var variable, int line);
+TreeBufferIndex NeTree_make_const(TreeBuffer* tb, NeObj const_obj, int line);
+TreeBufferIndex NeTree_make_IEWF_tree(TreeBuffer* tb, TreeBufferIndex expr, TreeBufferIndex block, TreeType type, int line);
+TreeBufferIndex NeTree_make_fcall(TreeBuffer* tb, int line);
+TreeBufferIndex NeTree_make_attribute(TreeBuffer* tb, TreeBufferIndex object, char* name, int line);
+TreeBufferIndex NeTree_make_functiondef(TreeBuffer* tb, char* name, struct TreeListTemp args, NeObj object, int line);
+TreeBufferIndex NeTree_make_except_block(TreeBuffer* tb, struct TreeListTemp exceptions, TreeBufferIndex block, int line);
+TreeBufferIndex NeTree_make_tryexcept(TreeBuffer* tb, TreeBufferIndex try_tree, struct TreeListTemp except_blocks, int line);
+TreeBufferIndex NeTree_make_kwparam(TreeBuffer* tb, struct TreeListTemp params, int code, int line);
+TreeBufferIndex NeTree_make_for_tree(TreeBuffer* tb, struct TreeListTemp params, TreeBufferIndex block, int line, TreeType type);
+bool NeTree_isexpr(TreeBuffer* tb, TreeBufferIndex tree);
 
 #endif

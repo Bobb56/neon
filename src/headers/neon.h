@@ -78,10 +78,10 @@ typedef struct NeonEnv {
     // Pour chaque type de container, ATTRIBUTES contient une liste de chaines de caractères correspondant aux noms des champs dans l'ordre
     NeList* ATTRIBUTES; // contient pour chaque type de container, une liste des noms de champs
 
-    // Ceci n'est pas un arbre, mais plutot une forêt. Tous les fils de cet arbre sont les arbres syntaxiques des fonctions
-    // définies par l'utilisateur. Les stocker permet de garder des versions uniques de ces arbres, même lors de la copie
-    // de fonctions utilisateurs, et de tout libérer à la fin
-    struct TreeList FONCTIONS; // cet arbre va contenir en fils tous les arbres de fonction des fonctions et des méthodes définies par l'utilisateur
+    // Ceci est un buffer contenant tous les arbres syntaxiques correspondant aux fonctions définies
+    // cela permet de conserver de manière contigüe toutes les fonctions pendant toute l'exécution du programme
+    // tout en supprimant le code qui n'est exécuté qu'une fois
+    TreeBuffer FONCTIONS; // cet arbre va contenir en fils tous les arbres de fonction des fonctions et des méthodes définies par l'utilisateur
 
     // Ce couple de variables permet de gérer les variables de Neon, c'est-à-dire les objets auxquels on peut directement accéder
     // par un nom depuis l'interpréteur.

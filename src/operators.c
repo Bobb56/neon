@@ -440,9 +440,9 @@ NeObj _eucl(NeObj _op1, NeObj _op2)
 
 
 
-NeObj _and(NeTree tree1, NeTree tree2)
+NeObj _and(TreeBuffer* tb, TreeBufferIndex tree1, TreeBufferIndex tree2)
 {
-  bool b = isTrue(tree1) && global_env->CODE_ERROR == 0 && isTrue(tree2);
+  bool b = isTrue(tb, tree1) && global_env->CODE_ERROR == 0 && isTrue(tb, tree2);
 
   if (global_env->CODE_ERROR != 0)
     return NEO_VOID;
@@ -454,9 +454,9 @@ NeObj _and(NeTree tree1, NeTree tree2)
 
 
 
-NeObj _or(NeTree tree1, NeTree tree2)
+NeObj _or(TreeBuffer* tb, TreeBufferIndex tree1, TreeBufferIndex tree2)
 {
-  bool b = isTrue(tree1) || global_env->CODE_ERROR != 0 || isTrue(tree2);
+  bool b = isTrue(tb, tree1) || global_env->CODE_ERROR != 0 || isTrue(tb, tree2);
 
   if (global_env->CODE_ERROR != 0)
     return NEO_VOID;

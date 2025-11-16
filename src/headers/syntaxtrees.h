@@ -9,19 +9,15 @@
 #include "trees.h"
 
 
-char* blockFromStatement(char* statement);
-char* expressionFromStatement(char* statement);
-char* fonctionName(char* fonction, char* set);
-char* fonctionArgs(char* fonction, char* set);
-NeTree createExpressionTree(char* string, bool free_after);
-void affExpr(NeTree tree);
-NeTree createConditionBlockTree(Ast** ast, toklist* tokens, intlist* lines, int offset);
-NeTree createStatementElseTree(Ast** ast, toklist* tokens, intlist* lines, int offset);
-NeTree createStatementIEWTree(Ast** ast, toklist* tokens, intlist* lines, int offset, TreeType type);
-NeTree createSyntaxTree(char* program, bool free_after);
-NeTree createFunctionTree(Ast** ast, toklist* tokens, intlist* lines, int offset, bool isMethod);
-NeTree createSyntaxTreeAux(Ast** ast, toklist* tokens, intlist* lines, int offset);
-NeTree createExpressionTreeAux(Ast** ast, toklist* tokens, intlist* lines, int offset);
+TreeBufferIndex createExpressionTree(TreeBuffer* tb, char* string, bool free_after);
+void affExpr(TreeBuffer* tb, TreeBufferIndex tree);
+TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset);
+TreeBufferIndex createStatementElseTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset);
+TreeBufferIndex createStatementIEWTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset, TreeType type);
+TreeBufferIndex createSyntaxTree(TreeBuffer* tb, char* program, bool free_after);
+TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset, bool isMethod);
+TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset);
+TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset);
 
 
 #endif

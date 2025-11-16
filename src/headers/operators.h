@@ -9,8 +9,8 @@
 
 #define NBOPERATEURS 40
 
-NeObj _and(NeTree tree1, NeTree tree2);
-NeObj _or(NeTree tree1, NeTree tree2);
+NeObj _and(TreeBuffer* tb, TreeBufferIndex tree1, TreeBufferIndex tree2);
+NeObj _or(TreeBuffer* tb, TreeBufferIndex tree1, TreeBufferIndex tree2);
 NeObj _xor(NeObj op1, NeObj op2);
 NeObj _add(NeObj op1, NeObj op2);
 NeObj _mul(NeObj op1, NeObj op2);

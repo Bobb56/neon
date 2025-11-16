@@ -18,17 +18,17 @@
 
 
 bool neoIsTrue(NeObj neo);
-bool isTrue(NeTree tree);
-NeObj eval(NeTree tree);
-NeObj* get_address(NeTree tree);
+bool isTrue(TreeBuffer* tb, TreeBufferIndex tree);
+NeObj eval(TreeBuffer* tb, TreeBufferIndex tree);
+NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree);
 void local(Var var, ptrlist* var_loc);
 void newContext(ptrlist* var_loc);
 void deleteContext(ptrlist* var_loc);
-int exec_aux(NeTree tree);
-void exec(NeTree tree);
-bool isTrue(NeTree tree);
+int exec_aux(TreeBuffer* tb, TreeBufferIndex tree);
+void exec(TreeBuffer* tb, TreeBufferIndex tree);
+bool isTrue(TreeBuffer* tb, TreeBufferIndex tree);
 void update__name__(char* name);
-NeObj eval_aux(NeTree tree);
+NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree);
 NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args);
 void initRuntime(void);
 void exitRuntime(void);

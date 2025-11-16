@@ -1,9 +1,194 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include "headers/trees.h"
 #include "headers/dynarrays.h"
 #include "headers/errors.h"
 #include "headers/neon.h"
 #include "headers/objects.h"
+
+
+/*
+Comment fonctionnent les structures de données d'arbres ?
+Afin de maximiser la localité mémoire et la compacité des données, les données associées à un même arbre sont
+toutes regroupées au sein du même TreeBuffer : un gros buffer dans lequel on alloue tous les sous-arbres et les
+TreeList.
+Ainsi, quand on demande la transformation d'un fichier source en arbre syntaxique, un TreeBuffer est créé, et
+tous les arbres sont alloués dedans, à l'exception des arbres associés aux fonctions définies. Ces derniers
+sont alloués dans un TreeBuffer global nommé global_env->FONCTIONS.
+Cela permet à la fin de l'exécution du fichier de supprimer le TreeBuffer du fichier tout en conservant les
+fonctions qui seront probablement réexécutées. Ce TreeBuffer global ne sert pas qu'aux fonctions utilisateur,
+mais sert globalement à allouer n'importe quel arbre qui sera amené à être conservé même après la suppression
+du TreeBuffer associé au fichier.
+Ce buffer n'a aucune fonctionnalité de désallocation à part sa suppression totale, donc on alloue dedans uniquement
+des zones mémoire qui n'auront pas besoin d'être supprimées ou modifiées avant la suppression définitive
+du TreeBuffer.
+Cela engendre un fonctionnement un peu plus subtil des TreeList.
+Lorsque qu'un type d'arbre contient des TreeList, on alloue lors de sa création un objet TreeListTemp qui peut
+être redimensionné, modifié, etc. Une fois que ce TreeListTemp a atteint sa forme finale, on peut appeler
+la fonction TreeListTemp_dump(TreeBuffer*, struct TreeListTemp*, struct TreeList*) qui va recopier la
+TreeListTemp dans la TreeList indiquée en argument tout en supprimant la TreeListTemp.
+
+
+
+*/
+
+TreeBuffer TreeBuffer_init(void) {
+    TreeBuffer tb;
+    tb.size = 0;
+    tb.n_blocks = 1;
+    tb.block_size = 512;
+    tb.pointer = neon_malloc(tb.block_size * tb.n_blocks);
+
+    if (tb.pointer == NULL)
+        global_env->CODE_ERROR = 12;
+
+    TreeListTemp_init(&tb.remember);
+
+    return tb;
+}
+
+// Permet au TreeBuffer de se souvenir des arbres vers lesquels personne ne pointe à l'intérieur d'un TreeBuffer
+void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree) {
+    TreeListTemp_append(&tb->remember, tree);
+}
+
+TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
+    TreeBufferIndex pointer = tb->size;
+    if (tb->size + size > tb->block_size * tb->n_blocks) {
+        tb->n_blocks++;
+        void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
+
+        if (tmp == NULL) {
+            neon_free(tb->pointer);
+            global_env->CODE_ERROR = 12;
+            return TREE_VOID;
+        }
+
+        tb->pointer = tmp;
+    }
+    tb->size += size;
+    return pointer;
+}
+
+
+void TreeList_destroy(TreeBuffer* tb, struct TreeList* treelist) {
+    TreeBufferIndex* array_ptr = tb->pointer + treelist->indices;
+    for (int i = 0 ; i < treelist->length ; i++) {
+        NeTree_destroy(tb, treelistGet(tb, *treelist)[i]);
+    }
+}
+
+void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree) {
+    if (TREE_ISVOID(tree))
+        return;
+
+    switch (TREE_TYPE(tb, tree)) {
+        case TypeBinaryOp:
+            NeTree_destroy(tb, treeBinOp(tb, tree)->left);
+            NeTree_destroy(tb, treeBinOp(tb, tree)->right);
+            break;
+        
+        case TypeUnaryOp:
+            NeTree_destroy(tb, treeUnOp(tb, tree)->expr);
+            break;
+
+        case TypeConst:
+            neobject_destroy(treeConst(tb, tree)->obj);
+            break;
+        
+        case TypeFor:
+        case TypeForeach:
+            TreeList_destroy(tb, &treeFor(tb, tree)->params);
+            NeTree_destroy(tb, treeFor(tb, tree)->block);
+            break;
+
+        case TypeWhile:
+        case TypeIf:
+        case TypeElif:
+            NeTree_destroy(tb, treeIEW(tb, tree)->expression);
+            NeTree_destroy(tb, treeIEW(tb, tree)->code);
+            break;
+        
+        case TypeAtomic:
+        case TypeConditionblock:
+        case TypeSyntaxtree:
+        case TypeElse:
+        case TypeList:
+            TreeList_destroy(tb, &treeSntxTree(tb, tree)->treelist);
+            break;
+        
+        case TypeTryExcept:
+            NeTree_destroy(tb, treeTE(tb, tree)->try_tree);
+            TreeList_destroy(tb, &treeTE(tb, tree)->except_blocks);
+            break;
+        
+        case TypeFunctiondef:
+            neon_free(treeFDef(tb, tree)->name);
+            neobject_destroy(treeFDef(tb, tree)->object);
+            TreeList_destroy(tb, &treeFDef(tb, tree)->args);
+            break;
+        
+        case TypeListindex:
+            NeTree_destroy(tb, treeLstIndx(tb, tree)->index);
+            NeTree_destroy(tb, treeLstIndx(tb, tree)->object);
+            break;
+        
+        case TypeFunctioncall:
+            TreeList_destroy(tb, &treeFCall(tb, tree)->args);
+            NeTree_destroy(tb, treeFCall(tb, tree)->function);
+            if (!neo_is_void(treeFCall(tb, tree)->function_obj))
+                neobject_destroy(treeFCall(tb, tree)->function_obj);
+            break;
+        
+        case TypeAttribute:
+            if (treeAttr(tb, tree)->name != NULL)
+                neon_free(treeAttr(tb, tree)->name);
+            NeTree_destroy(tb, treeAttr(tb, tree)->object);
+            break;
+        
+        case TypeKWParam:
+            TreeList_destroy(tb, &treeKWParam(tb, tree)->params);
+            break;
+        
+        case TypeContainerLit:
+            TreeList_destroy(tb, &treeContLit(tb, tree)->attributes);
+            break;
+        
+        case TypeAttributeLit:
+            neon_free(treeAttrLit(tb, tree)->name);
+            NeTree_destroy(tb, treeAttrLit(tb, tree)->expr);
+            break;
+        
+        case TypeExceptBlock:
+            NeTree_destroy(tb, treeExpt(tb, tree)->block);
+            TreeList_destroy(tb, &treeExpt(tb, tree)->exceptions);
+            break;
+        
+        case TypeKeyword:
+        case TypeVariable:
+            break;
+    }
+}
+
+
+
+
+void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
+    // Parcours de tout le TreeBuffer pour libérer tous les pointeurs dedans
+    if (!TREE_ISVOID(entry_point))
+        NeTree_destroy(tb, entry_point);
+    
+    // On supprime les arbres sur lesquels personne ne pointait
+    for (int i = 0 ; i < tb->remember.len ; i++)
+        NeTree_destroy(tb, tb->remember.trees[i]);
+
+    TreeListTemp_destroy(&tb->remember);
+    free(tb->pointer);
+}
+
+void TreeListTemp_destroy(struct TreeListTemp* list) {
+    neon_free(list->trees);
+}
 
 
 size_t type_size(TreeType type) {
@@ -55,125 +240,23 @@ size_t type_size(TreeType type) {
 
 
 
-NeTree NeTree_create(TreeType type, int line) {
-    NeTree tree;
-    tree.pointer = neon_malloc(type_size(type));
 
-    if (tree.pointer == NULL) {
-        global_env->CODE_ERROR = 12;
-        return TREE_VOID;
-    }
 
-    tree.general_info->line = line;
-    tree.general_info->type = type;
+TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line) {
+    TreeBufferIndex tree = TreeBuffer_alloc(tb, type_size(type));
+
+    return_on_error(TREE_VOID);
+
+    TREE_LINE(tb, tree) = line;
+    TREE_TYPE(tb,tree) = type;
     return tree;
 }
 
 
-bool NeTree_isvoid(NeTree tree) {
-    return tree.pointer == NULL;
-}
 
 
 
-
-
-void NeTree_destroy(NeTree tree) {
-    if (NeTree_isvoid(tree))
-        return;
-
-    switch (tree.general_info->type) {
-        case TypeBinaryOp:
-            NeTree_destroy(tree.binary_op->left);
-            NeTree_destroy(tree.binary_op->right);
-            break;
-        
-        case TypeUnaryOp:
-            NeTree_destroy(tree.unary_op->expr);
-            break;
-
-        case TypeConst:
-            neobject_destroy(tree.const_obj->obj);
-            break;
-        
-        case TypeFor:
-        case TypeForeach:
-            TreeList_destroy(&tree.for_tree->params);
-            NeTree_destroy(tree.for_tree->block);
-            break;
-
-        case TypeWhile:
-        case TypeIf:
-        case TypeElif:
-            NeTree_destroy(tree.iew->expression);
-            NeTree_destroy(tree.iew->code);
-            break;
-        
-        case TypeAtomic:
-        case TypeConditionblock:
-        case TypeSyntaxtree:
-        case TypeElse:
-        case TypeList:
-            TreeList_destroy(&tree.syntaxtree->treelist);
-            break;
-        
-        case TypeTryExcept:
-            NeTree_destroy(tree.tryexcept->try_tree);
-            TreeList_destroy(&tree.tryexcept->except_blocks);
-            break;
-        
-        case TypeFunctiondef:
-            neon_free(tree.functiondef->name);
-            neobject_destroy(tree.functiondef->object);
-            TreeList_destroy(&tree.functiondef->args);
-            break;
-        
-        case TypeListindex:
-            NeTree_destroy(tree.listindex->index);
-            NeTree_destroy(tree.listindex->object);
-            break;
-        
-        case TypeFunctioncall:
-            TreeList_destroy(&tree.fcall->args);
-            NeTree_destroy(tree.fcall->function);
-            if (!neo_is_void(tree.fcall->function_obj))
-                neobject_destroy(tree.fcall->function_obj);
-            break;
-        
-        case TypeAttribute:
-            if (tree.attribute->name != NULL)
-                neon_free(tree.attribute->name);
-            NeTree_destroy(tree.attribute->object);
-            break;
-        
-        case TypeKWParam:
-            TreeList_destroy(&tree.kwparam->params);
-            break;
-        
-        case TypeContainerLit:
-            TreeList_destroy(&tree.container_lit->attributes);
-            break;
-        
-        case TypeAttributeLit:
-            neon_free(tree.attribute_lit->name);
-            NeTree_destroy(tree.attribute_lit->expr);
-            break;
-        
-        case TypeExceptBlock:
-            NeTree_destroy(tree.except_block->block);
-            TreeList_destroy(&tree.except_block->exceptions);
-            break;
-        
-        case TypeKeyword:
-        case TypeVariable:
-            break;
-    }
-    neon_free(tree.pointer);
-}
-
-
-
-bool NeTree_isexpr(NeTree tree) {
+bool NeTree_isexpr(TreeBuffer* tb, TreeBufferIndex tree) {
     intlist expressions = {
         .tab = (int[]) {
                             TypeBinaryOp,
@@ -189,26 +272,26 @@ bool NeTree_isexpr(NeTree tree) {
                         },
         .len = 10
     };
-    return intlist_inList(&expressions, TREE_TYPE(tree));
+    return intlist_inList(&expressions, TREE_TYPE(tb,tree));
 }
 
 
 
 
 
-void TreeList_init(struct TreeList* tree_list)
+void TreeListTemp_init(struct TreeListTemp* tree_list)
 {
     tree_list->trees = NULL;
     tree_list->len = 0;
 }
 
-void TreeList_append(struct TreeList* tree_list, NeTree tree) {
-    NeTree* ptr;
+void TreeListTemp_append(struct TreeListTemp* tree_list, TreeBufferIndex tree) {
+    TreeBufferIndex* ptr;
     if (tree_list->len == 0) {
-        ptr = neon_malloc(sizeof(NeTree));
+        ptr = neon_malloc(sizeof(TreeBufferIndex));
     }
     else {
-        ptr = neon_realloc(tree_list->trees, (tree_list->len + 1) * sizeof(NeTree));
+        ptr = neon_realloc(tree_list->trees, (tree_list->len + 1) * sizeof(TreeBufferIndex));
     }
 
     if (ptr == NULL) {
@@ -220,12 +303,12 @@ void TreeList_append(struct TreeList* tree_list, NeTree tree) {
     tree_list->trees[tree_list->len++] = tree;
 }
 
-void TreeList_insert(struct TreeList* tree_list, NeTree tree, int index) {
+void TreeListTemp_insert(struct TreeListTemp* tree_list, TreeBufferIndex tree, int index) {
     if (tree_list->len == 0) {
-        tree_list->trees = neon_malloc(sizeof(NeTree));
+        tree_list->trees = neon_malloc(sizeof(TreeBufferIndex));
     }
     else {
-        tree_list->trees = neon_realloc(tree_list->trees, (tree_list->len + 1) * sizeof(NeTree));
+        tree_list->trees = neon_realloc(tree_list->trees, (tree_list->len + 1) * sizeof(TreeBufferIndex));
     }
 
     tree_list->len++;
@@ -238,159 +321,149 @@ void TreeList_insert(struct TreeList* tree_list, NeTree tree, int index) {
 }
 
 
-void TreeList_destroy(struct TreeList* tree_list) {
-    for (int i = 0 ; i < tree_list->len ; i++) {
-        NeTree_destroy(tree_list->trees[i]);
+
+/*
+Cette fonction recopie le TreeListTemp dans le TreeBuffer et initialise avec cela le TreeList*
+Elle libère le TreeListTemp
+*/
+void TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list, struct TreeList* list) {
+    // alloue un espace de la bonne taille et récupère l'indice dans le TreeBuffer
+    list->indices = TreeBuffer_alloc(tb, temp_list->len * sizeof(TreeBufferIndex));
+
+    // on le considère comme un tableau de TreeBufferIndex
+    TreeBufferIndex* array_ptr = treelistGet(tb, *list);
+
+    // copie le temp_list dans la liste contenue dans le TreeBuffer
+    for (int i = 0 ; i < temp_list->len ; i++) {
+        array_ptr[i] = temp_list->trees[i];
     }
-    if (tree_list->trees != NULL)
-        neon_free(tree_list->trees);
+
+    list->length = temp_list->len;
+
+    // libère la liste temporaire
+    neon_free(temp_list->trees);
 }
 
 
-NeTree NeTree_make_unaryOp(int op, NeTree expr, int line) {
-    NeTree tree = NeTree_create(TypeUnaryOp, line);
+TreeBufferIndex NeTree_make_unaryOp(TreeBuffer* tb, int op, TreeBufferIndex expr, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeUnaryOp, line);
 
     return_on_error(TREE_VOID);
 
-    tree.unary_op->op = op;
-    tree.unary_op->expr = expr;
+    treeUnOp(tb, expr)->op = op;
+    treeUnOp(tb, expr)->expr = expr;
     return tree;
 }
 
-NeTree NeTree_make_binaryOp(int op, NeTree left, NeTree right, int line) {
-    NeTree tree = NeTree_create(TypeBinaryOp, line);
+TreeBufferIndex NeTree_make_binaryOp(TreeBuffer* tb, int op, TreeBufferIndex left, TreeBufferIndex right, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeBinaryOp, line);
     return_on_error(TREE_VOID);
 
-    tree.binary_op->op = op;
-    tree.binary_op->left = left;
-    tree.binary_op->right = right;
+    treeBinOp(tb, tree)->op = op;
+    treeBinOp(tb, tree)->left = left;
+    treeBinOp(tb, tree)->right = right;
     return tree;
 }
 
-NeTree NeTree_make_variable(Var variable, int line) {
-    NeTree tree = NeTree_create(TypeVariable, line);
+TreeBufferIndex NeTree_make_variable(TreeBuffer* tb, Var variable, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeVariable, line);
     return_on_error(TREE_VOID);
 
-    tree.variable->var = variable;
+    treeVar(tb, tree)->var = variable;
     return tree;
 }
 
-NeTree NeTree_make_const(NeObj const_obj, int line) {
-    NeTree tree = NeTree_create(TypeConst, line);
+TreeBufferIndex NeTree_make_const(TreeBuffer* tb, NeObj const_obj, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeConst, line);
     return_on_error(TREE_VOID);
 
-    tree.const_obj->obj = const_obj;
-    return tree;
-}
-
-NeTree NeTree_make_containerlit(int line) {
-    NeTree tree = NeTree_create(TypeContainerLit, line);
-    return_on_error(TREE_VOID);
-
-    TreeList_init(&tree.container_lit->attributes);
-    return tree;
-}
-
-void NeTree_containerlit_add_attribute(NeTree* tree, NeTree attr) {
-    TreeList_append(&tree->container_lit->attributes, attr);
-}
-
-
-NeTree NeTree_make_fcall(int line) {
-    NeTree tree = NeTree_create(TypeFunctioncall, line);
-    return_on_error(TREE_VOID);
-
-    TreeList_init(&tree.fcall->args);
-
-    tree.fcall->function_obj = NEO_VOID;
-    return tree;
-}
-
-void NeTree_fcall_add_arg(NeTree* tree, NeTree arg) {
-    TreeList_append(&tree->fcall->args, arg);
-}
-
-
-NeTree NeTree_make_functiondef(char* name, struct TreeList args, NeObj object, int line) {
-    NeTree tree = NeTree_create(TypeFunctiondef, line);
-    return_on_error(TREE_VOID);
-
-    tree.functiondef->args = args;
-    tree.functiondef->object = object;
-    tree.functiondef->name = name;
+    treeConst(tb, tree)->obj = const_obj;
     return tree;
 }
 
 
-NeTree NeTree_make_attribute(NeTree object, char* name, int line) {
-    NeTree tree = NeTree_create(TypeAttribute, line);
+
+TreeBufferIndex NeTree_make_fcall(TreeBuffer* tb, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeFunctioncall, line);
     return_on_error(TREE_VOID);
 
-    tree.attribute->last_cont_type = -1;
-    tree.attribute->index = -1;
-    tree.attribute->name = name;
-    tree.attribute->object = object;
-    return tree;
-}
-
-NeTree NeTree_make_IEWF_tree(NeTree expr, NeTree block, TreeType type, int line) {
-    NeTree tree = NeTree_create(type, line);
-    return_on_error(TREE_VOID);
-
-    tree.iew->expression = expr;
-    tree.iew->code = block;
-    return tree;
-}
-
-NeTree NeTree_make_except_block(struct TreeList exceptions, NeTree block, int line) {
-    NeTree tree = NeTree_create(TypeExceptBlock, line);
-    return_on_error(TREE_VOID);
-
-    tree.except_block->exceptions = exceptions;
-    tree.except_block->block = block;
+    treeFCall(tb, tree)->function_obj = NEO_VOID;
     return tree;
 }
 
 
-NeTree NeTree_make_tryexcept(NeTree try_tree, struct TreeList except_blocks, int line) {
-    NeTree tryexcept = NeTree_create(TypeTryExcept, line);
+
+TreeBufferIndex NeTree_make_functiondef(TreeBuffer* tb, char* name, struct TreeListTemp args, NeObj object, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeFunctiondef, line);
     return_on_error(TREE_VOID);
 
-    tryexcept.tryexcept->except_blocks = except_blocks;
-    tryexcept.tryexcept->try_tree = try_tree;
+    TreeListTemp_dump(tb, &args, &treeFDef(tb, tree)->args);
+
+    treeFDef(tb, tree)->object = object;
+    treeFDef(tb, tree)->name = name;
+    return tree;
+}
+
+
+TreeBufferIndex NeTree_make_attribute(TreeBuffer* tb, TreeBufferIndex object, char* name, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeAttribute, line);
+    return_on_error(TREE_VOID);
+
+    treeAttr(tb, tree)->last_cont_type = -1;
+    treeAttr(tb, tree)->index = -1;
+    treeAttr(tb, tree)->name = name;
+    treeAttr(tb, tree)->object = object;
+    return tree;
+}
+
+TreeBufferIndex NeTree_make_IEWF_tree(TreeBuffer* tb, TreeBufferIndex expr, TreeBufferIndex block, TreeType type, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, type, line);
+    return_on_error(TREE_VOID);
+
+    treeIEW(tb, tree)->expression = expr;
+    treeIEW(tb, tree)->code = block;
+    return tree;
+}
+
+TreeBufferIndex NeTree_make_except_block(TreeBuffer* tb, struct TreeListTemp exceptions, TreeBufferIndex block, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeExceptBlock, line);
+    return_on_error(TREE_VOID);
+
+    TreeListTemp_dump(tb, &exceptions, &treeExpt(tb, tree)->exceptions);
+
+    treeExpt(tb, tree)->block = block;
+    return tree;
+}
+
+
+TreeBufferIndex NeTree_make_tryexcept(TreeBuffer* tb, TreeBufferIndex try_tree, struct TreeListTemp except_blocks, int line) {
+    TreeBufferIndex tryexcept = NeTree_create(tb, TypeTryExcept, line);
+    return_on_error(TREE_VOID);
+
+    TreeListTemp_dump(tb, &except_blocks, &treeTE(tb,tryexcept)->except_blocks);
+
+    treeTE(tb,tryexcept)->try_tree = try_tree;
     return tryexcept;
 }
 
-NeTree NeTree_make_kwparam(struct TreeList params, int code, int line) {
-    NeTree tree = NeTree_create(TypeKWParam, line);
+TreeBufferIndex NeTree_make_kwparam(TreeBuffer* tb, struct TreeListTemp params, int code, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeKWParam, line);
     return_on_error(TREE_VOID);
 
-    tree.kwparam->code = code;
-    tree.kwparam->params = params;
-    return tree;
-}
+    treeKWParam(tb, tree)->code = code;
+    
+    TreeListTemp_dump(tb, &params, &treeKWParam(tb, tree)->params);
 
-NeTree NeTree_make_for_tree(struct TreeList params, NeTree block, int line, TreeType type) {
-    NeTree tree = NeTree_create(type, line);
-    return_on_error(TREE_VOID);
-
-    tree.for_tree->params = params;
-    tree.for_tree->block = block;
     return tree;
 }
 
 
-// fonctions pour créer et modifier les arbres utilisant la structure struct Syntaxtree (listes, else, cb, atomic)
-
-NeTree NeTree_make_syntaxtree(TreeType type, int line) {
-    NeTree tree = NeTree_create(type, line);
-
+TreeBufferIndex NeTree_make_for_tree(TreeBuffer* tb, struct TreeListTemp params, TreeBufferIndex block, int line, TreeType type) {
+    TreeBufferIndex tree = NeTree_create(tb, type, line);
     return_on_error(TREE_VOID);
 
-    TreeList_init(&tree.syntaxtree->treelist);
-    return tree;
-}
+    TreeListTemp_dump(tb, &params, &treeFor(tb, tree)->params);
 
-void NeTree_add_syntaxtree(NeTree* tree, NeTree son) {
-    TreeList_append(&tree->syntaxtree->treelist, son);
+    treeFor(tb, tree)->block = block;
+    return tree;
 }

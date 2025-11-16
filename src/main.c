@@ -26,10 +26,13 @@ General Protection Fault => Problème d'alignement de la pile
 
 Avancement et choses à faire :
 -------------------------------
-> Changer le mode d'allocation de la pile, changer éventuellement le mode d'allocation des arbres syntaxiques
-> Ajouter des fonctions pour faciliter le développement de shells propres et optimisés
-> Faire une nouvelle console pour TI_EZ80
+> Changer le mode d'allocation de la pile (StackBuffer)
+> Modifier le mode de fonctionnement des TreeBuffer et StackBuffer en utilisant des fichiers en RAM sur TI_EZ80
+> Ajouter une fonction menu pour faciliter le développement de shells propres et optimisés
+(fonction menu exactement comme Neon Launcher actuel)
+
 PLUS TARD
+> Faire une nouvelle console pour TI_EZ80
 > Ajouter une fonction menu qui prend en entrée une liste de listes d'objets MenuItems(id, inactive, hover), un objet pour le background et qui renvoie l'id de l'élément sélectionné ou None si l'utilisateur a quitté
 Les touches supportées sont [<,>,v,^,Enter,Clear]
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
