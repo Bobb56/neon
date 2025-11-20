@@ -723,13 +723,13 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                         global_env->LINENUMBER = lines->tab[offset];
                         return TREE_VOID;
                     }
+
+                    return NeTree_make_parallel_call(tb, fils, lines->tab[offset]);
                 }
                 else {
                     fils = createExpressionTreeAux(tb, ast+1, &ntokens, lines, offset+1);
+                    return NeTree_make_unaryOp(tb, operator_index, fils, lines->tab[offset]);
                 }
-
-                TreeBufferIndex t = NeTree_make_unaryOp(tb, operator_index, fils, lines->tab[offset]);
-                return t;
             }
 
             else if (typeOperande & VARLEFT) {

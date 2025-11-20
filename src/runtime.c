@@ -210,7 +210,7 @@ NO_OPT void launch_process(void) {
 
     global_env->process_cycle->process->state = Running;
 
-    NeObj result = eval_aux(global_env->process_cycle->process->original_call_buffer, global_env->process_cycle->process->original_call);
+    NeObj result = eval_aux(&global_env->FONCTIONS, global_env->process_cycle->process->original_call);
 
     // on marque le processus comme terminé, il sera supprimé automatiquement par neon_interp_next_process
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
@@ -456,53 +456,8 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
         case TypeUnaryOp:
         {
-            if (treeUnOp(tb, tree)->op == 39) // opérateur parallel
-            {
-
-                TreeBufferIndex maintree = treeUnOp(tb, tree)->expr;
-                
-                TreeBuffer* func_buf = &global_env->FONCTIONS;
-
-                if (TREE_TYPE(func_buf, maintree) != TypeFunctioncall) {
-                    global_env->CODE_ERROR = 100;
-                    return NEO_VOID;
-                }
-
-                NeObj fixed_func = eval_aux(func_buf, treeFCall(func_buf, maintree)->function);
-
-                if (global_env->CODE_ERROR != 0) {
-                    return NEO_VOID;
-                }
-
-                if (NEO_TYPE(fixed_func) != TYPE_USERFUNC) {
-                    global_env->CODE_ERROR = 100;
-                    neobject_destroy(fixed_func);
-                    return NEO_VOID;
-                }
-                
-                // crée une copie de l'arbre avec une version figée de la fonction
-                TreeBufferIndex maintree_copy = NeTree_create(func_buf, TypeFunctioncall, TREE_LINE(func_buf, maintree));
-                
-                treeFCall(func_buf, maintree_copy)->args = treeFCall(func_buf, maintree)->args;
-                treeFCall(func_buf, maintree_copy)->function = treeFCall(func_buf, maintree)->function;
-                treeFCall(func_buf, maintree_copy)->function_obj = fixed_func;
-
-
-                // on ajoute le processus, et il va se faire exécuter dans la chaine de processus
-                // on met isInitialized = false pour que le processus entre dans eval_aux de manière normale
-                int id = create_new_process(func_buf, maintree_copy, false);
-
-                if (global_env->CODE_ERROR != 0) {
-                    neobject_destroy(treeFCall(func_buf, maintree_copy)->function_obj);
-                    return NEO_VOID;
-                }
-
-                return neo_promise_create(id);
-            }
-
-
             // opérateur paresseux
-            else if (operatorIs(treeUnOp(tb, tree)->op, LAZY)) {
+            if (operatorIs(treeUnOp(tb, tree)->op, LAZY)) {
                 NeObj (*func)(TreeBuffer*, TreeBufferIndex) = operators_functions[treeUnOp(tb, tree)->op];
                 return func(tb, treeUnOp(tb, tree)->expr);
             }
@@ -642,6 +597,50 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             return_on_error(NEO_VOID);
 
             return neo_list_convert(l);
+        }
+
+
+        case TypeParallelCall:
+        {
+            TreeBufferIndex maintree = treeParCall(tb, tree)->expr;
+                
+            TreeBuffer* func_buf = &global_env->FONCTIONS;
+
+            if (TREE_TYPE(func_buf, maintree) != TypeFunctioncall) {
+                global_env->CODE_ERROR = 100;
+                return NEO_VOID;
+            }
+
+            NeObj fixed_func = eval_aux(func_buf, treeFCall(func_buf, maintree)->function);
+
+            if (global_env->CODE_ERROR != 0) {
+                return NEO_VOID;
+            }
+
+            if (NEO_TYPE(fixed_func) != TYPE_USERFUNC) {
+                global_env->CODE_ERROR = 100;
+                neobject_destroy(fixed_func);
+                return NEO_VOID;
+            }
+            
+            // crée une copie de l'arbre avec une version figée de la fonction
+            TreeBufferIndex maintree_copy = NeTree_create(func_buf, TypeFunctioncall, TREE_LINE(func_buf, maintree));
+            
+            treeFCall(func_buf, maintree_copy)->args = treeFCall(func_buf, maintree)->args;
+            treeFCall(func_buf, maintree_copy)->function = treeFCall(func_buf, maintree)->function;
+            treeFCall(func_buf, maintree_copy)->function_obj = fixed_func;
+
+
+            // on ajoute le processus, et il va se faire exécuter dans la chaine de processus
+            // on met isInitialized = false pour que le processus entre dans eval_aux de manière normale
+            int id = create_new_process(maintree_copy, false);
+
+            if (global_env->CODE_ERROR != 0) {
+                neobject_destroy(treeFCall(func_buf, maintree_copy)->function_obj);
+                return NEO_VOID;
+            }
+
+            return neo_promise_create(id);
         }
         
         case TypeFunctioncall:
@@ -2008,7 +2007,6 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
         }
         
-
         return_on_error(0);
     
     }
@@ -2021,7 +2019,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
 void initRuntime(void) {
     // on met isInitialized = true car ce processus va entrer dans eval_aux de manière normale, pas par une restauration de registres
-    create_new_process(NULL, TREE_VOID, true);
+    create_new_process(TREE_VOID, true);
 }
 
 

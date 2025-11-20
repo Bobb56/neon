@@ -90,12 +90,7 @@ void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree) {
             break;
         
         case TypeUnaryOp:
-            // l'expression functioncall d'un parallel est stockée dans global_env->FONCTIONS
-            // pour pouvoir être exécutée après la suppression du TreeBuffer associée au fichier
-            // donc on ne supprime la sous-expression que dans le cas où ce n'est pas un parallel
-            if (treeUnOp(tb, tree)->op != 39) {
-                NeTree_destroy(tb, treeUnOp(tb, tree)->expr);
-            }
+            NeTree_destroy(tb, treeUnOp(tb, tree)->expr);
             break;
 
         case TypeConst:
@@ -172,6 +167,7 @@ void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree) {
         
         case TypeKeyword:
         case TypeVariable:
+        case TypeParallelCall:
             break;
     }
 }
@@ -239,6 +235,8 @@ size_t type_size(TreeType type) {
             return sizeof(struct AttributeLit);
         case TypeExceptBlock:
             return sizeof(struct ExceptBlock);
+        case TypeParallelCall:
+            return sizeof(struct ParallelCall);
     }
 }
 
@@ -362,6 +360,16 @@ TreeBufferIndex NeTree_make_unaryOp(TreeBuffer* tb, int op, TreeBufferIndex expr
     treeUnOp(tb, tree)->expr = expr;
     return tree;
 }
+
+
+TreeBufferIndex NeTree_make_parallel_call(TreeBuffer* tb, TreeBufferIndex expr, int line) {
+    TreeBufferIndex tree = NeTree_create(tb, TypeParallelCall, line);
+    return_on_error(TREE_VOID);
+
+    treeParCall(tb, tree)->expr = expr;
+    return tree;
+}
+
 
 TreeBufferIndex NeTree_make_binaryOp(TreeBuffer* tb, int op, TreeBufferIndex left, TreeBufferIndex right, int line) {
     TreeBufferIndex tree = NeTree_create(tb, TypeBinaryOp, line);

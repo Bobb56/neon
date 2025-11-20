@@ -50,7 +50,7 @@ typedef struct TreeBuffer {
 #define treeContLit(tb, tbi)            ((struct ContainerLit*)(((tb)->pointer) + tbi))
 #define treeAttrLit(tb, tbi)            ((struct AttributeLit*)(((tb)->pointer) + tbi))
 #define treeExpt(tb, tbi)               ((struct ExceptBlock*)(((tb)->pointer) + tbi))
-
+#define treeParCall(tb, tbi)            ((struct ParallelCall*)(((tb)->pointer) + tbi))
 
 
 
@@ -82,7 +82,8 @@ typedef enum {
     TypeSyntaxtree      = 21,
     TypeContainerLit    = 22,
     TypeAttributeLit    = 23,
-    TypeExceptBlock     = 24
+    TypeExceptBlock     = 24,
+    TypeParallelCall    = 25
 } TreeType;
 
 
@@ -197,6 +198,11 @@ struct ExceptBlock {
     TreeBufferIndex block;
 };
 
+struct ParallelCall {
+    GENERAL_INFO
+    TreeBufferIndex expr;
+};
+
 TreeBuffer TreeBuffer_init(void);
 void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree);
 void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point);
@@ -215,6 +221,7 @@ struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list
 
 TreeBufferIndex NeTree_make_binaryOp(TreeBuffer* tb, int op, TreeBufferIndex left, TreeBufferIndex right, int line);
 TreeBufferIndex NeTree_make_unaryOp(TreeBuffer* tb, int op, TreeBufferIndex expr, int line);
+TreeBufferIndex NeTree_make_parallel_call(TreeBuffer* tb, TreeBufferIndex expr, int line);
 TreeBufferIndex NeTree_make_variable(TreeBuffer* tb, Var variable, int line);
 TreeBufferIndex NeTree_make_const(TreeBuffer* tb, NeObj const_obj, int line);
 TreeBufferIndex NeTree_make_IEWF_tree(TreeBuffer* tb, TreeBufferIndex expr, TreeBufferIndex block, TreeType type, int line);
