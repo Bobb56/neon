@@ -607,7 +607,6 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                 }
                 else if (operator_index == 34) // opérateur >>
                 {
-
                     // maintenant, il se peut que le membre de droite soit de la forme fonc(truc) ou encore tab[truc]
 
                     if (ast[index+1]->type != TYPE_VARIABLE)
@@ -670,7 +669,6 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                         char* name = tokdup(tokens->tab[index + 1]); // le nom du champ
 
                         return NeTree_make_attribute(tb, obj_tree, name, lines->tab[offset]);
-
                     }
                 }
                 else

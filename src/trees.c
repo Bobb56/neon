@@ -55,7 +55,7 @@ void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree) {
 
 TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     TreeBufferIndex pointer = tb->size;
-    if (tb->size + size > tb->block_size * tb->n_blocks) {
+    while (tb->size + size > tb->block_size * tb->n_blocks) {
         tb->n_blocks++;
         void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
 

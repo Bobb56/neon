@@ -129,7 +129,7 @@ function main(args) do
         ["ackermann",
             "arbres",
             "atomic",
-            $"banque_parsing",$
+            "banque_parsing",
             "chatverse",
             "cmplx",
             "dico",
