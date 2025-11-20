@@ -31,6 +31,7 @@ typedef struct Process
     uint8_t state;
     
     TreeBufferIndex original_call; // pointeur vers l'arbre original (le premier argument) de ce processus. Sert à libérer les arbres temporaires que l'on crée pour lancer des promesses
+    TreeBuffer* original_call_buffer; // buffer dans lequel est original_call
     void* stack; // ceci est un pointeur sur l'adresse de début de la pile (le haut de la pile), qui servira à la libérer
     ptrlist* var_loc; // les variables locales créés depuis le lancement du processus
     int id;
@@ -48,7 +49,7 @@ ProcessCycle* ProcessCycle_create(void);
 ProcessCycle* ProcessCycle_remove(ProcessCycle* pc);
 ProcessCycle* loadNextLivingProcess(ProcessCycle* pc);
 void unloadCurrentProcess(Process* p);
-Process* ProcessCycle_add(ProcessCycle* pc, TreeBufferIndex tree, int id, bool isInitialized);
+Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree, int id, bool isInitialized);
 bool ProcessCycle_isActive(ProcessCycle* cycle);
 bool ProcessCycle_isEmpty(ProcessCycle* pc);
 void ProcessCycle_clean(ProcessCycle* cycle);
@@ -57,6 +58,6 @@ void process_preRemove(Process* p);
 void save_later(ptrlist* variables_a_sauvegarder, Var var);
 void switchGlobalLocalVariables(ptrlist* varsToSave);
 void partialRestore(ptrlist* varsToSave, ptrlist* sov_vars_to_save);
-int create_new_process(TreeBufferIndex tree, bool isInitialized);
+int create_new_process(TreeBuffer* tb, TreeBufferIndex tree, bool isInitialized);
 
 #endif

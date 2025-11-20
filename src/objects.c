@@ -745,13 +745,13 @@ char* nelist_str(NeList* list)
 
 
 
-void nelist_destroy(NeList* list)
+void general_nelist_destroy(NeList* list, bool gc_extern)
 {
     for (int i=0;i<list->len;i++)
     {
         //if (list == global_env->ADRESSES)
         //    printf("Suppression de %s\n", global_env->NOMS->tab[i]);
-        neobject_destroy(list->tab[i]);
+        general_neobject_destroy(list->tab[i], gc_extern);
     }
     neon_free(list->tab);
     neon_free(list);
@@ -1223,7 +1223,7 @@ NeObj neo_dup(NeObj neo) {
 
 
 
-void neobject_destroy(NeObj neo)
+void general_neobject_destroy(NeObj neo, bool gc_extern)
 {
     if (neo.type & HEAP_ALLOCATED)
     {
@@ -1241,7 +1241,8 @@ void neobject_destroy(NeObj neo)
             }
 
             else if (NEO_TYPE(neo) == TYPE_LIST) {
-                gc_remove_nelist(neo.nelist);
+                if (!gc_extern)
+                    gc_remove_nelist(neo.nelist);
                 nelist_destroy(neo.nelist);
             }
             else if (NEO_TYPE(neo) == TYPE_FONCTION) {
@@ -1253,7 +1254,8 @@ void neobject_destroy(NeObj neo)
             }
 
             else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
-                gc_remove_container(neo.container);
+                if (!gc_extern)
+                    gc_remove_container(neo.container);
                 container_destroy(neo.container);
             }
             else if (NEO_TYPE(neo) == TYPE_PROMISE)
@@ -1267,9 +1269,6 @@ void neobject_destroy(NeObj neo)
     }
     
 }
-
-
-
 
 
 void neobject_aff(NeObj neo)

@@ -75,6 +75,11 @@ typedef struct NeonEnv NeonEnv;
 #define NEO_SPECIAL(code)                   ((NeObj) {.type = TYPE_EMPTY, .integer = code})
 #define IS_NEO_SPECIAL_CODE(neo, code)      (neo.type == TYPE_EMPTY && neo.integer == code)
 
+#define neobject_destroy(neo)               general_neobject_destroy(neo, false)
+#define gc_extern_neobject_destroy(neo)     general_neobject_destroy(neo, true)
+#define nelist_destroy(list)                general_nelist_destroy(list, false)
+#define gc_extern_nelist_destroy(list)                general_nelist_destroy(list, true)
+
 bool neo_is_void(NeObj neo);
 bool neo_exact_equal(NeObj a, NeObj b);
 
@@ -102,7 +107,7 @@ NeObj get_container_field(Container* c, int index);
 void container_destroy(Container* c);
 NeObj neo_promise_create(int id);
 int get_promise_id(NeObj promise);
-void neobject_destroy(NeObj neo);
+void general_neobject_destroy(NeObj neo, bool gc_extern);
 void neobject_aff(NeObj neo);
 NeList* nelist_create(int len);
 void nelist_append(NeList* list, NeObj ptr);//ajoute un élément à la fin de la liste
@@ -111,7 +116,7 @@ NeObj nelist_nth(NeList* list, int index);
 NeList* nelist_reverse(NeList* list);
 void nelist_remove(NeList* list,int index);
 void nelist_aff(NeList* liste);
-void nelist_destroy(NeList* list);
+void general_nelist_destroy(NeList* list, bool gc_extern);
 void nelist_destroy_until(NeList *list, int index_max);
 NeObj neo_integer_create(intptr_t number);
 NeObj neo_double_create(double number);

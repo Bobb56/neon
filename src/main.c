@@ -23,6 +23,9 @@ Peut être qu'il y a des endroits où on oublie de mettre à jour les promesses
 
 General Protection Fault => Problème d'alignement de la pile
 
+Dans runtime, quand on crée l'arbre (le functioncall associé à un lancement en parallèle,
+on ne le crée pas dans global_env->FONCTIONS)
+
 
 Avancement et choses à faire :
 -------------------------------

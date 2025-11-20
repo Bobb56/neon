@@ -59,7 +59,7 @@ ProcessCycle* ProcessCycle_create(void) {
 
 
 
-Process* ProcessCycle_add(ProcessCycle* pc, TreeBufferIndex tree, int id, bool isInitialized) { // renvoie un pointeur vers le processus créé
+Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree, int id, bool isInitialized) { // renvoie un pointeur vers le processus créé
     // on crée le nouveau processus
     Process* p = neon_malloc(sizeof(Process));
     // création de la nouvelle pile
@@ -72,6 +72,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBufferIndex tree, int id, bool i
     p->state = (isInitialized) ? Running : Uninitialized;
 
     p->original_call = tree;
+    p->original_call_buffer = tb;
 
     // et maintenant on chaîne le processus au cycle des processus
     // trois cas de figure possibles
@@ -202,7 +203,7 @@ NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
     neon_free(p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés
     
     if (!TREE_ISVOID(p->original_call)) {
-        neobject_destroy(treeFCall(&global_env->FONCTIONS, p->original_call)->function_obj);
+        neobject_destroy(treeFCall(p->original_call_buffer, p->original_call)->function_obj);
     }
 
     if (p->stack != NULL) {
@@ -296,7 +297,7 @@ Crée un nouveau processus et renvoie son identifiant
 Il faut également indiquer si on doit supprimer l'arbre après avoir exécuté le processus
 Si on doit supprimer l'arbre, il doit obligatoirement avoir la forme des arbres que l'on met dans les nouvelles promesses
 */
-int create_new_process(TreeBufferIndex tree, bool isInitialized) {
+int create_new_process(TreeBuffer* tb, TreeBufferIndex tree, bool isInitialized) {
     // calcul de l'identifiant du processus que l'on ajoute
     int id = 0;
 
@@ -314,7 +315,7 @@ int create_new_process(TreeBufferIndex tree, bool isInitialized) {
     *global_env->PROMISES_CNT.tab[id] = 1;
     global_env->PROCESS_FINISH.tab[id] = 0;
 
-    ProcessCycle_add(global_env->process_cycle, tree, id, isInitialized); // le processus principal a un id de zéro
+    ProcessCycle_add(global_env->process_cycle, tb, tree, id, isInitialized); // le processus principal a un id de zéro
 
     return id;
 }

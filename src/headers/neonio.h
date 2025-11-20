@@ -6,6 +6,13 @@
 
 #include "constants.h"
 
+#ifdef DEBUG
+    #include <stdio.h>
+    #define debug(...)          printf(__VA_ARGS__)
+#else
+    #define debug(...)
+#endif
+
 void removeZeros(char* string);
 bool is_integer(char* string);
 intptr_t str_to_int(char* string);

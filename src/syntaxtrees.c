@@ -35,7 +35,7 @@ Ajouter les nouveaux traitements pour les indices de liste et les appels de fonc
 
 void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast, toklist* tokens, intlist* lines, int offset) {
     int nbVirgules = ast_typeCountAst(ast, tokens->len, TYPE_VIRGULE, offset);
-        
+    
     if (nbVirgules > 0) {
         int index = 0;
         toklist sous_tokens;
@@ -201,6 +201,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     TreeBufferIndex t1 = NeTree_create(tb, TypeAttributeLit, lines->tab[offset + argsAst_offset + i]);
 
                     if_error {
+                        TreeListTemp_destroy(tb, &temptreelist);
                         return TREE_VOID;
                     }
 
@@ -208,6 +209,8 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     {
                         global_env->CODE_ERROR = 87;
                         global_env->LINENUMBER = lines->tab[offset + argsAst_offset + i];
+                        NeTree_destroy(tb, t1);
+                        TreeListTemp_destroy(tb, &temptreelist);
                         return TREE_VOID;
                     }
 
@@ -224,10 +227,14 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     // prend la partie après la virgule, la première partie est 1 seul token que l'on prend au début de la boucle en ajoutant un de plus à i
                     toklist tok2 = (toklist) {.tab = argsTok.tab + i, .len = k-i};
 
-                    treeAttrLit(tb, t1)->expr = createExpressionTreeAux(tb, argsAst + i, &tok2, lines, offset + argsAst_offset + i);
+                    TREE_AFFECT(
+                        treeAttrLit(tb, t1)->expr,
+                        createExpressionTreeAux(tb, argsAst + i, &tok2, lines, offset + argsAst_offset + i)
+                    );
 
-                    if_error
-                    {
+                    if_error {
+                        NeTree_destroy(tb, t1);
+                        TreeListTemp_destroy(tb, &temptreelist);
                         return TREE_VOID;
                     }
 
@@ -260,6 +267,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                             {
                                 global_env->CODE_ERROR = 86;
                                 global_env->LINENUMBER = treeAttrLit(tb, temptreelist.trees[i])->line;
+                                TreeListTemp_destroy(tb, &temptreelist);
                                 return TREE_VOID;
                             }
                         }
@@ -290,6 +298,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     {
                         global_env->CODE_ERROR = 83;
                         global_env->LINENUMBER = treeContLit(tb, tree)->line;
+                        TreeListTemp_destroy(tb, &temptreelist);
                         return TREE_VOID;
                     }
 
@@ -316,6 +325,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                         {
                             global_env->CODE_ERROR = 83;
                             global_env->LINENUMBER = treeContLit(tb, tree) ->line;
+                            TreeListTemp_destroy(tb, &temptreelist);
                             if (attributes.trees != NULL)
                                 neon_free(attributes.trees);
                             return TREE_VOID;
@@ -328,7 +338,10 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                         neon_free(attributes.trees);
                 }
 
-                TreeListTemp_dump(tb, &temptreelist, &treeContLit(tb, tree)->attributes);
+                TREELIST_AFFECT(
+                    treeContLit(tb, tree)->attributes,
+                    TreeListTemp_dump(tb, &temptreelist)
+                );
 
                 return tree;
             }
@@ -348,13 +361,21 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                 treeFCall(tb, tree)->function = fonction;
 
+                struct TreeListTemp temptreelist; TreeListTemp_init(&temptreelist);
             
                 if ((argsTok.len == 1 && argsAst[0]->type != TYPE_ENDOFLINE) || argsTok.len > 1) // s'il y a des arguments
                 {
-                    struct TreeListTemp temptreelist; TreeListTemp_init(&temptreelist);
                     createVirguleTree(tb, &temptreelist, argsAst, &argsTok, lines, offset + lenNomFonc + 1);
-                    TreeListTemp_dump(tb, &temptreelist, &treeFCall(tb, tree)->args);
+                    if_error {
+                        TreeListTemp_destroy(tb, &temptreelist);
+                        return TREE_VOID;
+                    }
                 }
+
+                TREELIST_AFFECT(
+                    treeFCall(tb, tree)->args,
+                    TreeListTemp_dump(tb, &temptreelist)
+                );
 
                 return tree;
             }
@@ -401,22 +422,27 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
             TreeBufferIndex tree = NeTree_create(tb, TypeListindex, lines->tab[offset]);
 
-            treeLstIndx(tb, tree)->index = createExpressionTreeAux(tb, indAst, &indTok, lines, offset + lenNomInd + 1);
+            // on est obligé de faire une affectation différée, sinon le pointeur évalué à gauche n'est plus valide une fois
+            // createExpressionTreeAux appelée
+            TREE_AFFECT(
+                treeLstIndx(tb, tree)->index,
+                createExpressionTreeAux(tb, indAst, &indTok, lines, offset + lenNomInd + 1)
+            );
 
             if_error {
                 return TREE_VOID;
             }
+
 
             // appel récursif pour le nom de la liste
             toklist nomTok;
             nomTok.tab = tokens->tab;
             nomTok.len = lenNomInd;
 
-            treeLstIndx(tb, tree)->object = createExpressionTreeAux(tb, ast, &nomTok, lines, offset);
-            
-            if_error {
-                return TREE_VOID;
-            }
+            TREE_AFFECT(
+                treeLstIndx(tb, tree)->object,
+                createExpressionTreeAux(tb, ast, &nomTok, lines, offset);
+            );
 
             return tree;
         }
@@ -445,18 +471,24 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
             return_on_error(TREE_VOID);
 
+            struct TreeListTemp temptreelist; TreeListTemp_init(&temptreelist);
+
             if (listeTok.len > 0)
             {
-                struct TreeListTemp temptreelist; TreeListTemp_init(&temptreelist);
                 createVirguleTree(tb, &temptreelist, listeAst, &listeTok, lines, offset + 1);
-
-                return_on_error(TREE_VOID);
-
-                TreeListTemp_dump(tb, &temptreelist, &treeSntxTree(tb, tree)->treelist);
+                
+                if_error {
+                    TreeListTemp_destroy(tb, &temptreelist);
+                    return TREE_VOID;
+                }
             }
+
+            TREELIST_AFFECT(
+                treeSntxTree(tb, tree)->treelist,
+                TreeListTemp_dump(tb, &temptreelist)
+            );
             
             return tree;
-            
         }
         else if (ast[0]->type == TYPE_EXPRESSION) {
             // sous-expression prioritaires, entourées ou non de parenthèses
@@ -521,7 +553,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             }
             
             int operator_index = get_operator_index(tokens->tab[index]);
-            
+
             int typeOperande = get_type_operande_index(operator_index);
 
 
@@ -544,6 +576,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
 
                     if_error {
+                        NeTree_destroy(tb, tree);
                         return TREE_VOID;
                     }
                     
@@ -551,6 +584,8 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     // on va rajouter en premier argument de la fonction l'opérande de gauche
                     if (TREE_TYPE(tb, tree) != TypeFunctioncall)
                     {
+                        NeTree_destroy(tb, tree);
+                        NeTree_destroy(tb, arg0);
                         global_env->CODE_ERROR = 72;
                         global_env->LINENUMBER = lines->tab[offset];
                         return TREE_VOID;
@@ -566,10 +601,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     }
                     // et on remplace le TreeList
                     treeFCall(tb, tree)->args.indices = new_treelist;
-
-                    if_error {
-                        return TREE_VOID;
-                    }
+                    treeFCall(tb, tree)->args.length++;
 
                     return tree;
                 }
@@ -651,13 +683,12 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     toklist tokensDroite = (toklist){.tab = tokens->tab+index+1, .len = tokens->len-index-1};
                     
                     TreeBufferIndex left = createExpressionTreeAux(tb, ast, &tokensGauche, lines, offset);
-
                     return_on_error(TREE_VOID);
 
                     TreeBufferIndex right = createExpressionTreeAux(tb, ast + index + 1, &tokensDroite, lines, offset + index + 1);
                     
-                    if_error
-                    {
+                    if_error {
+                        NeTree_destroy(tb, left);
                         return TREE_VOID;
                     }
 
@@ -671,19 +702,34 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             {
 
                 toklist ntokens = (toklist) {.tab = tokens->tab+1, .len = tokens->len-1};
+
+                TreeBufferIndex fils;
+
+                // dans le cas où l'on est en train de créer l'arbre associé à l'opérateur parallel,
+                // on crée le fils dans global_env->FONCTIONS car l'expression du lancement de la fonction
+                // en parallèle, une fois ajoutée dans le nouveau processus en attente d'être démarré pourra
+                // si ça se trouve être exécutée après la suppression du buffer associé au fichier dans
+                // lequel on lance la fonction en parallèle
+                if (operator_index == 39) { // opérateur parallel
+                    TreeBuffer* func_buf = &global_env->FONCTIONS;
                 
-                TreeBufferIndex fils = createExpressionTreeAux(tb, ast+1, &ntokens, lines, offset+1);
+                    fils = createExpressionTreeAux(func_buf, ast+1, &ntokens, lines, offset+1);
+                    return_on_error(TREE_VOID);
 
-                return_on_error(TREE_VOID);
+                    TreeBuffer_remember(func_buf, fils);
 
-                if (operator_index == 39 && TREE_TYPE(tb, fils) != TypeFunctioncall) { // pour parallel
-                    global_env->CODE_ERROR = 100;
-                    global_env->LINENUMBER = lines->tab[offset];
-                    return TREE_VOID;
+                    if (TREE_TYPE(func_buf, fils) != TypeFunctioncall) { // pour parallel
+                        global_env->CODE_ERROR = 100;
+                        global_env->LINENUMBER = lines->tab[offset];
+                        return TREE_VOID;
+                    }
+                }
+                else {
+                    fils = createExpressionTreeAux(tb, ast+1, &ntokens, lines, offset+1);
                 }
 
-                return NeTree_make_unaryOp(tb, operator_index, fils, lines->tab[offset]);
-                
+                TreeBufferIndex t = NeTree_make_unaryOp(tb, operator_index, fils, lines->tab[offset]);
+                return t;
             }
 
             else if (typeOperande & VARLEFT) {
@@ -969,6 +1015,7 @@ TreeBufferIndex createStatementIEWTree(TreeBuffer* tb, Ast** ast, toklist* token
 
     if_error
     {
+        NeTree_destroy(tb, expr_tree);
         return TREE_VOID;
     }
 
@@ -996,7 +1043,7 @@ TreeBufferIndex createStatementForTree(TreeBuffer* tb, Ast** ast, toklist* token
     createVirguleTree(tb, &expr_tree, exprAst, &exprToks, lines, offset + 2);
 
     if_error {
-        TreeListTemp_destroy(&expr_tree);
+        TreeListTemp_destroy(tb, &expr_tree);
         return TREE_VOID;
     }
     
@@ -1004,7 +1051,7 @@ TreeBufferIndex createStatementForTree(TreeBuffer* tb, Ast** ast, toklist* token
 
     if_error
     {
-        TreeListTemp_destroy(&expr_tree);
+        TreeListTemp_destroy(tb, &expr_tree);
         return TREE_VOID;
     }
     
@@ -1057,6 +1104,7 @@ TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tok
             TreeBufferIndex fils = createStatementElseTree(tb, ast + i, &elseToks, lines, offset + i);
 
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1071,6 +1119,7 @@ TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tok
             TreeBufferIndex fils = createStatementIEWTree(tb, ast + i, &blocToks, lines, offset + i, type);
             
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1080,7 +1129,10 @@ TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tok
         i = index2;
     }
 
-    TreeListTemp_dump(tb, &temptreelist, &treeSntxTree(tb, tree)->treelist);
+    TREELIST_AFFECT(
+        treeSntxTree(tb, tree)->treelist,
+        TreeListTemp_dump(tb, &temptreelist)
+    );
     
     return tree;
 }
@@ -1098,13 +1150,13 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
 
     // on alloue l'arbre syntaxTree dans le TreeBuffer global des fonctions
     TreeBufferIndex syntaxTree = createSyntaxTreeAux(&global_env->FONCTIONS, ast + i + 1, &codeTok, lines, offset + i + 1);
-    TreeBuffer_remember(&global_env->FONCTIONS, syntaxTree);
-
-    return_on_error(TREE_VOID);
 
     if_error {
+        NeTree_destroy(&global_env->FONCTIONS, syntaxTree);
         return TREE_VOID;
     }
+
+    TreeBuffer_remember(&global_env->FONCTIONS, syntaxTree);
 
     Token name = tokens->tab[1];
 
@@ -1159,7 +1211,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                         TreeBufferIndex exp = createExpressionTreeAux(tb, argsAst + i + 2, &tokensarg, lines, args_offset + i + 2);
 
                         if_error {
-                            TreeListTemp_destroy(&opt_args);
+                            TreeListTemp_destroy(tb, &opt_args);
                             neon_free(liste);
                             return TREE_VOID;
                         }
@@ -1167,7 +1219,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                         TreeListTemp_append(&opt_args, exp); // on ajoute l'expression aux arguments optionnels
 
                         if_error {
-                            TreeListTemp_destroy(&opt_args);
+                            TreeListTemp_destroy(tb, &opt_args);
                             neon_free(liste);
                             return TREE_VOID;
                         }
@@ -1178,7 +1230,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                         // erreur de syntaxe
                         global_env->CODE_ERROR = 96;
                         global_env->LINENUMBER = lines->tab[offset + args_offset + i];
-                        TreeListTemp_destroy(&opt_args);
+                        TreeListTemp_destroy(tb, &opt_args);
                         neon_free(liste);
                         return TREE_VOID;
                     }
@@ -1187,13 +1239,13 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                             // erreur : on ne peut pas mettre d'arguments obligatoires après ...
                             global_env->CODE_ERROR = 96;
                             global_env->LINENUMBER = lines->tab[offset + args_offset + i];
-                            TreeListTemp_destroy(&opt_args);
+                            TreeListTemp_destroy(tb, &opt_args);
                             neon_free(liste);
                             return TREE_VOID;
                         }
                         TreeListTemp_append(&opt_args, TREE_VOID);
                         if_error {
-                            TreeListTemp_destroy(&opt_args);
+                            TreeListTemp_destroy(tb, &opt_args);
                             neon_free(liste);
                             return TREE_VOID;
                         }
@@ -1209,7 +1261,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                 else {
                     global_env->CODE_ERROR = 96;
                     global_env->LINENUMBER = lines->tab[offset + args_offset + i];
-                    TreeListTemp_destroy(&opt_args);
+                    TreeListTemp_destroy(tb, &opt_args);
                     neon_free(liste);
                     return TREE_VOID;
                 }
@@ -1269,6 +1321,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex try_tree = createSyntaxTreeAux(tb, ast + index + 2, &tryTok, lines, offset + index + 2);
 
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1292,7 +1345,9 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
                 
                 if_error
                 {
-                    TreeListTemp_destroy(&except_blocks);
+                    NeTree_destroy(tb, try_tree);
+                    TreeListTemp_destroy(tb, &temptreelist);
+                    TreeListTemp_destroy(tb, &except_blocks);
                     return TREE_VOID;
                 }
 
@@ -1307,8 +1362,11 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
 
                     if_error
                     {
-                        TreeListTemp_destroy(&except_blocks);
-                        TreeListTemp_destroy(&except_expr);
+                        TreeListTemp_destroy(tb, &temptreelist);
+                        TreeListTemp_destroy(tb, &except_blocks);
+                        TreeListTemp_destroy(tb, &except_expr);
+                        NeTree_destroy(tb, try_tree);
+                        NeTree_destroy(tb, except_bloc);
                         return TREE_VOID;
                     }
 
@@ -1317,15 +1375,21 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
                 TreeBufferIndex except = NeTree_make_except_block(tb, except_expr, except_bloc, lines->tab[offset + i]);
                 
                 if_error {
-                    TreeListTemp_destroy(&except_blocks);
-                    TreeListTemp_destroy(&except_expr);
+                    TreeListTemp_destroy(tb, &temptreelist);
+                    TreeListTemp_destroy(tb, &except_blocks);
+                    TreeListTemp_destroy(tb, &except_expr);
+                    NeTree_destroy(tb, try_tree);
+                    NeTree_destroy(tb, except_bloc);
                     return TREE_VOID;
                 }
                 
                 TreeListTemp_append(&except_blocks, except);
                 
                 if_error {
-                    TreeListTemp_destroy(&except_blocks);
+                    TreeListTemp_destroy(tb, &temptreelist);
+                    TreeListTemp_destroy(tb, &except_blocks);
+                    NeTree_destroy(tb, try_tree);
+                    NeTree_destroy(tb, except);
                     return TREE_VOID;
                 }
 
@@ -1337,7 +1401,9 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex try_except = NeTree_make_tryexcept(tb, try_tree, except_blocks, lines->tab[offset + index]);
 
             if_error {
-                TreeListTemp_destroy(&except_blocks);
+                TreeListTemp_destroy(tb, &temptreelist);
+                TreeListTemp_destroy(tb, &except_blocks);
+                NeTree_destroy(tb, try_tree);
                 return TREE_VOID;
             }
 
@@ -1350,6 +1416,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex body = createSyntaxTreeAux(tb, ast + index + 2, &blocTok, lines, offset + index + 2);
 
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1367,7 +1434,8 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             createVirguleTree(tb, &params, argsAst, &argsTok, lines, offset + index + 2);
 
             if_error {
-                TreeListTemp_destroy(&params);
+                TreeListTemp_destroy(tb, &temptreelist);
+                TreeListTemp_destroy(tb, &params);
                 return TREE_VOID;
             }
             
@@ -1376,7 +1444,8 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex fils = NeTree_make_kwparam(tb, params, code, lines->tab[offset + index]);
 
             if_error {
-                TreeListTemp_destroy(&params);
+                TreeListTemp_destroy(tb, &temptreelist);
+                TreeListTemp_destroy(tb, &params);
                 return TREE_VOID;
             }
             
@@ -1389,6 +1458,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex fils = createFunctionTree(tb, ast + index, &stru, lines, offset + index, ast[index]->type == TYPE_METHODDEF);
 
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1409,6 +1479,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex fils = createStatementForTree(tb, ast + index, &stru, lines, offset + index, type);
 
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1421,6 +1492,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex fils = createStatementIEWTree(tb, ast + index, &stru, lines, offset + index, TypeWhile);
 
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1433,6 +1505,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex st = createConditionBlockTree(tb, ast + index, &conBlock, lines, offset + index);
 
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1449,8 +1522,9 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             toklist exprToks = (toklist) {.tab = tokens->tab + exprStart, .len = index - exprStart};
 
             TreeBufferIndex expr = createExpressionTreeAux(tb, ast + exprStart, &exprToks, lines, offset + exprStart);
-
+            
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1467,6 +1541,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeBufferIndex expr = createExpressionTreeAux(tb, ast + exprStart, &exprToks, lines, offset + exprStart);
 
             if_error {
+                TreeListTemp_destroy(tb, &temptreelist);
                 return TREE_VOID;
             }
 
@@ -1476,6 +1551,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
         }
 
         if_error {
+            TreeListTemp_destroy(tb, &temptreelist);
             return TREE_VOID;
         }
 
@@ -1483,9 +1559,12 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
 
     }
 
-    TreeListTemp_dump(tb, &temptreelist, &treeSntxTree(tb, tree)->treelist);
-    return tree;
+    TREELIST_AFFECT(
+        treeSntxTree(tb, tree)->treelist,
+        TreeListTemp_dump(tb, &temptreelist)
+    );
 
+    return tree;
 }
 
 

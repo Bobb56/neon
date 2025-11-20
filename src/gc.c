@@ -309,7 +309,7 @@ void gc_mark_and_sweep(void) {
 void gc_final_sweep(void) {
     if (neo_is_void(global_env->OBJECTS_LIST))
         return;
-    
+
     // on parcourt maintenant tous les containers et listes
     // on fait une première passe dans laquelle on supprime de manière non récursive les objets présents
     for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = get_next(ptr)) {

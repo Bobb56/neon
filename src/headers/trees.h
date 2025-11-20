@@ -7,7 +7,7 @@
 #include "neobj.h"
 
 
-typedef uint16_t TreeBufferIndex;
+typedef uint32_t TreeBufferIndex;
 
 struct TreeListTemp {
     TreeBufferIndex* trees;
@@ -24,30 +24,32 @@ typedef struct TreeBuffer {
 
 
 
-#define GENERAL_INFO                TreeType type; uint16_t line;
-#define TREE_TYPE(tb, tbi)          ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->type
-#define TREE_LINE(tb, tbi)          ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->line
-#define TREE_ISVOID(tbi)            (tbi == (uint16_t)-1)
-#define TREE_VOID                   ((TreeBufferIndex)-1)
+#define GENERAL_INFO                    TreeType type; uint16_t line;
+#define TREE_TYPE(tb, tbi)              ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->type
+#define TREE_LINE(tb, tbi)              ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->line
+#define TREE_ISVOID(tbi)                (tbi == (TreeBufferIndex)-1)
+#define TREE_VOID                       ((TreeBufferIndex)-1)
+#define TREE_AFFECT(left, right)        {TreeBufferIndex temp = right ; left = temp;}
+#define TREELIST_AFFECT(left, right)    {struct TreeList temp = right ; left = temp;}
 
-#define treelistGet(tb, tl)         ((TreeBufferIndex*)(((tb)->pointer) + (tl).indices))
-#define treeBinOp(tb, tbi)          ((struct BinaryOp*)(((tb)->pointer) + tbi))
-#define treeUnOp(tb, tbi)           ((struct UnaryOp*)(((tb)->pointer) + tbi))
-#define treeVar(tb, tbi)            ((struct Variable*)(((tb)->pointer) + tbi))
-#define treeConst(tb, tbi)          ((struct ConstObj*)(((tb)->pointer) + tbi))
-#define treeIEW(tb, tbi)            ((struct StatementIEW*)(((tb)->pointer) + tbi))
-#define treeFor(tb, tbi)            ((struct StatementFor*)(((tb)->pointer) + tbi))
-#define treeSntxTree(tb, tbi)       ((struct SyntaxTree*)(((tb)->pointer) + tbi))
-#define treeFCall(tb, tbi)          ((struct FunctionCall*)(((tb)->pointer) + tbi))
-#define treeTE(tb, tbi)             ((struct TryExcept*)(((tb)->pointer) + tbi))
-#define treeFDef(tb, tbi)           ((struct FunctionDef*)(((tb)->pointer) + tbi))
-#define treeLstIndx(tb, tbi)        ((struct ListIndex*)(((tb)->pointer) + tbi))
-#define treeAttr(tb, tbi)           ((struct Attribute*)(((tb)->pointer) + tbi))
-#define treeKW(tb, tbi)             ((struct Keyword*)(((tb)->pointer) + tbi))
-#define treeKWParam(tb, tbi)        ((struct KWParam*)(((tb)->pointer) + tbi))
-#define treeContLit(tb, tbi)        ((struct ContainerLit*)(((tb)->pointer) + tbi))
-#define treeAttrLit(tb, tbi)        ((struct AttributeLit*)(((tb)->pointer) + tbi))
-#define treeExpt(tb, tbi)           ((struct ExceptBlock*)(((tb)->pointer) + tbi))
+#define treelistGet(tb, tl)             ((TreeBufferIndex*)(((tb)->pointer) + (tl).indices))
+#define treeBinOp(tb, tbi)              ((struct BinaryOp*)(((tb)->pointer) + tbi))
+#define treeUnOp(tb, tbi)               ((struct UnaryOp*)(((tb)->pointer) + tbi))
+#define treeVar(tb, tbi)                ((struct Variable*)(((tb)->pointer) + tbi))
+#define treeConst(tb, tbi)              ((struct ConstObj*)(((tb)->pointer) + tbi))
+#define treeIEW(tb, tbi)                ((struct StatementIEW*)(((tb)->pointer) + tbi))
+#define treeFor(tb, tbi)                ((struct StatementFor*)(((tb)->pointer) + tbi))
+#define treeSntxTree(tb, tbi)           ((struct SyntaxTree*)(((tb)->pointer) + tbi))
+#define treeFCall(tb, tbi)              ((struct FunctionCall*)(((tb)->pointer) + tbi))
+#define treeTE(tb, tbi)                 ((struct TryExcept*)(((tb)->pointer) + tbi))
+#define treeFDef(tb, tbi)               ((struct FunctionDef*)(((tb)->pointer) + tbi))
+#define treeLstIndx(tb, tbi)            ((struct ListIndex*)(((tb)->pointer) + tbi))
+#define treeAttr(tb, tbi)               ((struct Attribute*)(((tb)->pointer) + tbi))
+#define treeKW(tb, tbi)                 ((struct Keyword*)(((tb)->pointer) + tbi))
+#define treeKWParam(tb, tbi)            ((struct KWParam*)(((tb)->pointer) + tbi))
+#define treeContLit(tb, tbi)            ((struct ContainerLit*)(((tb)->pointer) + tbi))
+#define treeAttrLit(tb, tbi)            ((struct AttributeLit*)(((tb)->pointer) + tbi))
+#define treeExpt(tb, tbi)               ((struct ExceptBlock*)(((tb)->pointer) + tbi))
 
 
 
@@ -204,10 +206,12 @@ void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree);
 
 TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line);
 void TreeListTemp_init(struct TreeListTemp* tree_list);
-void TreeListTemp_destroy(struct TreeListTemp* list);
+void TreeListTemp_destroy(TreeBuffer* tb, struct TreeListTemp* list);
 void TreeListTemp_append(struct TreeListTemp* tree_list, TreeBufferIndex tree);
 void TreeListTemp_insert(struct TreeListTemp* tree_list, TreeBufferIndex tree, int index);
-void TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list, struct TreeList* list);
+struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list);
+
+
 
 TreeBufferIndex NeTree_make_binaryOp(TreeBuffer* tb, int op, TreeBufferIndex left, TreeBufferIndex right, int line);
 TreeBufferIndex NeTree_make_unaryOp(TreeBuffer* tb, int op, TreeBufferIndex expr, int line);

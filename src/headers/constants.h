@@ -5,6 +5,16 @@
 
 #define VERSION "4.1"
 
+// si la version actuelle n'est pas stable mais est en distribution
+//#define EXPERIMENTAL
+
+// pour débugger
+#define DEBUG
+
+
+#define SEQUENCE_ENTREE    ">> "
+#define SEQUENCE_SUITE     ".. "
+
 /*
 Numérotation de versions :
 Ajout d'opérateur ou de fonction ou modification d'un élément de syntaxe : +0.0.1
@@ -71,14 +81,6 @@ Ajout d'un type de données NeObject : +0.0.1
 #endif
 
 #define NO_INLINE __attribute__((noinline))
-
-
-
-// si la version actuelle n'est pas stable mais est en distribution
-//#define EXPERIMENTAL
-
-#define SEQUENCE_ENTREE    ">> "
-#define SEQUENCE_SUITE     ".. "
 
 
 #ifdef TI_EZ80

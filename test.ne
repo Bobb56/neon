@@ -1,5 +1,7 @@
-a = 50
-while (a > 0) do
-  a -= 3
-  print('a :', a)
+function test(n) do
+  return ("coucou coucou")
 end
+
+print(test(3))
+
+a = 1//0

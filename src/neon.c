@@ -640,7 +640,7 @@ void NeonEnv_destroy(NeonEnv* env) {
     TreeBuffer_destroy(&env->FONCTIONS, TREE_VOID);
 
     strlist_destroy(env->CONTAINERS, true);
-    nelist_destroy(env->ATTRIBUTES);
+    gc_extern_nelist_destroy(env->ATTRIBUTES);
 
     nelist_destroy(env->ADRESSES);
     strlist_destroy(env->NOMS, true);
@@ -921,6 +921,7 @@ void execFile(char* filename)
     TreeBufferIndex tree = createSyntaxTree(&tb, program, true);
     
     if_error {
+        TreeBuffer_destroy(&tb, tree);
         goto handle_error;
     }
 
@@ -932,7 +933,6 @@ void execFile(char* filename)
     }
 
     TreeBuffer_destroy(&tb, tree);
-    
     return ;
 
 handle_error:

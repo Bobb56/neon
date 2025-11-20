@@ -5,7 +5,7 @@
 #include "headers/errors.h"
 #include "headers/neon.h"
 #include "headers/objects.h"
-
+#include <string.h>
 
 /*
 Comment fonctionnent les structures de données d'arbres ?
@@ -38,6 +38,7 @@ TreeBuffer TreeBuffer_init(void) {
     tb.n_blocks = 1;
     tb.block_size = 512;
     tb.pointer = neon_malloc(tb.block_size * tb.n_blocks);
+    memset(tb.pointer, 0xff, tb.block_size * tb.n_blocks);
 
     if (tb.pointer == NULL)
         global_env->CODE_ERROR = 12;
@@ -89,7 +90,12 @@ void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree) {
             break;
         
         case TypeUnaryOp:
-            NeTree_destroy(tb, treeUnOp(tb, tree)->expr);
+            // l'expression functioncall d'un parallel est stockée dans global_env->FONCTIONS
+            // pour pouvoir être exécutée après la suppression du TreeBuffer associée au fichier
+            // donc on ne supprime la sous-expression que dans le cas où ce n'est pas un parallel
+            if (treeUnOp(tb, tree)->op != 39) {
+                NeTree_destroy(tb, treeUnOp(tb, tree)->expr);
+            }
             break;
 
         case TypeConst:
@@ -179,14 +185,13 @@ void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
         NeTree_destroy(tb, entry_point);
     
     // On supprime les arbres sur lesquels personne ne pointait
-    for (int i = 0 ; i < tb->remember.len ; i++)
-        NeTree_destroy(tb, tb->remember.trees[i]);
-
-    TreeListTemp_destroy(&tb->remember);
+    TreeListTemp_destroy(tb, &tb->remember);
     free(tb->pointer);
 }
 
-void TreeListTemp_destroy(struct TreeListTemp* list) {
+void TreeListTemp_destroy(TreeBuffer* tb, struct TreeListTemp* list) {
+    for (int i = 0 ; i < list->len ; i++)
+        NeTree_destroy(tb, list->trees[i]);
     neon_free(list->trees);
 }
 
@@ -326,22 +331,25 @@ void TreeListTemp_insert(struct TreeListTemp* tree_list, TreeBufferIndex tree, i
 Cette fonction recopie le TreeListTemp dans le TreeBuffer et initialise avec cela le TreeList*
 Elle libère le TreeListTemp
 */
-void TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list, struct TreeList* list) {
+struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list) {
     // alloue un espace de la bonne taille et récupère l'indice dans le TreeBuffer
-    list->indices = TreeBuffer_alloc(tb, temp_list->len * sizeof(TreeBufferIndex));
+    struct TreeList list;
+
+    list.indices = TreeBuffer_alloc(tb, temp_list->len * sizeof(TreeBufferIndex));
 
     // on le considère comme un tableau de TreeBufferIndex
-    TreeBufferIndex* array_ptr = treelistGet(tb, *list);
+    TreeBufferIndex* array_ptr = treelistGet(tb, list);
 
     // copie le temp_list dans la liste contenue dans le TreeBuffer
     for (int i = 0 ; i < temp_list->len ; i++) {
         array_ptr[i] = temp_list->trees[i];
     }
 
-    list->length = temp_list->len;
+    list.length = temp_list->len;
 
     // libère la liste temporaire
     neon_free(temp_list->trees);
+    return list;
 }
 
 
@@ -350,8 +358,8 @@ TreeBufferIndex NeTree_make_unaryOp(TreeBuffer* tb, int op, TreeBufferIndex expr
 
     return_on_error(TREE_VOID);
 
-    treeUnOp(tb, expr)->op = op;
-    treeUnOp(tb, expr)->expr = expr;
+    treeUnOp(tb, tree)->op = op;
+    treeUnOp(tb, tree)->expr = expr;
     return tree;
 }
 
@@ -397,7 +405,11 @@ TreeBufferIndex NeTree_make_functiondef(TreeBuffer* tb, char* name, struct TreeL
     TreeBufferIndex tree = NeTree_create(tb, TypeFunctiondef, line);
     return_on_error(TREE_VOID);
 
-    TreeListTemp_dump(tb, &args, &treeFDef(tb, tree)->args);
+    TREELIST_AFFECT(
+        treeFDef(tb, tree)->args,
+        TreeListTemp_dump(tb, &args)
+    );
+    
 
     treeFDef(tb, tree)->object = object;
     treeFDef(tb, tree)->name = name;
@@ -429,7 +441,10 @@ TreeBufferIndex NeTree_make_except_block(TreeBuffer* tb, struct TreeListTemp exc
     TreeBufferIndex tree = NeTree_create(tb, TypeExceptBlock, line);
     return_on_error(TREE_VOID);
 
-    TreeListTemp_dump(tb, &exceptions, &treeExpt(tb, tree)->exceptions);
+    TREELIST_AFFECT(
+        treeExpt(tb, tree)->exceptions,
+        TreeListTemp_dump(tb, &exceptions)
+    );
 
     treeExpt(tb, tree)->block = block;
     return tree;
@@ -440,7 +455,10 @@ TreeBufferIndex NeTree_make_tryexcept(TreeBuffer* tb, TreeBufferIndex try_tree, 
     TreeBufferIndex tryexcept = NeTree_create(tb, TypeTryExcept, line);
     return_on_error(TREE_VOID);
 
-    TreeListTemp_dump(tb, &except_blocks, &treeTE(tb,tryexcept)->except_blocks);
+    TREELIST_AFFECT(
+        treeTE(tb,tryexcept)->except_blocks,
+        TreeListTemp_dump(tb, &except_blocks)
+    );
 
     treeTE(tb,tryexcept)->try_tree = try_tree;
     return tryexcept;
@@ -452,7 +470,10 @@ TreeBufferIndex NeTree_make_kwparam(TreeBuffer* tb, struct TreeListTemp params, 
 
     treeKWParam(tb, tree)->code = code;
     
-    TreeListTemp_dump(tb, &params, &treeKWParam(tb, tree)->params);
+    TREELIST_AFFECT(
+        treeKWParam(tb, tree)->params,
+        TreeListTemp_dump(tb, &params)
+    )
 
     return tree;
 }
@@ -462,7 +483,10 @@ TreeBufferIndex NeTree_make_for_tree(TreeBuffer* tb, struct TreeListTemp params,
     TreeBufferIndex tree = NeTree_create(tb, type, line);
     return_on_error(TREE_VOID);
 
-    TreeListTemp_dump(tb, &params, &treeFor(tb, tree)->params);
+    TREELIST_AFFECT(
+        treeFor(tb, tree)->params,
+        TreeListTemp_dump(tb, &params)
+    );
 
     treeFor(tb, tree)->block = block;
     return tree;
