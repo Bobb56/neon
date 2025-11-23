@@ -6,6 +6,7 @@
 #include "headers/neon.h"
 #include "headers/objects.h"
 #include <string.h>
+#include "headers/neonio.h"
 
 /*
 Comment fonctionnent les structures de données d'arbres ?
@@ -47,12 +48,13 @@ TreeBuffer TreeBuffer_init(void) {
     }
     tb.name[8] = '\0';
 
-    printString("name : ");
-    //printString(tb.name);
-    newLine();
-    neon_pause("");
-
     tb.handle = ti_Open(tb.name, "w");
+
+    if (tb.handle == 0) {
+        global_env->CODE_ERROR = 67;
+        return tb;
+    }
+
     tb.pointer = ti_GetVATPtr(tb.handle);
     tb.size = 0;
 

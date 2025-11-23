@@ -29,7 +29,7 @@ typedef struct TreeBuffer {
 
 #else
 
-typedef uint32_t TreeBufferIndex;
+typedef unsigned int TreeBufferIndex;
 
 struct TreeListTemp {
     TreeBufferIndex* trees;
