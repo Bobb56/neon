@@ -5,7 +5,29 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "neobj.h"
+#include "constants.h"
 
+
+#ifdef TI_EZ80
+#include <fileioc.h>
+
+typedef uint16_t TreeBufferIndex;
+
+struct TreeListTemp {
+    TreeBufferIndex* trees;
+    unsigned int len;
+};
+
+typedef struct TreeBuffer {
+    void* pointer;
+    uint16_t size;
+    uint8_t handle;
+    char name[9];
+    struct TreeListTemp remember;
+} TreeBuffer;
+
+
+#else
 
 typedef uint32_t TreeBufferIndex;
 
@@ -22,7 +44,7 @@ typedef struct TreeBuffer {
     struct TreeListTemp remember;
 } TreeBuffer;
 
-
+#endif
 
 #define TREE_VOID                       ((TreeBufferIndex)-1)
 #define GENERAL_INFO                    TreeType type; uint16_t line;

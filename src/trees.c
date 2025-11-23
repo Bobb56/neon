@@ -28,9 +28,65 @@ Lorsque qu'un type d'arbre contient des TreeList, on alloue lors de sa création
 la fonction TreeListTemp_dump(TreeBuffer*, struct TreeListTemp*, struct TreeList*) qui va recopier la
 TreeListTemp dans la TreeList indiquée en argument tout en supprimant la TreeListTemp.
 
-
-
 */
+
+
+#ifdef TI_EZ80
+
+TreeBuffer TreeBuffer_init(void) {
+    static uint8_t fileno = 0; // compte le nombre de fichiers créés
+    fileno++;
+
+    TreeBuffer tb;
+    
+    strcpy(tb.name, "NRDAT"); // Neon Runtime Data
+    uint8_t n = fileno;
+    for (int i = 7 ; i >= 5 ; i--) {
+        tb.name[i] = n%10 + '0';
+        n = (n-n%10)/10;
+    }
+    tb.name[8] = '\0';
+
+    printString("name : ");
+    //printString(tb.name);
+    newLine();
+    neon_pause("");
+
+    tb.handle = ti_Open(tb.name, "w");
+    tb.pointer = ti_GetVATPtr(tb.handle);
+    tb.size = 0;
+
+    TreeListTemp_init(&tb.remember);
+
+    return tb;
+}
+
+
+TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
+    TreeBufferIndex pointer = tb->size;
+    uint8_t zero = 0;
+    ti_Write(&zero, 1, size, tb->handle);
+    tb->pointer = ti_GetVATPtr(tb->handle);
+
+    tb->size += size;
+    return pointer;
+}
+
+void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
+    // Parcours de tout le TreeBuffer pour libérer tous les pointeurs dedans
+    if (!TREE_ISVOID(entry_point))
+        NeTree_destroy(tb, entry_point);
+    
+    // On supprime les arbres sur lesquels personne ne pointait
+    TreeListTemp_destroy(tb, &tb->remember);
+
+    // Et on supprime les données en elles-même
+    ti_Close(tb->handle);
+    ti_Delete(tb->name);
+}
+
+#else
+
 
 TreeBuffer TreeBuffer_init(void) {
     TreeBuffer tb;
@@ -48,10 +104,6 @@ TreeBuffer TreeBuffer_init(void) {
     return tb;
 }
 
-// Permet au TreeBuffer de se souvenir des arbres vers lesquels personne ne pointe à l'intérieur d'un TreeBuffer
-void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree) {
-    TreeListTemp_append(&tb->remember, tree);
-}
 
 TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     TreeBufferIndex pointer = tb->size;
@@ -71,6 +123,28 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     return pointer;
 }
 
+void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
+    // Parcours de tout le TreeBuffer pour libérer tous les pointeurs dedans
+    if (!TREE_ISVOID(entry_point))
+        NeTree_destroy(tb, entry_point);
+    
+    // On supprime les arbres sur lesquels personne ne pointait
+    TreeListTemp_destroy(tb, &tb->remember);
+    free(tb->pointer);
+}
+
+
+#endif
+
+
+
+
+
+
+// Permet au TreeBuffer de se souvenir des arbres vers lesquels personne ne pointe à l'intérieur d'un TreeBuffer
+void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree) {
+    TreeListTemp_append(&tb->remember, tree);
+}
 
 void TreeList_destroy(TreeBuffer* tb, struct TreeList* treelist) {
     TreeBufferIndex* array_ptr = tb->pointer + treelist->indices;
@@ -175,15 +249,7 @@ void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree) {
 
 
 
-void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
-    // Parcours de tout le TreeBuffer pour libérer tous les pointeurs dedans
-    if (!TREE_ISVOID(entry_point))
-        NeTree_destroy(tb, entry_point);
-    
-    // On supprime les arbres sur lesquels personne ne pointait
-    TreeListTemp_destroy(tb, &tb->remember);
-    free(tb->pointer);
-}
+
 
 void TreeListTemp_destroy(TreeBuffer* tb, struct TreeListTemp* list) {
     for (int i = 0 ; i < list->len ; i++)
