@@ -585,12 +585,17 @@ void loadExceptions(NeonEnv* env) {
 NeonEnv* NeonEnv_init(void) {
     NeonEnv* env = neon_malloc(sizeof(NeonEnv));
 
+    env->FONCTIONS = TreeBuffer_init();
+    if_error {
+        free(env);
+        return NULL;
+    }
+
     env->NAME = 0;
     env->CODE_ERROR = 0;
     env->LINENUMBER = 0;
     env->FILENAME = NULL;
     env->EXCEPTION = NULL;
-    env->ATOMIC_TIME = PLATFORM_SPECIFIC_ATOMIC_TIME;
     env->atomic_counter = 0;
     env->RETURN_VALUE = NEO_VOID;
     env->OBJECTS_LIST = NEO_VOID;
@@ -603,7 +608,7 @@ NeonEnv* NeonEnv_init(void) {
     env->process_cycle = ProcessCycle_create();
     env->PROCESS_FINISH = intlist_create(0);
     env->PROMISES_CNT = intptrlist_create(0);
-    env->FONCTIONS = TreeBuffer_init();
+    env->ATOMIC_TIME = PLATFORM_SPECIFIC_ATOMIC_TIME;
 
     loadFunctions(env);
     loadExceptions(env);
@@ -668,6 +673,9 @@ void NeonEnv_destroy(NeonEnv* env) {
 void neonInit(void)
 {
     srand(time(NULL));
+    
+    NeonEnv_set(NeonEnv_init());
+    return_on_error();
 
     #ifdef LINUX
         linenoiseSetMultiLine(1); // spécial pour linenoise
@@ -684,8 +692,6 @@ void neonInit(void)
         gfx_Begin();
         set_neon_palette();
     #endif
-
-    NeonEnv_set(NeonEnv_init());
 
     return;
 }

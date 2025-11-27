@@ -65,6 +65,7 @@ int main (int argc, char* argv[])
 #endif
 {
     neonInit();
+    return_on_error(0);
 
     // définition de la liste des arguments
     NeObj l = neo_list_create(0);
