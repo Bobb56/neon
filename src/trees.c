@@ -47,12 +47,10 @@ int TreeBuffer_init(TreeBuffer* tb) {
     tb->name[8] = '\0';
 
     tb->handle = 0;
-    bp("z0");
+    
     while (tb->handle == 0) {
         tb->handle = ti_Open(tb->name, "w");
     }
-
-    bp("z1");
 
     tb->pointer = ti_GetVATPtr(tb->handle);
     tb->size = 0;

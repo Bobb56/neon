@@ -611,6 +611,7 @@ NeonEnv* NeonEnv_init(void) {
     env->PROMISES_CNT = intptrlist_create(0);
     env->ATOMIC_TIME = PLATFORM_SPECIFIC_ATOMIC_TIME;
 
+
     loadFunctions(env);
     loadExceptions(env);
 

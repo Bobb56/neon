@@ -29,6 +29,7 @@
 #include <string.h>
 #include "headers/nspireio.h"
 #include "headers/charmap.h"
+#include "../../headers/errors.h"
 
 static nio_console* nio_default = NULL;
 static unsigned int csl_count = 0;
@@ -135,11 +136,11 @@ bool nio_init(nio_console* csl, int size_x, int size_y, int offset_x, int offset
 
 	c->history_line = -1;
 
-	nio_clear(csl);
-
+	//nio_clear(csl);
 	return true;
 
 err:
+
 	nio_free(csl);
 	return false;
 }
@@ -168,6 +169,7 @@ void nio_clear(nio_console* csl)
 	}
 	c->cursor_x = 0;
 	c->cursor_y = 0;
+
 	if(c->drawing_enabled)
 	{
 		nio_set_global_color(c->default_background_color);

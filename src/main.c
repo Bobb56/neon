@@ -64,7 +64,6 @@ int main(void)
 int main (int argc, char* argv[])
 #endif
 {
-    bp("a0");
     int error = neonInit();
     if (error < 0)
         return 0;
