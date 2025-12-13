@@ -676,12 +676,6 @@ int neonInit(void)
 {
     srand(time(NULL));
     
-    NeonEnv* env = NeonEnv_init();
-
-    if (env == NULL)
-        return -1;
-
-    NeonEnv_set(NeonEnv_init());
 
     #ifdef LINUX
         linenoiseSetMultiLine(1); // spécial pour linenoise
@@ -699,6 +693,12 @@ int neonInit(void)
         set_neon_palette();
     #endif
 
+    NeonEnv* env = NeonEnv_init();
+
+    if (env == NULL)
+        return -1;
+
+    NeonEnv_set(env);
     return 0;
 }
 

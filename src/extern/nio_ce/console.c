@@ -118,7 +118,7 @@ bool nio_init(nio_console* csl, int size_x, int size_y, int offset_x, int offset
 
 	c->data = malloc(c->max_x*c->max_y);
 	if (!c->data) goto err;
-	c->color = malloc(c->max_x*c->max_y*2);
+	c->color = malloc(c->max_x*c->max_y*sizeof(unsigned short));
 	if (!c->color) goto err;
 
 	c->input_buf = malloc(sizeof(queue));
@@ -136,7 +136,7 @@ bool nio_init(nio_console* csl, int size_x, int size_y, int offset_x, int offset
 
 	c->history_line = -1;
 
-	//nio_clear(csl);
+	nio_clear(csl);
 	return true;
 
 err:
@@ -162,9 +162,8 @@ void nio_clear(nio_console* csl)
 	int i;
 	nio_console_private *c = *csl;
 	unsigned short color = (c->default_background_color << 8) | c->default_foreground_color;
-	memset(c->data,0,c->max_x*c->max_y);
-	for(i = 0; i < c->max_x*c->max_y; i++)
-	{
+	memset(c->data, 0, c->max_x*c->max_y);
+	for(i = 0; i < c->max_x*c->max_y; i++) {
 		c->color[i] = color;
 	}
 	c->cursor_x = 0;
