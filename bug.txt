@@ -1,0 +1,10 @@
+Il y a un RAM RESET lorsque Neon retourne à l'OS
+--> C'est à dire absolument pas dans le code de Neon
+Ce bug n'apparaît que si un TreeBuffer a été alloué dans terminal au
+moins une fois
+
+Il semblerait que lors de l'utilisation des TreeBuffer, Neon casse
+le système de fichiers
+
+Donc probablement des problèmes d'update de pointeurs ou équivalent
+(puisque sinon ça fonctionne dans le cas TreeBuffer normaux)

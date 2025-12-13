@@ -820,8 +820,7 @@ void terminal(void)
     TreeBuffer tb;
     TreeBufferIndex tree;
         
-    while (true)
-    {
+    while (true) {
         global_env->CODE_ERROR = 0; // réinitialise les erreurs
 
         if (global_env->FILENAME != NULL)
@@ -844,13 +843,11 @@ void terminal(void)
             return;
 
 
-
-        if (strcmp(exp,"")==0) // si l'utilisateur n'a rien ecrit
+        if (strcmp(exp,"") == 0) // si l'utilisateur n'a rien ecrit
         {
             neon_free(exp);
             continue;
         }
-
         
         
         if (global_env->CODE_ERROR != 0)
@@ -908,9 +905,7 @@ void terminal(void)
             }
         }
         TreeBuffer_destroy(&tb, tree);
-
     }
-
     return ;
 }
 

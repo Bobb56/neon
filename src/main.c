@@ -13,6 +13,9 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
+Si on tape trop de 1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1 dans la console sur TI_EZ80
+Quand on évalue des expressions dans la console sur TI_EZ80 puis que l'on quitte
++ boucles infinies à des moments random
 _____________________
 
 Potentielles futures erreurs :
