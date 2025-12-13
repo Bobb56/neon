@@ -8,3 +8,5 @@ le système de fichiers
 
 Donc probablement des problèmes d'update de pointeurs ou équivalent
 (puisque sinon ça fonctionne dans le cas TreeBuffer normaux)
+
+IDEE : quand on crée un nouveau TreeBuffer ou truc comme ça, ça peut modifier le pointeur d'autres TreeBuffers et on ne va pas forcément mettre à jour leur pointeur à chaque fois
