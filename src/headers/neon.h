@@ -131,7 +131,7 @@ void execFile(char* filename);
 void importFile(char* filename);
 void startMessage(void);
 void terminal (void);
-void neonInit(void);
+int neonInit(void);
 void neonExit(void);
 
 

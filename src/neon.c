@@ -585,8 +585,9 @@ void loadExceptions(NeonEnv* env) {
 NeonEnv* NeonEnv_init(void) {
     NeonEnv* env = neon_malloc(sizeof(NeonEnv));
 
-    env->FONCTIONS = TreeBuffer_init();
-    if_error {
+    int error = TreeBuffer_init(&env->FONCTIONS);
+
+    if (error < 0) {
         free(env);
         return NULL;
     }
@@ -670,12 +671,16 @@ void NeonEnv_destroy(NeonEnv* env) {
 
 
 
-void neonInit(void)
+int neonInit(void)
 {
     srand(time(NULL));
     
+    NeonEnv* env = NeonEnv_init();
+
+    if (env == NULL)
+        return -1;
+
     NeonEnv_set(NeonEnv_init());
-    return_on_error();
 
     #ifdef LINUX
         linenoiseSetMultiLine(1); // spécial pour linenoise
@@ -693,7 +698,7 @@ void neonInit(void)
         set_neon_palette();
     #endif
 
-    return;
+    return 0;
 }
 
 
@@ -854,7 +859,7 @@ void terminal(void)
             continue;
         }
 
-        tb = TreeBuffer_init();
+        TreeBuffer_init(&tb);
         tree = createSyntaxTree(&tb, exp, true);
 
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
@@ -923,7 +928,9 @@ void execFile(char* filename)
 
     global_env->FILENAME = strdup(filename);
     
-    TreeBuffer tb = TreeBuffer_init();
+    TreeBuffer tb;
+    TreeBuffer_init(&tb);
+
     TreeBufferIndex tree = createSyntaxTree(&tb, program, true);
     
     if_error {
@@ -969,7 +976,9 @@ void importFile(char* filename)
     global_env->FILENAME = strdup(filename);
     
     // exécution du fichier
-    TreeBuffer tb = TreeBuffer_init();
+    TreeBuffer tb;
+    TreeBuffer_init(&tb);
+
     TreeBufferIndex tree = createSyntaxTree(&tb, program, true);
 
     if (global_env->CODE_ERROR != 0)

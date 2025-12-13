@@ -245,7 +245,7 @@ NeObj _eval_(NeList* args)
     char* sov = global_env->FILENAME;
     global_env->FILENAME = NULL;
     
-    TreeBuffer tb = TreeBuffer_init();
+    TreeBuffer tb; TreeBuffer_init(&tb);
     TreeBufferIndex tree = createExpressionTree(&tb, exp, false);
 
     if (global_env->CODE_ERROR != 0) {
@@ -603,7 +603,7 @@ NeObj _list_comp_(NeList* args)
     
     _affect2(i, ARG(1)); // valeur de debut
 
-    TreeBuffer tb = TreeBuffer_init();
+    TreeBuffer tb; TreeBuffer_init(&tb);
 
     TreeBufferIndex cond = createExpressionTree(&tb, neo_to_string(ARG(4)), false);
 

@@ -335,6 +335,14 @@ int getFileIndex(char* program, int line) {
 
 
 
+void bp(char* s) {
+    printString(s);
+    flush();
+    volatile int a = 0;
+    while (a == 0) {a *= a;}
+}
+
+
 
 void printErrSource(char* file, int line) {
     setColor(RED);

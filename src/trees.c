@@ -34,33 +34,32 @@ TreeListTemp dans la TreeList indiquée en argument tout en supprimant la TreeLi
 
 #ifdef TI_EZ80
 
-TreeBuffer TreeBuffer_init(void) {
+int TreeBuffer_init(TreeBuffer* tb) {
     static uint8_t fileno = 0; // compte le nombre de fichiers créés
     fileno++;
 
-    TreeBuffer tb;
-    
-    strcpy(tb.name, "NRDAT"); // Neon Runtime Data
+    strcpy(tb->name, "NRDAT"); // Neon Runtime Data
     uint8_t n = fileno;
     for (int i = 7 ; i >= 5 ; i--) {
-        tb.name[i] = n%10 + '0';
+        tb->name[i] = n%10 + '0';
         n = (n-n%10)/10;
     }
-    tb.name[8] = '\0';
+    tb->name[8] = '\0';
 
-    tb.handle = ti_Open(tb.name, "w");
-
-    if (tb.handle == 0) {
-        global_env->CODE_ERROR = 67;
-        return tb;
+    tb->handle = 0;
+    bp("z0");
+    while (tb->handle == 0) {
+        tb->handle = ti_Open(tb->name, "w");
     }
 
-    tb.pointer = ti_GetVATPtr(tb.handle);
-    tb.size = 0;
+    bp("z1");
 
-    TreeListTemp_init(&tb.remember);
+    tb->pointer = ti_GetVATPtr(tb->handle);
+    tb->size = 0;
 
-    return tb;
+    TreeListTemp_init(&tb->remember);
+
+    return 0;
 }
 
 
@@ -90,20 +89,19 @@ void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
 #else
 
 
-TreeBuffer TreeBuffer_init(void) {
-    TreeBuffer tb;
-    tb.size = 0;
-    tb.n_blocks = 1;
-    tb.block_size = 512;
-    tb.pointer = neon_malloc(tb.block_size * tb.n_blocks);
-    memset(tb.pointer, 0xff, tb.block_size * tb.n_blocks);
+int TreeBuffer_init(TreeBuffer* tb) {
+    tb->size = 0;
+    tb->n_blocks = 1;
+    tb->block_size = 512;
+    tb->pointer = neon_malloc(tb->block_size * tb->n_blocks);
+    memset(tb->pointer, 0xff, tb->block_size * tb->n_blocks);
 
-    if (tb.pointer == NULL)
-        global_env->CODE_ERROR = 12;
+    if (tb->pointer == NULL)
+        return -1;
 
-    TreeListTemp_init(&tb.remember);
+    TreeListTemp_init(&tb->remember);
 
-    return tb;
+    return 0;
 }
 
 

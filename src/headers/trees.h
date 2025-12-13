@@ -225,7 +225,7 @@ struct ParallelCall {
     TreeBufferIndex expr;
 };
 
-TreeBuffer TreeBuffer_init(void);
+int TreeBuffer_init(TreeBuffer*);
 void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree);
 void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point);
 TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size);
