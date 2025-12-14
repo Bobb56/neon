@@ -47,5 +47,6 @@ NeObj getPixel(NeList* args);
 NeObj setTextTransparentColor(NeList* args);
 NeObj getTextWidth(NeList* args);
 NeObj rgb(NeList* args);
+NeObj menu(NeList* args);
 
 #endif

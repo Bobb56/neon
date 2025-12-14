@@ -32,7 +32,7 @@ TreeListTemp dans la TreeList indiquée en argument tout en supprimant la TreeLi
 */
 
 
-#ifdef TI_EZ80
+#ifdef TI_EZ80_EXPERIMENTAL
 
 int TreeBuffer_init(TreeBuffer* tb) {
     static uint8_t fileno = 0; // compte le nombre de fichiers créés

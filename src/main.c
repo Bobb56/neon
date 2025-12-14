@@ -13,9 +13,6 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
-Si on tape trop de 1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1 dans la console sur TI_EZ80
-Quand on évalue des expressions dans la console sur TI_EZ80 puis que l'on quitte
-+ boucles infinies à des moments random
 _____________________
 
 Potentielles futures erreurs :
@@ -32,8 +29,6 @@ on ne le crée pas dans global_env->FONCTIONS)
 
 Avancement et choses à faire :
 -------------------------------
-> Changer le mode d'allocation de la pile (StackBuffer)
-> Modifier le mode de fonctionnement des TreeBuffer et StackBuffer en utilisant des fichiers en RAM sur TI_EZ80
 > Ajouter une fonction menu pour faciliter le développement de shells propres et optimisés
 (fonction menu exactement comme Neon Launcher actuel)
 

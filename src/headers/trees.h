@@ -8,7 +8,7 @@
 #include "constants.h"
 
 
-#ifdef TI_EZ80
+#ifdef TI_EZ80_EXPERIMENTAL
 #include <fileioc.h>
 
 typedef uint16_t TreeBufferIndex;

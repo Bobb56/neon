@@ -16,6 +16,8 @@
 #include <time.h>
 
 #define FLOODFILL_STACK_SIZE        3328
+#define PALETTE_INDEX_RGB(r,g,b)    ((r/36) << 5 | (g/36) << 2 | (b/85))
+#define TEXT_Y(i)                   (28 + 14*i)
 
 
 void initGraphics(void) {
@@ -113,7 +115,7 @@ void initGraphics(void) {
 
 
     // functions
-    int nb_functions = 7;
+    int nb_functions = 8;
 
     char* names[] = {
         "getKey",
@@ -122,7 +124,8 @@ void initGraphics(void) {
         "getPixel",
         "setTextTransparentColor",
         "getTextWidth",
-        "rgb"
+        "rgb",
+        "menu"
     };
 
     Function functions[] = {
@@ -174,6 +177,13 @@ void initGraphics(void) {
             .nbArgs = 3,
             .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
             .typeRetour = TYPE_INTEGER
+        },
+        (Function) {
+            .ptr = menu,
+            .help = "Displays a menu for choosing between a list of items.\nThe first argument is the title of the menu.\nThe second argument is the list of items. It must me a list of strings.\nThe third argument is the text to be displayed if there are no elements in the list of items",
+            .nbArgs = 3,
+            .typeArgs = (int[]) {TYPE_STRING, TYPE_LIST, TYPE_STRING},
+            .typeRetour = TYPE_UNSPECIFIED
         }
     };
 
@@ -198,8 +208,7 @@ NeObj rgb(NeList* args) {
     uint8_t r = neo_to_integer(ARG(0));
     uint8_t g = neo_to_integer(ARG(1));
     uint8_t b = neo_to_integer(ARG(2));
-    uint8_t palette_index = (r/36) << 5 | (g/36) << 2 | (b/85);
-    return neo_integer_create(palette_index);
+    return neo_integer_create(PALETTE_INDEX_RGB(r, g, b));
 }
 
 
@@ -587,4 +596,129 @@ void set_neon_palette(void) {
             }
         }
     }
+}
+
+/*
+Affiche un menu pour laisser à l'utilisateur choisir un des éléments de la liste
+Renvoie l'élément dans la liste ou None si l'utilisateur a quitté
+*/
+NeObj menu(NeList* args) {
+    gfx_SetTextTransparentColor(1);
+
+    char* title = neo_to_string(ARG(0));
+    NeList* elements = neo_to_list(ARG(1));
+    char* empty_text = neo_to_string(ARG(2));
+
+    uint8_t highlight_color = PALETTE_INDEX_RGB(0, 100, 0);
+    uint8_t anti_highlight_color = PALETTE_INDEX_RGB(255, 255, 255);
+    uint8_t background_color = anti_highlight_color;
+    uint8_t foreground_color = PALETTE_INDEX_RGB(0, 0, 0);
+
+    // rectangle header
+    gfx_SetColor(highlight_color);
+    gfx_FillRectangle(0, 0, 320, 20);
+
+    // text header
+    gfx_SetTextBGColor(1);
+    gfx_SetTextFGColor(anti_highlight_color);
+    gfx_PrintStringXY(title, 10, 7);
+
+    // backgroud
+    gfx_SetColor(background_color);
+    gfx_FillRectangle(0, 20, 320, 220);
+
+    if (elements->len == 0) {
+        gfx_SetTextBGColor(background_color);
+        gfx_SetTextFGColor(foreground_color);
+        gfx_PrintStringXY(empty_text, 90, 120);
+        while (neon_getKey() != 15);
+    }
+    else {
+        int start_disp_index = 0; // indice dans la liste d'éléments de l'élément affiché le plus haut
+        int cursor_position = 0; // indice du curseur sur l'écran en teme de nombre d'items
+        uint8_t vertical_limit = 15;
+
+        bool refresh = true;
+        uint8_t key = 0;
+        while ((key = neon_getKey()) != 15) {
+            if (key == 1 || key == 3) { // next item
+                if (cursor_position + start_disp_index + 1 >= elements->len) {
+                    cursor_position = 0;
+                    start_disp_index = 0;
+                }
+                else if (cursor_position + 1 < vertical_limit) {
+                    cursor_position++;
+                }
+                else {
+                    start_disp_index++;
+                }
+                refresh = true;
+            }
+            else if (key == 2 || key == 4) { // previous item
+                if (cursor_position > 0) {
+                    cursor_position--;
+                }
+                else if (start_disp_index != 0) {
+                    start_disp_index--;
+                }
+                else {
+                    if (elements->len < vertical_limit) {
+                        cursor_position = elements->len - 1;
+                        start_disp_index = 0;
+                    }
+                    else {
+                        cursor_position = vertical_limit - 1;
+                        start_disp_index = elements->len - vertical_limit;
+                    }
+                }
+                refresh = true;
+            }
+            else if (key == 9) {
+                gfx_SetTextTransparentColor(global_env->text_transparent_color);
+                return neo_copy(elements->tab[start_disp_index + cursor_position]);
+            }
+
+            // affichage du menu
+            if (refresh) {
+                gfx_BlitScreen(); // copy the screen to the buffer
+                gfx_SetDrawBuffer(); // and then draw on the buffer
+
+                refresh = false;
+                int last_index;
+                if (elements->len < vertical_limit)
+                    last_index = elements->len;
+                else {
+                    last_index = vertical_limit;
+                }
+
+                // backgroud
+                gfx_SetColor(background_color);
+                gfx_FillRectangle(0, 20, 320, 220);
+
+                for (int i=0 ; i < last_index ; i++) {
+                    // display cursor
+                    if (i == cursor_position) {
+                        gfx_SetColor(highlight_color);
+                        gfx_FillRectangle(7, TEXT_Y(i)-3, 306, 14);
+
+                        gfx_SetTextBGColor(highlight_color);
+                        gfx_SetTextFGColor(anti_highlight_color);
+                        gfx_PrintStringXY(neo_to_string(elements->tab[start_disp_index + i]), 10, TEXT_Y(i));
+                    }
+                    // display normal item
+                    else {
+                        gfx_SetTextBGColor(background_color);
+                        gfx_SetTextFGColor(foreground_color);
+                        gfx_PrintStringXY(neo_to_string(elements->tab[start_disp_index + i]), 10, TEXT_Y(i));
+                    }
+                }
+
+                // copy the buffer to the secreen
+                gfx_BlitBuffer();
+                gfx_SetDrawScreen();
+            }
+        }
+    }
+    gfx_SetTextTransparentColor(global_env->text_transparent_color);
+    return neo_none_create();
 }
