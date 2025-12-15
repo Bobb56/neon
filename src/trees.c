@@ -110,7 +110,6 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
         void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
 
         if (tmp == NULL) {
-            neon_free(tb->pointer);
             global_env->CODE_ERROR = 12;
             return TREE_VOID;
         }
@@ -311,7 +310,6 @@ size_t type_size(TreeType type) {
 
 TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line) {
     TreeBufferIndex tree = TreeBuffer_alloc(tb, type_size(type));
-
     return_on_error(TREE_VOID);
 
     TREE_LINE(tb, tree) = line;
@@ -398,6 +396,10 @@ struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list
     struct TreeList list;
 
     list.indices = TreeBuffer_alloc(tb, temp_list->len * sizeof(TreeBufferIndex));
+
+    if_error {
+        return list;
+    }
 
     // on le considère comme un tableau de TreeBufferIndex
     TreeBufferIndex* array_ptr = treelistGet(tb, list);

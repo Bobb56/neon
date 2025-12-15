@@ -32,6 +32,7 @@ Modifier partout la méthode d'analyse des données renvoyées par cut, en méth
 Ajouter les nouveaux traitements pour les indices de liste et les appels de fonction
 */
 
+int debug = 0;
 
 void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast, toklist* tokens, intlist* lines, int offset) {
     int nbVirgules = ast_typeCountAst(ast, tokens->len, TYPE_VIRGULE, offset);
@@ -52,8 +53,8 @@ void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast
 
             sous_tokens.tab = tokens->tab + debut;
             sous_tokens.len = index - debut;
+            
             TreeBufferIndex arbre = createExpressionTreeAux(tb, ast + debut, &sous_tokens, lines, offset + debut);
-
             return_on_error();
 
             TreeListTemp_append(tree_list, arbre);
@@ -83,11 +84,6 @@ void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast
 
 TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset)
 {
-
-    //printf("createExpressionTreeAux :\n");
-    //toklist_aff(tokens);
-    //ast_aff(ast, tokens->len);
-
     int count = ast_typeCountAst(ast, tokens->len, TYPE_ENDOFLINE, offset);
     int real_length = ast_length(ast, tokens->len, offset);
     
@@ -1156,6 +1152,11 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
 
     TreeBuffer_remember(&global_env->FONCTIONS, syntaxTree);
 
+    if_error {
+        NeTree_destroy(&global_env->FONCTIONS, syntaxTree);
+        return TREE_VOID;
+    }
+
     Token name = tokens->tab[1];
 
     toklist argsTok = (toklist) {.tab = tokens->tab + 3, .len = i - 4};
@@ -1281,7 +1282,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
     else {
         partial_func = userFuncCreate(liste, syntaxTree, liste_index, unlimited_arguments, nbOptArgs, NULL, TYPE_USERFUNC); // objet destiné à être dans l'arbre
     }
-    
+
     return NeTree_make_functiondef(tb, tokdup(name), opt_args, partial_func, lines->tab[offset]);
 }
 
@@ -1290,8 +1291,10 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
 
 
 TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset) {
-
-    _Bool expression = false;
+    /*printString("-----createSyntaxTreeAux------\n");
+    toklist_aff(tokens);
+    neon_pause("----\n");*/
+    bool expression = false;
     int exprStart = 0;
 
     int index = 0, index2 = 0;
@@ -1304,9 +1307,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
     while (index < tokens->len) {
 
         index2 = ast[index]->fin - offset + 1; // on regarde où on va sauter, et on saute à cet endroit après
-        // c'est important, car on modifie ast[index] dans le code qui suit
-
-        
+        // c'est important, car on modifie ast[index] dans le code qui suit        
 
         if (ast[index]->type == TYPE_TRYEXCEPT) {
             ast_pop(ast[index]);
@@ -1591,7 +1592,21 @@ TreeBufferIndex createSyntaxTree(TreeBuffer* tb, char* program, bool free_after)
         return TREE_VOID;
     }
 
+    printString("Taille tokens : ");
+    printInt((1<< tokens->capacity)*sizeof(Token));
+    newLine();
+    printString("Taille types : ");
+    printInt((1<< types.capacity)*sizeof(int));
+    newLine();
+    printString("Taille lines : ");
+    printInt((1<< lines.capacity)*sizeof(int));
+    newLine();
+
     ast = ast_create(&types);
+
+    printString("Taille ast : ");
+    printInt((types.len * sizeof(Ast*)));
+    newLine();
 
     if (ast == NULL) {
         global_env->CODE_ERROR = 12;
@@ -1622,6 +1637,9 @@ TreeBufferIndex createSyntaxTree(TreeBuffer* tb, char* program, bool free_after)
     }
 
     TreeBufferIndex tree = createSyntaxTreeAux(tb, ast, tokens, &lines, 0);
+
+    printString("taille buffer : "); printInt(tb->block_size * tb->n_blocks);newLine();
+    printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); neon_pause("");
 
     ast_destroy(ast, tokens->len);
     toklist_destroy(tokens);

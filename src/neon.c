@@ -934,6 +934,9 @@ void execFile(char* filename)
         goto handle_error;
     }
 
+    printString("taille buffer : "); printInt(tb.block_size * tb.n_blocks);newLine();
+    printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); neon_pause("");
+
     exec(&tb, tree);
     
     if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
@@ -949,9 +952,6 @@ handle_error:
     neon_pause("Press ENTER to leave Neon...");
     return;
 }
-
-
-
 
 
 
