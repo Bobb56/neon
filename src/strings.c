@@ -529,17 +529,11 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
 // sert à savoir si une variable commence par prefix~
 bool has_strict_prefix(char* string, char* prefix) {
     unsigned len = strlen(prefix);
-    if (len >= strlen(string))
+    // string doit être au moins aussi longue que prefix + 2 (le tilde et au moins un caractère)
+    if (len + 1 >= strlen(string))
         return false;
 
-    char temp = string[len];
-    string[len] = '\0';
-
-    bool bo = (strcmp(string, prefix) == 0);
-
-    string[len] = temp;
-
-    return bo;
+    return (strncmp(string, prefix, len) == 0) && string[len] == '~';
 }
 
 /*
