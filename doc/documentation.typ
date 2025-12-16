@@ -1382,6 +1382,17 @@ Par défaut, la couleur utilisée pour le transparent est la couleur `255`.
 
 Cette fonction calcule la largeur en pixels d'un objet `Text` donné, en prenant en compte le paramètre `size`.
 
+*La fonction `menu`*
+
+Cette fonction permet d'afficher un menu interactif pour choisir entre différentes options.
+
+Elle prend trois paramètres :
+- Le titre du menu (une chaîne de caractères)
+- La liste des items à afficher (une liste de chaînes de caractères)
+- Une chaîne de caractères à afficher dans le cas où la liste d'items est vide
+
+La fonction `menu` renvoie l'élément choisi (donc une chaîne de caractères), ou `None` si l'utilisateur n'a rien choisi.
+
 
 === 7.1.1 - Le clavier
 
