@@ -644,7 +644,7 @@ void NeonEnv_destroy(NeonEnv* env) {
 
     neobject_destroy(env->RETURN_VALUE);
 
-    TreeBuffer_destroy(&env->FONCTIONS, TREE_VOID);
+    TreeBuffer_destroy(&env->FONCTIONS);
 
     strlist_destroy(env->CONTAINERS, true);
     gc_extern_nelist_destroy(env->ATTRIBUTES);
@@ -857,13 +857,11 @@ void terminal(void)
             continue;
         }
 
-        TreeBuffer_init(&tb);
-        tree = createSyntaxTree(&tb, exp, true);
+        tb = createSyntaxTree(exp, true);
 
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
         {
             printError(global_env->CODE_ERROR);
-            TreeBuffer_destroy(&tb, tree);
             continue;
         }
 
@@ -876,12 +874,12 @@ void terminal(void)
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
                 printError(global_env->CODE_ERROR);
-                TreeBuffer_destroy(&tb, tree);
+                TreeBuffer_destroy(&tb);
                 continue;
             }
             else if (global_env->CODE_ERROR == 1) // quitte le terminal
             {
-                TreeBuffer_destroy(&tb, tree);
+                TreeBuffer_destroy(&tb);
                 return ;
             }
             
@@ -895,16 +893,16 @@ void terminal(void)
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
                 printError(global_env->CODE_ERROR);
-                TreeBuffer_destroy(&tb, tree);
+                TreeBuffer_destroy(&tb);
                 continue;
             }
             else if (global_env->CODE_ERROR == 1) // quitte le terminal
             {
-                TreeBuffer_destroy(&tb, tree);
+                TreeBuffer_destroy(&tb);
                 return ;
             }
         }
-        TreeBuffer_destroy(&tb, tree);
+        TreeBuffer_destroy(&tb);
     }
     return ;
 }
@@ -924,27 +922,23 @@ void execFile(char* filename)
 
     global_env->FILENAME = strdup(filename);
     
-    TreeBuffer tb;
-    TreeBuffer_init(&tb);
-
-    TreeBufferIndex tree = createSyntaxTree(&tb, program, true);
+    TreeBuffer tb = createSyntaxTree(program, true);
     
     if_error {
-        TreeBuffer_destroy(&tb, tree);
         goto handle_error;
     }
 
-    printString("taille buffer : "); printInt(tb.block_size * tb.n_blocks);newLine();
-    printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); neon_pause("");
+    //mem_stat printString("taille buffer : "); printInt(tb.block_size * tb.n_blocks);newLine();
+    //mem_stat printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); neon_pause("");
 
-    exec(&tb, tree);
+    tb_exec(&tb);
     
     if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
-        TreeBuffer_destroy(&tb, tree);
+        TreeBuffer_destroy(&tb);
         goto handle_error;
     }
 
-    TreeBuffer_destroy(&tb, tree);
+    TreeBuffer_destroy(&tb);
     return ;
 
 handle_error:
@@ -972,29 +966,25 @@ void importFile(char* filename)
     global_env->FILENAME = strdup(filename);
     
     // exécution du fichier
-    TreeBuffer tb;
-    TreeBuffer_init(&tb);
-
-    TreeBufferIndex tree = createSyntaxTree(&tb, program, true);
+    TreeBuffer tb = createSyntaxTree(program, true);
 
     if (global_env->CODE_ERROR != 0)
     {
         neon_free(sov);
-        TreeBuffer_destroy(&tb, tree);
         return;
     }
 
-    exec_aux(&tb, tree);
+    tb_exec_aux(&tb);
 
     if (global_env->CODE_ERROR != 0) {
         neon_free(sov);
-        TreeBuffer_destroy(&tb, tree);
+        TreeBuffer_destroy(&tb);
         return;
     }
 
     neon_free(global_env->FILENAME);
     global_env->FILENAME = sov;
 
-    TreeBuffer_destroy(&tb, tree);
+    TreeBuffer_destroy(&tb);
     return ;
 }

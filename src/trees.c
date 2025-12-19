@@ -88,6 +88,7 @@ void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
 
 
 int TreeBuffer_init(TreeBuffer* tb) {
+    tb->entry_point = TREE_VOID;
     tb->size = 0;
     tb->n_blocks = 1;
     tb->block_size = 512;
@@ -120,10 +121,10 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     return pointer;
 }
 
-void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
+void TreeBuffer_destroy(TreeBuffer* tb) {
     // Parcours de tout le TreeBuffer pour libérer tous les pointeurs dedans
-    if (!TREE_ISVOID(entry_point))
-        NeTree_destroy(tb, entry_point);
+    if (!TREE_ISVOID(tb->entry_point))
+        NeTree_destroy(tb, tb->entry_point);
     
     // On supprime les arbres sur lesquels personne ne pointait
     TreeListTemp_destroy(tb, &tb->remember);

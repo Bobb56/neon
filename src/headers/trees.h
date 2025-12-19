@@ -37,6 +37,7 @@ struct TreeListTemp {
 };
 
 typedef struct TreeBuffer {
+    TreeBufferIndex entry_point;
     int size;
     int n_blocks;
     int block_size;
@@ -227,7 +228,7 @@ struct ParallelCall {
 
 int TreeBuffer_init(TreeBuffer*);
 void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree);
-void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point);
+void TreeBuffer_destroy(TreeBuffer* tb);
 TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size);
 void TreeList_destroy(TreeBuffer* tb, struct TreeList* treelist);
 void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree);

@@ -273,6 +273,7 @@ Voici la liste des exceptions built-in :\
 *`AssertionFailed`* : Déclenchée lorsque la fonction `assert` échoue\
 *`DefinitionError`* : Déclenchée principalement lorsque la définition d'un container est incorrecte au regard des informations dont dispose l'interpréteur sur ce type de container\
 *`KeyboardInterrupt`* : Déclenchée par un Ctrl-C dans le terminal. Sur plateforme `TI_EZ80`, cette erreur est déclenchée en appuyant sur la touche `ON`\
+*`NotImplemented`* : Déclenchée lors de l'appel à une fonctionnalité non implementée. Peut se produire lors d'appel à des fonctions implémentées seulement pour quelques plateformes comme la fonction `initGraphics` (voir la section sur les graphiques).\
 
 === 1.2.8 - Le type `Built-in function`
 

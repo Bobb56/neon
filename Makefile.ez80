@@ -6,8 +6,9 @@ NAME = NEON
 ICON = src/assets/neon16x16.png
 DESCRIPTION = Neon interpreter
 COMPRESSED = NO
-#COMPRESSED_MODE = zx7
+COMPRESSED_MODE = zx7
 CFLAGS = -Oz
+LTO = NO
 
 # ----------------------------
 

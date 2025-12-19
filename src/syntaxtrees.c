@@ -768,8 +768,9 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
 
 // Cette fonction libère dès qu'elle n'en n'a plus besoin la chaîne de caractères donnée en argument
-TreeBufferIndex createExpressionTree(TreeBuffer* tb, char* string, bool free_string)
+TreeBuffer createExpressionTree(char* string, bool free_string)
 {
+
     toklist* tokens = toklist_create(0);
     intlist types = intlist_create(0);
     intlist lines = intlist_create(0);
@@ -783,7 +784,7 @@ TreeBufferIndex createExpressionTree(TreeBuffer* tb, char* string, bool free_str
         neon_free(types.tab);
         neon_free(lines.tab);
         toklist_destroy(tokens);
-        return TREE_VOID;
+        return (TreeBuffer){0};
     }
 
     ast = ast_create(&types);
@@ -797,12 +798,18 @@ TreeBufferIndex createExpressionTree(TreeBuffer* tb, char* string, bool free_str
         neon_free(lines.tab);
         ast_destroy(ast, tokens->len);
         toklist_destroy(tokens);
-        return TREE_VOID;
+        return (TreeBuffer){0};
     }
 
     statements(&types, tokens, ast, &lines, 0);
     
-    TreeBufferIndex tree = createExpressionTreeAux(tb, ast, tokens, &lines, 0);
+    TreeBuffer tb;
+    TreeBuffer_init(&tb);
+    tb.entry_point = createExpressionTreeAux(&tb, ast, tokens, &lines, 0);
+
+    if_error {
+        TreeBuffer_destroy(&tb);
+    }
 
     ast_destroy(ast, tokens->len);
 
@@ -810,7 +817,7 @@ TreeBufferIndex createExpressionTree(TreeBuffer* tb, char* string, bool free_str
     neon_free(types.tab);
     neon_free(lines.tab);
 
-    return tree;
+    return tb;
     
 }
 
@@ -1573,11 +1580,13 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
 
 
 /*
-Cette fonction prend en argument une chaine de caractères représentant un programme, et un pointeur vers un arbre initialisé
-Elle construit dans ce pointeur l'arbre syntaxique associé à la chaine de caractères
+Cette fonction prend en argument une chaine de caractères représentant un programme
+et un booléen indiquant si on peut libérer la chaîne de caractères dès qu'on en n'a plus besoin
+Elle renvoie un TreeBuffer prêt à être exécuté
 */
-TreeBufferIndex createSyntaxTree(TreeBuffer* tb, char* program, bool free_after)
+TreeBuffer createSyntaxTree(char* program, bool free_after)
 {
+
     toklist* tokens = toklist_create(0);
     intlist types = intlist_create(0);
     intlist lines = intlist_create(0);
@@ -1589,31 +1598,31 @@ TreeBufferIndex createSyntaxTree(TreeBuffer* tb, char* program, bool free_after)
         neon_free(types.tab);
         neon_free(lines.tab);
         toklist_destroy(tokens);
-        return TREE_VOID;
+        return (TreeBuffer){0};
     }
 
-    printString("Taille tokens : ");
-    printInt((1<< tokens->capacity)*sizeof(Token));
-    newLine();
-    printString("Taille types : ");
-    printInt((1<< types.capacity)*sizeof(int));
-    newLine();
-    printString("Taille lines : ");
-    printInt((1<< lines.capacity)*sizeof(int));
-    newLine();
+    //mem_stat printString("Taille tokens : ");
+    //mem_stat printInt((1<< tokens->capacity)*sizeof(Token));
+    //mem_stat newLine();
+    //mem_stat printString("Taille types : ");
+    //mem_stat printInt((1<< types.capacity)*sizeof(int));
+    //mem_stat newLine();
+    //mem_stat printString("Taille lines : ");
+    //mem_stat printInt((1<< lines.capacity)*sizeof(int));
+    //mem_stat newLine();
 
     ast = ast_create(&types);
 
-    printString("Taille ast : ");
-    printInt((types.len * sizeof(Ast*)));
-    newLine();
+    //mem_stat printString("Taille ast : ");
+    //mem_stat printInt((types.len * sizeof(Ast*)));
+    //mem_stat newLine();
 
     if (ast == NULL) {
         global_env->CODE_ERROR = 12;
         neon_free(types.tab);
         neon_free(lines.tab);
         toklist_destroy(tokens);
-        return TREE_VOID;
+        return (TreeBuffer){0};
     }
 
     parse(tokens, types, ast, &lines, 0);
@@ -1623,7 +1632,7 @@ TreeBufferIndex createSyntaxTree(TreeBuffer* tb, char* program, bool free_after)
         neon_free(lines.tab);
         ast_destroy(ast, tokens->len);
         toklist_destroy(tokens);
-        return TREE_VOID;
+        return (TreeBuffer){0};
     }
 
     statements(&types, tokens, ast, &lines, 0);
@@ -1633,18 +1642,24 @@ TreeBufferIndex createSyntaxTree(TreeBuffer* tb, char* program, bool free_after)
         neon_free(lines.tab);
         ast_destroy(ast, tokens->len);
         toklist_destroy(tokens);
-        return TREE_VOID;
+        return (TreeBuffer){0};
     }
 
-    TreeBufferIndex tree = createSyntaxTreeAux(tb, ast, tokens, &lines, 0);
+    TreeBuffer tb;
+    TreeBuffer_init(&tb);
+    tb.entry_point = createSyntaxTreeAux(&tb, ast, tokens, &lines, 0);
 
-    printString("taille buffer : "); printInt(tb->block_size * tb->n_blocks);newLine();
-    printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); neon_pause("");
+    if_error {
+        TreeBuffer_destroy(&tb);
+    }
+
+    //mem_stat printString("taille buffer : "); printInt(tb->block_size * tb->n_blocks);newLine();
+    //mem_stat printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); neon_pause("");
 
     ast_destroy(ast, tokens->len);
     toklist_destroy(tokens);
     neon_free(types.tab);
     neon_free(lines.tab);
 
-    return tree;
+    return tb;
 }

@@ -245,22 +245,21 @@ NeObj _eval_(NeList* args)
     char* sov = global_env->FILENAME;
     global_env->FILENAME = NULL;
     
-    TreeBuffer tb; TreeBuffer_init(&tb);
-    TreeBufferIndex tree = createExpressionTree(&tb, exp, false);
+    TreeBuffer tb = createExpressionTree(exp, false);
 
     if (global_env->CODE_ERROR != 0) {
         neon_free(sov);
         return NEO_VOID;
     }
 
-    NeObj res = eval_aux(&tb, tree);
+    NeObj res = tb_eval_aux(&tb);
 
     if (global_env->CODE_ERROR != 0)
         neon_free(sov);
     else
         global_env->FILENAME = sov;
     
-    TreeBuffer_destroy(&tb, tree);
+    TreeBuffer_destroy(&tb);
     return res;
 }
 
@@ -603,40 +602,38 @@ NeObj _list_comp_(NeList* args)
     
     _affect2(i, ARG(1)); // valeur de debut
 
-    TreeBuffer tb; TreeBuffer_init(&tb);
-
-    TreeBufferIndex cond = createExpressionTree(&tb, neo_to_string(ARG(4)), false);
+    // un premier TreeBuffer contenant l'expression de la condition
+    TreeBuffer cond = createExpressionTree(neo_to_string(ARG(4)), false);
 
     if (global_env->CODE_ERROR != 0)
     {
-        TreeBuffer_destroy(&tb, TREE_VOID);
+        TreeBuffer_destroy(&cond);
         if (sov_FILENAME != NULL)
             neon_free(sov_FILENAME);
         return NEO_VOID;
     }
-    TreeBuffer_remember(&tb, cond);
 
-    TreeBufferIndex val = createExpressionTree(&tb, neo_to_string(ARG(5)), false);
+    // un second TreeBuffer contenant l'expression de la valeur
+    TreeBuffer val = createExpressionTree(neo_to_string(ARG(5)), false);
 
     if (global_env->CODE_ERROR != 0)
     {
-        TreeBuffer_destroy(&tb, TREE_VOID);
+        TreeBuffer_destroy(&cond);
         if (sov_FILENAME != NULL)
             neon_free(sov_FILENAME);
         return NEO_VOID;
     }
-    TreeBuffer_remember(&tb, val);
 
     NeObj liste = neo_list_create(0);
     NeObj x = NEO_VOID;
 
     while (neo_to_integer(*i) < neo_to_integer(ARG(2)))
     {
-        NeObj bo = eval_aux(&tb, cond);
-
+        NeObj bo = tb_eval_aux(&cond);
 
         if (global_env->CODE_ERROR != 0) {
-            TreeBuffer_destroy(&tb, TREE_VOID);
+            TreeBuffer_destroy(&cond);
+            TreeBuffer_destroy(&val);
             neobject_destroy(liste);
             if (sov_FILENAME != NULL)
                 neon_free(sov_FILENAME);
@@ -645,13 +642,14 @@ NeObj _list_comp_(NeList* args)
 
 
         if (neoIsTrue(bo)) {
-            NeObj neo = eval_aux(&tb, val);
+            NeObj neo = tb_eval_aux(&val);
             neo_list_append(liste, neo);
 
             if (global_env->CODE_ERROR != 0) {
                 neobject_destroy(bo);
                 neobject_destroy(liste);
-                TreeBuffer_destroy(&tb, TREE_VOID);
+                TreeBuffer_destroy(&cond);
+                TreeBuffer_destroy(&val);
                 if (sov_FILENAME != NULL)
                     neon_free(sov_FILENAME);
                 return NEO_VOID;
@@ -667,7 +665,8 @@ NeObj _list_comp_(NeList* args)
         *i = x;
     }
 
-    TreeBuffer_destroy(&tb, TREE_VOID);
+    TreeBuffer_destroy(&cond);
+    TreeBuffer_destroy(&val);
 
     global_env->FILENAME = sov_FILENAME;
     

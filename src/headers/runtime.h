@@ -16,6 +16,9 @@
                             }                                                           \
                             global_env->atomic_counter--
 
+#define tb_eval_aux(tb)     eval_aux(tb, (tb)->entry_point)
+#define tb_exec(tb)         exec(tb, (tb)->entry_point)
+#define tb_exec_aux(tb)     exec_aux(tb, (tb)->entry_point)
 
 bool neoIsTrue(NeObj neo);
 bool isTrue(TreeBuffer* tb, TreeBufferIndex tree);
