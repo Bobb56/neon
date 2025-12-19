@@ -1009,8 +1009,8 @@ NeObj _in(NeObj op1, NeObj op2)
 NeObj _swap(NeObj* op1, NeObj* op2)
 {
     NeObj temp = *op1;
-    *op2 = *op1;
-    *op1 = temp;
+    *op1 = *op2;
+    *op2 = temp;
     return neo_none_create();
 }
 

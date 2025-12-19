@@ -7,4 +7,5 @@ for (_, 0, 27) do # cette boucle ne s'exécutera probablement pas jusqu'à la fi
     l''[0] <-> l
     l''[1] <-> l'
     l <-> l''
+    print('Tour de boucle n°', _)
 end
