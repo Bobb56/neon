@@ -13,4 +13,4 @@ LTO = NO
 # ----------------------------
 
 #include $(shell cedev-config --makefile)
-include ~/CEdev/meta/app_tools/makefile
+include app_tools/makefile
