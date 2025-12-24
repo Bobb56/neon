@@ -9,7 +9,7 @@
 //#define EXPERIMENTAL
 
 // pour débugger
-#define DEBUG
+//#define DEBUG
 
 
 #define SEQUENCE_ENTREE    ">> "

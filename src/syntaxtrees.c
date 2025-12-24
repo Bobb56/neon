@@ -550,7 +550,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
         
         if (nbVirgules > 0)
         {
-            printString("Une expression seule contenant des virgules n'est pas une expression valide\n");
+            global_env->CODE_ERROR = 30;
             return TREE_VOID;
         }
         else
