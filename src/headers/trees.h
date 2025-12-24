@@ -6,9 +6,10 @@
 #include <stdint.h>
 #include "neobj.h"
 #include "constants.h"
+#include "dynarrays.h"
 
 
-#ifdef TI_EZ80_EXPERIMENTAL
+/*
 #include <fileioc.h>
 
 typedef uint16_t TreeBufferIndex;
@@ -25,9 +26,8 @@ typedef struct TreeBuffer {
     char name[9];
     struct TreeListTemp remember;
 } TreeBuffer;
+*/
 
-
-#else
 
 typedef unsigned int TreeBufferIndex;
 
@@ -42,10 +42,10 @@ typedef struct TreeBuffer {
     int n_blocks;
     int block_size;
     void* pointer;
-    struct TreeListTemp remember;
+    bool locked;
 } TreeBuffer;
 
-#endif
+
 
 #define TREE_VOID                       ((TreeBufferIndex)-1)
 #define GENERAL_INFO                    TreeType type; uint16_t line;
@@ -223,12 +223,13 @@ struct ExceptBlock {
 
 struct ParallelCall {
     GENERAL_INFO
+    TreeBuffer* expr_buffer;
     TreeBufferIndex expr;
 };
 
 int TreeBuffer_init(TreeBuffer*);
-void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree);
 void TreeBuffer_destroy(TreeBuffer* tb);
+void TreeBuffer_delete_all(ptrlist* tree_buffers);
 TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size);
 void TreeList_destroy(TreeBuffer* tb, struct TreeList* treelist);
 void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree);
@@ -244,7 +245,7 @@ struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list
 
 TreeBufferIndex NeTree_make_binaryOp(TreeBuffer* tb, int op, TreeBufferIndex left, TreeBufferIndex right, int line);
 TreeBufferIndex NeTree_make_unaryOp(TreeBuffer* tb, int op, TreeBufferIndex expr, int line);
-TreeBufferIndex NeTree_make_parallel_call(TreeBuffer* tb, TreeBufferIndex expr, int line);
+TreeBufferIndex NeTree_make_parallel_call(TreeBuffer* tb, TreeBuffer* expr_buffer, TreeBufferIndex expr, int line);
 TreeBufferIndex NeTree_make_variable(TreeBuffer* tb, Var variable, int line);
 TreeBufferIndex NeTree_make_const(TreeBuffer* tb, NeObj const_obj, int line);
 TreeBufferIndex NeTree_make_IEWF_tree(TreeBuffer* tb, TreeBufferIndex expr, TreeBufferIndex block, TreeType type, int line);

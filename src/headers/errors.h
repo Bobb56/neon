@@ -6,10 +6,11 @@
 #include "constants.h"
 #include "dynarrays.h"
 
-#define NB_ERRORS 120
+#define NB_ERRORS 121
 
-#define return_on_error(value)      if (global_env->CODE_ERROR != 0) return value
-#define if_error                    if (global_env->CODE_ERROR != 0)
+#define return_on_error(value)                  if (global_env->CODE_ERROR != 0) return value
+#define if_error                                if (global_env->CODE_ERROR != 0)
+#define neon_assert(condition, return_value)    if (!(condition)) {global_env->CODE_ERROR = 120 ; return return_value ;}
 
 #define neon_malloc     malloc
 #define neon_realloc    realloc

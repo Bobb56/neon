@@ -571,10 +571,11 @@ void loadExceptions(NeonEnv* env) {
         "DefinitionError",
         "KeyboardInterrupt",
         "NotImplemented",
-        "ExitSignal"
+        "ExitSignal",
+        "InternError"
     };
 
-    for (int i = 0 ; i < 17 ; i++) {
+    for (int i = 0 ; i < 18 ; i++) {
         strlist_append(env->EXCEPTIONS, strdup(exceptions[i]));
     }
 }
@@ -585,13 +586,6 @@ void loadExceptions(NeonEnv* env) {
 NeonEnv* NeonEnv_init(void) {
     NeonEnv* env = neon_malloc(sizeof(NeonEnv));
 
-    int error = TreeBuffer_init(&env->FONCTIONS);
-
-    if (error < 0) {
-        free(env);
-        return NULL;
-    }
-
     env->NAME = 0;
     env->CODE_ERROR = 0;
     env->LINENUMBER = 0;
@@ -601,6 +595,7 @@ NeonEnv* NeonEnv_init(void) {
     env->RETURN_VALUE = NEO_VOID;
     env->OBJECTS_LIST = NEO_VOID;
     env->NOMS = strlist_create(0);
+    env->TREEBUFFERS = ptrlist_create();
     env->PROMISES = nelist_create(0);
     env->ADRESSES = nelist_create(0);
     env->ATTRIBUTES = nelist_create(0);
@@ -644,7 +639,8 @@ void NeonEnv_destroy(NeonEnv* env) {
 
     neobject_destroy(env->RETURN_VALUE);
 
-    TreeBuffer_destroy(&env->FONCTIONS);
+    TreeBuffer_delete_all(env->TREEBUFFERS);
+    ptrlist_destroy(env->TREEBUFFERS, true, true);
 
     strlist_destroy(env->CONTAINERS, true);
     gc_extern_nelist_destroy(env->ATTRIBUTES);

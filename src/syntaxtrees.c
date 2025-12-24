@@ -32,7 +32,31 @@ Modifier partout la méthode d'analyse des données renvoyées par cut, en méth
 Ajouter les nouveaux traitements pour les indices de liste et les appels de fonction
 */
 
-int debug = 0;
+
+
+// création d'un TreeBuffer qui sera automatiquement libéré à la suppression de l'environnement
+TreeBuffer* TreeBuffer_persistent_syntaxtree(Ast** ast, toklist* tokens, intlist* lines, int offset) {
+    TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
+    ptrlist_append(global_env->TREEBUFFERS, tb);
+    TreeBuffer_init(tb);
+    tb->entry_point = createSyntaxTreeAux(tb, ast, tokens, lines, offset);
+    tb->locked = true;
+    return tb;
+}
+
+
+TreeBuffer* TreeBuffer_persistent_expr(Ast** ast, toklist* tokens, intlist* lines, int offset) {
+    TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
+    ptrlist_append(global_env->TREEBUFFERS, tb);
+    TreeBuffer_init(tb);
+    tb->entry_point = createExpressionTreeAux(tb, ast, tokens, lines, offset);
+    tb->locked = true;
+    return tb;
+}
+
+
+
+
 
 void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast, toklist* tokens, intlist* lines, int offset) {
     int nbVirgules = ast_typeCountAst(ast, tokens->len, TYPE_VIRGULE, offset);
@@ -90,6 +114,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
     // tous les tokens sont des retours à la ligne
     if (count == real_length) {
         global_env->LINENUMBER = lines->tab[offset];
+        debug("z0\n");
         global_env->CODE_ERROR = 30;
         return TREE_VOID;
     }
@@ -536,6 +561,8 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             int index = ast_minOp(ast, tokens, offset);
 
             if (index < 0) {
+                toklist_aff(tokens);
+                debug("z1\n");
                 global_env->CODE_ERROR = 30;
                 global_env->LINENUMBER = lines->tab[offset];
                 return TREE_VOID;
@@ -694,7 +721,6 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             
             else if (typeOperande & VARRIGHT || typeOperande & RIGHT) // variable à gauche comme -- ou ++
             {
-
                 toklist ntokens = (toklist) {.tab = tokens->tab+1, .len = tokens->len-1};
 
                 TreeBufferIndex fils;
@@ -705,20 +731,16 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                 // si ça se trouve être exécutée après la suppression du buffer associé au fichier dans
                 // lequel on lance la fonction en parallèle
                 if (operator_index == 39) { // opérateur parallel
-                    TreeBuffer* func_buf = &global_env->FONCTIONS;
-                
-                    fils = createExpressionTreeAux(func_buf, ast+1, &ntokens, lines, offset+1);
+                    TreeBuffer* func_buf = TreeBuffer_persistent_expr(ast+1, &ntokens, lines, offset+1);
                     return_on_error(TREE_VOID);
 
-                    TreeBuffer_remember(func_buf, fils);
-
-                    if (TREE_TYPE(func_buf, fils) != TypeFunctioncall) { // pour parallel
+                    if (TREE_TYPE(func_buf, func_buf->entry_point) != TypeFunctioncall) { // pour parallel
                         global_env->CODE_ERROR = 100;
                         global_env->LINENUMBER = lines->tab[offset];
                         return TREE_VOID;
                     }
 
-                    return NeTree_make_parallel_call(tb, fils, lines->tab[offset]);
+                    return NeTree_make_parallel_call(tb, func_buf, func_buf->entry_point, lines->tab[offset]);
                 }
                 else {
                     fils = createExpressionTreeAux(tb, ast+1, &ntokens, lines, offset+1);
@@ -810,6 +832,8 @@ TreeBuffer createExpressionTree(char* string, bool free_string)
     if_error {
         TreeBuffer_destroy(&tb);
     }
+
+    tb.locked = true;
 
     ast_destroy(ast, tokens->len);
 
@@ -1150,17 +1174,9 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
     toklist codeTok = (toklist) {.tab = tokens->tab + i + 1, .len = tokens->len - i - 2};
 
     // on alloue l'arbre syntaxTree dans le TreeBuffer global des fonctions
-    TreeBufferIndex syntaxTree = createSyntaxTreeAux(&global_env->FONCTIONS, ast + i + 1, &codeTok, lines, offset + i + 1);
+    TreeBuffer* functionBody = TreeBuffer_persistent_syntaxtree(ast + i + 1, &codeTok, lines, offset + i + 1);
 
     if_error {
-        NeTree_destroy(&global_env->FONCTIONS, syntaxTree);
-        return TREE_VOID;
-    }
-
-    TreeBuffer_remember(&global_env->FONCTIONS, syntaxTree);
-
-    if_error {
-        NeTree_destroy(&global_env->FONCTIONS, syntaxTree);
         return TREE_VOID;
     }
 
@@ -1284,10 +1300,10 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
             return TREE_VOID;
         }
         else
-            partial_func = userFuncCreate(liste, syntaxTree, liste_index, unlimited_arguments, nbOptArgs, NULL, TYPE_USERMETHOD); // objet destiné à être dans l'arbre
+            partial_func = userFuncCreate(liste, functionBody, functionBody->entry_point, liste_index, unlimited_arguments, nbOptArgs, NULL, TYPE_USERMETHOD); // objet destiné à être dans l'arbre
     }
     else {
-        partial_func = userFuncCreate(liste, syntaxTree, liste_index, unlimited_arguments, nbOptArgs, NULL, TYPE_USERFUNC); // objet destiné à être dans l'arbre
+        partial_func = userFuncCreate(liste, functionBody, functionBody->entry_point, liste_index, unlimited_arguments, nbOptArgs, NULL, TYPE_USERFUNC); // objet destiné à être dans l'arbre
     }
 
     return NeTree_make_functiondef(tb, tokdup(name), opt_args, partial_func, lines->tab[offset]);
@@ -1601,21 +1617,7 @@ TreeBuffer createSyntaxTree(char* program, bool free_after)
         return (TreeBuffer){0};
     }
 
-    //mem_stat printString("Taille tokens : ");
-    //mem_stat printInt((1<< tokens->capacity)*sizeof(Token));
-    //mem_stat newLine();
-    //mem_stat printString("Taille types : ");
-    //mem_stat printInt((1<< types.capacity)*sizeof(int));
-    //mem_stat newLine();
-    //mem_stat printString("Taille lines : ");
-    //mem_stat printInt((1<< lines.capacity)*sizeof(int));
-    //mem_stat newLine();
-
     ast = ast_create(&types);
-
-    //mem_stat printString("Taille ast : ");
-    //mem_stat printInt((types.len * sizeof(Ast*)));
-    //mem_stat newLine();
 
     if (ast == NULL) {
         global_env->CODE_ERROR = 12;
@@ -1653,8 +1655,7 @@ TreeBuffer createSyntaxTree(char* program, bool free_after)
         TreeBuffer_destroy(&tb);
     }
 
-    //mem_stat printString("taille buffer : "); printInt(tb->block_size * tb->n_blocks);newLine();
-    //mem_stat printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); neon_pause("");
+    tb.locked = true;
 
     ast_destroy(ast, tokens->len);
     toklist_destroy(tokens);

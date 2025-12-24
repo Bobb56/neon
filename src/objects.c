@@ -498,11 +498,12 @@ UserFunc* neo_to_userfunc(NeObj neo) {
 }
 
 
-NeObj userFuncCreate(Var* args, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type)
+NeObj userFuncCreate(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type)
 {
     UserFunc* fun = neon_malloc(sizeof(UserFunc));
     fun->args = args;
     fun->code = code;
+    fun->tree_buffer = tree_buffer;
     fun->nbArgs = nbArgs;
     fun->opt_args = opt_args;
     fun->nbOptArgs = nbOptArgs;
@@ -527,7 +528,7 @@ NeObj userFuncDefine(NeObj obj, NeList* opt_args) {
     for (int i = 0 ; i < fun->nbArgs ; i++)
         args[i] = fun->args[i];
 
-    return userFuncCreate(args, fun->code, fun->nbArgs, fun->unlimited_arguments, fun->nbOptArgs, opt_args, NEO_TYPE(obj));
+    return userFuncCreate(args, fun->tree_buffer, fun->code, fun->nbArgs, fun->unlimited_arguments, fun->nbOptArgs, opt_args, NEO_TYPE(obj));
 }
 
 

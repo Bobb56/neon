@@ -210,7 +210,8 @@ NO_OPT void launch_process(void) {
 
     global_env->process_cycle->process->state = Running;
 
-    NeObj result = eval_aux(&global_env->FONCTIONS, global_env->process_cycle->process->original_call);
+    treeFCall(global_env->process_cycle->process->original_call_buffer, global_env->process_cycle->process->original_call)->function_obj = neo_copy(global_env->process_cycle->process->fixed_function);
+    NeObj result = eval_aux(global_env->process_cycle->process->original_call_buffer, global_env->process_cycle->process->original_call);
 
     // on marque le processus comme terminé, il sera supprimé automatiquement par neon_interp_next_process
     // supprime le processus du point de vue du runtime, mais sans vraiment libérer les ressources dans un premier temps
@@ -327,7 +328,7 @@ NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args) {
 
     // on stocke fun et args
     
-    int int_ret = exec_aux(&global_env->FONCTIONS, fun->code);
+    int int_ret = exec_aux(fun->tree_buffer, fun->code);
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
@@ -408,7 +409,7 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
 
     // on stocke fun et args
     
-    int int_ret = exec_aux(&global_env->FONCTIONS, fun->code);
+    int int_ret = exec_aux(fun->tree_buffer, fun->code);
 
     if (global_env->CODE_ERROR != 0) {
         deleteContext(global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
@@ -602,16 +603,15 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
         case TypeParallelCall:
         {
+            TreeBuffer* tree_buffer = treeParCall(tb, tree)->expr_buffer;
             TreeBufferIndex maintree = treeParCall(tb, tree)->expr;
                 
-            TreeBuffer* func_buf = &global_env->FONCTIONS;
-
-            if (TREE_TYPE(func_buf, maintree) != TypeFunctioncall) {
+            if (TREE_TYPE(tree_buffer, maintree) != TypeFunctioncall) {
                 global_env->CODE_ERROR = 100;
                 return NEO_VOID;
             }
 
-            NeObj fixed_func = eval_aux(func_buf, treeFCall(func_buf, maintree)->function);
+            NeObj fixed_func = eval_aux(tree_buffer, treeFCall(tree_buffer, maintree)->function);
 
             if (global_env->CODE_ERROR != 0) {
                 return NEO_VOID;
@@ -622,21 +622,13 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 neobject_destroy(fixed_func);
                 return NEO_VOID;
             }
-            
-            // crée une copie de l'arbre avec une version figée de la fonction
-            TreeBufferIndex maintree_copy = NeTree_create(func_buf, TypeFunctioncall, TREE_LINE(func_buf, maintree));
-            
-            treeFCall(func_buf, maintree_copy)->args = treeFCall(func_buf, maintree)->args;
-            treeFCall(func_buf, maintree_copy)->function = treeFCall(func_buf, maintree)->function;
-            treeFCall(func_buf, maintree_copy)->function_obj = fixed_func;
-
 
             // on ajoute le processus, et il va se faire exécuter dans la chaine de processus
             // on met isInitialized = false pour que le processus entre dans eval_aux de manière normale
-            int id = create_new_process(maintree_copy, false);
+            int id = create_new_process(tree_buffer, maintree, fixed_func, false);
 
             if (global_env->CODE_ERROR != 0) {
-                neobject_destroy(treeFCall(func_buf, maintree_copy)->function_obj);
+                neobject_destroy(fixed_func);
                 return NEO_VOID;
             }
 
@@ -647,7 +639,6 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
         {
 
             // ici, appel récursif pour évaluer la fonction (1er fils), et on la met dans ->data de l'arbre
-
 
             // si le champ data de la fonction est déjà occuppé, on n'a pas besoin d'évaluer la fonction
             if (neo_is_void(treeFCall(tb, tree)->function_obj)) {
@@ -892,16 +883,13 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     ret = callUserMethod(fun, self, arguments, neo_local_args);
                 else
                     ret = callUserFunc(fun, arguments, neo_local_args);
-                
-                treeFCall(tb, tree)->function_obj = tree_data_sov;
-                neobject_destroy(treeFCall(tb, tree)->function_obj);
+
+                neobject_destroy(tree_data_sov);
                 treeFCall(tb, tree)->function_obj = NEO_VOID;
 
                 nelist_destroy(arguments);
 
-                if (global_env->CODE_ERROR != 0) {
-                    return NEO_VOID;
-                }
+                return_on_error(NEO_VOID);
 
                 // ainsi si une return_value n'est pas à NULL c'est que forcément la valeur n'a pas été récupérée
                 return ret;
@@ -2019,7 +2007,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
 void initRuntime(void) {
     // on met isInitialized = true car ce processus va entrer dans eval_aux de manière normale, pas par une restauration de registres
-    create_new_process(TREE_VOID, true);
+    create_new_process(NULL, TREE_VOID, NEO_VOID, true);
 }
 
 
@@ -2047,7 +2035,6 @@ NO_OPT void exitRuntime(void) {
     process_preRemove(global_env->process_cycle->process);
 
     if (ProcessCycle_isActive(global_env->process_cycle)) { // il reste des processus annexes à exécuter
-
         // ici, on sauvegarde les registres sauvegardés et la pile dans le processus actuel
         // comme ça quand on va passer au prochain processus, ils vont être transférés de processus en processus et restaurés à la fin
         save_stack_and_registers(global_env->process_cycle->process);

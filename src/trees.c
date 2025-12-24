@@ -14,12 +14,10 @@ Afin de maximiser la localité mémoire et la compacité des données, les donn�
 toutes regroupées au sein du même TreeBuffer : un gros buffer dans lequel on alloue tous les sous-arbres et les
 TreeList.
 Ainsi, quand on demande la transformation d'un fichier source en arbre syntaxique, un TreeBuffer est créé, et
-tous les arbres sont alloués dedans, à l'exception des arbres associés aux fonctions définies. Ces derniers
-sont alloués dans un TreeBuffer global nommé global_env->FONCTIONS.
-Cela permet à la fin de l'exécution du fichier de supprimer le TreeBuffer du fichier tout en conservant les
-fonctions qui seront probablement réexécutées. Ce TreeBuffer global ne sert pas qu'aux fonctions utilisateur,
-mais sert globalement à allouer n'importe quel arbre qui sera amené à être conservé même après la suppression
-du TreeBuffer associé au fichier.
+tous les arbres sont alloués dedans, à l'exception des arbres associés aux fonctions définies et aux expressions
+d'appel de fonction pour le lancement de fonction en parallèle. Ces derniers sont alloués dans des TreeBuffers
+persistants libérés lors de la destruction d'un environnement. Il sont chaînés dans env->TREEBUFFERS
+
 Ce buffer n'a aucune fonctionnalité de désallocation à part sa suppression totale, donc on alloue dedans uniquement
 des zones mémoire qui n'auront pas besoin d'être supprimées ou modifiées avant la suppression définitive
 du TreeBuffer.
@@ -29,11 +27,18 @@ Lorsque qu'un type d'arbre contient des TreeList, on alloue lors de sa création
 la fonction TreeListTemp_dump(TreeBuffer*, struct TreeListTemp*, struct TreeList*) qui va recopier la
 TreeListTemp dans la TreeList indiquée en argument tout en supprimant la TreeListTemp.
 
+Si un programme utilise uniquement ces fonctions pour créer des TreeBuffers :
+- createSyntaxTree
+- createExpressionTree
+- TreeBuffer_persistent_expr
+- TreeBuffer_persistent_syntaxtree
+alors les TreeBuffers sont garantis comme ne pouvant plus être modifiés après
+Chacune de ces fonctions verrouille le TreeBuffer juste avant de le renvoyer.
+Cela permet d'optimiser l'accès aux sous-arbres lors de l'évaluation
 */
 
 
-#ifdef TI_EZ80_EXPERIMENTAL
-
+/*
 int TreeBuffer_init(TreeBuffer* tb) {
     static uint8_t fileno = 0; // compte le nombre de fichiers créés
     fileno++;
@@ -84,7 +89,7 @@ void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
     ti_Delete(tb->name);
 }
 
-#else
+*/
 
 
 int TreeBuffer_init(TreeBuffer* tb) {
@@ -98,13 +103,14 @@ int TreeBuffer_init(TreeBuffer* tb) {
     if (tb->pointer == NULL)
         return -1;
 
-    TreeListTemp_init(&tb->remember);
-
+    tb->locked = false;
     return 0;
 }
 
 
 TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
+    neon_assert(!tb->locked, TREE_VOID);
+
     TreeBufferIndex pointer = tb->size;
     while (tb->size + size > tb->block_size * tb->n_blocks) {
         tb->n_blocks++;
@@ -127,22 +133,20 @@ void TreeBuffer_destroy(TreeBuffer* tb) {
         NeTree_destroy(tb, tb->entry_point);
     
     // On supprime les arbres sur lesquels personne ne pointait
-    TreeListTemp_destroy(tb, &tb->remember);
     free(tb->pointer);
 }
 
-
-#endif
-
-
-
-
-
-
-// Permet au TreeBuffer de se souvenir des arbres vers lesquels personne ne pointe à l'intérieur d'un TreeBuffer
-void TreeBuffer_remember(TreeBuffer* tb, TreeBufferIndex tree) {
-    TreeListTemp_append(&tb->remember, tree);
+void TreeBuffer_delete_all(ptrlist* tree_buffers) {
+    ptrlist* ptr = tree_buffers;
+    while (ptr != NULL && (ptr->tete != NULL || ptr->queue != NULL)) {
+        TreeBuffer_destroy(ptr->tete);
+        ptr = ptr->queue;
+    }
 }
+
+
+
+
 
 void TreeList_destroy(TreeBuffer* tb, struct TreeList* treelist) {
     TreeBufferIndex* array_ptr = tb->pointer + treelist->indices;
@@ -429,11 +433,12 @@ TreeBufferIndex NeTree_make_unaryOp(TreeBuffer* tb, int op, TreeBufferIndex expr
 }
 
 
-TreeBufferIndex NeTree_make_parallel_call(TreeBuffer* tb, TreeBufferIndex expr, int line) {
+TreeBufferIndex NeTree_make_parallel_call(TreeBuffer* tb, TreeBuffer* expr_buffer, TreeBufferIndex expr, int line) {
     TreeBufferIndex tree = NeTree_create(tb, TypeParallelCall, line);
     return_on_error(TREE_VOID);
 
     treeParCall(tb, tree)->expr = expr;
+    treeParCall(tb, tree)->expr_buffer = expr_buffer;
     return tree;
 }
 
