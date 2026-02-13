@@ -13,6 +13,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui marchent pas :
+help(compo) après avoir importé higherorder.ne
 _____________________
 
 Potentielles futures erreurs :
