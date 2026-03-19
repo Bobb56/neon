@@ -69,7 +69,6 @@ int main (int argc, char* argv[])
 
     // définition de la liste des arguments
     NeObj l = neo_list_create(0);
-    update__name__(strdup("__main__")); // nom du fichier actuel
 
     #ifdef TI_EZ80
         variable_append(global_env, "__args__", l);

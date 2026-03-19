@@ -68,7 +68,7 @@ void defineVariables(NeonEnv* env)
     variable_append(env, "__platform__", neo_str_create(strdup(PLATFORM)));
 
     // le nom du fichier
-    variable_append(env, "__name__", NEO_VOID);
+    variable_append(env, "__name__", neo_str_create(strdup("__main__")));
 
     env->NAME = env->ADRESSES->len - 1; // l'adresse de __name__ à modifier
 }
