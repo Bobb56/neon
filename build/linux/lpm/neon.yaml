@@ -1,0 +1,11 @@
+AppName: Neon
+AppDirectory: /home/rlpuillandre/Documents/neon/build/linux/lpm/../../../bin
+Launcher: neon
+Icon: /home/rlpuillandre/Documents/neon/build/linux/lpm/../../../icons/neontflixgreen.png
+Category: Development
+ShortDescription: Neon programming language
+Description: This is the official interpreter of the Neon programming language
+Version: '4.1'
+Terminal: true
+Command: neon
+InstFileName: /home/rlpuillandre/Documents/neon/build/linux/lpm/Neon_installer

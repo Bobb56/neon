@@ -1066,7 +1066,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
     }
     
     
-    if (!(*isPotentiallyNumber) && ((*char1)==';' || (*char1)=='\n'))
+    if ((!(*isPotentiallyNumber) && *char1=='\n') || (!(*isPotentiallyLongComm) && !(*isPotentiallyComm) && !(*isPotentiallyNumber) && !(*isPotentiallyString) && !(*isPotentiallyWord) && !(*isPotentiallyOp) && !(*isPotentiallyString2) && (*char1)==';'))
     {
 
         // si le token précédent était aussi un retour à la ligne, alors on ne compte pas celui-là
@@ -1078,12 +1078,6 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
             intlist_append(typeTok,TYPE_ENDOFLINE);
             intlist_append(lines, global_env->LINENUMBER);
             (*isPotentiallyNumber)=false;
-        }
-        
-        if ((*isPotentiallyString) || (*isPotentiallyString2))
-        {
-    		global_env->CODE_ERROR = 33; // chaine de carcatère non fermée en fin de ligne
-            return;
         }
         
         (*nouvTok)=true;

@@ -1,5 +1,6 @@
 #include "headers/constants.h"
 
+#ifdef WINDOWS_AMD64
 .extern launch_process
 
 .text
@@ -253,3 +254,4 @@ get_stack:
     addq    $8,     %rax
     ret
 
+#endif

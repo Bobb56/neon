@@ -1,5 +1,7 @@
 #include "headers/constants.h"
 
+#ifdef LINUX_RISCV64
+
 .extern launch_process
 
 
@@ -315,3 +317,4 @@ get_stack:
     mv a0, sp
     ret
 
+#endif

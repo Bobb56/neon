@@ -1,5 +1,7 @@
 #include "headers/constants.h"
 
+#ifdef LINUX_AMD64
+
 .extern launch_process
 
 # pour ne pas avoir de pile exécutable
@@ -171,3 +173,4 @@ get_stack:
     movq    %rsp,   %rax
     addq    $8,     %rax
     ret
+#endif

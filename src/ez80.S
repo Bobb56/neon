@@ -1,25 +1,29 @@
+#include "headers/constants.h"
 
-REG_BUFFER_SIZE := 8
+#ifdef TI_EZ80
+.assume  adl=1
 
-assume  adl=1
-
-
-section .text
+.section .bss
 
 ; variables globales statiques
-prev_process:   dl 0
-process:        dl 0
-old_stack:      dl 0
-ret_address:    dl 0
+prev_process:
+    d24 0
+process:
+    d24 0
+old_stack:
+    d24 0
+ret_address:
+    d24 0
 
+.section .text
 
-public  _reset_stack_and_registers
+.global  _reset_stack_and_registers
 _reset_stack_and_registers:
     pop hl ; récupère l'adresse de retour de la fonction
     pop iy ; récupère l'adresse du buffer
 
     ; load les registres
-    ld ix, (3 + iy)
+    ld ix, (iy + 3)
     ld iy, (iy)
     ld sp, iy
 
@@ -28,7 +32,7 @@ _reset_stack_and_registers:
 
     ret
 
-public  _save_stack_and_registers
+.global  _save_stack_and_registers
 _save_stack_and_registers:
     ; récupère l'adresse de retour de la fonction
     pop hl
@@ -52,7 +56,7 @@ _save_stack_and_registers:
 
     ret
 
-public  _switch_registers
+.global  _switch_registers
 _switch_registers:
     ; enregistre les arguments dans des variables globales
     pop hl
@@ -79,13 +83,13 @@ _switch_registers:
 
     ; 2) on charge les sauvegardes des registres dans les registres
     ld iy, (process)
-    
+
     ld ix, (iy + 3)
     ld iy, (iy)
     ld sp, iy ; donc on a la nouvelle pile, mais on a sauvegardé le pointeur vers l'ancienne pile
 
 
-    ; 3) on transfère les registres à restaurer à la toute fin    
+    ; 3) on transfère les registres à restaurer à la toute fin
     ld hl, (prev_process)
     ld de, (process)
     ld bc, $6
@@ -118,7 +122,7 @@ _switch_registers:
 
     ret
 
-public  _get_stack
+.global  _get_stack
 _get_stack:
     ld hl, $0
     add hl, sp
@@ -131,7 +135,7 @@ _get_stack:
 ; Cette fonction renvoie la pile avec laquelle elle est arrivée moins l'adresse de retour
 ; Elle retourne avec exactement la pile qu'on lui a envoyé en paramètre
 
-public  _floodfill_switch_stack
+.global  _floodfill_switch_stack
 _floodfill_switch_stack:
     ; récupère l'adresse de retour
     pop hl
@@ -160,4 +164,5 @@ _floodfill_switch_stack:
     ret
 
 
-extern  _launch_process
+    .extern  _launch_process
+#endif
