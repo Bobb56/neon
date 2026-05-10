@@ -1,6 +1,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "headers/neobj.h"
+#include "headers/neonio.h"
 #include "headers/objects.h"
 #include "headers/strings.h"
 #include "headers/runtime.h"
@@ -55,8 +57,7 @@ void* operators_functions[NBOPERATEURS] = {
 
 //definition des fonctions attribuees aux operateurs
 
-NeObj _add(NeObj _op1, NeObj _op2)
-{
+NeObj _add(NeObj _op1, NeObj _op2) {
   if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
     NeObj ret = callOverloadedBinaryOperator(_op1, _op2, "add");
     if (global_env->CODE_ERROR != 0) {
@@ -162,7 +163,7 @@ NeObj _sub(NeObj _op1, NeObj _op2)
   }
   else if (NEO_TYPE(_op2)==TYPE_INTEGER && NEO_TYPE(_op1)==TYPE_DOUBLE)
   {
-    return neo_double_create((double)neo_to_integer(_op2) - neo_to_double(_op1));
+    return neo_double_create((double)neo_to_integer(_op1) - neo_to_double(_op2));
   }
 
 
