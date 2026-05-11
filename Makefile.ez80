@@ -5,7 +5,8 @@
 NAME = NEON
 ICON = src/assets/neon16x16.png
 DESCRIPTION = Neon interpreter
-APPLICATION = NO
+APPLICATION_DESCRIPTION = Neon interpreter
+APPLICATION = YES
 COMPRESSED = NO
 COMPRESSED_MODE = zx7
 CFLAGS = -Oz
@@ -14,4 +15,3 @@ LTO = NO
 # ----------------------------
 
 include $(shell cedev-config --makefile)
-#include ~/CEdev/meta/app_tools/installer/makefile

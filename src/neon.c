@@ -814,7 +814,6 @@ void terminal(void)
     char* exp;
     NeObj res ;
     TreeBuffer tb;
-    TreeBufferIndex tree;
         
     while (true) {
         global_env->CODE_ERROR = 0; // réinitialise les erreurs
@@ -863,9 +862,11 @@ void terminal(void)
 
         
         // s'il n'y a qu'une expression, alors, on affiche le résultat de l'expression
-        if (treeSntxTree(&tb, tree)->treelist.length == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tree)->treelist)[0]))
+        if (treeSntxTree(&tb, tb.entry_point)->treelist.length == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0]))
         {
-            res = eval(&tb, treelistGet(&tb, treeSntxTree(&tb, tree)->treelist)[0]);
+            TreeBufferIndex exprtree = treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0];
+
+            res = eval(&tb, exprtree);
 
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
@@ -883,9 +884,9 @@ void terminal(void)
 
             storeAns(res); // stocke le résultat dans une variable au lieu de le supprimer
         }
-        else if (treeSntxTree(&tb, tree)->treelist.length > 0)
+        else if (treeSntxTree(&tb, tb.entry_point)->treelist.length > 0)
         {
-            exec(&tb, tree);
+            exec(&tb, tb.entry_point);
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
                 printError(global_env->CODE_ERROR);
