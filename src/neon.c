@@ -77,7 +77,7 @@ void defineVariables(NeonEnv* env)
 void loadFunctions(NeonEnv* env)
 {
     // the names of the built-in functions
-    const char* names[] = {
+    static const char* const names[] = {
         "print",
         "input",
         "nbr",
@@ -582,6 +582,22 @@ void loadExceptions(NeonEnv* env) {
 
 
 
+int NeonEnv_get_size(NeonEnv* env) {
+    int size = 0;
+    size += sizeof(NeonEnv);
+    size += strlist_getsize(env->NOMS);
+    size += nelist_getsize(env->PROMISES);
+    size += nelist_getsize(env->ADRESSES);
+    size += nelist_getsize(env->ATTRIBUTES);
+    size += strlist_getsize(env->EXCEPTIONS);
+    size += strlist_getsize(env->CONTAINERS);
+    size += intlist_getsize(env->PROCESS_FINISH);
+    return size;
+}
+
+
+
+
 // initializes an empty environment
 NeonEnv* NeonEnv_init(void) {
     NeonEnv* env = neon_malloc(sizeof(NeonEnv));
@@ -907,7 +923,6 @@ void terminal(void)
 
 
 
-
 void execFile(char* filename)
 {
     
@@ -918,7 +933,7 @@ void execFile(char* filename)
     }
 
     global_env->FILENAME = strdup(filename);
-    
+
     TreeBuffer tb = createSyntaxTree(program, true);
     
     if_error {
@@ -926,7 +941,7 @@ void execFile(char* filename)
     }
 
     //mem_stat printString("taille buffer : "); printInt(tb.block_size * tb.n_blocks);newLine();
-    //mem_stat printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); neon_pause("");
+    //mem_stat printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); 
 
     tb_exec(&tb);
     

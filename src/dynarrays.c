@@ -593,9 +593,12 @@ intlist intlist_create(int len)// crée une liste d'entiers
   return list;//retourne la structure
 }
 
+int intlist_getsize(intlist list) {
+  return sizeof(int) * (1 << list.capacity);
+}
 
 
-/*
+
 void intlist_aff(intlist* list)//affiche une liste d'entiers
 {
   if (list->len == 0)//si la liste a une longueur de zéro
@@ -616,7 +619,7 @@ void intlist_aff(intlist* list)//affiche une liste d'entiers
     newLine();
   }
 }
-*/
+
 
 
 
@@ -640,7 +643,7 @@ void intlist_append(intlist* list,int nombre)//ajoute un élément à la fin de 
 }
 
 
-/*
+
 void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la nouvelle longueur
 {
   int* tmp;
@@ -676,7 +679,7 @@ void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la n
   list->len=newLen;//modification de la longueur
   
 }
-*/
+
 
 
 
@@ -759,7 +762,7 @@ int intlist_index(intlist* list, int nombre)
 }
 
 
-/*
+
 void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à la place indiquée
 {
   if (index > list->len)
@@ -787,7 +790,7 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
 
   list->len++;//incrémente la longueur
 }
-*/
+
 
 
 int intlist_max(intlist* list)
@@ -898,6 +901,14 @@ strlist* strlist_create(int len)
 }
 
 
+int strlist_getsize(strlist* list) {
+  int size = sizeof(strlist);
+  for (int i=0 ; i < list->len ; i++)
+    size += strlen(list->tab[i]) + 1;
+  
+  size += sizeof(char*) * (1 << list->capacity);
+  return size;
+}
 
 
 

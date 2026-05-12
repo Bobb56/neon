@@ -100,6 +100,7 @@ void intptrlist_destroy(intptrlist* list);
 
 /**************************intlist**********************/
 intlist intlist_create(int len);
+int intlist_getsize(intlist list);
 //void intlist_aff(intlist* list);
 void intlist_append(intlist* list,int nombre);
 //void intlist_resize(intlist* list, int newLen);
@@ -115,6 +116,7 @@ int intlist_max(intlist* list);
 /**************************strlist**********************/
 void strlist_destroy(strlist* list, bool bo);
 strlist* strlist_create(int len);
+int strlist_getsize(strlist* list);
 void strlist_aff(strlist* list);
 void strlist_append(strlist* list, char* chaine);
 //void strlist_resize(strlist* list, int newLen, bool freeElement);

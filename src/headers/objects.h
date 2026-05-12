@@ -108,9 +108,11 @@ NeObj get_container_field(Container* c, int index);
 void container_destroy(Container* c);
 NeObj neo_promise_create(int id);
 int get_promise_id(NeObj promise);
+int neobject_getsize(NeObj);
 void general_neobject_destroy(NeObj neo, bool gc_extern);
 void neobject_aff(NeObj neo);
 NeList* nelist_create(int len);
+int nelist_getsize(NeList* list);
 void nelist_append(NeList* list, NeObj ptr);//ajoute un élément à la fin de la liste
 NeObj* nelist_nth_addr(NeList* list, int index);
 NeObj nelist_nth(NeList* list, int index);

@@ -32,8 +32,6 @@ L'extension de fichiers officiellement supportée pour les programmes Neon est l
 
 Sur la plateforme `TI_EZ80`, les fichier Neon sont des AppVars contenant directement le code Neon en texte. Les noms de ces AppVars sont sans extensions. Pour lancer un fichier en mode exécution, il faut mettre le nom de ce fichier dans la variable `Ans` ou `Rép`. Pour cela, écrivez le nom du fichier entre guillemets dans l'écran principal de la calculatrice, et appuyez sur ENTRÉE. Lors de son lancement, le programme NEON va détecter le nom de fichier dans cette variable et va l'exécuter.
 
-Depuis les mises à jour bloquant l'assembleur sur calculatrices TI, on ne peut plus lancer directement de programmes assembleur, et il est nécessaire d'utiliser des hacks comme `arTIfiCE` (https://yvantt.github.io/arTIfiCE) par exemple. arTIfiCE utilisant une faille de l'interpréteur du TI-Basic, il écrase la valeur de la variable `Ans` (ou `Rép`), ce qui rend impossible le lancement direct de programmes. Je recommande donc l'installation de shells comme `Cesium` (https://github.com/mateoconlechuga/cesium) ou encore du hook `asmhook` de Jacobly (https://tipla.net/a2643391) afin de contourner `arTIfiCE` après une première utilisation de celui-ci.
-
 Afin de faciliter le développement en Neon, l'interpréteur est compatible avec les AppVars Python.
 
 Pour que l'application Python puisse reconnaître les AppVars python par rapport à un appvar normal, ceux-ci commencent toujours par les 4 lettres `PYCD` suivies de l'octet `00` (noté `PYCD\x00`).

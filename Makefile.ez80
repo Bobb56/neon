@@ -9,7 +9,7 @@ APPLICATION_DESCRIPTION = Neon interpreter
 APPLICATION = YES
 COMPRESSED = NO
 COMPRESSED_MODE = zx7
-CFLAGS = -Oz
+CFLAGS = -Oz -O3
 LTO = NO
 
 # ----------------------------

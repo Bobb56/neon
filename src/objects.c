@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "headers/constants.h"
+#include "headers/neobj.h"
 #include "headers/neonio.h"
 #include "headers/objects.h"
 #include "headers/dynarrays.h"
@@ -742,6 +743,15 @@ char* nelist_str(NeList* list)
 }
 
 
+int nelist_getsize(NeList* list) {
+    int size = sizeof(NeList);
+    for (int i=0 ; i < list->len ; i++)
+        size += neobject_getsize(list->tab[i]);
+
+    // Ajout de la taille supplémentaire à cause de capacity
+    size += sizeof(NeObj) * ((1 << list->capacity) - list->len);
+    return size;
+}
 
 
 
@@ -1221,7 +1231,37 @@ NeObj neo_dup(NeObj neo) {
 }
 
 
+int neobject_getsize(NeObj neo) {
 
+    if (neo.type & HEAP_ALLOCATED) {
+        if (NEO_TYPE(neo) == TYPE_STRING || NEO_TYPE(neo) == TYPE_CONST) {
+            return sizeof(NeObj) + sizeof(String) + strlen(neo.string->string) + 1;
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_LIST) {
+            return sizeof(NeObj) + nelist_getsize(neo.nelist);
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_FONCTION) {
+            return sizeof(NeObj) + sizeof(Function) + sizeof(int) * neo.function->nbArgs + strlen(neo.function->help) + 1;
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC || NEO_TYPE(neo) == TYPE_USERMETHOD) {
+            return sizeof(NeObj) + sizeof(UserFunc) + sizeof(Var) * neo.userfunc->nbArgs + nelist_getsize(neo.userfunc->opt_args);
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+            return sizeof(NeObj) + sizeof(Container) + nelist_getsize(neo.container->data);
+        }
+
+        else {
+            return sizeof(NeObj);
+        }
+    }
+    else {
+        return sizeof(NeObj);
+    }
+}
 
 
 void general_neobject_destroy(NeObj neo, bool gc_extern)

@@ -12,6 +12,7 @@
 #include "headers/trees.h"
 #include "headers/errors.h"
 
+
 /*
 PROCéDé :
 La fonction cut (ou parse) ne sera appelée que deux fois dans cette bibliothèque,
