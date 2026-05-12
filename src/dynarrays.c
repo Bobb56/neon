@@ -27,9 +27,32 @@ void unstringize(Token tok, char sov) {
 }
 
 
-char* tokdup(Token tok) {
-  return strndup(tok.debut, tok.len);
-}
+#ifdef WINDOWS
+  size_t neon_strnlen(const char *src, size_t n) {
+      size_t len = 0;
+      while (len < n && src[len])
+          len++;
+      return len;
+  }
+
+  char *neon_strndup(const char *s, size_t n) {
+      size_t len = neon_strnlen(s, n);
+      char *p = malloc(len + 1);
+      if (p) {
+          memcpy(p, s, len);
+          p[len] = '\0';
+      }
+      return p;
+  }
+
+  char* tokdup(Token tok) {
+    return neon_strndup(tok.debut, tok.len);
+  }
+#else
+  char* tokdup(Token tok) {
+    return strndup(tok.debut, tok.len);
+  }
+#endif
 
 bool tokeq(Token token, char* string) {
   return strncmp(token.debut, string, token.len) == 0 && string[token.len] == '\0';

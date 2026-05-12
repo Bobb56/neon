@@ -27,7 +27,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=.
-OutputBaseFilename=neon_4.0_windows_amd64_setup      
+OutputBaseFilename=neon_4.1_windows_amd64_setup      
 SetupIconFile=neon.ico
 Compression=lzma
 SolidCompression=yes
