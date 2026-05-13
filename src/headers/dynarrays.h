@@ -69,7 +69,7 @@ void printToken(Token tok);
 char stringize(Token tok);
 void unstringize(Token tok, char sov);
 char* tokdup(Token tok);
-toklist* toklist_create(int len);
+toklist toklist_create(int len);
 void toklist_aff(toklist* list);
 void toklist_append(toklist* list, Token chaine);
 void toklist_destroy(toklist* list);

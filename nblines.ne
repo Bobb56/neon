@@ -17,7 +17,8 @@ files = [
     "win_amd64.S",
     "linux_amd64.S",
     "linux_riscv64.S",
-    "ez80.asm",
+    "ez80.S",
+    "sidememory.c",
     
     "headers/errors.h",
     "headers/builtinfunctions.h",
@@ -33,7 +34,8 @@ files = [
     "headers/objects.h",
     "headers/processcycle.h",
     "headers/lowlevel.h",
-    "headers/trees.h"
+    "headers/trees.h",
+    "headers/sidememory.h"
 ]
 
 other_files = [

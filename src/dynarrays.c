@@ -59,31 +59,25 @@ bool tokeq(Token token, char* string) {
 }
 
 
-toklist* toklist_create(int len)
+toklist toklist_create(int len)
 {
-  toklist* list = neon_malloc(sizeof(toklist));
+  toklist list;
+  
+  list.capacity = 0;
+  list.source_string = NULL;
+  
+  while ((1<<list.capacity) < len)
+    list.capacity++;
+  
+  list.tab=neon_malloc((1<<list.capacity)*sizeof(Token));
 
-  if (list == NULL) {
+  if (list.tab == NULL) {
     global_env->CODE_ERROR = 12;
-    return NULL;
+    return list;
   }
   
-  list->capacity = 0;
-  list->source_string = NULL;
-  
-  while ((1<<list->capacity) < len)
-    list->capacity++;
-  
-  list->tab=neon_malloc((1<<list->capacity)*sizeof(Token));
-
-  if (list == NULL) {
-    global_env->CODE_ERROR = 12;
-    neon_free(list);
-    return NULL;
-  }
-  
-  memset(list->tab,0,len);
-  list->len=len;
+  memset(list.tab,0,len);
+  list.len=len;
   return list;
 }
 
@@ -151,7 +145,6 @@ void toklist_destroy(toklist* list)
     neon_free(list->source_string);
   
   neon_free(list->tab);
-  neon_free(list);
 }
 
 

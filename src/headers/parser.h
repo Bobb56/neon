@@ -42,10 +42,6 @@ void compConditionBlock(int cas, bool* isPotentiallyConBlock, int *conBlockStep,
 void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int offset);
 void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, intlist* lines, bool free_original_string);
 void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int offset);
-Ast** ast_create(intlist* typeTok);
-void ast_push(Ast* ast);
-int ast_pop(Ast* ast);
-void ast_destroy(Ast ** ast, int length);
 void ast_aff(Ast** ast, int len);
 bool toklist_ast_inList(toklist* list, Ast** ast, char* elt, int type, int offset);
 bool ast_typeInAst(Ast** ast, int len, int type, int offset);

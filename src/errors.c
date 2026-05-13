@@ -283,11 +283,11 @@ int allocatedMem(void) {
     return memory;
 }
 
-
+*/
 void segfault(void) {
     volatile int* p = (int*)8;
     volatile int a = *p;
-}*/
+}
 
 void printError(int code)
 {

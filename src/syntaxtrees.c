@@ -7,6 +7,7 @@
 #include "headers/dynarrays.h"
 #include "headers/parser.h"
 #include "headers/runtime.h"
+#include "headers/sidememory.h"
 #include "headers/strings.h"
 #include "headers/syntaxtrees.h"
 #include "headers/trees.h"
@@ -788,47 +789,47 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
 
 
-
-
 // Cette fonction libère dès qu'elle n'en n'a plus besoin la chaîne de caractères donnée en argument
 TreeBuffer createExpressionTree(char* string, bool free_string)
 {
 
-    toklist* tokens = toklist_create(0);
+    toklist tokens = toklist_create(0);
     intlist types = intlist_create(0);
     intlist lines = intlist_create(0);
     Ast** ast;
 
-    //printf("Début cut\n");
+    init_side_memory();
 
-    cut(tokens, &types, string, true, &lines, free_string);
+    cut(&tokens, &types, string, true, &lines, free_string);
 
     if_error {
         neon_free(types.tab);
         neon_free(lines.tab);
-        toklist_destroy(tokens);
+        toklist_destroy(&tokens);
         return (TreeBuffer){0};
     }
+
+    // À partir de maintenant on ne touche plus à ni à tokens, ni à types, ni à lines
+    copy_intlist_to_side_memory(&lines);
+    copy_intlist_to_side_memory(&types);
+    copy_toklist_to_side_memory(&tokens);
 
     ast = ast_create(&types);
 
     //printf("Debut parse\n");
         
-    parse(tokens, types, ast, &lines, 0);
+    parse(&tokens, types, ast, &lines, 0);
 
     if_error {
-        neon_free(types.tab);
-        neon_free(lines.tab);
-        ast_destroy(ast, tokens->len);
-        toklist_destroy(tokens);
+        deinit_side_memory();
         return (TreeBuffer){0};
     }
 
-    statements(&types, tokens, ast, &lines, 0);
+    statements(&types, &tokens, ast, &lines, 0);
     
     TreeBuffer tb;
     TreeBuffer_init(&tb);
-    tb.entry_point = createExpressionTreeAux(&tb, ast, tokens, &lines, 0);
+    tb.entry_point = createExpressionTreeAux(&tb, ast, &tokens, &lines, 0);
 
     if_error {
         TreeBuffer_destroy(&tb);
@@ -836,14 +837,9 @@ TreeBuffer createExpressionTree(char* string, bool free_string)
 
     tb.locked = true;
 
-    ast_destroy(ast, tokens->len);
-
-    toklist_destroy(tokens);
-    neon_free(types.tab);
-    neon_free(lines.tab);
+    deinit_side_memory();
 
     return tb;
-    
 }
 
 
@@ -1604,53 +1600,47 @@ Elle renvoie un TreeBuffer prêt à être exécuté
 TreeBuffer createSyntaxTree(char* program, bool free_after)
 {
 
-    toklist* tokens = toklist_create(0);
+    toklist tokens = toklist_create(0);
     intlist types = intlist_create(0);
     intlist lines = intlist_create(0);
     Ast** ast;
 
-    cut(tokens, &types, program, true, &lines, free_after);
+    init_side_memory();
+
+    cut(&tokens, &types, program, true, &lines, free_after);
 
     if_error {
         neon_free(types.tab);
         neon_free(lines.tab);
-        toklist_destroy(tokens);
+        toklist_destroy(&tokens);
         return (TreeBuffer){0};
     }
+
+    // À partir de maintenant on ne touche plus à ni à tokens, ni à types, ni à lines
+    copy_intlist_to_side_memory(&lines);
+    copy_intlist_to_side_memory(&types);
+    copy_toklist_to_side_memory(&tokens);
+
 
     ast = ast_create(&types);
 
-    if (ast == NULL) {
-        global_env->CODE_ERROR = 12;
-        neon_free(types.tab);
-        neon_free(lines.tab);
-        toklist_destroy(tokens);
+    parse(&tokens, types, ast, &lines, 0);
+
+    if_error {
+        deinit_side_memory();
         return (TreeBuffer){0};
     }
 
-    parse(tokens, types, ast, &lines, 0);
+    statements(&types, &tokens, ast, &lines, 0);
 
     if_error {
-        neon_free(types.tab);
-        neon_free(lines.tab);
-        ast_destroy(ast, tokens->len);
-        toklist_destroy(tokens);
-        return (TreeBuffer){0};
-    }
-
-    statements(&types, tokens, ast, &lines, 0);
-
-    if_error {
-        neon_free(types.tab);
-        neon_free(lines.tab);
-        ast_destroy(ast, tokens->len);
-        toklist_destroy(tokens);
+        deinit_side_memory();
         return (TreeBuffer){0};
     }
 
     TreeBuffer tb;
     TreeBuffer_init(&tb);
-    tb.entry_point = createSyntaxTreeAux(&tb, ast, tokens, &lines, 0);
+    tb.entry_point = createSyntaxTreeAux(&tb, ast, &tokens, &lines, 0);
 
     if_error {
         TreeBuffer_destroy(&tb);
@@ -1658,10 +1648,7 @@ TreeBuffer createSyntaxTree(char* program, bool free_after)
 
     tb.locked = true;
 
-    ast_destroy(ast, tokens->len);
-    toklist_destroy(tokens);
-    neon_free(types.tab);
-    neon_free(lines.tab);
+    deinit_side_memory();
 
     return tb;
 }

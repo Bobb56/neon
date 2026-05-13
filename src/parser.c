@@ -9,6 +9,7 @@
 #include "headers/strings.h"
 #include "headers/parser.h"
 #include "headers/errors.h"
+#include "headers/sidememory.h"
 
 
 // définition des élément modifiables de la syntaxe
@@ -300,89 +301,6 @@ bool is_operateurs1(char* string, int debut, int current_index) {
 }
 
 
-///////////// DÉFINITION DE LA STRUCTURE AST //////////////
-
-
-Ast** ast_create(intlist* typeTok) {
-    Ast** ast = neon_malloc(sizeof(Ast*) * typeTok->len);
-
-    if (ast == NULL) {
-        global_env->CODE_ERROR = 12;
-        return NULL;
-    }
-
-    for (int i = 0 ; i < typeTok->len ; i++) {
-        ast[i] = neon_malloc(sizeof(Ast));
-
-        if (ast[i] == NULL) {
-            global_env->CODE_ERROR = 12;
-            for (int j=0 ; j < i ; j++)
-                neon_free(ast[j]);
-            neon_free(ast);
-            return NULL;
-        }
-
-        ast[i]->type = typeTok->tab[i];
-        ast[i]->fin = i;
-        ast[i]->suiv = NULL;
-    }
-    return ast;
-}
-
-
-void ast_push(Ast* ast) {
-    Ast* ast2 = neon_malloc(sizeof(Ast));
-
-    if (ast2 == NULL) {
-        global_env->CODE_ERROR = 12;
-        return;
-    }
-
-    ast2->fin = ast->fin;
-    ast2->type = ast->type;
-    ast2->suiv = ast->suiv;
-    // on a fait une copie du chaînon
-
-    ast->suiv = ast2;
-}
-
-
-void ast_push_check(Ast** ast, int fin, int type) {
-    //if (ast[0]->fin != fin || ast[0]->type != type)
-    //{
-        ast_push(ast[0]);
-
-        if (global_env->CODE_ERROR == 0) {
-            ast[0]->type = type;
-            ast[0]->fin = fin;
-        }
-    //}
-}
-
-
-
-int ast_pop(Ast* ast) {
-    if (ast -> suiv == NULL) {
-        return -1;
-    }
-
-    Ast* sov = ast->suiv;
-    ast->fin = sov->fin;
-    ast->type = sov->type;
-    ast->suiv = sov->suiv;
-    neon_free(sov);
-    return 0;
-}
-
-
-void ast_destroy(Ast ** ast, int length) {
-    for (int i = 0 ; i < length ; i++) {
-        while (ast[i]->suiv != NULL)
-            ast_pop(ast[i]);
-        neon_free(ast[i]);
-    }
-    neon_free(ast);
-}
 
 
 
@@ -549,18 +467,12 @@ bool isFull(char* string)
     if (strlen(string) == 0)
         return true;
 
-    toklist* tokens = toklist_create(0);
-
-    if (tokens == NULL) {
-        global_env->CODE_ERROR = 12;
-        return false;
-    }
-
+    toklist tokens = toklist_create(0);
     intlist types = intlist_create(0);
 
     if_error {
         global_env->CODE_ERROR = 12;
-        toklist_destroy(tokens);
+        toklist_destroy(&tokens);
         return false;
     }
 
@@ -568,29 +480,33 @@ bool isFull(char* string)
 
     if_error {
         global_env->CODE_ERROR = 12;
-        toklist_destroy(tokens);
+        toklist_destroy(&tokens);
         neon_free(types.tab);
         return false;
     }
 
     Ast** ast;
 
-    cut(tokens, &types, string, true, &lines, false);
+    init_side_memory();
+
+    cut(&tokens, &types, string, true, &lines, false);
+
+    copy_intlist_to_side_memory(&lines);
+    copy_intlist_to_side_memory(&types);
+    copy_toklist_to_side_memory(&tokens);
 
     if (global_env->CODE_ERROR == 0) {
         ast = ast_create(&types);
         
-        parse(tokens, types, ast, &lines, 0);
+        parse(&tokens, types, ast, &lines, 0);
 
         if (global_env->CODE_ERROR == 0)
-            statements(&types, tokens, ast, &lines, 0);
+            statements(&types, &tokens, ast, &lines, 0);
 
-        ast_destroy(ast, tokens->len);
     }
 
-    toklist_destroy(tokens);
-    neon_free(types.tab);
-    neon_free(lines.tab);
+    neon_free(tokens.source_string);
+    deinit_side_memory();
 
     global_env->LINENUMBER = -1;
     
@@ -628,9 +544,9 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
     char* string;
 
     if (traiterStatements)
-        string = sandwich(str, '\n');
+        string = side_memory_sandwich(str, '\n');
     else
-        string = addStr(str, "\n");
+        string = side_memory_addStr(str, "\n");
 
     if (free_original_str)
         free(str);
