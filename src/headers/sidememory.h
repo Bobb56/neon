@@ -3,8 +3,15 @@
 
 #include "dynarrays.h"
 #include "parser.h"
+#include "errors.h"
 
-#define BUFFER_SIZE         (1 << 24)
+#ifdef TI_EZ80
+    #define GET_BUFFER()            (void*)0xd40000
+    #define RESET_BUFFER
+#else
+    #define GET_BUFFER()            neon_malloc((1 << 24))
+    #define RESET_BUFFER(buffer)    neon_free(buffer)
+#endif
 
 void init_side_memory(void);
 void deinit_side_memory(void);

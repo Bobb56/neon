@@ -13,13 +13,13 @@ static void* buffer = NULL;
 static void* pointer = NULL;
 
 void init_side_memory(void) {
-    buffer = malloc(BUFFER_SIZE);
+    buffer = GET_BUFFER();
     pointer = buffer;
 }
 
 
 void deinit_side_memory(void) {
-    neon_free(buffer);
+    RESET_BUFFER(buffer);
 }
 
 
