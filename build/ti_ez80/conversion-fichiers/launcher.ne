@@ -1,8 +1,20 @@
 #NEON Neon launcher 1.0
 initGraphics()
 
-files=detectFiles("#NEON")+detectFiles("NEON"+chr(0))
-files.remove(files.index("LAUNCHER"))
+prefixes = [
+    "#NEON",
+    "NEON"+chr(0),
+    "PYCD"
+]
+
+files=[]
+foreach (prefix, prefixes) do
+    files += detectFiles(prefix)
+end
+
+if ("LAUNCHER" in files) then
+    files.remove(files.index("LAUNCHER"))
+end
 files.sortAsc()
 
 while (True) do
