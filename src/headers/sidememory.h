@@ -4,17 +4,21 @@
 #include "dynarrays.h"
 #include "parser.h"
 #include "errors.h"
+#include "trees.h"
 
 #ifdef TI_EZ80
-    #define GET_BUFFER()            (void*)0xd40000
-    #define RESET_BUFFER
+    #define INITIAL_BASE_POINTER()      (void*)0xd52c00 // (0xd40000 + 320*240)
+    #define BUFFER_SIZE                 (320*240)
 #else
-    #define GET_BUFFER()            neon_malloc((1 << 24))
-    #define RESET_BUFFER(buffer)    neon_free(buffer)
+    #define BUFFER_SIZE                 (1 << 24)
 #endif
 
-void init_side_memory(void);
-void deinit_side_memory(void);
+void side_memory_init(void);
+void side_memory_exit(void);
+void side_memory_start(void);
+void side_memory_end(void);
+void move_all_treebuffers(void);
+void move_treebuffer_to_side_memory(TreeBuffer* tb);
 void copy_intlist_to_side_memory(intlist* list);
 void copy_toklist_to_side_memory(toklist* list);
 Ast** copy_ast_to_side_memory(Ast** ast, int length);

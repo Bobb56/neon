@@ -43,6 +43,7 @@ TreeBuffer* TreeBuffer_persistent_syntaxtree(Ast** ast, toklist* tokens, intlist
     TreeBuffer_init(tb);
     tb->entry_point = createSyntaxTreeAux(tb, ast, tokens, lines, offset);
     tb->locked = true;
+    move_treebuffer_to_side_memory(tb);
     return tb;
 }
 
@@ -53,6 +54,7 @@ TreeBuffer* TreeBuffer_persistent_expr(Ast** ast, toklist* tokens, intlist* line
     TreeBuffer_init(tb);
     tb->entry_point = createExpressionTreeAux(tb, ast, tokens, lines, offset);
     tb->locked = true;
+    move_treebuffer_to_side_memory(tb);
     return tb;
 }
 
@@ -798,7 +800,7 @@ TreeBuffer createExpressionTree(char* string, bool free_string)
     intlist lines = intlist_create(0);
     Ast** ast;
 
-    init_side_memory();
+    side_memory_start();
 
     cut(&tokens, &types, string, true, &lines, free_string);
 
@@ -821,7 +823,7 @@ TreeBuffer createExpressionTree(char* string, bool free_string)
     parse(&tokens, types, ast, &lines, 0);
 
     if_error {
-        deinit_side_memory();
+        side_memory_end();
         return (TreeBuffer){0};
     }
 
@@ -837,7 +839,7 @@ TreeBuffer createExpressionTree(char* string, bool free_string)
 
     tb.locked = true;
 
-    deinit_side_memory();
+    side_memory_end();
 
     return tb;
 }
@@ -1605,7 +1607,7 @@ TreeBuffer createSyntaxTree(char* program, bool free_after)
     intlist lines = intlist_create(0);
     Ast** ast;
 
-    init_side_memory();
+    side_memory_start();
 
     cut(&tokens, &types, program, true, &lines, free_after);
 
@@ -1613,28 +1615,52 @@ TreeBuffer createSyntaxTree(char* program, bool free_after)
         neon_free(types.tab);
         neon_free(lines.tab);
         toklist_destroy(&tokens);
+        side_memory_end();
         return (TreeBuffer){0};
     }
 
     // À partir de maintenant on ne touche plus à ni à tokens, ni à types, ni à lines
     copy_intlist_to_side_memory(&lines);
+    if_error {
+        neon_free(types.tab);
+        neon_free(lines.tab);
+        toklist_destroy(&tokens);
+        side_memory_end();
+        return (TreeBuffer){0};
+    }
     copy_intlist_to_side_memory(&types);
+    if_error {
+        neon_free(types.tab);
+        toklist_destroy(&tokens);
+        side_memory_end();
+        return (TreeBuffer){0};
+    }
     copy_toklist_to_side_memory(&tokens);
+    if_error {
+        toklist_destroy(&tokens);
+        side_memory_end();
+        return (TreeBuffer){0};
+    }
 
 
     ast = ast_create(&types);
 
+    if_error {
+        side_memory_end();
+        return (TreeBuffer){0};
+    }
+
     parse(&tokens, types, ast, &lines, 0);
 
     if_error {
-        deinit_side_memory();
+        side_memory_end();
         return (TreeBuffer){0};
     }
 
     statements(&types, &tokens, ast, &lines, 0);
 
     if_error {
-        deinit_side_memory();
+        side_memory_end();
         return (TreeBuffer){0};
     }
 
@@ -1648,7 +1674,7 @@ TreeBuffer createSyntaxTree(char* program, bool free_after)
 
     tb.locked = true;
 
-    deinit_side_memory();
+    side_memory_end();
 
     return tb;
 }

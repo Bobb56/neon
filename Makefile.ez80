@@ -2,7 +2,7 @@
 # Makefile Options
 # ----------------------------
 
-NAME = NEON
+NAME = Neon
 ICON = src/assets/neon16x16.png
 DESCRIPTION = Neon interpreter
 APPLICATION_DESCRIPTION = Neon interpreter

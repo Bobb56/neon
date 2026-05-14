@@ -93,6 +93,7 @@ void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
 
 
 int TreeBuffer_init(TreeBuffer* tb) {
+    tb->side_memory = false;
     tb->entry_point = TREE_VOID;
     tb->size = 0;
     tb->n_blocks = 1;
@@ -114,15 +115,16 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     TreeBufferIndex pointer = tb->size;
     while (tb->size + size > tb->block_size * tb->n_blocks) {
         tb->n_blocks++;
-        void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
-
-        if (tmp == NULL) {
-            global_env->CODE_ERROR = 12;
-            return TREE_VOID;
-        }
-
-        tb->pointer = tmp;
     }
+
+    void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
+
+    if (tmp == NULL) {
+        global_env->CODE_ERROR = 12;
+        return TREE_VOID;
+    }
+
+    tb->pointer = tmp;
     tb->size += size;
     return pointer;
 }
@@ -133,7 +135,8 @@ void TreeBuffer_destroy(TreeBuffer* tb) {
         NeTree_destroy(tb, tb->entry_point);
     
     // On supprime les arbres sur lesquels personne ne pointait
-    free(tb->pointer);
+    if (!tb->side_memory)
+        neon_free(tb->pointer);
 }
 
 void TreeBuffer_delete_all(ptrlist* tree_buffers) {

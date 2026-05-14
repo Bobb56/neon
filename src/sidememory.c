@@ -1,38 +1,132 @@
-// bibliothèque pour sauvegarder des objets inertes afin de conserver le plus de heap possible pour les objets en construction
-// on y copie toutes les données temporaires nécéssaires à la création d'un TreeBuffer une fois qu'elles sont readonly
+/*
+Cette bibliothèque gère une deuxième zone mémoire utilisée pour désengorger le heap
+Cette mémoire est divisée en deux zones : la zone permanente, suivie de la zone temporaire.
+
+|       Zone permanente         |       Zone temporaire -->
+^                               ^                         ^
+initial_base_pointer            base_pointer              pointer
+
+La zone temporaire s'utilise par sessions : on appelle side_memory_start() pour commencer à allouer dedans et on appelle side_memory_end() lorsque l'on a terminé. Pour allouer dans la zone temporaire si une session est en cours, on appelle side_memory_alloc()
+Entre deux sessions d'utilisation de la mémoire temporaire, on peut écrire dans la mémoire permanente. Ce qui est écrit dans la mémoire permanente ne sera supprimé qu'à la sortie de l'interpréteur Neon. Pour allouer dans la zone permanente si aucune session n'est en cours, on utilise side_memory_hard_alloc()
+*/
+
 #include "headers/sidememory.h"
 #include "headers/dynarrays.h"
 #include "headers/errors.h"
 #include "headers/neonio.h"
 #include "headers/parser.h"
 #include "headers/neon.h"
+#include "headers/trees.h"
 #include <stdlib.h>
 #include <string.h>
 
-static void* buffer = NULL;
-static void* pointer = NULL;
+#ifdef TI_EZ80
+#include "ti/vars.h"
+#endif
 
-void init_side_memory(void) {
-    buffer = GET_BUFFER();
-    pointer = buffer;
+static int buffer_size = 0;
+static void* base_pointer = NULL;
+static void* pointer = NULL;
+static void* initial_base_pointer = NULL;
+static bool open = false;
+
+// Un mécanisme qui permet de stocker de manière permanente des TreeBuffers dans la side memory
+static ptrlist* pending_treebuffers = NULL;
+
+// À appeler au chargement de l'interpréteur Neon
+void side_memory_init(void) {
+    #ifdef TI_EZ80
+        buffer_size = BUFFER_SIZE;
+        initial_base_pointer = INITIAL_BASE_POINTER();
+        //buffer_size = os_MemChk(&initial_base_pointer);
+    #else
+        initial_base_pointer = neon_malloc(BUFFER_SIZE);
+        buffer_size = BUFFER_SIZE;
+    #endif
+    base_pointer = initial_base_pointer;
+
+    pending_treebuffers = ptrlist_create();
+}
+
+// À appeler avant de sortir de l'interpréteur Neon
+void side_memory_exit(void) {
+    #ifndef TI_EZ80
+        neon_free(initial_base_pointer);
+    #endif
+    ptrlist_destroy(pending_treebuffers, false, true);
 }
 
 
-void deinit_side_memory(void) {
-    RESET_BUFFER(buffer);
+// Début d'une session d'utilisation de la side memory
+void side_memory_start(void) {
+    pointer = base_pointer;
+    open = true;
+}
+
+// Fin d'une session d'utilisation de la side memory
+void side_memory_end(void) {
+    //printString("Size of side memory : "); printInt((long int)pointer - (long int)initial_base_pointer); newLine();
+    //neon_pause("");
+    open = false;
+    move_all_treebuffers();
+    pointer = base_pointer;
 }
 
 
 void* side_memory_alloc(int size) {
     void* alloc_area = pointer;
+    if (pointer + size >= initial_base_pointer + buffer_size) {
+        global_env->CODE_ERROR = 12;
+        return NULL;
+    }
     pointer += size;
     return alloc_area;
 }
 
+// Alloue définitivement de la mémoire dans la side memory
+// Part du principe que la side memory ne contient aucune donnée temporaire
+void* side_memory_hard_alloc(int size) {
+    neon_assert(!open, NULL);
+
+    void* alloc_area = base_pointer;
+    if (base_pointer + size >= initial_base_pointer + buffer_size) {
+        global_env->CODE_ERROR = 12;
+        return NULL;
+    }
+    base_pointer += size;
+
+    if (base_pointer > pointer)
+        pointer = base_pointer;
+
+    return alloc_area;
+}
+
+
+void move_treebuffer_to_side_memory(TreeBuffer* tb) {
+    //ptrlist_append(pending_treebuffers, tb);
+}
+
+void move_treebuffer(TreeBuffer* tb) {
+    void* new_pointer = side_memory_hard_alloc(tb->block_size * tb->n_blocks);
+    return_on_error();
+    memcpy(new_pointer, tb->pointer, tb->block_size * tb->n_blocks);
+    neon_free(tb->pointer);
+    tb->pointer = new_pointer;
+    tb->side_memory = true;
+}
+
+void move_all_treebuffers(void) {
+    while (!ptrlist_isEmpty(pending_treebuffers)) {
+        TreeBuffer* tb = ptrlist_pop(pending_treebuffers);
+        move_treebuffer(tb);
+        return_on_error();
+    }
+}
 
 
 void copy_intlist_to_side_memory(intlist* list) {
     int* new_tab = side_memory_alloc(sizeof(int) * list->len);
+    return_on_error();
     memcpy(new_tab, list->tab, sizeof(int) * list->len);
     neon_free(list->tab);
     list->tab = new_tab;
@@ -40,6 +134,7 @@ void copy_intlist_to_side_memory(intlist* list) {
 
 void copy_toklist_to_side_memory(toklist* list) {
     Token* new_tab = side_memory_alloc(sizeof(Token) * list->len);
+    return_on_error();
     memcpy(new_tab, list->tab, sizeof(Token) * list->len);
     neon_free(list->tab);
     list->tab = new_tab;
@@ -47,17 +142,19 @@ void copy_toklist_to_side_memory(toklist* list) {
 
 Ast* copy_ast(Ast* ast) {
     Ast* new_ast = side_memory_alloc(sizeof(Ast));
+    return_on_error(NULL);
     memcpy(new_ast, ast, sizeof(Ast));
     return new_ast;
 }
 
 Ast* copy_ast_chain(Ast* root) {
-
     if (root == NULL)
         return NULL;
     else {
         Ast* next = copy_ast_chain(root->suiv);
+        return_on_error(NULL);
         Ast* copy = copy_ast(root);
+        return_on_error(NULL);
         copy->suiv = next;
         neon_free(root);
         return copy;
@@ -65,10 +162,16 @@ Ast* copy_ast_chain(Ast* root) {
 }
 
 Ast** copy_ast_to_side_memory(Ast** ast, int length) {
+    void* pointer_save = pointer; // On sauvegarde le pointeur avant de faire des modifs au cas où ça échoue
     Ast** new_ast = side_memory_alloc(sizeof(Ast*) * length);
+    return_on_error(NULL);
 
     for (int i=0 ; i < length ; i++) {
         new_ast[i] = copy_ast_chain(ast[i]);
+        if_error {
+            pointer = pointer_save; // On restaure le pointeur à l'état d'arrivée
+            return NULL;
+        }
     }
     neon_free(ast);
     return new_ast;
@@ -80,10 +183,17 @@ Ast** copy_ast_to_side_memory(Ast** ast, int length) {
 
 
 Ast** ast_create(intlist* typeTok) {
+    void* pointer_save = pointer;
     Ast** ast = side_memory_alloc(sizeof(Ast*) * typeTok->len);
+    return_on_error(NULL);
 
     for (int i = 0 ; i < typeTok->len ; i++) {
         ast[i] = side_memory_alloc(sizeof(Ast));
+
+        if_error {
+            pointer = pointer_save;
+            return NULL;
+        }
 
         ast[i]->type = typeTok->tab[i];
         ast[i]->fin = i;
@@ -96,6 +206,7 @@ Ast** ast_create(intlist* typeTok) {
 
 void ast_push(Ast* ast) {
     Ast* ast2 = side_memory_alloc(sizeof(Ast));
+    return_on_error();
 
     ast2->fin = ast->fin;
     ast2->type = ast->type;
@@ -153,9 +264,7 @@ char* side_memory_sandwich(char* string, char car)
     /* fonction qui ajoute le caractère car avant et après la chaine de caractères string*/
     int len = strlen(string);
     char* newStr = side_memory_alloc(len + 3);
-
-    if (newStr == NULL)
-        return NULL;
+    return_on_error(NULL);
   
     newStr[0]=car;
     newStr[len+1]=car;
@@ -173,9 +282,7 @@ char* side_memory_sandwich(char* string, char car)
 char* side_memory_addStr(char* str1, char* str2)// concatène deux chaines de caractères
 {
   char* newStr = side_memory_alloc(strlen(str1) + strlen(str2) + 1);
-
-  if (newStr == NULL)
-    return NULL;
+  return_on_error(NULL);
   
   strcpy(newStr,str1);
   strcat(newStr,str2);

@@ -17,6 +17,7 @@
 #include "headers/neon.h"
 #include "headers/processcycle.h"
 #include "headers/trees.h"
+#include "headers/sidememory.h"
 
 #ifdef TI_EZ80
 #include "headers/graphics.h"
@@ -705,6 +706,9 @@ int neonInit(void)
         set_neon_palette();
     #endif
 
+    // Initialisation de l'allocateur secondaire
+    side_memory_init();
+
     NeonEnv* env = NeonEnv_init();
 
     if (env == NULL)
@@ -722,6 +726,9 @@ void neonExit(void)
     gfx_End();
     kb_DisableOnLatch();
     #endif
+
+    // Nettoyage de l'allocateur secondaire
+    side_memory_exit();
     return;
 }
 
@@ -923,9 +930,7 @@ void terminal(void)
 
 
 
-void execFile(char* filename)
-{
-    
+void execFile(char* filename) {
     char* program = openFile(filename); // fonction dépendant du système cible
     
     if_error {
@@ -998,5 +1003,5 @@ void importFile(char* filename)
     global_env->FILENAME = sov;
 
     TreeBuffer_destroy(&tb);
-    return ;
+    return;
 }

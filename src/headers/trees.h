@@ -43,6 +43,7 @@ typedef struct TreeBuffer {
     int block_size;
     void* pointer;
     bool locked;
+    bool side_memory;
 } TreeBuffer;
 
 

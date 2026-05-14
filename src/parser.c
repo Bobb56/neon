@@ -471,7 +471,6 @@ bool isFull(char* string)
     intlist types = intlist_create(0);
 
     if_error {
-        global_env->CODE_ERROR = 12;
         toklist_destroy(&tokens);
         return false;
     }
@@ -479,7 +478,6 @@ bool isFull(char* string)
     intlist lines = intlist_create(0);
 
     if_error {
-        global_env->CODE_ERROR = 12;
         toklist_destroy(&tokens);
         neon_free(types.tab);
         return false;
@@ -487,26 +485,47 @@ bool isFull(char* string)
 
     Ast** ast;
 
-    init_side_memory();
+    side_memory_start();
 
     cut(&tokens, &types, string, true, &lines, false);
 
     copy_intlist_to_side_memory(&lines);
+    if_error {
+        toklist_destroy(&tokens);
+        neon_free(types.tab);
+        neon_free(lines.tab);
+        side_memory_end();
+        return false;
+    }
     copy_intlist_to_side_memory(&types);
+    if_error {
+        toklist_destroy(&tokens);
+        neon_free(types.tab);
+        side_memory_end();
+        return false;
+    }
     copy_toklist_to_side_memory(&tokens);
+    if_error {
+        toklist_destroy(&tokens);
+        side_memory_end();
+        return false;
+    }
 
     if (global_env->CODE_ERROR == 0) {
         ast = ast_create(&types);
+
+        if_error {
+            side_memory_end();
+            return false;
+        }
         
         parse(&tokens, types, ast, &lines, 0);
 
         if (global_env->CODE_ERROR == 0)
             statements(&types, &tokens, ast, &lines, 0);
-
     }
-
-    neon_free(tokens.source_string);
-    deinit_side_memory();
+    
+    side_memory_end();
 
     global_env->LINENUMBER = -1;
     

@@ -604,6 +604,7 @@ Renvoie l'élément dans la liste ou None si l'utilisateur a quitté
 */
 NeObj menu(NeList* args) {
     gfx_SetTextTransparentColor(1);
+    gfx_SetTextScale(1, 1);
 
     char* title = neo_to_string(ARG(0));
     NeList* elements = neo_to_list(ARG(1));

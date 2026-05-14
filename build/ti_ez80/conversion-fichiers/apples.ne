@@ -11,12 +11,12 @@ end
 
 function update_apples(apples) do
     apple_index = 0
-    
+
     while (apple_index < len(apples)) do
         apple = apples[apple_index]
-        
+
         apple>>figure>>y += apple>>speed
-        
+
         # checks if the apple is catched by the pad
         if (apple>>figure>>y > 222) then
             if (apple>>figure>>x >= screen>>pad>>x and apple>>figure>>x <= screen>>pad>>x + screen>>pad>>width) then # catched
@@ -46,7 +46,7 @@ function eventually_add_apple(apples) do
         else
             m = 1
         end
-        
+
         apple = Apple(
             figure: Circle(x:randint(5, 235), y:0, radius:5, color: 192, filled:True),
             speed: m % apple_max_speed + 1
@@ -89,7 +89,7 @@ function main() do
     pad_speed = 7
     score = 0
     highscore = load_highscore()
-    
+
     screen = Screen(
         bg: Rect(x:0, y:0, width:320, height:240, color:rgb(0, 150, 100), filled:True),
         pad: Rect(x:145, y:220, width:55, height:5, color:0, filled:True),
@@ -106,17 +106,17 @@ function main() do
         score: Text(text: "Score: " + str(score), x:5, y:5, fgcolor: 0, bgcolor:255, size:1),
         hscore: Text(text: "High score: " + str(highscore), x:5, y:15, fgcolor: 0, bgcolor:255, size:1)
     )
-    
+
     counter = 0
     while ((getKey() -> key) != 15) do
         update_pad(key)
         update_apples(screen>>apples)
         update_score()
-        
+
         if (len(screen>>apples) < max_apples) then # adds an apple
             eventually_add_apple(screen>>apples)
         end
-        
+
         draw(screen)
         counter ++
         if (counter%200 == 0) then
