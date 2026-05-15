@@ -38,6 +38,6 @@ function mandelbrot(N_iteration := 15, res := 2) do
   end
 end
 
-mandelbrot(20, 2)
+mandelbrot(20, 16)
 
 await(getKey() == 15)
