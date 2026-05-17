@@ -22,6 +22,8 @@ char* addStr2(char* str1, char* str2);
 char* charToString(char car);
 char* sandwich(char* string, char car);
 bool strToBool(char* string);
+char* decToBin(intptr_t n);
+char* decToHex(intptr_t n);
 bool isidentifier(char c);
 bool has_strict_prefix(char* string, char* prefix);
 char* remove_prefix(char* string, char* prefix);

@@ -430,7 +430,41 @@ bool strToBool(char* string)
     return strcmp(string, get_True()) == 0;
 }
 
+// Fonction pour convertir un entier en chaîne de caractères contenant sa représentation en binaire
+char* decToBin(intptr_t n) {
+    int buffer_size = sizeof(intptr_t)*8;
+    char buffer[buffer_size+1];
+    int index = buffer_size;
+    while (n > 0) {
+        buffer[--index] = '0' + n%2;
+        n = n/2;
+    }
+    buffer[buffer_size] = '\0';
+    return strdup(buffer + index);
+}
 
+
+
+char getHexCharacter(int digit) {
+    if (digit < 10)
+        return '0' + digit;
+    else
+        return 'a' + digit - 10;
+}
+
+
+// Fonction pour convertir un entier en chaîne de caractères contenant sa représentation en hexadécimal
+char* decToHex(intptr_t n) {
+    int buffer_size = sizeof(intptr_t)*8;
+    char buffer[buffer_size+1];
+    int index = buffer_size;
+    while (n > 0) {
+        buffer[--index] = getHexCharacter(n%16);
+        n = n/16;
+    }
+    buffer[buffer_size] = '\0';
+    return strdup(buffer + index);
+}
 
 
 

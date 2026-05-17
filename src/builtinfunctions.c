@@ -1228,3 +1228,11 @@ NeObj _safeExec_(NeList* args) {
 
     return neo_none_create();
 }
+
+NeObj _bin_(NeList* args) {
+    return neo_str_create(decToBin(neo_to_integer(ARG(0))));
+}
+
+NeObj _hex_(NeList* args) {
+    return neo_str_create(decToHex(neo_to_integer(ARG(0))));
+}

@@ -135,7 +135,9 @@ void loadFunctions(NeonEnv* env)
         "setColor",
         "initGraphics",
         "detectFiles",
-        "safeExec"
+        "safeExec",
+        "bin",
+        "hex"
     };
 
     // built-in functions
@@ -538,6 +540,20 @@ void loadFunctions(NeonEnv* env)
             .nbArgs = 2,
             .typeArgs = (int[]){TYPE_STRING, TYPE_LIST},
             .typeRetour = TYPE_NONE
+        },
+        {
+            .ptr = _bin_,
+            .help = "Converts an integer into its binary representation",
+            .nbArgs = 1,
+            .typeArgs = (int[]){TYPE_INTEGER},
+            .typeRetour = TYPE_STRING
+        },
+        {
+            .ptr = _hex_,
+            .help = "Converts an integer into its hexa-decimal representation",
+            .nbArgs = 1,
+            .typeArgs = (int[]){TYPE_INTEGER},
+            .typeRetour = TYPE_STRING
         }
     };
 
