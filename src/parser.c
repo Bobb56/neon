@@ -575,6 +575,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
         return ;
     }
 
+    tokens->free_source_string = false;
     tokens->source_string = string;
 
     int len_string = strlen(string); //pour utiliser la longueur de string sans appeler a chaque fois strlen

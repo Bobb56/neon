@@ -12,8 +12,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > lowlevel.asm
 > set_stack_pointer
 
-Liste des choses qui marchent pas :
-help(compo) après avoir importé higherorder.ne
+Liste des choses qui ne marchent pas
 _____________________
 
 Potentielles futures erreurs :
@@ -30,21 +29,19 @@ on ne le crée pas dans global_env->FONCTIONS)
 
 Avancement et choses à faire :
 -------------------------------
-> Ajouter une fonction menu pour faciliter le développement de shells propres et optimisés
-(fonction menu exactement comme Neon Launcher actuel)
-
 PLUS TARD
-> Faire une nouvelle console pour TI_EZ80
-> Ajouter une fonction menu qui prend en entrée une liste de listes d'objets MenuItems(id, inactive, hover), un objet pour le background et qui renvoie l'id de l'élément sélectionné ou None si l'utilisateur a quitté
-Les touches supportées sont [<,>,v,^,Enter,Clear]
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
 --> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
+> Ajouter
 
 
-NOUVEAUTéS depuis la dernière publication :
+NOUVEAUTéS après la mise à jour 4.1 :
 -------------------------------------------
+- Ajout des fonctions bin et hex pour convertir des nombres en décimal et binaire
+
+Nouveautés de la version 4.1 (à ajouter dans la doc)
 - Fonction initGraphics, fonction draw, nouveaux containers, setPixel, getPixel, rgb, getTextWidth
 - Amélioration de la fonction help avec les containers
 - Fonction detectFiles

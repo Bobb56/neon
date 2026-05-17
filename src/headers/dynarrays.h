@@ -55,6 +55,7 @@ typedef struct Token {
 typedef struct toklist {
   Token* tab;
   char* source_string;
+  bool free_source_string;
   int len;
   int capacity;
 } toklist;

@@ -1,7 +1,7 @@
 i = Cmplx(re: 0, im: 1)
 
 function Cmplx(re, im := 0) do
-    if (type(re) in ['Decimal', 'Integer'] and type(im) in ['Decimal', 'Integer']) then
+    if (type(re) in ['Real', 'Integer'] and type(im) in ['Real', 'Integer']) then
         return (Cmplx(re:re, im:im))
     else
         return (re)
@@ -86,7 +86,7 @@ end
 
 function Cmplx~equal(z1, z2) do
     z1 = Cmplx(z1) ; z2 = Cmplx(z2)
-    return (z1>>re == z2>>re and z1>>im == z2>>im)
+    return (type(z1) == 'Cmplx' and type(z2) == 'Cmplx' and z1>>re == z2>>re and z1>>im == z2>>im)
 end
 
 
@@ -100,3 +100,5 @@ z3 = -z3
 
 assert(@"1 + i" / (1+i) == z3)
 assert(Cmplx(4) == 4) # surcharge de l'opérateur d'égalite
+
+help(Cmplx~repr)

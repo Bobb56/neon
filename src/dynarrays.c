@@ -65,6 +65,7 @@ toklist toklist_create(int len)
   
   list.capacity = 0;
   list.source_string = NULL;
+  list.free_source_string = true;
   
   while ((1<<list.capacity) < len)
     list.capacity++;
@@ -141,7 +142,7 @@ void toklist_append(toklist* list, Token chaine)
 
 void toklist_destroy(toklist* list)
 {
-  if (list->source_string != NULL)
+  if (list->free_source_string && list->source_string != NULL)
     neon_free(list->source_string);
   
   neon_free(list->tab);

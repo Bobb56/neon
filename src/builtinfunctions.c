@@ -342,8 +342,16 @@ NeObj _help_(NeList* args)
                 else
                     printString("function ");
 
-
-                printString(global_env->NOMS->tab[nelist_index2(global_env->ADRESSES,ARG(i))]);
+                // La raison pour laquelle on n'utilise pas la soft-comparaison entre la fonction et les variables de ADRESSES
+                // est que l'opérateur d'égalité peut être surchargé donc peut donner de faux résultats ici
+                int index = nelist_index(global_env->ADRESSES, ARG(i));
+                if (index == -1) {
+                    printString("<anonymous>");
+                    global_env->CODE_ERROR = 0;
+                }
+                else {
+                    printString(global_env->NOMS->tab[index]);
+                }
 
                 printString("(");
 

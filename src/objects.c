@@ -678,7 +678,7 @@ NeObj neo_none_create(void) // attention, la chaine de caractères passée en ar
 
 bool nelist_equal(NeList* l1, NeList* l2)
 {
-    bool bo = l1->len==l2->len;
+    bool bo = l1->len == l2->len;
     for (int i=0 ; bo && i < l1->len ; i++)
         bo = bo && neo_equal(nelist_nth(l1, i), nelist_nth(l2, i));
     
@@ -1618,7 +1618,7 @@ bool neo_equal(NeObj _op1, NeObj _op2)
     {
         if (NEO_TYPE(_op2) == TYPE_USERFUNC || NEO_TYPE(_op2) == TYPE_USERMETHOD)
         {
-            return _op1.userfunc->code == _op2.userfunc->code && nelist_equal(_op1.userfunc->opt_args, _op2.userfunc->opt_args);
+            return _op1.userfunc->code == _op2.userfunc->code && _op1.userfunc->tree_buffer == _op2.userfunc->tree_buffer && nelist_equal(_op1.userfunc->opt_args, _op2.userfunc->opt_args);
         }
         else
         {
@@ -1655,6 +1655,9 @@ bool neo_equal(NeObj _op1, NeObj _op2)
     }
     else if (NEO_TYPE(_op1) == TYPE_PROMISE)
         return NEO_TYPE(_op2) == TYPE_PROMISE && get_promise_id(_op1) == get_promise_id(_op2);
+
+    else if (NEO_TYPE(_op1) == TYPE_EMPTY)
+        return NEO_TYPE(_op2) == TYPE_EMPTY;
 
     return false; // dans tous les autres cas
   
