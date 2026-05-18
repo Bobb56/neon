@@ -30,8 +30,8 @@ on ne le crée pas dans global_env->FONCTIONS)
 Avancement et choses à faire :
 -------------------------------
 PLUS TARD
-> Modifier et optimiser la manière dont sont gérés les contextes pour ne plus faire de malloc/free tout le temps
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
+--> Sauvegarder un environnement entier
 --> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
@@ -39,15 +39,9 @@ PLUS TARD
 
 NOUVEAUTéS après la mise à jour 4.1 :
 -------------------------------------------
+- Fonction index sur les chaînes de caractères
+- Affichage de la signature de la fonction dans help() d'une fonction built-in
 - Ajout des fonctions bin et hex pour convertir des nombres en décimal et binaire
-
-Nouveautés de la version 4.1 (à ajouter dans la doc)
-- Fonction initGraphics, fonction draw, nouveaux containers, setPixel, getPixel, rgb, getTextWidth
-- Amélioration de la fonction help avec les containers
-- Fonction detectFiles
-- Arrêt d'un programme en appuyant sur ON sur calculatrice
-- Lancement automatique de __launcher__.ne ou LAUNCHER si fichier présent au lancement de l'interpréteur
-- Fonction safeExec qui exécute un programme Neon dans un nouvel environnement
 */
 
 

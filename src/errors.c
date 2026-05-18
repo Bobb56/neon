@@ -97,7 +97,7 @@ static const char* error_messages[NB_ERRORS] = {
     "Unknown container type",
     "Two different fields cannot have the same name in a container",
     "Incorrect container definition",
-    "Object not in list",
+    "The list or the string doesn't contain the element",
     "Cannot assign a value or execute a method on a litteral object",
     "That list cannot be sorted",
     "Cannot call a function while dereferencing a container field",
@@ -125,11 +125,13 @@ static const char* error_messages[NB_ERRORS] = {
     "This object cannot be converted to an integer",
     "This function can only receive integer numbers of real numbers as arguments",
     "This functionality has not been implemented yet",
-    "Cannot initialize graphics without overriding an already defined type",
+    "Cannot initialize graphics without overriding an already defined type. Please check that all the containers you use respect the specification of graphic containers",
     "This figure object cannot be drawn because it was not defined correctly",
     "str cannot be overloaded with a function that does not return a string",
     "File system error",
-    "Violation of Neon internal invariants"
+    "Violation of Neon internal invariants",
+    "The index function can only search for the index of an object in a list or a string in another string"
+
 };
 
 
@@ -255,8 +257,31 @@ static const int error_codes_exceptions[NB_ERRORS] = {
     9,
     9,
     1,
-    17
+    17,
+    9
 };
+
+
+/*
+0: SyntaxError
+1: FileSystemError
+2: UnmeasurableObject
+3: UndefinedVariable
+4: IncorrectFunctionCall
+5: MemoryError
+6: NonIndexableObject
+7: IncorrectIndex
+8: OutOfRange
+9: IncorrectType
+10: DivisionByZero
+11: UnknownError
+12: AssertionFailed
+13: DefinitionError
+14: KeyboardInterrupt
+15: NotImplemented
+16: ExitSignal
+17: InternError
+*/
 
 
 int get_exception_from_code_error(int code_error) {

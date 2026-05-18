@@ -4,8 +4,6 @@
 #include "headers/gc.h"
 #include "headers/neon.h"
 #include "headers/errors.h"
-
-#include "headers/dynarrays.h"
 #include "headers/processcycle.h"
 
 
@@ -199,7 +197,7 @@ void gc_processes_var_loc_mark(ProcessCycle* pc) {
 // affiche l'ensemble des objets traqués par le GC
 void print_objects_list(void) {
     if (neo_is_void(global_env->OBJECTS_LIST)) {
-        setColor(BLUE) ; printString("The Garbage Collector is empty.");
+        setColor(BLUE) ; printString("The Garbage Collector doesn't track any object."); newLine();
     }
     else {
         setColor(BLUE) ; printString("Objects currently tracked by the Garbage Collector :"); newLine();

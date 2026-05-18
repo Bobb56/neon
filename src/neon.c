@@ -326,9 +326,9 @@ void loadFunctions(NeonEnv* env)
         },
         (Function) {
             .ptr = _index_,
-            .help = "Returns the index of an element in a list.",
+            .help = "Returns the index of an element in a list or the index of a string in another string",
             .nbArgs = 2,
-            .typeArgs = (int[]){TYPE_LIST, TYPE_UNSPECIFIED},
+            .typeArgs = (int[]){TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
             .typeRetour = TYPE_INTEGER
         },
         (Function) {
@@ -440,7 +440,7 @@ void loadFunctions(NeonEnv* env)
             .ptr = _round_,
             .help = "round: Round to the nearest real number with the given precision",
             .nbArgs = 2,
-            .typeArgs = (int[]){TYPE_DOUBLE, TYPE_DOUBLE},
+            .typeArgs = (int[]){TYPE_DOUBLE, TYPE_INTEGER},
             .typeRetour = TYPE_DOUBLE
         },
         (Function) {

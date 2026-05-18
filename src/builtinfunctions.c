@@ -393,28 +393,83 @@ NeObj _help_(NeList* args)
                 Function* fun = neo_to_function(ARG(i));
                 printString("Built-in function ");
 
+                // Affichage de la signature
+
+                setColor(BLUE);
                 printString(global_env->NOMS->tab[nelist_index2(global_env->ADRESSES,ARG(i))]);
+                setColor(DEFAULT);
+
+                printString("(");
+                
+                setColor(GREEN);
+                if (fun->nbArgs == -1) {
+                    printString("...");
+                }
+                else
+                {
+                    for (int i=0 ; i < fun->nbArgs ; i++) {
+                        if (fun->typeArgs[i] == TYPE_UNSPECIFIED) {
+                            printString("Any");
+                        }
+                        else {
+                            NeObj neo = (NeObj) {.type = fun->typeArgs[i]};
+                            printString(type(neo));
+                        }
+
+                        if (i + 1 < fun->nbArgs) {
+                            setColor(DEFAULT);
+                            printString(", ");
+                            setColor(GREEN);
+                        }
+                    }
+                }
+                setColor(DEFAULT);
+                printString(")");
+                printString(" -> ");
+
+                setColor(GREEN);
+
+                if (fun->typeRetour == TYPE_NONE) {
+                    printString("None");
+                }
+                else if (fun->typeRetour == TYPE_UNSPECIFIED) {
+                    printString("Any");
+                }
+                else {
+                    NeObj neo = (NeObj) {.type = fun->typeRetour};
+                    printString(type(neo));
+                }
+                setColor(DEFAULT);
+                
+                
                 newLine();
                 
                 if (fun->nbArgs == -1)
                 {
                     printString("Illimited number of arguments of type : ");
 
+                    setColor(GREEN);
                     NeObj neo = (NeObj) {.type = fun->typeArgs[0]};
                     printString(type(neo));
+                    setColor(DEFAULT);
                 }
                 else
                 {
                     printString("Needs ");
                     printInt(fun->nbArgs);
-                    printString(" argument(s)");
+                    if (fun->nbArgs == 1)
+                        printString(" argument");
+                    else
+                        printString(" arguments");
 
                     if (fun->nbArgs > 0) {
                         printString(" of type : ");
                         for (int i = 0 ; i < fun->nbArgs ; i++)
                         {
+                            setColor(GREEN);
                             NeObj neo = (NeObj) {.type = fun->typeArgs[i]};
                             printString(type(neo));
+                            setColor(DEFAULT);
 
                             if (i + 1 < fun->nbArgs)
                                 printString(", ");
@@ -428,8 +483,10 @@ NeObj _help_(NeList* args)
 
                 printString("The returned type is : ");
 
+                setColor(GREEN);
                 NeObj neo = (NeObj) {.type = fun->typeRetour};
                 printString(type(neo));
+                setColor(DEFAULT);
 
                 printString(".");
                 newLine();
@@ -736,12 +793,34 @@ NeObj _int_(NeList* args)
 
 NeObj _index_(NeList* args)
 {
-    int i = nelist_index2(neo_to_list(ARG(0)), ARG(1));
+    if (NEO_TYPE(ARG(0)) == TYPE_STRING) {
+        if (NEO_TYPE(ARG(1)) != TYPE_STRING) {
+            global_env->CODE_ERROR = 121;
+            return NEO_VOID;
+        }
+        char* string = neo_to_string(ARG(0));
+        char* search = neo_to_string(ARG(1));
+        int index = string_index(string, search);
+        if (index == -1) {
+            global_env->CODE_ERROR = 88;
+            return NEO_VOID;
+        }
+        else {
+            return neo_integer_create(index);
+        }
+    }
+    else if (NEO_TYPE(ARG(0)) == TYPE_LIST) {
+        int i = nelist_index2(neo_to_list(ARG(0)), ARG(1));
 
-    if (i >= 0)
-        return neo_integer_create(i);
-    
-    return NEO_VOID;
+        if (i >= 0)
+            return neo_integer_create(i);
+        
+        return NEO_VOID;
+    }
+    else {
+        global_env->CODE_ERROR = 121;
+        return NEO_VOID;
+    }
 }
 
 

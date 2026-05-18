@@ -16,6 +16,7 @@ char* addStr(char* str1, char* str2);//a liberer après
 int count(char* string, char* search);
 char* subReplace(char* string, int len, int debut, int longueur, char* remplacement, int len_remplacement);
 int sindex (char* string, char car);
+int string_index(char* string, char* search);
 char* traitementString(char* string);//a liberer apres
 char* traitementStringInverse(char* string);//a liberer apres
 char* addStr2(char* str1, char* str2);

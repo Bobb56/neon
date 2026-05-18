@@ -292,97 +292,100 @@ Toutes les informations sur une fonction built-in peuvent être obtenues en tapa
 
 De manière générale, quand une fonction ne renvoie rien, elle renvoie en réalité None.
 
-Voici la liste de toutes les fonctions built-in :
+Voici dans l'ordre alphabétique la liste de toutes les fonctions built-in :
 
-*`print` :*\
-Cette fonction attend un nombre indéfini de paramètres, et affiche la représentation en objet de chaque paramètre, séparé par un espace. Cette fonction affiche également un retour à la ligne. Elle renvoie None.
+*`abs(Real)` #sym.arrow.r `Real`:*\
+Renvoie la valeur absolue d'un nombre.
 
-*`input` :*\
-Cette fonction prend en argument une chaîne de caractères, l'affiche et attend du texte de l'utilisateur. Elle renvoie une chaîne de caractères correspondant au texte entré.
-
-*`nbr` :*\
-Cette fonction prend en argument une chaîne de caractères représentant un nombre et la convertit en entier ou en décimal.
-
-*`str` :*\
-Cette fonction prend un objet quelconque et renvoie sa représentation textuelle évaluable par Neon.
-
-*`len` :*\
-Cette fonction prend une liste ou une chaîne de caractères et renvoie sa longueur.
-
-*`sub` :*\
-Cette fonction attend trois arguments : une chaîne de caractères et deux entiers. `sub(string, i1, i2)` renvoie la sous-chaîne de string commençant au caractère numéro i2 jusqu'au caractère numéro i2 exclu.
-
-*`exit` :*\
-Cette fonction n'attend aucun argument, et quitte l'interpréteur. Elle renvoie None
-
-*`append` :*\
+*`append(List, Any)` #sym.arrow.r `None`:*\
 Cette fonction prend en argument une liste et un objet quelconque, et ajoute l'objet à la fin de la liste.
 
-*`remove` :*\
-Cette fonction prend en argument une liste et un indice de cette liste, et supprime l'élément présent à cet indice.
+*`assert(Bool)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument un booléen, et lève l'exception AssertionFailed si le booléen vaut False.
 
-*`insert` :*\
-Cette fonction prend en argument une liste, un objet et un indice dans cette liste, et insère l'objet à l'indice indiqué.
+*`bin(Integer)` #sym.arrow.r `String`:*\
+Cette fonction prend un entier en argument et renvoie une chaîne de caractères correspondant à sa description en binaire. La chaîne de caractères n'est pas précédée du préfixe `'0b'` comme c'est notamment le cas en Python.
 
-*`type` :*\
-Cette fonction prend en argument un objet et renvoie son type. Les types d'objet sont représentés par des chaînes de caractères. Voici les types renvoyés par la fonction `type` :\
-`"Bool"` #sym.arrow.r.long booléen\
-`"String"` #sym.arrow.r.long chaîne de caractères\
-`"Integer"` #sym.arrow.r.long entier\
-`"Real"` #sym.arrow.r.long nombre décimal\
-`"Built-in function"` #sym.arrow.r.long fonction built-in\
-`"List"` #sym.arrow.r.long liste\
-`"Function"` #sym.arrow.r.long fonction utilisateur\
-`"Method"` #sym.arrow.r.long méthode utilisateur\
-`"Exception"` #sym.arrow.r.long exception\
-`"Promise"` #sym.arrow.r.long promesse\
-`"unspecified type"` #sym.arrow.r.long correspond au type -1. Aucun objet n'a ce type, c'est une valeur spéciale servant à décrire la signature des fonctions. En général, un argument de type `unspecified type` peut être de plusieurs types, et ceux-ci sont spécifiés dans la chaîne d'aide de la fonction\
-`"Undefined"` #sym.arrow.r.long renvoyé sur un objet non défini (de `TYPE_EMPTY`)\
+*`ceil(Real)` #sym.arrow.r `Real`:*\
+Renvoie l'arrondi par valeur supérieure d'un nombre.
 
-La fonction type ne renvoie jamais de type `"Container"` car elle renvoie directement le nom du container.
+*`chr(String)` #sym.arrow.r `Integer`:*\
+Cette fonction prend en argument un code ASCII (nombre entier) et renvoie le caractère correspondant.
 
-
-*`reverse` :*\
-Cette fonction prend en argument une chaîne de caractères ou une liste et renvoie l'objet inversé sans modifier l'objet original.
-
-*`eval` :*\
-Cette fonction prend en argument une chaîne de caractères correspondant à une expression Neon, et renvoie le résultat de l'évaluation de l'expression.
-
-*`clear` :*\
+*`clear()` #sym.arrow.r `None`:*\
 Cette fonction efface le terminal.
 
-*`help` :*\
+*`copy(Any)` #sym.arrow.r `Any`:*\
+Cette fonction renvoie la copie profonde d'un objet, en conservant les dépendances de pointeurs au sein de l'objet.
+
+*`cos(Real)` #sym.arrow.r `Real`:*\
+Calcule le cosinus d'un angle en radians.
+
+*`count(List | String)` #sym.arrow.r `Integer`:*\
+Cette fonction compte le nombre d'apparitions d'une sous-chaîne dans une chaîne de caractères ou compte le nombre d'objets présents dans une liste. Il faut indiquer d'abord la liste ou la chaîne de caractères, puis la sous-chaîne ou le sous objet.
+
+*`createException(String)` #sym.arrow.r `Exception`:*\
+Cette fonction sert à créer des exceptions. Elle prend en argument une chaîne de caractères, et crée une exception ayant le nom donné en argument. Un nouveau mot-clé est créé avec le nom de cette exception, et elle est accessible directement avec ce mot-clé. La fonction `createException` renvoie également l'exception créée.
+
+*`deg(Real)` #sym.arrow.r `Real`:*\
+Convertit en degrés un angle en radians.
+
+*`detectFiles(String)` #sym.arrow.r `List`:*\
+Cette fonction renvoie une liste de tous les noms de fichiers du répertoire courant commençant par une certaine chaîne de caractères. Elle prend en argument la chaîne de caractères à comparer avec le début de chaque fichier.
+
+*`eval(String)` #sym.arrow.r `Any`:*\
+Cette fonction prend en argument une chaîne de caractères correspondant à une expression Neon, et renvoie le résultat de l'évaluation de l'expression.
+
+*`exit()` #sym.arrow.r `None`:*\
+Cette fonction n'attend aucun argument, et quitte l'interpréteur. Elle renvoie None
+
+*`exp(Real)` #sym.arrow.r `Real`:*\
+Calcule l'exponentielle d'un nombre
+
+
+*`failwith(String)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument une chaîne de caractères, et quitte l'interpréteur en affichant cette chaîne de caractères.
+
+
+*`floor(Real)` #sym.arrow.r `Real`:*\
+Renvoie l'arrondi par valeur inférieure d'un nombre.
+
+*`gc()` #sym.arrow.r `None`:*\
+Cette fonction appelle le Garbage Collector.
+
+
+*`help(Any)` #sym.arrow.r `None`:*\
 Cette fonction affiche de l'aide liée à certains objets ou certains types d'objets. Voici les arguments possibles à la fonction `help` :\
 `help("modules")` #sym.arrow.r.long affiche tous les noms de modules présents dans la mémoire\
 `help("variables")` #sym.arrow.r.long affiche toutes les variables définies présentes dans la mémoire ainsi que leur type\
 `help("MonModule")` #sym.arrow.r.long affiche tous les objets liés au module MonModule présents dans la mémoire
-`help(mon_objet)` #sym.arrow.r.long affiche le type de l'objet mon_objet
+`help(mon_objet)` #sym.arrow.r.long affiche mon_objet et son type
 
 Dans le cas d'une fonction built-in, la fonction `help` affiche aussi le type des arguments attendus, le type de retour et une chaîne de caractères expliquant comment utiliser la fonction.
 Dans le cas d'une fonction utilisateur (ou d'une méthode utilisateur), affiche le nom de la fonction, les arguments attendus, et si une chaîne de caractères d'aide a été assignée par la fonction `setFunctionDoc`, affiche cette chaîne.
 
-*`randint` :*\
-Cette fonction prend en argument deux entiers : une borne inférieure et une borne supérieure, et renvoie un entier aléatoire compris entre ces deux bornes, borne supérieure exclue.
+*`hex(Integer)` #sym.arrow.r `String`:*\
+Cette fonction prend un entier en argument et renvoie une chaîne de caractères correspondant à sa description en hexadécimal. Comme pour la fonction `bin`, la chaîne de caractères n'est pas précédée du préfixe `'0x'`.
 
-*`failwith` :*\
-Cette fonction prend en argument une chaîne de caractères, et quitte l'interpréteur en affichant cette chaîne de caractères.
+*`index(List, Any)` #sym.arrow.r `Integer`:*\
+Cette fonction prend en argument une liste et un objet de cette liste, et renvoie l'indice de la première apparition de l'objet dans la liste.
 
-*`time` :*\
-Cette fonction renvoie le nombre de secondes écoulées depuis l'Epoch.
+*`int(Any)` #sym.arrow.r `Integer`:*\
+Cette fonction prend en argument un objet et le convertit en entier.
 
-*`assert` :*\
-Cette fonction prend en argument un booléen, et lève l'exception AssertionFailed si le booléen vaut False.
+*`input(...)` #sym.arrow.r `String`:*\
+Cette fonction prend en argument une chaîne de caractères, l'affiche et attend du texte de l'utilisateur. Elle renvoie une chaîne de caractères correspondant au texte entré.
 
-*`output` :*\
-Cette fonction prend en argument un nombre illimité d'objets de tous types, et affiche tous ces objets à la suite sans retour à la ligne.
+*`insert(List, Any, Integer)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument une liste, un objet et un indice dans cette liste, et insère l'objet à l'indice indiqué.
 
-*`chr` :*\
-Cette fonction prend en argument un code ASCII (nombre entier) et renvoie le caractère correspondant.
+*`len(String | List)` #sym.arrow.r `Integer`:*\
+Cette fonction prend une liste ou une chaîne de caractères et renvoie sa longueur.
 
-*`ord` :*\
-Cette fonction prend en argument un caractère et renvoie son code ASCII.
+*`list(String)` #sym.arrow.r `List`:*\
+Cette fonction transforme une chaîne de caractères en liste dont les éléments sont les caractères de la chaîne.
 
-*`listComp` :*\
+*`listComp(String, Integer, Integer, Integer, String, String)` #sym.arrow.r `List`:*\
 Cette fonction sert à fabriquer des listes de manière efficace. Elle prend en argument, dans l'ordre :\
 - Le nom d'une variable (dans une chaîne de caractères)\
 - Un indice de début\
@@ -401,105 +404,120 @@ for (variable, debut, fin, pas) do
 end
 ```
 
-*`createException` :*\
-Cette fonction sert à créer des exceptions. Elle prend en argument une chaîne de caractères, et crée une exception ayant le nom donné en argument. Un nouveau mot-clé est créé avec le nom de cette exception, et elle est accessible directement avec ce mot-clé. La fonction `createException` renvoie également l'exception créée.
-
-*`raise` :*\
-Cette fonction prend en argument une exception et une chaîne de caractères et quitte l'interpréteur en levant cette exception et en affichant la chaîne de caractères comme message d'erreur.
-
-*`int` :*\
-Cette fonction prend en argument un objet et le convertit en entier.
-
-*`index` :*\
-Cette fonction prend en argument une liste et un objet de cette liste, et renvoie l'indice de la première apparition de l'objet dans la liste.
-
-*`replace` :*\
-Cette fonction prend en argument trois chaînes de caractères, et remplace toutes les occurences de la deuxième chaîne dans la première chaîne par la troisième chaîne.
-
-*`count` :*\
-Cette fonction compte le nombre d'apparitions d'une sous-chaîne dans une chaîne de caractères ou compte le nombre d'objets présents dans une liste. Il faut indiquer d'abord la liste ou la chaîne de caractères, puis la sous-chaîne ou le sous objet.
-
-*`list` :*\
-Cette fonction transforme une chaîne de caractères en liste dont les éléments sont les caractères de la chaîne.
-
-*`sortAsc` :*\
-Cette fonction trie une liste dans l'ordre croissant suivant l'ordre lexicographique ou l'ordre sur les nombres.
-
-*`sortDesc` :*\
-Pareil mais dans l'autre sens.
-
-*`sin` :*\
-Calcule le sinus d'un angle en radians.
-
-*`cos` :*\
-Calcule le cosinus d'un angle en radians.
-
-*`tan` :*\
-Calcule la tangente d'un angle en radians.
-
-*`deg` :*\
-Convertit en degrés un angle en radians.
-
-*`rad` :*\
-Convertit en radians un angle en degrés.
-
-*`sqrt` :*\
-Calcule la racine carrée d'un nombre.
-
-*`ln` :*\
+*`ln(Real)` #sym.arrow.r `Real`:*\
 Calcule le logarithme népérien d'un nombre.
 
-*`exp` :*\
-Calcule l'exponentielle d'un nombre
-
-*`log` :*\*
-Calcule le logarithme base 10 d'un nombre.
-
-*`log2` :*\
-Calcule le logarithme base 2 d'un nombre
-
-*`round` :*\
-Calcule l'arrondi d'un nombre à la précision demandée en deuxième argument.
-
-*`abs` :*\
-Renvoie la valeur absolue d'un nombre.
-
-*`ceil` :*\
-Renvoie l'arrondi par valeur supérieure d'un nombre.
-
-*`floor` :*\
-Renvoie l'arrondi par valeur inférieure d'un nombre.
-
-*`readFile` :*\
-Prend en argument le nom d'un fichier texte et renvoie son contenu. Sur la plateforme TI_EZ80, les fichiers ne peuvent être que des AppVars.
-
-*`writeFile` :*\
-Cette fonction prend en argument un nom de fichier et une chaîne de caractères, et écrit cette chaîne de caractères dans le fichier dont le nom a été indiqué en argument. Si le fichier existe, son contenu est remplacé. Sur la plateforme TI_EZ80, les fichiers ne peuvent être que des AppVars.
-
-*`setFunctionDoc` :*\
-Cette fonction prend en argument une fonction utilisateur, et une chaîne de caractères, et définit cette chaîne de caractères comme message d'aide pour cette fonction. Ce message d'aide est affiché lorsque la fonction help est appelée avec cette fonction.
-
-*`setAtomicTime` :*\
-Cette fonction change la période de changement de processus avec l'entier donné en argument.
-
-*`copy` :*\
-Cette fonction renvoie la copie profonde d'un objet, en conservant les dépendances de pointeurs au sein de l'objet.
-
-*`loadNamespace` :*\
+*`loadNamespace(String)` #sym.arrow.r `None`:*\
 Cette fonction charge dans la mémoire une copie des objets du module dont le nom est donné en argument sans préfixe.
 
-*`gc` :*\
-Cette fonction appelle le Garbage Collector.
 
-*`setColor` :*\
+*`log(Real)` #sym.arrow.r `Real`:*\*
+Calcule le logarithme base 10 d'un nombre.
+
+*`log2(Real)` #sym.arrow.r `Real`:*\
+Calcule le logarithme base 2 d'un nombre
+
+*`nbr(String)` #sym.arrow.r `Real | Integer`:*\
+Cette fonction prend en argument une chaîne de caractères représentant un nombre et la convertit en entier ou en décimal.
+
+*`ord(String)` #sym.arrow.r `Integer`:*\
+Cette fonction prend en argument un caractère et renvoie son code ASCII.
+
+*`output(...)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument un nombre illimité d'objets de tous types, et affiche tous ces objets à la suite sans retour à la ligne.
+
+*`print(...)` #sym.arrow.r `None`:*\
+Cette fonction attend un nombre indéfini de paramètres, et affiche la représentation en objet de chaque paramètre, séparé par un espace. Cette fonction affiche également un retour à la ligne. Elle renvoie None.
+
+*`rad(Real)` #sym.arrow.r `Real`:*\
+Convertit en radians un angle en degrés.
+
+
+*`raise(Exception, String)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument une exception et une chaîne de caractères et quitte l'interpréteur en levant cette exception et en affichant la chaîne de caractères comme message d'erreur.
+
+*`randint(Integer, Integer)` #sym.arrow.r `Integer`:*\
+Cette fonction prend en argument deux entiers : une borne inférieure et une borne supérieure, et renvoie un entier aléatoire compris entre ces deux bornes, borne supérieure exclue.
+
+*`readFile(String)` #sym.arrow.r `String`:*\
+Prend en argument le nom d'un fichier texte et renvoie son contenu. Sur la plateforme TI_EZ80, les fichiers ne peuvent être que des AppVars.
+
+*`remove(List, Integer)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument une liste et un indice de cette liste, et supprime l'élément présent à cet indice.
+
+*`replace(String, String, String)` #sym.arrow.r `String`:*\
+Cette fonction prend en argument trois chaînes de caractères, et remplace toutes les occurences de la deuxième chaîne dans la première chaîne par la troisième chaîne.
+
+*`reverse(String | List)` #sym.arrow.r `String | List`:*\
+Cette fonction prend en argument une chaîne de caractères ou une liste et renvoie l'objet inversé sans modifier l'objet original.
+
+*`round(Real, Integer)` #sym.arrow.r `Real`:*\
+Calcule l'arrondi d'un nombre à la précision demandée en deuxième argument.
+
+
+*`safeExec(String, List)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument un nom de fichier source Neon ainsi qu'une liste d'objets, et lance le programme dans un environnement indépendant en lui donnant la liste d'objets comme arguments.
+
+*`setAtomicTime(Integer)` #sym.arrow.r `None`:*\
+Cette fonction change la période de changement de processus avec l'entier donné en argument.
+
+*`setColor(String)` #sym.arrow.r `None`:*\
 Cette fonction change la couleur du texte affiché dans le terminal après son appel. Les couleurs disponibles sont : `"blue"`, `"red"`, `"green"`, `"default"`.
 
 La couleur `default` est soit le blanc en mode blanc sur fond noir, soit le noir en mode noir sur fond blanc.
 
 Sur les terminaux où c'est disponible, le rouge et le bleu sont affichés en gras.
 
-*`detectFiles` :*\
-Cette fonction renvoie une liste de tous les noms de fichiers du répertoire courant commençant par une certaine chaîne de caractères. Elle prend en argument la chaîne de caractères à comparer avec le début de chaque fichier.
+*`setFunctionDoc(Function | Method)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument une fonction utilisateur, et une chaîne de caractères, et définit cette chaîne de caractères comme message d'aide pour cette fonction. Ce message d'aide est affiché lorsque la fonction help est appelée avec cette fonction.
+
+*`sin(Real)` #sym.arrow.r `Real`:*\
+Calcule le sinus d'un angle en radians.
+
+*`sortAsc(List)` #sym.arrow.r `None`:*\
+Cette fonction trie une liste dans l'ordre croissant suivant l'ordre lexicographique ou l'ordre sur les nombres.
+
+*`sortDesc(List)` #sym.arrow.r `None`:*\
+Pareil mais dans l'autre sens.
+
+*`sqrt(Real)` #sym.arrow.r `Real`:*\
+Calcule la racine carrée d'un nombre.
+
+*`str(Any)` #sym.arrow.r `String`:*\
+Cette fonction prend un objet quelconque et renvoie sa représentation textuelle évaluable par Neon.
+
+
+*`sub(String, Integer, Integer)` #sym.arrow.r `String`:*\
+Cette fonction attend trois arguments : une chaîne de caractères et deux entiers. `sub(string, i1, i2)` renvoie la sous-chaîne de string commençant au caractère numéro i2 jusqu'au caractère numéro i2 exclu.
+
+
+*`tan(Real)` #sym.arrow.r `Real`:*\
+Calcule la tangente d'un angle en radians.
+
+
+*`time()` #sym.arrow.r `Integer`:*\
+Cette fonction renvoie le nombre de secondes écoulées depuis une certaine date dépendant du système sur lequel s'exécute le programme.
+
+*`type(Any)` #sym.arrow.r `String`:*\
+Cette fonction prend en argument un objet et renvoie son type. Les types d'objet sont représentés par des chaînes de caractères. Voici les types renvoyés par la fonction `type` :\
+`"Bool"` #sym.arrow.r.long booléen\
+`"String"` #sym.arrow.r.long chaîne de caractères\
+`"Integer"` #sym.arrow.r.long entier\
+`"Real"` #sym.arrow.r.long nombre décimal\
+`"Built-in function"` #sym.arrow.r.long fonction built-in\
+`"List"` #sym.arrow.r.long liste\
+`"Function"` #sym.arrow.r.long fonction utilisateur\
+`"Method"` #sym.arrow.r.long méthode utilisateur\
+`"Exception"` #sym.arrow.r.long exception\
+`"Promise"` #sym.arrow.r.long promesse\
+`"unspecified type"` #sym.arrow.r.long correspond au type -1. Aucun objet n'a ce type, c'est une valeur spéciale servant à décrire la signature des fonctions. En général, un argument de type `unspecified type` peut être de plusieurs types, et ceux-ci sont spécifiés dans la chaîne d'aide de la fonction\
+`"Undefined"` #sym.arrow.r.long renvoyé sur un objet non défini (de `TYPE_EMPTY`)\
+
+La fonction type ne renvoie jamais de type `"Container"` car elle renvoie directement le nom du container.
+
+
+*`writeFile(String, String)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument un nom de fichier et une chaîne de caractères, et écrit cette chaîne de caractères dans le fichier dont le nom a été indiqué en argument. Si le fichier existe, son contenu est remplacé. Sur la plateforme TI_EZ80, les fichiers ne peuvent être que des AppVars.
 
 
 === 1.2.9 - Le type `Function`

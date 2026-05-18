@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "dynarrays.h"
 
-#define NB_ERRORS 121
+#define NB_ERRORS 122
 
 #define return_on_error(value)                  if (global_env->CODE_ERROR != 0) return value
 #define if_error                                if (global_env->CODE_ERROR != 0)

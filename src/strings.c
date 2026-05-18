@@ -37,7 +37,7 @@ int sindex (char* string, char car)
     }
     
     return -1;
-}   
+}
 
 
 /*
@@ -307,7 +307,21 @@ char* inputCode(char* text)
 
 
 
+int string_index(char* string, char* search) {
+    int len_search = strlen(search), len = strlen(string);
 
+    for (int i = 0 ; i <= len-len_search ; i++)
+    {
+        char temp = string[i+len_search];
+        string[i+len_search] = '\0';
+        if (strcmp(search, string + i) == 0)
+            return i;
+
+        string[i+len_search] = temp;
+    }
+  
+    return -1;
+}
 
 
 
