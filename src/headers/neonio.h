@@ -1,6 +1,10 @@
 #ifndef NEONIO_H
 #define NEONIO_H
 
+#ifndef TI_EZ80
+#include <stdio.h>
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -12,6 +16,22 @@
 #else
     #define debug(...)
 #endif
+
+
+#ifdef TI_EZ80
+typedef uint8_t NeStream;
+#else
+typedef FILE* NeStream;
+#endif
+
+
+
+
+
+NeStream NeStream_open(char* name, char* mode);
+void NeStream_close(NeStream stream);
+void NeStream_write(NeStream stream, void* data, int size);
+
 
 void removeZeros(char* string);
 bool is_integer(char* string);

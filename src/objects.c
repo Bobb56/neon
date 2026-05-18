@@ -1537,7 +1537,6 @@ char* neobject_str(NeObj neo)
 
 
 
-
 char* type(NeObj neo)
 {
     if (NEO_TYPE(neo) == TYPE_BOOL)

@@ -25,6 +25,20 @@
 
 #ifndef TI_EZ80
 
+    NeStream NeStream_open(char* name, char* mode) {
+        FILE* stream = fopen(name, mode);
+        return stream;
+    }
+
+    void NeStream_close(NeStream stream) {
+        fclose(stream);
+    }
+
+    void NeStream_write(NeStream stream, void* data, int size) {
+        fwrite(data, 1, size, stream);
+    }
+
+
     char* openFile(char* filename)
     {
         FILE* fichier = fopen(filename, "rt");//lit le fichier
@@ -210,6 +224,19 @@
 
 #else //------------------------------------------------- PASSAGE A TI_EZ80 ---------------------------------------------
 
+
+    NeStream NeStream_open(char* name, char* mode) {
+        uint8_t* stream = ti_Open(name, mode);
+        return stream;
+    }
+
+    void NeStream_close(NeStream stream) {
+        ti_Close(stream);
+    }
+
+    void NeStream_write(NeStream stream, void* data, int size) {
+        ti_Write(data, 1, size, stream);
+    }
 
     char* argsAns(void)
     {

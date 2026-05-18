@@ -665,6 +665,30 @@ NeonEnv* NeonEnv_set(NeonEnv* new_env) {
 
 
 
+/*
+Cette fonction sauvegarde complètement l'environnement dans un fichier
+
+Procédé :
+La sauvegarde maintient tous les liens de pointeurs d'un objet à l'autre
+Pendant la sauvegarde, on construit récursivement une table des symboles (ou une table des pointeurs), en associant à chaque pointeur un symbole et en écrivant les données correspondant au pointeur.
+Quand on sauvegarde un objet, pour chaque sous-objet qu'il contient, on cherche son symbole dans la table des symboles. Si le symbole n'est pas présent, on sauvegarde l'objet, sinon on récupère juste le symbole
+
+*/
+void NeonEnv_save(NeonEnv* env, char* filename) {
+
+}
+
+/*
+Cette fonction charge un environnement complet depuis un fichier
+Dans un premier temps on charge en mémoire tous les objets, sans résoudre les liens
+Dans un second temps, une fois que tous les objets sont chargés en mémoire, on résoud tous les liens
+*/
+NeonEnv* NeonEnv_load(char* filename) {
+
+}
+
+
+
 void NeonEnv_destroy(NeonEnv* env) {
     neon_free(env->process_cycle);
 
