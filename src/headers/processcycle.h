@@ -5,13 +5,7 @@
 #include "syntaxtrees.h"
 #include "constants.h"
 #include "trees.h"
-
-
-typedef struct NeSave
-{
-    NeObj object;
-    Var var;
-} NeSave;
+#include "contexts.h"
 
 
 
@@ -33,7 +27,7 @@ typedef struct Process
     TreeBufferIndex original_call; // pointeur vers l'arbre original (le premier argument) de ce processus. Sert à libérer les arbres temporaires que l'on crée pour lancer des promesses
     NeObj fixed_function; // fonction à appeler lors du lancement du processus
     void* stack; // ceci est un pointeur sur l'adresse de début de la pile (le haut de la pile), qui servira à la libérer
-    ptrlist* var_loc; // les variables locales créés depuis le lancement du processus
+    ContextStack var_loc; // les variables locales créés depuis le lancement du processus
     int id;
     ptrlist* varsToSave;
 } Process;

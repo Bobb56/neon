@@ -19,6 +19,7 @@ files = [
     "linux_riscv64.S",
     "ez80.S",
     "sidememory.c",
+    "contexts.c",
     
     "headers/errors.h",
     "headers/builtinfunctions.h",
@@ -35,7 +36,8 @@ files = [
     "headers/processcycle.h",
     "headers/lowlevel.h",
     "headers/trees.h",
-    "headers/sidememory.h"
+    "headers/sidememory.h",
+    "headers/contexts.h"
 ]
 
 other_files = [

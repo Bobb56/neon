@@ -1,3 +1,4 @@
+#include "headers/contexts.h"
 #include "headers/neonio.h"
 #include "headers/objects.h"
 #include "headers/gc.h"
@@ -172,24 +173,13 @@ void gc_mark(NeObj obj) {
     }
 }
 
-// il faut aussi parcourir les contextes pour marquer les variables sauvegardées à d'autres niveaux
-void gc_context_mark(ptrlist* context) {
-    while (context != NULL && context->tete != NULL) {
-        NeSave* ns = context->tete;
-        gc_mark(ns->object);
 
-        if (context != NULL)
-            context = context->queue;
-    }
-}
 
-void gc_var_loc_mark(ptrlist* var_loc) {
-    while (var_loc != NULL) {
-        ptrlist* context = var_loc->tete;
-        gc_context_mark(context);
-
-        if (var_loc != NULL)
-            var_loc = var_loc->queue;
+void gc_var_loc_mark(ContextStack* var_loc) {
+    for (int i=0 ; i < var_loc->len ; i++) {
+        if (!isContextMark(var_loc->tab[i])) {
+            gc_mark(var_loc->tab[i].object);
+        }
     }
 }
 
@@ -197,7 +187,7 @@ void gc_var_loc_mark(ptrlist* var_loc) {
 void gc_processes_var_loc_mark(ProcessCycle* pc) {
     ProcessCycle* ptr = pc;
     do {
-        gc_var_loc_mark(ptr->process->var_loc);
+        gc_var_loc_mark(&ptr->process->var_loc);
         ptr = ptr->next;
     } while (ptr != pc);
 }

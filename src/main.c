@@ -30,11 +30,11 @@ on ne le crée pas dans global_env->FONCTIONS)
 Avancement et choses à faire :
 -------------------------------
 PLUS TARD
+> Modifier et optimiser la manière dont sont gérés les contextes pour ne plus faire de malloc/free tout le temps
 > Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
 --> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
-> Ajouter
 
 
 NOUVEAUTéS après la mise à jour 4.1 :

@@ -8,6 +8,7 @@
 #include "headers/errors.h"
 #include "headers/objects.h"
 #include "headers/trees.h"
+#include "headers/contexts.h"
 
 
 
@@ -64,7 +65,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
     // on crée le nouveau processus
     Process* p = neon_malloc(sizeof(Process));
     // création de la nouvelle pile
-    p->var_loc = ptrlist_create();
+    ContextStack_init(&p->var_loc);
     p->id = id;
     p->varsToSave = ptrlist_create();
     p->stack = NULL; // dans le cas où c'est le premier processus que l'on crée, p->stack va rester NULL, sinon on alloue une nouvelle pile
@@ -89,7 +90,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
 
         if (p->stack == NULL) {
             global_env->CODE_ERROR = 12;
-            neon_free(p->var_loc);
+            ContextStack_destroy(&p->var_loc);
             neon_free(p->varsToSave);
             neon_free(p);
             return NULL;
@@ -107,7 +108,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
 
         if (p->stack == NULL) {
             global_env->CODE_ERROR = 12;
-            neon_free(p->var_loc);
+            ContextStack_destroy(&p->var_loc);
             neon_free(p->varsToSave);
             neon_free(p);
             return NULL;
@@ -202,7 +203,7 @@ Cette fonction supprime le processus actuel et passe au processus suivant
 NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
     Process* p = pc->process;
 
-    neon_free(p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés
+    ContextStack_destroy(&p->var_loc); // on suppose que tous les contextes créés dans le cadre de ce processus ont bien été supprimés
     
     if (!neo_is_void(p->fixed_function)) {
         neobject_destroy(p->fixed_function);
