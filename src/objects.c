@@ -1354,13 +1354,54 @@ void neobject_aff(NeObj neo)
             printString("<built-in function>");
         }
 
-        else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
-            printString("<function>");
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC || NEO_TYPE(neo) == TYPE_USERMETHOD) {
+            UserFunc* fun = neo_to_userfunc(neo);
+
+            if (NEO_TYPE(neo) == TYPE_USERMETHOD)
+                printString("method ");
+            else
+                printString("function ");
+
+            // La raison pour laquelle on n'utilise pas la soft-comparaison entre la fonction et les variables de ADRESSES
+            // est que l'opérateur d'égalité peut être surchargé donc peut donner de faux résultats ici
+            int index = nelist_index(global_env->ADRESSES, neo);
+            if (index == -1) {
+                printString("<anonymous>");
+                global_env->CODE_ERROR = 0;
+            }
+            else {
+                printString(global_env->NOMS->tab[index]);
+            }
+
+            printString("(");
+
+            bool bo = false;
+
+            for (int i = 0 ; i < fun->nbArgs ; i++)
+            {
+                if (fun->unlimited_arguments && i == fun->nbArgs - fun->nbOptArgs && !bo) {
+                    printString("...");
+                    i --;
+                    bo = true;
+                }
+                else {
+                    // affichage de la variable fun->args[i]
+                    char* nom = get_name(fun->args[i]);
+                    printString(nom);
+
+                    if (!neo_is_void(fun->opt_args->tab[i])) // expression non vide
+                    {
+                        printString(" := ");
+                        neobject_aff(fun->opt_args->tab[i]);
+                    }
+                }
+
+                if (i < fun->nbArgs - 1)
+                    printString(", ");
+            }
+            printString(")");
         }
 
-        else if (NEO_TYPE(neo) == TYPE_USERMETHOD) {
-            printString("<method>");
-        }
         else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
             neo_container_aff(neo);
         }
@@ -1429,14 +1470,54 @@ char* neobject_str(NeObj neo)
             ret = strdup("<built-in function>");
         }
 
-        else if (NEO_TYPE(neo) == TYPE_USERFUNC)
-        {
-            ret = strdup("<function>");
-        }
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC || NEO_TYPE(neo) == TYPE_USERMETHOD) {
+            UserFunc* fun = neo_to_userfunc(neo);
 
-        else if (NEO_TYPE(neo) == TYPE_USERMETHOD)
-        {
-            ret = strdup("<method>");
+            if (NEO_TYPE(neo) == TYPE_USERMETHOD)
+                ret = "method ";
+            else
+                ret = "function ";
+
+            // La raison pour laquelle on n'utilise pas la soft-comparaison entre la fonction et les variables de ADRESSES
+            // est que l'opérateur d'égalité peut être surchargé donc peut donner de faux résultats ici
+            int index = nelist_index(global_env->ADRESSES, neo);
+            if (index == -1) {
+                ret = addStr(ret, "<anonymous>");
+                global_env->CODE_ERROR = 0;
+            }
+            else {
+                ret = addStr(ret, global_env->NOMS->tab[index]);
+            }
+
+            ret = addStr2(ret, "(");
+
+            bool bo = false;
+
+            for (int i = 0 ; i < fun->nbArgs ; i++)
+            {
+                if (fun->unlimited_arguments && i == fun->nbArgs - fun->nbOptArgs && !bo) {
+                    ret = addStr2(ret, "...");
+                    i --;
+                    bo = true;
+                }
+                else {
+                    // affichage de la variable fun->args[i]
+                    char* nom = get_name(fun->args[i]);
+                    ret = addStr2(ret, nom);
+
+                    if (!neo_is_void(fun->opt_args->tab[i])) // expression non vide
+                    {
+                        ret = addStr2(ret, " := ");
+                        char* obj_str = neobject_str(fun->opt_args->tab[i]);
+                        ret = addStr2(ret, obj_str);
+                        neon_free(obj_str);
+                    }
+                }
+
+                if (i < fun->nbArgs - 1)
+                    ret = addStr2(ret, ", ");
+            }
+            ret = addStr2(ret, ")");
         }
 
         else if (NEO_TYPE(neo) == TYPE_CONTAINER)
