@@ -31,7 +31,7 @@ typedef FILE* NeStream;
 NeStream NeStream_open(char* name, char* mode);
 void NeStream_close(NeStream stream);
 void NeStream_write(NeStream stream, void* data, int size);
-
+void NeStream_read(NeStream stream, void* data, int size);
 
 void removeZeros(char* string);
 bool is_integer(char* string);

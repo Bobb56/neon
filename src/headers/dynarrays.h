@@ -96,7 +96,8 @@ void* ptrlist_pop(ptrlist* list);
 
 /*********************intptrlist**********************/
 intptrlist intptrlist_create(int len);
-void intptrlist_append(intptrlist* list, int* ptr);
+void intptrlist_append(intptrlist* list, void* ptr);
+int intptrlist_index(intptrlist* list, void* ptr);
 void intptrlist_destroy(intptrlist* list);
 
 /**************************intlist**********************/

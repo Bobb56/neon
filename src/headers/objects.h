@@ -71,7 +71,7 @@ typedef struct NeonEnv NeonEnv;
 
 
 
-#define NEO_TYPE(neo)                       neo.type
+#define NEO_TYPE(neo)                       (neo).type
 #define NEO_VOID                            ((NeObj) {.type = TYPE_EMPTY})
 #define NEO_SPECIAL(code)                   ((NeObj) {.type = TYPE_EMPTY, .integer = code})
 #define IS_NEO_SPECIAL_CODE(neo, code)      (neo.type == TYPE_EMPTY && neo.integer == code)

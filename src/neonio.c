@@ -38,6 +38,10 @@
         fwrite(data, 1, size, stream);
     }
 
+    void NeStream_read(NeStream stream, void* data, int size) {
+        fread(data, 1, size, stream);
+    }
+
 
     char* openFile(char* filename)
     {
@@ -236,6 +240,10 @@
 
     void NeStream_write(NeStream stream, void* data, int size) {
         ti_Write(data, 1, size, stream);
+    }
+
+    void NeStream_read(NeStream stream, void* data, int size) {
+        ti_Read(data, 1, size, stream);
     }
 
     char* argsAns(void)

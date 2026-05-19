@@ -20,6 +20,7 @@ files = [
     "ez80.S",
     "sidememory.c",
     "contexts.c",
+    "serialization.c",
     
     "headers/errors.h",
     "headers/builtinfunctions.h",
@@ -37,7 +38,8 @@ files = [
     "headers/lowlevel.h",
     "headers/trees.h",
     "headers/sidememory.h",
-    "headers/contexts.h"
+    "headers/contexts.h",
+    "headers/serialization.h"
 ]
 
 other_files = [

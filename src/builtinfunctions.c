@@ -11,6 +11,7 @@
 #include "headers/operators.h"
 #include "headers/runtime.h"
 #include "headers/errors.h"
+#include "headers/serialization.h"
 #include "headers/strings.h"
 #include "headers/syntaxtrees.h"
 #include "headers/neon.h"
@@ -1322,4 +1323,19 @@ NeObj _bin_(NeList* args) {
 
 NeObj _hex_(NeList* args) {
     return neo_str_create(decToHex(neo_to_integer(ARG(0))));
+}
+
+NeObj _serialize_(NeList* args) {
+    NeStream stream = NeStream_open(neo_to_string(ARG(0)), "w+");
+    neobject_serialize(stream, ARG(1));
+    NeStream_close(stream);
+    return neo_none_create();
+}
+
+
+NeObj _deserialize_(NeList* args) {
+    NeStream stream = NeStream_open(neo_to_string(ARG(0)), "r");
+    NeObj neo = neobject_deserialize(stream);
+    NeStream_close(stream);
+    return neo;
 }

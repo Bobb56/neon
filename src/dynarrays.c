@@ -858,7 +858,7 @@ intptrlist intptrlist_create(int len)// crée une liste d'entiers
 }
 
 
-void intptrlist_append(intptrlist* list, int* ptr)//ajoute un élément à la fin de la liste
+void intptrlist_append(intptrlist* list, void* ptr)//ajoute un élément à la fin de la liste
 {
     
   int **tmp;
@@ -875,6 +875,17 @@ void intptrlist_append(intptrlist* list, int* ptr)//ajoute un élément à la fi
 
   list->tab[list->len] = ptr;//affecte nombre au dernier élément
   list->len++;//incrémente la longueur
+}
+
+
+int intptrlist_index(intptrlist* list, void* ptr)
+{
+  for (int i=0; i < list->len; i++) {
+    if (ptr == list->tab[i]) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 

@@ -137,7 +137,9 @@ void loadFunctions(NeonEnv* env)
         "detectFiles",
         "safeExec",
         "bin",
-        "hex"
+        "hex",
+        "serialize",
+        "deserialize"
     };
 
     // built-in functions
@@ -554,6 +556,20 @@ void loadFunctions(NeonEnv* env)
             .nbArgs = 1,
             .typeArgs = (int[]){TYPE_INTEGER},
             .typeRetour = TYPE_STRING
+        },
+        {
+            .ptr = _serialize_,
+            .help = "Writes a Neon object into a file",
+            .nbArgs = 2,
+            .typeArgs = (int[]){TYPE_STRING, TYPE_UNSPECIFIED},
+            .typeRetour = TYPE_NONE
+        },
+        {
+            .ptr = _deserialize_,
+            .help = "Reads a Neon object from a file created by the serialize function",
+            .nbArgs = 1,
+            .typeArgs = (int[]){TYPE_STRING},
+            .typeRetour = TYPE_UNSPECIFIED
         }
     };
 
@@ -661,30 +677,6 @@ NeonEnv* NeonEnv_set(NeonEnv* new_env) {
     gfx_SetTextTransparentColor(global_env->text_transparent_color);
     #endif
     return global_env_sov;
-}
-
-
-
-/*
-Cette fonction sauvegarde complètement l'environnement dans un fichier
-
-Procédé :
-La sauvegarde maintient tous les liens de pointeurs d'un objet à l'autre
-Pendant la sauvegarde, on construit récursivement une table des symboles (ou une table des pointeurs), en associant à chaque pointeur un symbole et en écrivant les données correspondant au pointeur.
-Quand on sauvegarde un objet, pour chaque sous-objet qu'il contient, on cherche son symbole dans la table des symboles. Si le symbole n'est pas présent, on sauvegarde l'objet, sinon on récupère juste le symbole
-
-*/
-void NeonEnv_save(NeonEnv* env, char* filename) {
-
-}
-
-/*
-Cette fonction charge un environnement complet depuis un fichier
-Dans un premier temps on charge en mémoire tous les objets, sans résoudre les liens
-Dans un second temps, une fois que tous les objets sont chargés en mémoire, on résoud tous les liens
-*/
-NeonEnv* NeonEnv_load(char* filename) {
-
 }
 
 
