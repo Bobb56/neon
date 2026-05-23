@@ -130,8 +130,8 @@ static const char* error_messages[NB_ERRORS] = {
     "str cannot be overloaded with a function that does not return a string",
     "File system error",
     "Violation of Neon internal invariants",
-    "The index function can only search for the index of an object in a list or a string in another string"
-
+    "The index function can only search for the index of an object in a list or a string in another string",
+    "Unable to deserialize object because of corrupted data"
 };
 
 
@@ -258,7 +258,8 @@ static const int error_codes_exceptions[NB_ERRORS] = {
     9,
     1,
     17,
-    9
+    9,
+    18
 };
 
 
@@ -281,6 +282,7 @@ static const int error_codes_exceptions[NB_ERRORS] = {
 15: NotImplemented
 16: ExitSignal
 17: InternError
+18: DeserializationError
 */
 
 

@@ -1327,6 +1327,7 @@ NeObj _hex_(NeList* args) {
 
 NeObj _serialize_(NeList* args) {
     NeStream stream = NeStream_open(neo_to_string(ARG(0)), "w+");
+    return_on_error(NEO_VOID);
     neobject_serialize(stream, ARG(1));
     NeStream_close(stream);
     return neo_none_create();
@@ -1335,7 +1336,9 @@ NeObj _serialize_(NeList* args) {
 
 NeObj _deserialize_(NeList* args) {
     NeStream stream = NeStream_open(neo_to_string(ARG(0)), "r");
+    return_on_error(NEO_VOID);
     NeObj neo = neobject_deserialize(stream);
     NeStream_close(stream);
+    return_on_error(NEO_VOID);
     return neo;
 }

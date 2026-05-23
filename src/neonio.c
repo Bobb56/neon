@@ -27,6 +27,8 @@
 
     NeStream NeStream_open(char* name, char* mode) {
         FILE* stream = fopen(name, mode);
+        if (stream == NULL)
+            global_env->CODE_ERROR = 67;
         return stream;
     }
 
@@ -38,8 +40,9 @@
         fwrite(data, 1, size, stream);
     }
 
-    void NeStream_read(NeStream stream, void* data, int size) {
-        fread(data, 1, size, stream);
+    bool NeStream_read(NeStream stream, void* data, int size) {
+        int count = fread(data, 1, size, stream);
+        return count == size;
     }
 
 
@@ -230,7 +233,9 @@
 
 
     NeStream NeStream_open(char* name, char* mode) {
-        uint8_t* stream = ti_Open(name, mode);
+        uint8_t stream = ti_Open(name, mode);
+        if (stream == 0)
+            global_env->CODE_ERROR = 67;
         return stream;
     }
 
@@ -242,8 +247,9 @@
         ti_Write(data, 1, size, stream);
     }
 
-    void NeStream_read(NeStream stream, void* data, int size) {
-        ti_Read(data, 1, size, stream);
+    bool NeStream_read(NeStream stream, void* data, int size) {
+        int count = ti_Read(data, 1, size, stream);
+        return count == size;
     }
 
     char* argsAns(void)

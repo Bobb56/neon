@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include "neobj.h"
 #include "constants.h"
@@ -56,6 +57,8 @@ typedef struct TreeBuffer {
 #define TREE_TYPE(tb, tbi)              ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->type
 #define TREE_LINE(tb, tbi)              ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->line
 
+
+#define BYTE(tb, tbi)                   (*(uint8_t*)((tb)->pointer + tbi))
 #define treeUnOp(tb, tbi)               ((struct UnaryOp*)(((tb)->pointer) + tbi))
 #define treeKW(tb, tbi)                 ((struct Keyword*)(((tb)->pointer) + tbi))
 #define treeKWParam(tb, tbi)            ((struct KWParam*)(((tb)->pointer) + tbi))
@@ -82,33 +85,34 @@ typedef struct TreeBuffer {
 #define FOR_ARG(tb,tbi, n)        (treelistGet(tb, treeFor(tb,tbi)->params)[n])
 
 
-typedef enum {
-    TypeBinaryOp        = 1,
-    TypeUnaryOp         = 2,
-    TypeConst           = 3,
-    TypeFor             = 4,
-    TypeForeach         = 5,
-    TypeWhile           = 6,
-    TypeIf              = 7,
-    TypeElif            = 8,
-    TypeElse            = 9,
-    TypeTryExcept       = 10,
-    TypeFunctiondef     = 11,
-    TypeVariable        = 12,
-    TypeListindex       = 13,
-    TypeFunctioncall    = 14,
-    TypeAttribute       = 15,
-    TypeAtomic          = 16,
-    TypeConditionblock  = 17,
-    TypeList            = 18,
-    TypeKeyword         = 19,
-    TypeKWParam         = 20,
-    TypeSyntaxtree      = 21,
-    TypeContainerLit    = 22,
-    TypeAttributeLit    = 23,
-    TypeExceptBlock     = 24,
-    TypeParallelCall    = 25
-} TreeType;
+typedef uint8_t TreeType;
+#define TypeBinaryOp            1
+#define TypeUnaryOp             2
+#define TypeConst               3
+#define TypeFor                 4
+#define TypeForeach             5
+#define TypeWhile               6
+#define TypeIf                  7
+#define TypeElif                8
+#define TypeElse                9
+#define TypeTryExcept           10
+#define TypeFunctiondef         11
+#define TypeVariable            12
+#define TypeListindex           13
+#define TypeFunctioncall        14
+#define TypeAttribute           15
+#define TypeAtomic              16
+#define TypeConditionblock      17
+#define TypeList                18
+#define TypeKeyword             19
+#define TypeKWParam             20
+#define TypeSyntaxtree          21
+#define TypeContainerLit        22
+#define TypeAttributeLit        23
+#define TypeExceptBlock         24
+#define TypeParallelCall        25
+
+#define TypeTreeList            30
 
 
 
@@ -227,6 +231,8 @@ struct ParallelCall {
     TreeBuffer* expr_buffer;
     TreeBufferIndex expr;
 };
+
+size_t type_size(TreeType type);
 
 int TreeBuffer_init(TreeBuffer*);
 void TreeBuffer_destroy(TreeBuffer* tb);

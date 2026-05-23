@@ -605,10 +605,11 @@ void loadExceptions(NeonEnv* env) {
         "KeyboardInterrupt",
         "NotImplemented",
         "ExitSignal",
-        "InternError"
+        "InternError",
+        "DeserializationError"
     };
 
-    for (int i = 0 ; i < 18 ; i++) {
+    for (int i = 0 ; i < 19 ; i++) {
         strlist_append(env->EXCEPTIONS, strdup(exceptions[i]));
     }
 }

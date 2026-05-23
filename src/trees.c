@@ -1,3 +1,4 @@
+#include <endian.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "headers/trees.h"
@@ -6,7 +7,6 @@
 #include "headers/neon.h"
 #include "headers/objects.h"
 #include <string.h>
-#include "headers/neonio.h"
 
 /*
 Comment fonctionnent les structures de données d'arbres ?
@@ -128,6 +128,26 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     tb->size += size;
     return pointer;
 }
+
+
+void TreeBuffer_iter(TreeBuffer* tb, void (*function)(TreeBuffer*, TreeBufferIndex)) {
+    TreeBufferIndex index = 0;
+    while (index < tb->size) {
+        TreeType tree_type = BYTE(tb, index);
+
+        if (tree_type == TypeTreeList) {
+
+        }
+    }
+}
+
+
+
+
+
+
+
+
 
 void TreeBuffer_destroy(TreeBuffer* tb) {
     // Parcours de tout le TreeBuffer pour libérer tous les pointeurs dedans
@@ -277,7 +297,7 @@ size_t type_size(TreeType type) {
         case TypeWhile:
         case TypeIf:
         case TypeElif:
-            return sizeof(struct StatementIEW);        
+            return sizeof(struct StatementIEW);
         case TypeElse:
         case TypeSyntaxtree:
         case TypeAtomic:
@@ -308,6 +328,8 @@ size_t type_size(TreeType type) {
             return sizeof(struct ExceptBlock);
         case TypeParallelCall:
             return sizeof(struct ParallelCall);
+        default:
+            return 0;
     }
 }
 
@@ -403,11 +425,13 @@ struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list
     // alloue un espace de la bonne taille et récupère l'indice dans le TreeBuffer
     struct TreeList list;
 
-    list.indices = TreeBuffer_alloc(tb, temp_list->len * sizeof(TreeBufferIndex));
+    // Allocation d'un octet juste avant la liste pour signifier que le bloc suivant est une liste
+    TreeBufferIndex previous_byte = TreeBuffer_alloc(tb, 1);
+    return_on_error(list);
+    BYTE(tb, previous_byte) = TypeTreeList;
 
-    if_error {
-        return list;
-    }
+    list.indices = TreeBuffer_alloc(tb, temp_list->len * sizeof(TreeBufferIndex));
+    return_on_error(list);
 
     // on le considère comme un tableau de TreeBufferIndex
     TreeBufferIndex* array_ptr = treelistGet(tb, list);
