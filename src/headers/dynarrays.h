@@ -2,6 +2,7 @@
 #define DYNARRAYS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "constants.h"
 
 typedef struct ChainonPtr

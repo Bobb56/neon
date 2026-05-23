@@ -918,7 +918,7 @@ void terminal(void)
 
         
         // s'il n'y a qu'une expression, alors, on affiche le résultat de l'expression
-        if (treeSntxTree(&tb, tb.entry_point)->treelist.length == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0]))
+        if (treelistLength(&tb, treeSntxTree(&tb, tb.entry_point)->treelist) == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0]))
         {
             TreeBufferIndex exprtree = treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0];
 
@@ -940,7 +940,7 @@ void terminal(void)
 
             storeAns(res); // stocke le résultat dans une variable au lieu de le supprimer
         }
-        else if (treeSntxTree(&tb, tb.entry_point)->treelist.length > 0)
+        else if (treelistLength(&tb, treeSntxTree(&tb, tb.entry_point)->treelist) > 0)
         {
             exec(&tb, tb.entry_point);
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)

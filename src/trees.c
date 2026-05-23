@@ -130,29 +130,57 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
 }
 
 
-void TreeBuffer_iter(TreeBuffer* tb, void (*function)(TreeBuffer*, TreeBufferIndex)) {
+
+// Itère une fonction sur tous les arbres d'un TreeBuffer. Cette fonction n'a pas à gérer l'appel aux sous-arbres
+void TreeBuffer_iter(TreeBuffer* tb, void (*function)(TreeBuffer*, TreeBufferIndex, void* arg), void* arg) {
     TreeBufferIndex index = 0;
     while (index < tb->size) {
-        TreeType tree_type = BYTE(tb, index);
-
-        if (tree_type == TypeTreeList) {
-
+        if (BYTE(tb, index) == TypeTreeList) {
+            index += sizeof(uint8_t) + sizeof(uint16_t) + sizeof(TreeBufferIndex) * treelistLength(tb, index);
+        }
+        else {
+            function(tb, index, arg);
+            index += type_size(TREE_TYPE(tb, index));
         }
     }
 }
 
 
 
+void NeTree_destroy_iter(TreeBuffer *tb, TreeBufferIndex tree, void* args) {
+    if (TREE_ISVOID(tree))
+        return;
 
-
-
-
+    switch (TREE_TYPE(tb, tree)) {
+        case TypeConst:
+            neobject_destroy(treeConst(tb, tree)->obj);
+            return;
+        
+        case TypeFunctiondef:
+            neon_free(treeFDef(tb, tree)->name);
+            neobject_destroy(treeFDef(tb, tree)->object);
+            return;
+        
+        case TypeFunctioncall:
+            if (!neo_is_void(treeFCall(tb, tree)->function_obj))
+                neobject_destroy(treeFCall(tb, tree)->function_obj);
+            return;
+        
+        case TypeAttribute:
+            if (treeAttr(tb, tree)->name != NULL)
+                neon_free(treeAttr(tb, tree)->name);
+            return;
+        
+        case TypeAttributeLit:
+            neon_free(treeAttrLit(tb, tree)->name);
+            return;
+    }
+}
 
 
 void TreeBuffer_destroy(TreeBuffer* tb) {
     // Parcours de tout le TreeBuffer pour libérer tous les pointeurs dedans
-    if (!TREE_ISVOID(tb->entry_point))
-        NeTree_destroy(tb, tb->entry_point);
+    TreeBuffer_iter(tb, NeTree_destroy_iter, NULL);
     
     // On supprime les arbres sur lesquels personne ne pointait
     if (!tb->side_memory)
@@ -169,118 +197,6 @@ void TreeBuffer_delete_all(ptrlist* tree_buffers) {
 
 
 
-
-
-void TreeList_destroy(TreeBuffer* tb, struct TreeList* treelist) {
-    TreeBufferIndex* array_ptr = tb->pointer + treelist->indices;
-    for (int i = 0 ; i < treelist->length ; i++) {
-        NeTree_destroy(tb, treelistGet(tb, *treelist)[i]);
-    }
-}
-
-void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree) {
-    if (TREE_ISVOID(tree))
-        return;
-
-    switch (TREE_TYPE(tb, tree)) {
-        case TypeBinaryOp:
-            NeTree_destroy(tb, treeBinOp(tb, tree)->left);
-            NeTree_destroy(tb, treeBinOp(tb, tree)->right);
-            break;
-        
-        case TypeUnaryOp:
-            NeTree_destroy(tb, treeUnOp(tb, tree)->expr);
-            break;
-
-        case TypeConst:
-            neobject_destroy(treeConst(tb, tree)->obj);
-            break;
-        
-        case TypeFor:
-        case TypeForeach:
-            TreeList_destroy(tb, &treeFor(tb, tree)->params);
-            NeTree_destroy(tb, treeFor(tb, tree)->block);
-            break;
-
-        case TypeWhile:
-        case TypeIf:
-        case TypeElif:
-            NeTree_destroy(tb, treeIEW(tb, tree)->expression);
-            NeTree_destroy(tb, treeIEW(tb, tree)->code);
-            break;
-        
-        case TypeAtomic:
-        case TypeConditionblock:
-        case TypeSyntaxtree:
-        case TypeElse:
-        case TypeList:
-            TreeList_destroy(tb, &treeSntxTree(tb, tree)->treelist);
-            break;
-        
-        case TypeTryExcept:
-            NeTree_destroy(tb, treeTE(tb, tree)->try_tree);
-            TreeList_destroy(tb, &treeTE(tb, tree)->except_blocks);
-            break;
-        
-        case TypeFunctiondef:
-            neon_free(treeFDef(tb, tree)->name);
-            neobject_destroy(treeFDef(tb, tree)->object);
-            TreeList_destroy(tb, &treeFDef(tb, tree)->args);
-            break;
-        
-        case TypeListindex:
-            NeTree_destroy(tb, treeLstIndx(tb, tree)->index);
-            NeTree_destroy(tb, treeLstIndx(tb, tree)->object);
-            break;
-        
-        case TypeFunctioncall:
-            TreeList_destroy(tb, &treeFCall(tb, tree)->args);
-            NeTree_destroy(tb, treeFCall(tb, tree)->function);
-            if (!neo_is_void(treeFCall(tb, tree)->function_obj))
-                neobject_destroy(treeFCall(tb, tree)->function_obj);
-            break;
-        
-        case TypeAttribute:
-            if (treeAttr(tb, tree)->name != NULL)
-                neon_free(treeAttr(tb, tree)->name);
-            NeTree_destroy(tb, treeAttr(tb, tree)->object);
-            break;
-        
-        case TypeKWParam:
-            TreeList_destroy(tb, &treeKWParam(tb, tree)->params);
-            break;
-        
-        case TypeContainerLit:
-            TreeList_destroy(tb, &treeContLit(tb, tree)->attributes);
-            break;
-        
-        case TypeAttributeLit:
-            neon_free(treeAttrLit(tb, tree)->name);
-            NeTree_destroy(tb, treeAttrLit(tb, tree)->expr);
-            break;
-        
-        case TypeExceptBlock:
-            NeTree_destroy(tb, treeExpt(tb, tree)->block);
-            TreeList_destroy(tb, &treeExpt(tb, tree)->exceptions);
-            break;
-        
-        case TypeKeyword:
-        case TypeVariable:
-        case TypeParallelCall:
-            break;
-    }
-}
-
-
-
-
-
-
-void TreeListTemp_destroy(TreeBuffer* tb, struct TreeListTemp* list) {
-    for (int i = 0 ; i < list->len ; i++)
-        NeTree_destroy(tb, list->trees[i]);
-    neon_free(list->trees);
-}
 
 
 size_t type_size(TreeType type) {
@@ -421,17 +337,22 @@ void TreeListTemp_insert(struct TreeListTemp* tree_list, TreeBufferIndex tree, i
 Cette fonction recopie le TreeListTemp dans le TreeBuffer et initialise avec cela le TreeList*
 Elle libère le TreeListTemp
 */
-struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list) {
-    // alloue un espace de la bonne taille et récupère l'indice dans le TreeBuffer
-    struct TreeList list;
 
-    // Allocation d'un octet juste avant la liste pour signifier que le bloc suivant est une liste
-    TreeBufferIndex previous_byte = TreeBuffer_alloc(tb, 1);
-    return_on_error(list);
-    BYTE(tb, previous_byte) = TypeTreeList;
 
-    list.indices = TreeBuffer_alloc(tb, temp_list->len * sizeof(TreeBufferIndex));
-    return_on_error(list);
+TreeBufferIndex TreeList_alloc(TreeBuffer* tb, uint16_t length) {
+    // Allocation de l'espace pour le type du bloc (TypeTreeList), la taille du tableau, et les données
+    TreeBufferIndex list = TreeBuffer_alloc(tb, sizeof(uint8_t) + sizeof(uint16_t) + length * sizeof(TreeBufferIndex));
+    return_on_error(TREE_VOID);
+
+    // On écrit le type du bloc comme étant une TreeList
+    BYTE(tb, list) = TypeTreeList;
+    treelistLength(tb, list) = length;
+    return list;
+}
+
+
+TreeBufferIndex TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list) {
+    TreeBufferIndex list = TreeList_alloc(tb, temp_list->len);
 
     // on le considère comme un tableau de TreeBufferIndex
     TreeBufferIndex* array_ptr = treelistGet(tb, list);
@@ -440,8 +361,6 @@ struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list
     for (int i = 0 ; i < temp_list->len ; i++) {
         array_ptr[i] = temp_list->trees[i];
     }
-
-    list.length = temp_list->len;
 
     // libère la liste temporaire
     neon_free(temp_list->trees);

@@ -34,7 +34,7 @@ typedef union {
 NeObj neobject_deserialize(NeStream stream);
 void neobject_serialize(NeStream stream, NeObj neo);
 
-void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, intptrlist* ptrTable, intlist* typesTable);
+void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, void* args);
 void update_ptr_table_list(NeList* list, intptrlist* ptrTable, intlist* typesTable);
 void solve_pointers(NeObj* neo, intptrlist* ptrTable, intlist* typesTable);
 #endif

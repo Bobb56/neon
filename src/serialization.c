@@ -101,8 +101,8 @@ void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable) 
             }
             
             // Update the pointer table with some pointers that are not stored directly in the TreeBuffer (the NeObjects for instance)
-            if (!TREE_ISVOID(tb->entry_point))
-                NeTree_update_ptr_table(tb, tb->entry_point, ptrTable, typesTable);
+            void* args[] = {(void*)ptrTable, (void*)typesTable};
+            TreeBuffer_iter(tb, NeTree_update_ptr_table, args);
 
             // Ajout des arguments optionnels
             NeList* opt_args = obj.userfunc->opt_args;
@@ -123,59 +123,16 @@ void update_ptr_table_list(NeList* list, intptrlist* ptrTable, intlist* typesTab
 
 
 
+void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, void* args) {
+    intptrlist* ptrTable = ((void**)args)[0];
+    intlist* typesTable = ((void**)args)[1];
 
-void TreeList_update_ptr_table(TreeBuffer* tb, struct TreeList* treelist, intptrlist* ptrTable, intlist* typesTable) {
-    TreeBufferIndex* array_ptr = tb->pointer + treelist->indices;
-    for (int i = 0 ; i < treelist->length ; i++) {
-        NeTree_update_ptr_table(tb, treelistGet(tb, *treelist)[i], ptrTable, typesTable);
-    }
-}
-
-
-
-
-void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, intptrlist* ptrTable, intlist* typesTable) {
     if (TREE_ISVOID(tree))
         return;
     
     switch (TREE_TYPE(tb, tree)) {
-        case TypeBinaryOp:
-            NeTree_update_ptr_table(tb, treeBinOp(tb, tree)->left, ptrTable, typesTable);
-            NeTree_update_ptr_table(tb, treeBinOp(tb, tree)->right, ptrTable, typesTable);
-            break;
-        
-        case TypeUnaryOp:
-            NeTree_update_ptr_table(tb, treeUnOp(tb, tree)->expr, ptrTable, typesTable);
-            break;
-
         case TypeConst:
             update_ptr_table_obj(treeConst(tb, tree)->obj, ptrTable, typesTable);
-            break;
-        
-        case TypeFor:
-        case TypeForeach:
-            TreeList_update_ptr_table(tb, &treeFor(tb, tree)->params, ptrTable, typesTable);
-            NeTree_update_ptr_table(tb, treeFor(tb, tree)->block, ptrTable, typesTable);
-            break;
-
-        case TypeWhile:
-        case TypeIf:
-        case TypeElif:
-            NeTree_update_ptr_table(tb, treeIEW(tb, tree)->expression, ptrTable, typesTable);
-            NeTree_update_ptr_table(tb, treeIEW(tb, tree)->code, ptrTable, typesTable);
-            break;
-        
-        case TypeAtomic:
-        case TypeConditionblock:
-        case TypeSyntaxtree:
-        case TypeElse:
-        case TypeList:
-            TreeList_update_ptr_table(tb, &treeSntxTree(tb, tree)->treelist, ptrTable, typesTable);
-            break;
-            
-        case TypeTryExcept:
-            NeTree_update_ptr_table(tb, treeTE(tb, tree)->try_tree, ptrTable, typesTable);
-            TreeList_update_ptr_table(tb, &treeTE(tb, tree)->except_blocks, ptrTable, typesTable);
             break;
         
         case TypeFunctiondef:
@@ -183,17 +140,9 @@ void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, intptrlist* p
             intlist_append(typesTable, CharStarPtr);
 
             update_ptr_table_obj(treeFDef(tb, tree)->object, ptrTable, typesTable);
-            TreeList_update_ptr_table(tb, &treeFDef(tb, tree)->args, ptrTable, typesTable);
-            break;
-            
-        case TypeListindex:
-            NeTree_update_ptr_table(tb, treeLstIndx(tb, tree)->index, ptrTable, typesTable);
-            NeTree_update_ptr_table(tb, treeLstIndx(tb, tree)->object, ptrTable, typesTable);
             break;
         
         case TypeFunctioncall:
-            TreeList_update_ptr_table(tb, &treeFCall(tb, tree)->args, ptrTable, typesTable);
-            NeTree_update_ptr_table(tb, treeFCall(tb, tree)->function, ptrTable, typesTable);
             if (!neo_is_void(treeFCall(tb, tree)->function_obj))
                 update_ptr_table_obj(treeFCall(tb, tree)->function_obj, ptrTable, typesTable);
             break;
@@ -201,37 +150,16 @@ void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, intptrlist* p
         case TypeAttribute:
             intptrlist_append(ptrTable, treeAttr(tb, tree)->name);
             intlist_append(typesTable, CharStarPtr);
-            
-            NeTree_update_ptr_table(tb, treeAttr(tb, tree)->object, ptrTable, typesTable);
-            break;
-            
-        case TypeKWParam:
-            TreeList_update_ptr_table(tb, &treeKWParam(tb, tree)->params, ptrTable, typesTable);
-            break;
-        
-        case TypeContainerLit:
-            TreeList_update_ptr_table(tb, &treeContLit(tb, tree)->attributes, ptrTable, typesTable);
             break;
         
         case TypeAttributeLit:
             intptrlist_append(ptrTable, treeAttrLit(tb, tree)->name);
             intlist_append(typesTable, CharStarPtr);
-
-            NeTree_update_ptr_table(tb, treeAttrLit(tb, tree)->expr, ptrTable, typesTable);
-            break;
-        
-        case TypeExceptBlock:
-            NeTree_update_ptr_table(tb, treeExpt(tb, tree)->block, ptrTable, typesTable);
-            TreeList_update_ptr_table(tb, &treeExpt(tb, tree)->exceptions, ptrTable, typesTable);
             break;
             
         case TypeParallelCall:
             intptrlist_append(ptrTable, treeParCall(tb, tree)->expr_buffer);
             intlist_append(typesTable, TreeBufferPtr);
-            break;
-
-        case TypeKeyword:
-        case TypeVariable:
             break;
     }
 }

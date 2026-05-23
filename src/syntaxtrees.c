@@ -618,18 +618,29 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                         return TREE_VOID;
                     }
 
-                    // on alloue une nouveau TreeList dans le TreeBuffer sans libérer l'ancien
-                    TreeBufferIndex new_treelist = TreeBuffer_alloc(tb, sizeof(TreeBufferIndex) * (treeFCall(tb, tree)->args.length + 1));
-                    TreeBufferIndex* array_ptr = tb->pointer + new_treelist;
-                    array_ptr[0] = arg0; // le premier argument est l'objet à gauche
+                    TreeBufferIndex function_call_args = treeFCall(tb, tree)->args;
+                    int function_call_nb_args = treelistLength(tb, function_call_args);
+                    
+                    // on alloue une nouvelle TreeList dans le TreeBuffer sans libérer l'ancien
+                    TreeBufferIndex new_treelist = TreeList_alloc(tb, function_call_nb_args + 1);
+
+                    // On récupère un pointeur sur le début du tableau
+                    TreeBufferIndex* function_call_args_ptr = treelistGet(tb, function_call_args);
+                    TreeBufferIndex* new_treelist_ptr = treelistGet(tb, new_treelist);
+                    
+                    // Et on copie les données dedans
+                    new_treelist_ptr[0] = arg0; // le premier argument est l'objet à gauche
                     // et on copie les autres arguments
-                    for (int i = 0 ; i < treeFCall(tb, tree)->args.length ; i++) {
-                        array_ptr[i+1] = treelistGet(tb, treeFCall(tb, tree)->args)[i];
+                    for (int i = 0 ; i < function_call_nb_args ; i++) {
+                        new_treelist_ptr[i+1] = function_call_args_ptr[i];
                     }
                     // et on remplace le TreeList
-                    treeFCall(tb, tree)->args.indices = new_treelist;
-                    treeFCall(tb, tree)->args.length++;
+                    treeFCall(tb, tree)->args = new_treelist;
 
+                    // On vide l'ancienne liste
+                    for (int i=0 ; i < function_call_nb_args ; i++) {
+                        function_call_args_ptr[i] = TREE_VOID;
+                    }
                     return tree;
                 }
                 else if (operator_index == 34) // opérateur >>
@@ -895,13 +906,16 @@ void affExpr(TreeBuffer* tb, TreeBufferIndex tree)
             printString(nom);
             printString("(");
 
-            for (int i = 0 ; i + 1 < treeFCall(tb, tree)->args.length ; i++)
+            TreeBufferIndex function_call_args = treeFCall(tb, tree)->args;
+            int function_call_nb_args = treelistLength(tb, function_call_args);
+
+            for (int i = 0 ; i + 1 < function_call_nb_args ; i++)
             {
-                affExpr(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i]);
+                affExpr(tb, treelistGet(tb, function_call_args)[i]);
                 printString(", ");
             }
-            if (treeFCall(tb, tree)->args.length > 0)
-                affExpr(tb, treelistGet(tb, treeFCall(tb, tree)->args)[treeFCall(tb, tree)->args.length - 1]);
+            if (function_call_nb_args > 0)
+                affExpr(tb, treelistGet(tb, function_call_args)[function_call_nb_args - 1]);
 
 
             printString(")");
@@ -943,19 +957,21 @@ void affExpr(TreeBuffer* tb, TreeBufferIndex tree)
 
         case TypeList:
         {
-            if (treeSntxTree(tb, tree)->treelist.length == 0)
-            {
+            TreeBufferIndex list = treeSntxTree(tb, tree)->treelist;
+            int treelist_length = treelistLength(tb, list);
+
+            if (treelist_length == 0) {
                 printString("[]");
             }
             else
             {
                 printString("[");
-                for (int i = 0 ; i < treeSntxTree(tb, tree)->treelist.length - 1 ; i++)
+                for (int i = 0 ; i < treelist_length - 1 ; i++)
                 {
-                    affExpr(tb, treelistGet(tb, treeSntxTree(tb, tree)->treelist)[i]);
+                    affExpr(tb, treelistGet(tb, list)[i]);
                     printString(", ");
                 }
-                affExpr(tb, treelistGet(tb, treeSntxTree(tb, tree)->treelist)[treeSntxTree(tb, tree)->treelist.length]);
+                affExpr(tb, treelistGet(tb, list)[treelist_length]);
                 printString("]");
             }
             return;
@@ -967,14 +983,17 @@ void affExpr(TreeBuffer* tb, TreeBufferIndex tree)
             printString(global_env->CONTAINERS->tab[treeContLit(tb, tree) ->container_type]);
             printString("(");
 
-            // boucle pour afficher chaque nom de champ et chaque expression associée
-            for (int i = 0 ; i < treeContLit(tb, tree) ->attributes.length ; i++)
-            {
-                printString(treeAttrLit(tb, treelistGet(tb, treeContLit(tb, tree)->attributes)[i])->name);
-                printString(": ");
-                affExpr(tb, treeAttrLit(tb, treelistGet(tb, treeContLit(tb, tree)->attributes)[i])->expr);
+            TreeBufferIndex attributes = treeContLit(tb, tree)->attributes;
+            int attributes_length = treelistLength(tb, attributes);
 
-                if (i < treeContLit(tb, tree)->attributes.length - 1)
+            // boucle pour afficher chaque nom de champ et chaque expression associée
+            for (int i = 0 ; i < attributes_length ; i++)
+            {
+                printString(treeAttrLit(tb, treelistGet(tb, attributes)[i])->name);
+                printString(": ");
+                affExpr(tb, treeAttrLit(tb, treelistGet(tb, attributes)[i])->expr);
+
+                if (i < attributes_length - 1)
                     printString(", ");
             }
             printString(")");

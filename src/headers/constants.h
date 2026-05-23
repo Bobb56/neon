@@ -1,7 +1,6 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#include <stdbool.h>
 
 #define VERSION "4.1"
 
@@ -9,7 +8,7 @@
 //#define EXPERIMENTAL
 
 // pour débugger
-//#define DEBUG
+// #define DEBUG
 
 
 #define SEQUENCE_ENTREE    ">> "
@@ -111,7 +110,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #define RED     2
 #define GREEN   3
 
-#define PI 3.141592653589793
+#define PI 3.14159265358979323
 
 #define UNIT ((void*)-1) // valeur de pointeur spéciale comme NULL
 

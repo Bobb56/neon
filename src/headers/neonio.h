@@ -10,6 +10,7 @@
 
 #include "constants.h"
 
+
 #ifdef DEBUG
     #include <stdio.h>
     #define debug(...)          printf(__VA_ARGS__)
@@ -18,12 +19,12 @@
 #endif
 
 
+
 #ifdef TI_EZ80
 typedef uint8_t NeStream;
 #else
 typedef FILE* NeStream;
 #endif
-
 
 
 

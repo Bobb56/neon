@@ -53,7 +53,7 @@ typedef struct TreeBuffer {
 #define GENERAL_INFO                    TreeType type; uint16_t line;
 #define TREE_ISVOID(tbi)                (tbi == (TreeBufferIndex)-1)
 #define TREE_AFFECT(left, right)        {TreeBufferIndex temp = right ; left = temp;}
-#define TREELIST_AFFECT(left, right)    {struct TreeList temp = right ; left = temp;}
+#define TREELIST_AFFECT(left, right)    {TreeBufferIndex temp = right ; left = temp;}
 #define TREE_TYPE(tb, tbi)              ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->type
 #define TREE_LINE(tb, tbi)              ((struct {GENERAL_INFO}*)(((tb)->pointer)+tbi))->line
 
@@ -77,11 +77,11 @@ typedef struct TreeBuffer {
 #define treeContLit(tb, tbi)            ((struct ContainerLit*)(((tb)->pointer) + tbi))
 #define treeAttrLit(tb, tbi)            ((struct AttributeLit*)(((tb)->pointer) + tbi))
 #define treeParCall(tb, tbi)            ((struct ParallelCall*)(((tb)->pointer) + tbi))
-#define treelistGet(tb, tl)             ((TreeBufferIndex*)(((tb)->pointer) + (tl).indices))
+#define treelistGet(tb, tl)             ((TreeBufferIndex*)(((tb)->pointer) + tl + sizeof(uint8_t) + sizeof(uint16_t)))
+#define treelistLength(tb, tl)          (*(uint16_t*)(((tb)->pointer) + tl + sizeof(uint8_t)))
 
 
-
-#define FOR_NBARGS(tb,tbi)        (treeFor(tb,tbi)->params.length)
+#define FOR_NBARGS(tb,tbi)        (treelistLength(tb, treeFor(tb, tbi)->params))
 #define FOR_ARG(tb,tbi, n)        (treelistGet(tb, treeFor(tb,tbi)->params)[n])
 
 
@@ -116,11 +116,6 @@ typedef uint8_t TreeType;
 
 
 
-struct TreeList {
-    TreeBufferIndex indices; /* Pointeur vers le début du tableau dans le TreeBuffer*/
-    uint16_t length;
-};
-
 struct BinaryOp {
     GENERAL_INFO
     int op;
@@ -142,7 +137,7 @@ struct ListIndex {
 struct ContainerLit {
     GENERAL_INFO
     int container_type;
-    struct TreeList attributes;
+    TreeBufferIndex attributes;
 };
 
 struct AttributeLit {
@@ -179,7 +174,7 @@ struct StatementIEW {
 struct StatementFor {
     GENERAL_INFO
     TreeBufferIndex block;
-    struct TreeList params;
+    TreeBufferIndex params;
 };
 
 
@@ -187,21 +182,21 @@ struct FunctionCall {
     GENERAL_INFO
     TreeBufferIndex function;
     NeObj function_obj;
-    struct TreeList args;
+    TreeBufferIndex args;
 };
 
 
 struct TryExcept {
     GENERAL_INFO
     TreeBufferIndex try_tree;
-    struct TreeList except_blocks;
+    TreeBufferIndex except_blocks;
 };
 
 struct FunctionDef {
     GENERAL_INFO
     char* name;
     NeObj object;
-    struct TreeList args;
+    TreeBufferIndex args;
 };
 
 struct Keyword {
@@ -212,17 +207,17 @@ struct Keyword {
 struct KWParam {
     GENERAL_INFO
     int code;
-    struct TreeList params;
+    TreeBufferIndex params;
 };
 
 struct SyntaxTree {
     GENERAL_INFO
-    struct TreeList treelist;
+    TreeBufferIndex treelist;
 };
 
 struct ExceptBlock {
     GENERAL_INFO
-    struct TreeList exceptions;
+    TreeBufferIndex exceptions;
     TreeBufferIndex block;
 };
 
@@ -234,19 +229,22 @@ struct ParallelCall {
 
 size_t type_size(TreeType type);
 
+#define TreeList_destroy(...)
+#define TreeListTemp_destroy(...)
+#define NeTree_destroy(...)
+
 int TreeBuffer_init(TreeBuffer*);
+void TreeBuffer_iter(TreeBuffer* tb, void (*function)(TreeBuffer*, TreeBufferIndex, void* arg), void* arg);
 void TreeBuffer_destroy(TreeBuffer* tb);
 void TreeBuffer_delete_all(ptrlist* tree_buffers);
 TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size);
-void TreeList_destroy(TreeBuffer* tb, struct TreeList* treelist);
-void NeTree_destroy(TreeBuffer* tb, TreeBufferIndex tree);
 
 TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line);
 void TreeListTemp_init(struct TreeListTemp* tree_list);
-void TreeListTemp_destroy(TreeBuffer* tb, struct TreeListTemp* list);
 void TreeListTemp_append(struct TreeListTemp* tree_list, TreeBufferIndex tree);
 void TreeListTemp_insert(struct TreeListTemp* tree_list, TreeBufferIndex tree, int index);
-struct TreeList TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list);
+TreeBufferIndex TreeList_alloc(TreeBuffer* tb, uint16_t length);
+TreeBufferIndex TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list);
 
 
 
