@@ -43,7 +43,6 @@ PointerType getPointerType(NeObj neo) {
         case TYPE_LIST: return NeListPtr;
         case TYPE_CONTAINER: return ContainerPtr;
         case TYPE_USERFUNC:
-        case TYPE_USERMETHOD:
             return UserFuncPtr;
         default: return -1;
     }
@@ -51,7 +50,12 @@ PointerType getPointerType(NeObj neo) {
 
 
 
-void write_number_value2(NeStream stream, intptr_t value) {
+// Fonctions pour lire/écrire des entiers de manière indépendante de l'endianness de manière légèrement compressée
+
+void write_number_value(NeStream stream, intptr_t signed_value) {
+    // Cast sans changer la représentation
+    uintptr_t value = *(uintptr_t*)&signed_value;
+
     uint8_t buffer[sizeof(intptr_t)] = {0};
     // Écriture de l'entier octet par octet dans un buffer de manière indépendante de l'endianness
     int i = 0;
@@ -62,7 +66,7 @@ void write_number_value2(NeStream stream, intptr_t value) {
     }
 
     // Calcul du nombre d'octets utilisés
-    int size = sizeof(intptr_t);
+    uint8_t size = sizeof(intptr_t);
     while (size >= 1 && buffer[size-1] == 0) size--;
 
     // Écriture du nombre d'octets utilisés
@@ -73,45 +77,35 @@ void write_number_value2(NeStream stream, intptr_t value) {
 }
 
 
-void write_number_value(NeStream stream, intptr_t value) {
-    NeStream_write(stream, &value, sizeof(intptr_t));
-}
+
 
 intptr_t read_number_value(NeStream stream) {
-    intptr_t value;
-    if (!NeStream_read(stream, &value, sizeof(intptr_t))) {
-        global_env->CODE_ERROR = 122;
-        return -1;
-    }
-    return value;
-}
-
-
-int min(int a, int b) {
-    if (a < b)
-        return a;
-    else
-        return b;
-}
-
-
-
-intptr_t read_number_value2(NeStream stream) {
     // On récupère le nombre d'octets sur lequel est stocké l'entier
     uint8_t size;
-    NeStream_read(stream, &size, 1);
+    if (!NeStream_read(stream, &size, 1)) {
+        global_env->CODE_ERROR = 122;
+        return 0;
+    }
+
+    // On prend garde à ne pas lire plus que la taille d'un intptr_t
+    if (size > sizeof(intptr_t))
+        size = sizeof(intptr_t);
 
     // Lecture des octets de l'entier dans le buffer
-    uint8_t buffer[sizeof(intptr_t)];
-    NeStream_read(stream, buffer, min(sizeof(intptr_t), size));
+    uint8_t buffer[sizeof(intptr_t)] = {0};
+    if (!NeStream_read(stream, buffer, size)) {
+        global_env->CODE_ERROR = 122;
+        return 0;
+    }
     
-    // Reconstitution de l'entier de manière indépendant de l'endianness
-    intptr_t value = 0;
+    // Reconstitution de l'entier de manière indépendante de l'endianness
+    uintptr_t value = 0;
     for (int i = size-1 ; i >= 0 ; i--) {
         value = (value << 8) | buffer[i];
     }
 
-    return value;
+    // Cast sans changer la représentation
+    return *(intptr_t*)&value;
 }
 
 
@@ -131,7 +125,7 @@ void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable) 
             intptrlist_append(ptrTable, obj.container->data);
             update_ptr_table_list(obj.container->data, ptrTable, typesTable);
         }
-        else if (NEO_TYPE(obj) == TYPE_USERFUNC || NEO_TYPE(obj) == TYPE_USERMETHOD) {
+        else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
             // Ajout du TreeBuffer
             TreeBuffer* tb = obj.userfunc->tree_buffer;
             if (intptrlist_index(ptrTable, tb) == -1) {
@@ -248,8 +242,10 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
                 struct ConstObj* tree = treeConst(tb, index);
                 memcpy(buffer, tree, sizeof(struct ConstObj));
                 struct ConstObj* copy = buffer;
-
-                copy->obj.integer = intptrlist_index(ptrTable, copy->obj.refc_ptr);
+                
+                if (NEO_TYPE(copy->obj) & HEAP_ALLOCATED) {
+                    copy->obj.integer = intptrlist_index(ptrTable, copy->obj.refc_ptr);
+                }
 
                 NeStream_write(stream, copy, sizeof(struct ConstObj));
                 index += sizeof(struct ConstObj);
@@ -262,7 +258,9 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
                 struct FunctionDef* copy = buffer;
 
                 copy->name = (char*)(intptr_t)intptrlist_index(ptrTable, copy->name);
-                copy->object.integer = intptrlist_index(ptrTable, copy->object.refc_ptr);
+                if (NEO_TYPE(copy->object) & HEAP_ALLOCATED) {
+                    copy->object.integer = intptrlist_index(ptrTable, copy->object.refc_ptr);
+                }
 
                 NeStream_write(stream, copy, sizeof(struct FunctionDef));
                 index += sizeof(struct FunctionDef);
@@ -274,7 +272,9 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
                 memcpy(buffer, tree, sizeof(struct FunctionCall));
                 struct FunctionCall* copy = buffer;
 
-                copy->function_obj.integer = intptrlist_index(ptrTable, copy->function_obj.refc_ptr);
+                if (NEO_TYPE(copy->function_obj) & HEAP_ALLOCATED) {
+                    copy->function_obj.integer = intptrlist_index(ptrTable, copy->function_obj.refc_ptr);
+                }
 
                 NeStream_write(stream, copy, sizeof(struct FunctionCall));
                 index += sizeof(struct FunctionCall);
@@ -387,6 +387,7 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
             }
 
             case UserFuncPtr: {
+                write_number_value(stream, ptr.userfunc->isMethod);
                 write_number_value(stream, ptr.userfunc->nbArgs);
                 write_number_value(stream, ptr.userfunc->nbOptArgs);
                 write_number_value(stream, ptr.userfunc->unlimited_arguments);
@@ -453,7 +454,7 @@ void neobject_serialize(NeStream stream, NeObj neo) {
 
 
 NeObj read_partial_neobject(NeStream stream) {
-    NeObj obj;
+    NeObj obj = NEO_VOID;
     if (!NeStream_read(stream, &obj.type, 1)) {
         global_env->CODE_ERROR = 122;
         return NEO_VOID;
@@ -612,6 +613,9 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
             }
 
             case UserFuncPtr: {
+                bool isMethod = read_number_value(stream);
+                return_on_error();
+
                 int nbArgs = read_number_value(stream);
                 return_on_error();
 
@@ -686,6 +690,11 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                     return;
                 }
 
+                fun->isMethod = isMethod;
+                fun->runningInstances = 0;
+                fun->myCopy = NULL;
+                fun->next = NEO_VOID;
+                fun->prev = NEO_VOID;
                 fun->args = args;
                 fun->nbArgs = nbArgs;
                 fun->nbOptArgs = nbOptArgs;
@@ -695,6 +704,9 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 fun->unlimited_arguments = unlimited_arguments;
                 fun->tree_buffer = (void*)tree_buffer;
                 fun->refc = 0;
+
+                // Ajout de la fonction au garbage collector
+                neo_userfunc_convert(fun);
 
                 intptrlist_append(ptrTable, fun);
                 intlist_append(typesTable, UserFuncPtr);
@@ -801,7 +813,7 @@ void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable) {
             neo->container->data = (NeList*)ptrTable->tab[(intptr_t)neo->container->data];
             solve_pointers_list(neo->container->data, ptrTable, typesTable);
         }
-        else if ((NEO_TYPE(*neo) == TYPE_USERFUNC || NEO_TYPE(*neo) == TYPE_USERMETHOD) && !ismarked(*neo)) {
+        else if ((NEO_TYPE(*neo) == TYPE_USERFUNC) && !ismarked(*neo)) {
             mark(*neo);
             neo->userfunc->opt_args = (NeList*)ptrTable->tab[(intptr_t)neo->userfunc->opt_args];
             solve_pointers_list(neo->userfunc->opt_args, ptrTable, typesTable);

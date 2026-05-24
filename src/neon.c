@@ -484,7 +484,7 @@ void loadFunctions(NeonEnv* env)
             .ptr = _setFunctionDoc_,
             .help = "Sets a string documentation for a user-defined function or method",
             .nbArgs = 2,
-            .typeArgs = (int[]){TYPE_UNSPECIFIED, TYPE_STRING},
+            .typeArgs = (int[]){TYPE_USERFUNC, TYPE_STRING},
             .typeRetour = TYPE_NONE
         },
         (Function) {

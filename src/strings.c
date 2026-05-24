@@ -643,7 +643,7 @@ int function_module(char* module, char* function) {
     global_env->CODE_ERROR = 0;
     neon_free(functionName);
 
-    if (n < 0 || (NEO_TYPE(global_env->ADRESSES->tab[n]) != TYPE_USERFUNC && NEO_TYPE(global_env->ADRESSES->tab[n]) != TYPE_USERMETHOD))
+    if (n < 0 || (NEO_TYPE(global_env->ADRESSES->tab[n]) != TYPE_USERFUNC))
         return -1;
 
     return n;

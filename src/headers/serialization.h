@@ -29,6 +29,9 @@ typedef union {
     void* pointer;
 } PointerUnion;
 
+void write_number_value2(NeStream stream, intptr_t value);
+intptr_t read_number_value2(NeStream stream);
+
 NeObj neobject_deserialize(NeStream stream);
 void neobject_serialize(NeStream stream, NeObj neo);
 

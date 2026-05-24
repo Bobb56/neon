@@ -1,10 +1,30 @@
+#include "headers/constants.h"
 #include "headers/contexts.h"
+#include "headers/neobj.h"
 #include "headers/neonio.h"
 #include "headers/objects.h"
 #include "headers/gc.h"
 #include "headers/neon.h"
 #include "headers/errors.h"
 #include "headers/processcycle.h"
+
+// Cette fonction implémente une exception lors de la suppression d'objets dans une garbage collection
+// Parfois, certains objets, bien qu'ils soient dans le garbage collector et éligibles à la suppression car rien ne pointe sur eux, le runtime a encore besoin qu'ils vivent pour fonctionner correctement
+// Exemple : Cela pourrait arriver qu'une UserFunc en cours d'exécution soit supprimée car deviendrait inaccessible depuis le runtime, mais cette fonction a quand même besoin de vivre jusqu'à la fin de son exécution
+bool gc_excluded(NeObj neo) {
+    if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        if (neo.userfunc->runningInstances > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        return false;
+    }
+}
+
 
 
 // récupère l'objet d'après dans la liste chaînée
@@ -16,6 +36,10 @@ NeObj get_next(const NeObj obj) {
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         NeList* l = neo_to_list(obj);
         return l->next;
+    }
+    else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(obj);
+        return f->next;
     }
     else {
         return NEO_VOID;
@@ -31,6 +55,10 @@ NeObj get_prev(const NeObj obj) {
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         NeList* l = neo_to_list(obj);
         return l->prev;
+    }
+    else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(obj);
+        return f->prev;
     }
     else {
         return NEO_VOID;
@@ -49,6 +77,10 @@ void set_next(NeObj obj, NeObj next) {
         NeList* l = neo_to_list(obj);
         l->next = next;
     }
+    else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(obj);
+        f->next = next;
+    }
 }
 
 void set_prev(NeObj obj, NeObj prev) {
@@ -59,6 +91,10 @@ void set_prev(NeObj obj, NeObj prev) {
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         NeList* l = neo_to_list(obj);
         l->prev = prev;
+    }
+    else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(obj);
+        f->prev = prev;
     }
 }
 
@@ -100,6 +136,20 @@ void gc_remove_nelist(NeList* l) {
 }
 
 
+void gc_remove_userfunc(UserFunc* f) {
+    if (neo_is_void(f->prev)) { // c'est le premier élément de la chaîne
+        global_env->OBJECTS_LIST = f->next;
+        if (!neo_is_void(global_env->OBJECTS_LIST))
+            set_prev(global_env->OBJECTS_LIST, NEO_VOID);
+    }
+    else {
+        set_next(f->prev, f->next);
+
+        if (!neo_is_void(f->next))
+            set_prev(f->next, f->prev);
+    }
+}
+
 
 // comme les objets qu'on a ajoutés ont subi un neo_copy, il faut les supprimer proprement
 void gc_free_objects_list(void) {
@@ -119,7 +169,7 @@ void nelist_partial_destroy(NeList* list) {
     for (int i=0 ; i < list->len ; i++) {
         // si l'objet est soit une feuille, soit une liste ou un container encore accessible depuis adresses
         // les objets ne vérifiant pas cette condition sont les objets qui sont à supprimer dans global_env->OBJECTS_LIST
-        if ((NEO_TYPE(list->tab[i]) != TYPE_CONTAINER && NEO_TYPE(list->tab[i]) != TYPE_LIST) || ismarked(list->tab[i])) {
+        if ((NEO_TYPE(list->tab[i]) != TYPE_CONTAINER && NEO_TYPE(list->tab[i]) != TYPE_LIST && NEO_TYPE(list->tab[i]) != TYPE_USERFUNC) || ismarked(list->tab[i])) {
             neobject_destroy(list->tab[i]);
         }
     }
@@ -137,6 +187,10 @@ void neobject_partial_destroy(NeObj neo)
     else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
         Container* c = neo_to_container(neo);
         nelist_partial_destroy(c->data);
+    }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(neo);
+        nelist_partial_destroy(f->opt_args);
     }
     // on ne peut pas finir la suppression totale de l'objet car on a besoin de démarquer à la fin tous les objets
 }
@@ -168,6 +222,11 @@ void gc_mark(NeObj obj) {
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         mark(obj);
         gc_nelist_mark(neo_to_list(obj));
+    }
+    else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
+        mark(obj);
+        UserFunc* f = neo_to_userfunc(obj);
+        gc_nelist_mark(f->opt_args);
     }
 }
 
@@ -222,7 +281,6 @@ void print_objects_list(void) {
 
 // implémentation de l'algorithme Mark & Sweep
 void gc_mark_and_sweep(void) {
-
     if (neo_is_void(global_env->OBJECTS_LIST))
         return;
 
@@ -234,8 +292,8 @@ void gc_mark_and_sweep(void) {
     // on fait une première passe dans laquelle on supprime de manière non récursive les objets présents
     for (NeObj ptr = global_env->OBJECTS_LIST ; !neo_is_void(ptr) ; ptr = get_next(ptr)) {
 
-        if (!ismarked(ptr)) {
-            // l'objet n'est pas marqué, on va donc devoir nous en débarrasser
+        if (!ismarked(ptr) && !gc_excluded(ptr)) {
+            // l'objet n'est pas marqué, et n'est pas exclu de suppression, on va donc devoir nous en débarrasser
             // on commence par supprimer les objets qu'il contient avec une profondeur de 1.
             // en effet :
             // - soit c'est un objet accessible depuis ADRESSES, auquel cas il faut juste décrémenter son compteur de références
@@ -259,6 +317,10 @@ void gc_mark_and_sweep(void) {
             prev = ptr;
             next = get_next(prev);
         }
+        else if (gc_excluded(ptr)) { // Si l'objet est exclu de suppression, on passe juste au suivant
+            prev = ptr;
+            next = get_next(prev);
+        }
         else { // l'objet n'est pas marqué, on va donc devoir nous en débarrasser
             // on fait pointer prev sur next(ptr) au lieu de ptr et next sur prev au lieu de ptr
             next = get_next(ptr);
@@ -279,6 +341,15 @@ void gc_mark_and_sweep(void) {
                 neon_free(c->data->tab);
                 neon_free(c->data);
                 neon_free(c);
+            }
+            else if (NEO_TYPE(ptr) == TYPE_USERFUNC) {
+                UserFunc* f = neo_to_userfunc(ptr);
+                neon_free(f->opt_args->tab);
+                neon_free(f->opt_args);
+                if (f->doc != NULL)
+                    neon_free(f->doc);
+                neon_free(f->args);
+                neon_free(f);
             }
             else if (NEO_TYPE(ptr) == TYPE_LIST) {
                 NeList* list = neo_to_list(ptr);
@@ -319,6 +390,15 @@ void gc_final_sweep(void) {
             neon_free(c->data->tab);
             neon_free(c->data);
             neon_free(c);
+        }
+        else if (NEO_TYPE(ptr) == TYPE_USERFUNC) {
+            UserFunc* f = neo_to_userfunc(ptr);
+            neon_free(f->opt_args->tab);
+            neon_free(f->opt_args);
+            if (f->doc != NULL)
+                neon_free(f->doc);
+            neon_free(f->args);
+            neon_free(f);
         }
         else if (NEO_TYPE(ptr) == TYPE_LIST) {
             NeList* list = neo_to_list(ptr);

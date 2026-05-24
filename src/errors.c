@@ -107,7 +107,7 @@ static const char* error_messages[NB_ERRORS] = {
     "':=' outside function call or function definition",
     "Bad arguments definition in function definition",
     "Use of '...' outside function definition",
-    "Can only set a documentation for a user-defined function or method",
+    "",
     "Use of return outside function",
     "Can only call a user-defined function in parallel",
     "await takes exactly one argument",

@@ -9,6 +9,7 @@ void gc_free_objects_list(void);
 void gc_add_deep_object(const NeObj neo);
 void gc_remove_container(Container* c);
 void gc_remove_nelist(NeList* l);
+void gc_remove_userfunc(UserFunc* f);
 void neobject_partial_destroy(NeObj neo);
 void nelist_partial_destroy(NeList* neo);
 void gc_nelist_mark(NeList* list);

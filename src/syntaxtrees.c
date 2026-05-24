@@ -1318,10 +1318,10 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
             return TREE_VOID;
         }
         else
-            partial_func = userFuncCreate(liste, functionBody, functionBody->entry_point, liste_index, unlimited_arguments, nbOptArgs, NULL, TYPE_USERMETHOD); // objet destiné à être dans l'arbre
+            partial_func = neo_partialfunc_create(liste, functionBody, functionBody->entry_point, liste_index, unlimited_arguments, nbOptArgs, true); // objet destiné à être dans l'arbre
     }
     else {
-        partial_func = userFuncCreate(liste, functionBody, functionBody->entry_point, liste_index, unlimited_arguments, nbOptArgs, NULL, TYPE_USERFUNC); // objet destiné à être dans l'arbre
+        partial_func = neo_partialfunc_create(liste, functionBody, functionBody->entry_point, liste_index, unlimited_arguments, nbOptArgs, false); // objet destiné à être dans l'arbre
     }
 
     return NeTree_make_functiondef(tb, tokdup(name), opt_args, partial_func, lines->tab[offset]);

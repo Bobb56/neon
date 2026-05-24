@@ -333,12 +333,12 @@ NeObj _help_(NeList* args)
 
         for (int i = 0 ; i < args->len ; i++) { // boucle pour afficher l'aide de chaque objet
 
-            if (NEO_TYPE(ARG(i)) == TYPE_USERFUNC || NEO_TYPE(ARG(i)) == TYPE_USERMETHOD)
+            if (NEO_TYPE(ARG(i)) == TYPE_USERFUNC)
             {
                 // type userfunc
                 UserFunc* fun = neo_to_userfunc(ARG(i));
 
-                if (NEO_TYPE(ARG(i)) == TYPE_USERMETHOD)
+                if (neo_isMethod(ARG(i)))
                     printString("method ");
                 else
                     printString("function ");
@@ -1099,10 +1099,6 @@ NeObj _writeFile_(NeList* args)
 
 
 NeObj _setFunctionDoc_(NeList* args) {
-    if (NEO_TYPE(ARG(0)) != TYPE_USERFUNC && NEO_TYPE(ARG(0)) != TYPE_USERMETHOD) {
-        global_env->CODE_ERROR = 98;
-        return NEO_VOID;
-    }
     UserFunc* fun = neo_to_userfunc(ARG(0));
 
     if (fun->doc != NULL)

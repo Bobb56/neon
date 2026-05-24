@@ -203,7 +203,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #define TYPE_SYNTAXTREE         47
 
 #define TYPE_BUILTINFUNC        48
-#define TYPE_USERMETHOD         (49 | HEAP_ALLOCATED)
+#define TYPE_PARTIALFUNC        (49 | HEAP_ALLOCATED)
 #define TYPE_USERFUNC           (50 | HEAP_ALLOCATED)
 #define TYPE_CONTAINER          (51 | HEAP_ALLOCATED)
 #define TYPE_ATTRIBUTE          52

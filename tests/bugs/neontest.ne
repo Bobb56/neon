@@ -126,7 +126,8 @@ end
 
 function main(args) do
     screen = Screen~create (
-        ["ackermann",
+        [
+            "ackermann",
             "arbres",
             "atomic",
             "banque_parsing",

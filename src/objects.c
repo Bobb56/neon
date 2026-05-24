@@ -494,14 +494,22 @@ Function* neo_to_function(NeObj neo) {
 
 ////////////////////// TYPE_USERFUNC ///////////////////////
 
+bool neo_isMethod(NeObj obj) {
+    if (NEO_TYPE(obj) != TYPE_USERFUNC)
+        return false;
+
+    return obj.userfunc->isMethod;
+}
+
 UserFunc* neo_to_userfunc(NeObj neo) {
     return neo.userfunc;
 }
 
 
-NeObj userFuncCreate(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, uint8_t type)
-{
+UserFunc* userfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, bool isMethod) {
     UserFunc* fun = neon_malloc(sizeof(UserFunc));
+    fun->isMethod = isMethod;
+    fun->runningInstances = 0;
     fun->args = args;
     fun->code = code;
     fun->tree_buffer = tree_buffer;
@@ -511,9 +519,32 @@ NeObj userFuncCreate(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, i
     fun -> unlimited_arguments = unlimited_arguments;
     fun->doc = NULL;
     fun->refc = 1;
+    fun->myCopy = NULL;
+    fun->next = NEO_VOID;
+    fun->prev = NEO_VOID;
+    return fun;
+}
 
-    NeObj neo = neobject_create(type);
-    neo.userfunc = fun;    
+
+NeObj neo_userfunc_convert(UserFunc* fun) {
+    NeObj obj = neobject_create(TYPE_USERFUNC);
+    obj.userfunc = fun;
+    gc_add_deep_object(obj);
+    return obj;
+}
+
+
+NeObj gc_extern_neo_userfunc_convert(UserFunc* fun) {
+    NeObj obj = neobject_create(TYPE_USERFUNC);
+    obj.userfunc = fun;
+    return obj;
+}
+
+
+NeObj neo_partialfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, bool isMethod) {
+    UserFunc* fun = userfunc_create(args, tree_buffer, code, nbArgs, unlimited_arguments, nbOptArgs, NULL, isMethod);
+    NeObj neo = neobject_create(TYPE_PARTIALFUNC);
+    neo.userfunc = fun;
     return neo;
 }
 
@@ -521,24 +552,28 @@ NeObj userFuncCreate(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, i
 
 // cette fonction prend en entrée une userFunc pas encore définie (donc opt_args = NULL), et renvoie une nouvelle fonction
 // qui correspond à la userfunc définie
-NeObj userFuncDefine(NeObj obj, NeList* opt_args) {
+NeObj neo_userfunc_define(NeObj obj, NeList* opt_args) {
     UserFunc* fun = neo_to_userfunc(obj);
-    Var* args = neon_malloc(sizeof(Var) * fun->nbArgs);
 
-    // copie des global_env->NOMS de variable des arguments
-    for (int i = 0 ; i < fun->nbArgs ; i++)
+    Var* args = neon_malloc(sizeof(Var) * fun->nbArgs);
+    for (int i=0 ; i < fun->nbArgs ; i++)
         args[i] = fun->args[i];
 
-    return userFuncCreate(args, fun->tree_buffer, fun->code, fun->nbArgs, fun->unlimited_arguments, fun->nbOptArgs, opt_args, NEO_TYPE(obj));
+    UserFunc* new_fun = userfunc_create(args, fun->tree_buffer, fun->code, fun->nbArgs, fun->unlimited_arguments, fun->nbOptArgs, opt_args, fun->isMethod);
+
+    return neo_userfunc_convert(new_fun);
 }
 
+void partialfunc_destroy(UserFunc* fun) {
+    neon_free(fun->args);
+    neon_free(fun);
+}
 
 void userfunc_destroy(UserFunc* fun) {
     if (fun->doc != NULL)
         neon_free(fun->doc);
     neon_free(fun->args);
-    if (fun->opt_args != NULL)
-        nelist_destroy(fun->opt_args);
+    nelist_destroy(fun->opt_args);
     neon_free(fun);
 }
 
@@ -986,8 +1021,7 @@ int nelist_index2(NeList* l, NeObj neo)
 Cette fonction doit absolument recevoir une liste valide, car on va directement copier l'objet pour l'ajouter
 au garbage collector
 */
-NeObj neo_list_convert(NeList* list)
-{
+NeObj neo_list_convert(NeList* list) {
     NeObj neo = neobject_create(TYPE_LIST);
     neo.nelist = list;
 
@@ -1106,6 +1140,10 @@ void mark_as_already_copied(NeObj neo, void* copy) {
         Container* original = neo_to_container(neo);
         original->myCopy = copy;
     }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* original = neo_to_userfunc(neo);
+        original->myCopy = copy;
+    }
     // les autres types d'objets ne sont pas sensibles aux dépendances de pointeurs
 }
 
@@ -1121,6 +1159,13 @@ NeObj get_previous_copy(NeObj neo) {
         Container* container = neo_to_container(neo);
         if (container->myCopy != UNIT && container->myCopy != NULL)
             return gc_extern_neo_container_convert(container->myCopy);
+        else
+            return NEO_VOID;
+    }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* function = neo_to_userfunc(neo);
+        if (function->myCopy != UNIT && function->myCopy != NULL)
+            return gc_extern_neo_userfunc_convert(function->myCopy);
         else
             return NEO_VOID;
     }
@@ -1224,6 +1269,28 @@ NeObj neo_dup(NeObj neo) {
         return neo_container_convert(copied_cntr); // et c'est le moment où on l'ajoute au GC
     }
 
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* original_func = neo_to_userfunc(neo);
+
+        // Copie de args
+        Var* args_copy = neon_malloc(sizeof(Var) * original_func->nbArgs);
+        for (int i=0 ; i < original_func->nbArgs ; i++)
+            args_copy[i] = original_func->args[i];
+
+        // Création de l'objet
+        UserFunc* copied_func = userfunc_create(args_copy, original_func->tree_buffer, original_func->code, original_func->nbArgs, original_func->unlimited_arguments, original_func->nbOptArgs, nelist_create(original_func->opt_args->len), original_func->isMethod);
+
+        if (original_func->doc != NULL)
+            copied_func->doc = strdup(original_func->doc);
+
+        mark_as_already_copied(neo, copied_func);
+
+        for (int i = 0 ; i < original_func->opt_args->len ; i++)
+            copied_func->opt_args->tab[i] = neo_dup(nelist_nth(original_func->opt_args, i));
+
+        return neo_userfunc_convert(copied_func); // et c'est le moment où on l'ajoute au GC
+    }
+
     else
         return neo_copy(neo);
     
@@ -1246,7 +1313,7 @@ int neobject_getsize(NeObj neo) {
             return sizeof(NeObj) + sizeof(Function) + sizeof(int) * neo.function->nbArgs + strlen(neo.function->help) + 1;
         }
 
-        else if (NEO_TYPE(neo) == TYPE_USERFUNC || NEO_TYPE(neo) == TYPE_USERMETHOD) {
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
             return sizeof(NeObj) + sizeof(UserFunc) + sizeof(Var) * neo.userfunc->nbArgs + nelist_getsize(neo.userfunc->opt_args);
         }
 
@@ -1290,7 +1357,13 @@ void general_neobject_destroy(NeObj neo, bool gc_extern)
                 function_destroy(neo.function);
             }
 
-            else if (NEO_TYPE(neo) == TYPE_USERFUNC || NEO_TYPE(neo) == TYPE_USERMETHOD) {
+            else if (NEO_TYPE(neo) == TYPE_PARTIALFUNC) {
+                partialfunc_destroy(neo.userfunc);
+            }
+
+            else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+                if (!gc_extern)
+                    gc_remove_userfunc(neo.userfunc);
                 userfunc_destroy(neo.userfunc);
             }
 
@@ -1354,10 +1427,10 @@ void neobject_aff(NeObj neo)
             printString("<built-in function>");
         }
 
-        else if (NEO_TYPE(neo) == TYPE_USERFUNC || NEO_TYPE(neo) == TYPE_USERMETHOD) {
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
             UserFunc* fun = neo_to_userfunc(neo);
 
-            if (NEO_TYPE(neo) == TYPE_USERMETHOD)
+            if (neo_isMethod(neo))
                 printString("method ");
             else
                 printString("function ");
@@ -1470,10 +1543,10 @@ char* neobject_str(NeObj neo)
             ret = strdup("<built-in function>");
         }
 
-        else if (NEO_TYPE(neo) == TYPE_USERFUNC || NEO_TYPE(neo) == TYPE_USERMETHOD) {
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
             UserFunc* fun = neo_to_userfunc(neo);
 
-            if (NEO_TYPE(neo) == TYPE_USERMETHOD)
+            if (neo_isMethod(neo))
                 ret = "method ";
             else
                 ret = "function ";
@@ -1560,11 +1633,12 @@ char* type(NeObj neo)
     if (NEO_TYPE(neo) == TYPE_LIST)
         return "List";
 
-    if (NEO_TYPE(neo) == TYPE_USERFUNC)
-        return "Function";
-
-    if (NEO_TYPE(neo) == TYPE_USERMETHOD)
-        return "Method";
+    if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        if (neo_isMethod(neo))
+            return "Method";
+        else
+            return "Function";
+    }
 
     if (NEO_TYPE(neo) == TYPE_EXCEPTION)
         return "Exception";
@@ -1694,11 +1768,14 @@ bool neo_equal(NeObj _op1, NeObj _op2)
         }
     }
 
-    else if (NEO_TYPE(_op1) == TYPE_USERFUNC || NEO_TYPE(_op1) == TYPE_USERMETHOD)
+    else if (NEO_TYPE(_op1) == TYPE_USERFUNC)
     {
-        if (NEO_TYPE(_op2) == TYPE_USERFUNC || NEO_TYPE(_op2) == TYPE_USERMETHOD)
+        if (NEO_TYPE(_op2) == TYPE_USERFUNC)
         {
-            return _op1.userfunc->code == _op2.userfunc->code && _op1.userfunc->tree_buffer == _op2.userfunc->tree_buffer && nelist_equal(_op1.userfunc->opt_args, _op2.userfunc->opt_args);
+                return  _op1.userfunc->isMethod == _op2.userfunc->isMethod &&
+                        _op1.userfunc->code == _op2.userfunc->code &&
+                        _op1.userfunc->tree_buffer == _op2.userfunc->tree_buffer &&
+                        nelist_equal(_op1.userfunc->opt_args, _op2.userfunc->opt_args);
         }
         else
         {
@@ -1828,6 +1905,10 @@ void mark(NeObj neo) {
         NeList* l = neo_to_list(neo);
         l->myCopy = UNIT;
     }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(neo);
+        f->myCopy = UNIT;
+    }
 }
 
 void unmark(NeObj neo) {
@@ -1839,6 +1920,10 @@ void unmark(NeObj neo) {
         NeList* l = neo_to_list(neo);
         l->myCopy = NULL;
     }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(neo);
+        f->myCopy = NULL;
+    }
 }
 
 bool ismarked(NeObj neo) {
@@ -1849,6 +1934,10 @@ bool ismarked(NeObj neo) {
     else if (NEO_TYPE(neo) == TYPE_LIST) {
         NeList* l = neo_to_list(neo);
         return l->myCopy;
+    }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(neo);
+        return f->myCopy;
     }
     return false;
 }
@@ -1864,6 +1953,8 @@ void recursive_unmark(NeObj neo) {
             list = neo_to_list(neo);
         else if (NEO_TYPE(neo) == TYPE_CONTAINER)
             list = neo_to_container(neo)->data;
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC)
+            list = neo_to_userfunc(neo)->opt_args;
         else
             return;
 
