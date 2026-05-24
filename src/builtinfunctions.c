@@ -370,10 +370,10 @@ NeObj _help_(NeList* args)
                         char* nom = get_name(fun->args[i]);
                         printString(nom);
 
-                        if (!neo_is_void(fun->opt_args->tab[i])) // expression non vide
+                        if (!neo_is_void(nelist_nth(fun->opt_args, i))) // expression non vide
                         {
                             printString(" := ");
-                            neobject_aff(fun->opt_args->tab[i]);
+                            neobject_aff(nelist_nth(fun->opt_args, i));
                         }
                     }
 

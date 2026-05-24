@@ -5,6 +5,7 @@
 #include "headers/neonio.h"
 #include "headers/objects.h"
 #include "headers/errors.h"
+#include "headers/sidememory.h"
 #include "headers/trees.h"
 #include "headers/neon.h"
 
@@ -48,11 +49,43 @@ PointerType getPointerType(NeObj neo) {
     }
 }
 
-void write_number_value(NeStream stream, intptr_t value) {
-    uint8_t size = strnlen((char*)&value, sizeof(intptr_t));
+
+
+void write_number_value2(NeStream stream, intptr_t value) {
+    uint8_t buffer[sizeof(intptr_t)] = {0};
+    // Écriture de l'entier octet par octet dans un buffer de manière indépendante de l'endianness
+    int i = 0;
+    while (value != 0) {
+        buffer[i] = value & 0xff; // On récupère les 8 bits de poids faible
+        value = value >> 8; // On enlève les 8 bits de poids faible
+        i++;
+    }
+
+    // Calcul du nombre d'octets utilisés
+    int size = sizeof(intptr_t);
+    while (size >= 1 && buffer[size-1] == 0) size--;
+
+    // Écriture du nombre d'octets utilisés
     NeStream_write(stream, &size, 1);
-    NeStream_write(stream, &value, size);
+
+    // Écriture du bon nombre d'octets dans le buffer
+    NeStream_write(stream, buffer, size);
 }
+
+
+void write_number_value(NeStream stream, intptr_t value) {
+    NeStream_write(stream, &value, sizeof(intptr_t));
+}
+
+intptr_t read_number_value(NeStream stream) {
+    intptr_t value;
+    if (!NeStream_read(stream, &value, sizeof(intptr_t))) {
+        global_env->CODE_ERROR = 122;
+        return -1;
+    }
+    return value;
+}
+
 
 int min(int a, int b) {
     if (a < b)
@@ -63,16 +96,22 @@ int min(int a, int b) {
 
 
 
-intptr_t read_number_value(NeStream stream) {
+intptr_t read_number_value2(NeStream stream) {
+    // On récupère le nombre d'octets sur lequel est stocké l'entier
     uint8_t size;
+    NeStream_read(stream, &size, 1);
+
+    // Lecture des octets de l'entier dans le buffer
+    uint8_t buffer[sizeof(intptr_t)];
+    NeStream_read(stream, buffer, min(sizeof(intptr_t), size));
+    
+    // Reconstitution de l'entier de manière indépendant de l'endianness
     intptr_t value = 0;
-    if (NeStream_read(stream, &size, 1) && NeStream_read(stream, &value, min(size, sizeof(intptr_t)))) {
-        return value;
+    for (int i = size-1 ; i >= 0 ; i--) {
+        value = (value << 8) | buffer[i];
     }
-    else {
-        global_env->CODE_ERROR = 122;
-        return 0;
-    }
+
+    return value;
 }
 
 
@@ -107,7 +146,7 @@ void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable) 
             // Ajout des arguments optionnels
             NeList* opt_args = obj.userfunc->opt_args;
             if (intptrlist_index(ptrTable, opt_args) == -1) {
-                intlist_append(typesTable, NeListPtr);
+                intlist_append(typesTable, NeListPtr | GC_EXTERN);
                 intptrlist_append(ptrTable, opt_args);
                 update_ptr_table_list(opt_args, ptrTable, typesTable);
             }
@@ -143,8 +182,7 @@ void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, void* args) {
             break;
         
         case TypeFunctioncall:
-            if (!neo_is_void(treeFCall(tb, tree)->function_obj))
-                update_ptr_table_obj(treeFCall(tb, tree)->function_obj, ptrTable, typesTable);
+            update_ptr_table_obj(treeFCall(tb, tree)->function_obj, ptrTable, typesTable);
             break;
         
         case TypeAttribute:
@@ -166,15 +204,8 @@ void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, void* args) {
 
 
 
-// Pour sérialiser l'arbre, on crée un buffer de la taille de l'arbre, on modifie les champs qu'on veut, puis on écrit le buffer dans le fichier
-void NeTree_serialize(NeStream stream, uint8_t** pointer, intptrlist* ptrTable, intlist* typesTable) {
-    
-}
 
-
-
-
-void serialize_partial_neobject(NeStream stream, NeObj neo, intptrlist* ptrTable) {
+void serialize_partial_neobject_opt(NeStream stream, NeObj neo, intptrlist* ptrTable) {
     NeStream_write(stream, &neo.type, 1);
     if (NEO_TYPE(neo) & HEAP_ALLOCATED) {
         intptr_t index = intptrlist_index(ptrTable, neo.refc_ptr);
@@ -184,6 +215,123 @@ void serialize_partial_neobject(NeStream stream, NeObj neo, intptrlist* ptrTable
         write_number_value(stream, neo.integer);
     }
 }
+
+
+void serialize_partial_neobject(NeStream stream, NeObj neo, intptrlist* ptrTable) {
+    NeStream_write(stream, &neo.type, 1);
+    if (NEO_TYPE(neo) & HEAP_ALLOCATED) {
+        neo.integer = intptrlist_index(ptrTable, neo.refc_ptr);
+    }
+    NeStream_write(stream, &neo.integer, sizeof(intptr_t));
+}
+
+
+
+
+
+// Cette fonction écrit exactement tb->size octets, donc aucune compression des indices de la table
+void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptrTable) {
+    void* buffer = neon_malloc(100); // Plus grand que n'importe quelle structure d'arbre (taille max atteinte avec FunctionDef sur Linux x86 = 40 octets)
+    TreeBufferIndex index = 0;
+    while (index < tb->size) {
+        switch (BYTE(tb, index)) {
+            case TypeTreeList: {
+                // Calcul de la taille totale du bloc de la TreeList
+                int treelist_size = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(TreeBufferIndex) * treelistLength(tb, index);
+                // Écriture de la TreeList telle quelle
+                NeStream_write(stream, tb->pointer + index, treelist_size);
+                index += treelist_size;
+                break;
+            }
+
+            case TypeConst: {
+                struct ConstObj* tree = treeConst(tb, index);
+                memcpy(buffer, tree, sizeof(struct ConstObj));
+                struct ConstObj* copy = buffer;
+
+                copy->obj.integer = intptrlist_index(ptrTable, copy->obj.refc_ptr);
+
+                NeStream_write(stream, copy, sizeof(struct ConstObj));
+                index += sizeof(struct ConstObj);
+                break;
+            }
+
+            case TypeFunctiondef: {
+                struct FunctionDef* tree = treeFDef(tb, index);
+                memcpy(buffer, tree, sizeof(struct FunctionDef));
+                struct FunctionDef* copy = buffer;
+
+                copy->name = (char*)(intptr_t)intptrlist_index(ptrTable, copy->name);
+                copy->object.integer = intptrlist_index(ptrTable, copy->object.refc_ptr);
+
+                NeStream_write(stream, copy, sizeof(struct FunctionDef));
+                index += sizeof(struct FunctionDef);
+                break;
+            }
+
+            case TypeFunctioncall: {
+                struct FunctionCall* tree = treeFCall(tb, index);
+                memcpy(buffer, tree, sizeof(struct FunctionCall));
+                struct FunctionCall* copy = buffer;
+
+                copy->function_obj.integer = intptrlist_index(ptrTable, copy->function_obj.refc_ptr);
+
+                NeStream_write(stream, copy, sizeof(struct FunctionCall));
+                index += sizeof(struct FunctionCall);
+                break;
+            }
+
+            case TypeAttribute: {
+                struct Attribute* tree = treeAttr(tb, index);
+                memcpy(buffer, tree, sizeof(struct Attribute));
+                struct Attribute* copy = buffer;
+
+                copy->name = (char*)(intptr_t)intptrlist_index(ptrTable, copy->name);
+
+                NeStream_write(stream, copy, sizeof(struct Attribute));
+                index += sizeof(struct Attribute);
+                break;
+            }
+
+            case TypeAttributeLit: {
+                struct AttributeLit* tree = treeAttrLit(tb, index);
+                memcpy(buffer, tree, sizeof(struct AttributeLit));
+                struct AttributeLit* copy = buffer;
+
+                copy->name = (char*)(intptr_t)intptrlist_index(ptrTable, copy->name);
+
+                NeStream_write(stream, copy, sizeof(struct AttributeLit));
+                index += sizeof(struct AttributeLit);
+                break;
+            }
+
+            case TypeParallelCall: {
+                struct ParallelCall* tree = treeParCall(tb, index);
+                memcpy(buffer, tree, sizeof(struct ParallelCall));
+                struct ParallelCall* copy = buffer;
+
+                copy->expr_buffer = (TreeBuffer*)(intptr_t)intptrlist_index(ptrTable, copy->expr_buffer);
+
+                NeStream_write(stream, copy, sizeof(struct ParallelCall));
+                index += sizeof(struct ParallelCall);
+                break;
+            }
+
+
+            default: {
+                int tree_size = type_size(TREE_TYPE(tb, index));
+                NeStream_write(stream, tb->pointer + index, tree_size);
+                index += tree_size;
+                break;
+            }
+        }
+    }
+    neon_free(buffer);
+}
+
+
+
+
 
 /*
 Format :
@@ -223,7 +371,7 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
 
                 // Écriture de chaque NeObject
                 for (int j = 0 ; j < ptr.nelist->len ; j++) {
-                    serialize_partial_neobject(stream, ptr.nelist->tab[j], ptrTable);
+                    serialize_partial_neobject_opt(stream, ptr.nelist->tab[j], ptrTable);
                 }
                 break;
             }
@@ -238,6 +386,29 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
                 break;
             }
 
+            case UserFuncPtr: {
+                write_number_value(stream, ptr.userfunc->nbArgs);
+                write_number_value(stream, ptr.userfunc->nbOptArgs);
+                write_number_value(stream, ptr.userfunc->unlimited_arguments);
+                for (int i=0 ; i < ptr.userfunc->nbArgs ; i++) {
+                    write_number_value(stream, ptr.userfunc->args[i]);
+                }
+
+                if (ptr.userfunc->doc == NULL) {
+                    write_number_value(stream, -1);
+                }
+                else {
+                    int size = strlen(ptr.userfunc->doc) + 1;
+                    write_number_value(stream, size);
+                    NeStream_write(stream, ptr.userfunc->doc, size);
+                }
+                
+                NeStream_write(stream, &ptr.userfunc->code, sizeof(TreeBufferIndex));
+                write_number_value(stream, intptrlist_index(ptrTable, ptr.userfunc->tree_buffer));
+                write_number_value(stream, intptrlist_index(ptrTable, ptr.userfunc->opt_args));
+                break;
+            }
+
             case TreeBufferPtr: {
                 // Écriture du nombre de blocs
                 write_number_value(stream, ptr.treebuffer->n_blocks);
@@ -248,9 +419,11 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
                 // Écriture de la taille du TreeBuffer
                 write_number_value(stream, ptr.treebuffer->size);
 
+                // Écriture de l'entry point
+                NeStream_write(stream, &ptr.treebuffer->entry_point, sizeof(TreeBufferIndex));
+
                 // Écriture des données (size octets)
-                
-                
+                serialize_treebuffer_block(stream, ptr.treebuffer, ptrTable);
             }
         }
     }
@@ -269,7 +442,7 @@ void neobject_serialize(NeStream stream, NeObj neo) {
     update_ptr_table_obj(neo, &ptrTable, &typesTable);
 
     serialize_all_pointers(stream, &ptrTable, &typesTable);
-    serialize_partial_neobject(stream, neo, &ptrTable);
+    serialize_partial_neobject_opt(stream, neo, &ptrTable);
 
     neon_free(ptrTable.tab);
     neon_free(typesTable.tab);
@@ -290,6 +463,7 @@ NeObj read_partial_neobject(NeStream stream) {
 }
 
 
+// On désérialise tous les objets, mais en gardant les références aux autres objets comme des indices dans la table des pointeurs
 void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTable) {
     int tableSize = read_number_value(stream);
     return_on_error();
@@ -320,6 +494,24 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
                 intptrlist_append(ptrTable, string);
                 intlist_append(typesTable, StringPtr);
+                break;
+            }
+
+            case CharStarPtr: {
+                // Lecture de la taille de la chaîne de caractères
+                int size = read_number_value(stream);
+                return_on_error();
+
+                // Lecture de la chaîne de caractères
+                char* string = neon_malloc(size);
+                if (!NeStream_read(stream, string, size)) {
+                    neon_free(string);
+                    global_env->CODE_ERROR = 122;
+                    return;
+                }
+
+                intptrlist_append(ptrTable, string);
+                intlist_append(typesTable, CharStarPtr);
                 break;
             }
 
@@ -365,6 +557,150 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 break;
             }
 
+            case TreeBufferPtr: {
+                // Lecture du nombre de blocs
+                int n_blocks = read_number_value(stream);
+                return_on_error();
+
+                // Lecture de la taille de chaque bloc
+                int block_size = read_number_value(stream);
+                return_on_error();
+
+                // Lecture de la taille du TreeBuffer
+                int size = read_number_value(stream);
+                return_on_error();
+
+
+                // Lecture de l'entry point
+                TreeBufferIndex entry_point;
+                if (!NeStream_read(stream, &entry_point, sizeof(TreeBufferIndex))) {
+                    global_env->CODE_ERROR = 122;
+                    return;
+                }
+
+                
+                // Lecture des données (size octets)
+                void* pointer = neon_malloc(n_blocks * block_size);
+                return_on_error();
+
+                if (!NeStream_read(stream, pointer, size)) {
+                    global_env->CODE_ERROR = 122;
+                    neon_free(pointer);
+                    return;
+                }
+
+                
+                TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
+                ptrlist_append(global_env->TREEBUFFERS, tb);
+
+                if_error {
+                    neon_free(pointer);
+                    return;
+                }
+
+                tb->n_blocks = n_blocks;
+                tb->block_size = block_size;
+                tb->size = size;
+                tb->side_memory = false;
+                tb->locked = false; // On se sert du champ locked pour savoir si on a résolu les pointeurs internes du TreeBuffer
+                tb->pointer = pointer;
+                tb->entry_point = entry_point;
+                
+                intptrlist_append(ptrTable, tb);
+                intlist_append(typesTable, TreeBufferPtr);
+                break;
+            }
+
+            case UserFuncPtr: {
+                int nbArgs = read_number_value(stream);
+                return_on_error();
+
+                int nbOptArgs = read_number_value(stream);
+                return_on_error();
+
+                bool unlimited_arguments = read_number_value(stream);
+                return_on_error();
+
+                // Lecture des arguments
+                Var* args = neon_malloc(sizeof(Var) * nbArgs);
+                return_on_error();
+
+                for (int i=0 ; i < nbArgs ; i++) {
+                    args[i] = read_number_value(stream);
+                    if_error {
+                        neon_free(args);
+                        return;
+                    }
+                }
+
+                // Lecture de la doc de la fonction
+                int size = read_number_value(stream);
+                if_error {
+                    neon_free(args);
+                    return;
+                }
+
+                char* doc = NULL;
+
+                if (size != -1) {
+                    doc = neon_malloc(sizeof(char) * size);
+                    if_error {
+                        neon_free(args);
+                        return;
+                    }
+
+                    if (!NeStream_read(stream, doc, size)) {
+                        global_env->CODE_ERROR = 122;
+                        neon_free(args);
+                        neon_free(doc);
+                        return;
+                    }
+                }
+
+                TreeBufferIndex code;
+                if (!NeStream_read(stream, &code, sizeof(TreeBufferIndex))) {
+                    global_env->CODE_ERROR = 122;
+                    neon_free(args);
+                    neon_free(doc);
+                    return;
+                }
+
+                intptr_t tree_buffer = read_number_value(stream);
+                if_error {
+                    neon_free(doc);
+                    neon_free(args);
+                    return;
+                }
+
+                intptr_t opt_args = read_number_value(stream);
+                if_error {
+                    neon_free(doc);
+                    neon_free(args);
+                    return;
+                }
+
+                UserFunc* fun = neon_malloc(sizeof(UserFunc));
+                if_error {
+                    neon_free(doc);
+                    neon_free(args);
+                    return;
+                }
+
+                fun->args = args;
+                fun->nbArgs = nbArgs;
+                fun->nbOptArgs = nbOptArgs;
+                fun->opt_args = (void*)opt_args;
+                fun->code = code;
+                fun->doc = doc;
+                fun->unlimited_arguments = unlimited_arguments;
+                fun->tree_buffer = (void*)tree_buffer;
+                fun->refc = 0;
+
+                intptrlist_append(ptrTable, fun);
+                intlist_append(typesTable, UserFuncPtr);
+                break;
+            }
+
             default: {
                 global_env->CODE_ERROR = 122;
                 return;
@@ -375,16 +711,80 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
 void solve_pointers_list(NeList* list, intptrlist* ptrTable, intlist* typesTable) {
     for (int i=0 ; i < list->len ; i++) {
-        solve_pointers(&list->tab[i], ptrTable, typesTable);
+        solve_pointers_aux(&list->tab[i], ptrTable, typesTable);
     }
 }
+
+
+void solve_pointers_treebuffer(TreeBuffer* tb, intptrlist* ptrTable, intlist* typesTable) {
+    TreeBufferIndex index = 0;
+    while (index < tb->size) {
+        switch (BYTE(tb, index)) {
+
+            case TypeTreeList: {
+                index += sizeof(uint8_t) + sizeof(uint16_t) + sizeof(TreeBufferIndex) * treelistLength(tb, index);
+                break;
+            }
+
+
+            case TypeConst: {
+                struct ConstObj* tree = treeConst(tb, index);
+                solve_pointers_aux(&tree->obj, ptrTable, typesTable);
+                index += sizeof(struct ConstObj);
+                break;
+            }
+
+            case TypeFunctiondef: {
+                struct FunctionDef* tree = treeFDef(tb, index);
+                tree->name = (char*)ptrTable->tab[(intptr_t)tree->name];
+                solve_pointers_aux(&tree->object, ptrTable, typesTable);
+                index += sizeof(struct FunctionDef);
+                break;
+            }
+
+            case TypeFunctioncall: {
+                struct FunctionCall* tree = treeFCall(tb, index);
+                solve_pointers_aux(&tree->function_obj, ptrTable, typesTable);
+                index += sizeof(struct FunctionCall);
+                break;
+            }
+
+            case TypeAttribute: {
+                struct Attribute* tree = treeAttr(tb, index);
+                tree->name = (char*)ptrTable->tab[(intptr_t)tree->name];
+                index += sizeof(struct Attribute);
+                break;
+            }
+
+            case TypeAttributeLit: {
+                struct AttributeLit* tree = treeAttrLit(tb, index);
+                tree->name = (char*)ptrTable->tab[(intptr_t)tree->name];
+                index += sizeof(struct AttributeLit);
+                break;
+            }
+
+            case TypeParallelCall: {
+                struct ParallelCall* tree = treeParCall(tb, index);
+                tree->expr_buffer = (TreeBuffer*)ptrTable->tab[(intptr_t)tree->expr_buffer];
+                index += sizeof(struct ParallelCall);
+                break;
+            }
+
+            default: {
+                index += type_size(TREE_TYPE(tb, index));
+                break;
+            }
+        }
+    }
+}
+
+
 
 
 /*
 Restitue tous les pointeurs dans les objets et met à jour les compteurs de références
 */
 void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable) {
-
     if (NEO_TYPE(*neo) & HEAP_ALLOCATED) {
         neo->refc_ptr = ptrTable->tab[neo->integer];
         // Incrémentation du compteur de références du pointeur que l'on vient d'écrire
@@ -400,6 +800,19 @@ void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable) {
             mark(*neo);
             neo->container->data = (NeList*)ptrTable->tab[(intptr_t)neo->container->data];
             solve_pointers_list(neo->container->data, ptrTable, typesTable);
+        }
+        else if ((NEO_TYPE(*neo) == TYPE_USERFUNC || NEO_TYPE(*neo) == TYPE_USERMETHOD) && !ismarked(*neo)) {
+            mark(*neo);
+            neo->userfunc->opt_args = (NeList*)ptrTable->tab[(intptr_t)neo->userfunc->opt_args];
+            solve_pointers_list(neo->userfunc->opt_args, ptrTable, typesTable);
+            neo->userfunc->tree_buffer = (TreeBuffer*)ptrTable->tab[(intptr_t)neo->userfunc->tree_buffer];
+
+            // On se sert du champ locked pour savoir si on a résolu les pointeurs internes du TreeBuffer
+            if (!neo->userfunc->tree_buffer->locked) {
+                neo->userfunc->tree_buffer->locked = true;
+                solve_pointers_treebuffer(neo->userfunc->tree_buffer, ptrTable, typesTable);
+                move_treebuffer_to_side_memory(neo->userfunc->tree_buffer);
+            }
         }
     }
 }

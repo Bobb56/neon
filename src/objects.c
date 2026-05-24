@@ -1389,10 +1389,10 @@ void neobject_aff(NeObj neo)
                     char* nom = get_name(fun->args[i]);
                     printString(nom);
 
-                    if (!neo_is_void(fun->opt_args->tab[i])) // expression non vide
+                    if (!neo_is_void(nelist_nth(fun->opt_args, i))) // expression non vide
                     {
                         printString(" := ");
-                        neobject_aff(fun->opt_args->tab[i]);
+                        neobject_aff(nelist_nth(fun->opt_args, i));
                     }
                 }
 
@@ -1505,10 +1505,10 @@ char* neobject_str(NeObj neo)
                     char* nom = get_name(fun->args[i]);
                     ret = addStr2(ret, nom);
 
-                    if (!neo_is_void(fun->opt_args->tab[i])) // expression non vide
+                    if (!neo_is_void(nelist_nth(fun->opt_args, i))) // expression non vide
                     {
                         ret = addStr2(ret, " := ");
-                        char* obj_str = neobject_str(fun->opt_args->tab[i]);
+                        char* obj_str = neobject_str(nelist_nth(fun->opt_args, i));
                         ret = addStr2(ret, obj_str);
                         neon_free(obj_str);
                     }

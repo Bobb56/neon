@@ -661,7 +661,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 // pour des questions de performance
 
                 // Fonction avec appel direct (sans arguments optionnels ni arguments échangés)
-                if (!fun->unlimited_arguments && fun->opt_args == 0 && !key_arguments) {
+                if (!fun->unlimited_arguments && fun->opt_args == NULL && !key_arguments) {
 
                     NeList* arguments = treeToList(tb, tree_fun_call->args);
 

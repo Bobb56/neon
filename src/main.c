@@ -5,6 +5,7 @@
 #include "headers/runtime.h"
 #include "headers/errors.h"
 #include "headers/neonio.h"
+#include "headers/serialization.h"
 
 
 /*
@@ -13,6 +14,12 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui ne marchent pas
+>> l = [0]
+>> function f(x := l) do
+..   return (42)
+.. end
+>> l[0] = f
+--> Ajouter les opt_args au garbage collector
 _____________________
 
 Potentielles futures erreurs :
@@ -30,7 +37,9 @@ on ne le crée pas dans global_env->FONCTIONS)
 Avancement et choses à faire :
 -------------------------------
 PLUS TARD
-> Ajouter une sorte de JSON intégrée et sécurisée (stocké en binaire) pour stocker plein d'infos et les récupérer facilement
+--> Mettre les opt_args des userfunc dans le garbage collector
+--> Ajouter compteur de références dans le treebuffer
+--> Ajouter un header dans le fichier de sérialisation d'objets qui permet de rendre compatibles entre eux des runtimes (exemple : donner l'association nom de variable/indice dans ADRESSES, les champs de containers, etc)
 --> Sauvegarder un environnement entier
 --> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)
@@ -49,11 +58,10 @@ NOUVEAUTéS après la mise à jour 4.1 :
 
 
 #ifdef TI_EZ80
-int main(void)
+int main(void) {
 #else
-int main (int argc, char* argv[])
+int main (int argc, char* argv[]) {
 #endif
-{
     int error = neonInit();
     if (error < 0)
         return 0;
