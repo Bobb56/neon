@@ -6,7 +6,7 @@
 
 #include "constants.h"
 #include "trees.h"
-
+#include "nativefunctions.h"
 
 #include "neobj.h"
 
@@ -45,7 +45,8 @@ struct Container
 struct Function
 {
     int refc;
-    NeObj (*ptr) (NeList*);
+    Module module;
+    int id;
     const char* help;
     int nbArgs;
     int* typeArgs;
@@ -159,8 +160,8 @@ char* neobject_str(NeObj);
 char* nelist_str(NeList*);
 NeObj neo_list_convert(NeList* list);
 NeObj gc_extern_neo_list_convert(NeList* list);
-Function* function_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const int* typeArgs, int typeRetour);
-NeObj neo_fun_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const int* typeArgs, int typeRetour);
+Function* function_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour);
+NeObj neo_fun_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour);
 bool funcArgsCheck(Function* fun, NeList* args);
 NeObj functionCall(NeObj fun, NeList* args);
 char* type(NeObj neo);

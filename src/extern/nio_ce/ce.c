@@ -27,7 +27,7 @@
 
 #include "headers/platform.h"
 #include "headers/nspireio.h"
-#include "../../headers/graphics.h"
+#include "../../headers/graphicmodule.h"
 
 bool any_key_pressed(void)
 {

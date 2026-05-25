@@ -1,6 +1,7 @@
 files = [
     "errors.c",
-    "builtinfunctions.c",
+    "standardmodule.c",
+    "graphicmodule.c",
     "dynarrays.c",
     "strings.c",
     "parser.c",
@@ -21,9 +22,11 @@ files = [
     "sidememory.c",
     "contexts.c",
     "serialization.c",
+    "nativefunctions.c",
     
     "headers/errors.h",
-    "headers/builtinfunctions.h",
+    "headers/standardmodule.h",
+    "headers/graphicmodule.h",
     "headers/dynarrays.h",
     "headers/strings.h",
     "headers/parser.h",
@@ -39,7 +42,8 @@ files = [
     "headers/trees.h",
     "headers/sidememory.h",
     "headers/contexts.h",
-    "headers/serialization.h"
+    "headers/serialization.h",
+    "headers/nativefunctions.h"
 ]
 
 other_files = [

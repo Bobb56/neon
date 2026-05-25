@@ -1709,7 +1709,6 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     for (int ext_index = 0 ; ext_index < param_length ; ext_index++)
                     {
                         NeObj nom = eval_aux(tb, treelistGet(tb, tree_kw_param->params)[ext_index]);
-
                         return_on_error(0);
 
                         char* nomAct = strdup(neo_to_string(nelist_nth(global_env->ADRESSES, global_env->NAME))); // pour restaurer le nom de fichier actuel

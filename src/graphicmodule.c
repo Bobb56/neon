@@ -1,9 +1,10 @@
+#include "headers/nativefunctions.h"
 #define NEON_SOURCE_ID 7
 
 // cette bibliothèque est spécifique à ez80
 
 #include <string.h>
-#include "headers/graphics.h"
+#include "headers/graphicmodule.h"
 #include "headers/constants.h"
 #include "headers/neon.h"
 #include "headers/neonio.h"
@@ -22,184 +23,7 @@
 #define TEXT_Y(i)                   (28 + 14*i)
 
 
-void initGraphics(void) {
-    int nb_types = 9;
 
-    struct ContainerType container_types[] = {
-        (struct ContainerType) {
-            .name = "Point",
-            .fields = (char*[]) {"x", "y"},
-            .nb_fields = 2,
-            .container_assoc_index = &global_env->graphic_containers.Point
-        },
-        (struct ContainerType) {
-            .name = "Circle",
-            .fields = (char*[]) {"x", "y", "radius", "color", "filled"},
-            .nb_fields = 5,
-            .container_assoc_index = &global_env->graphic_containers.Circle
-        },
-        (struct ContainerType) {
-            .name = "Rect",
-            .fields = (char*[]) {"x", "y", "width", "height", "color", "filled"},
-            .nb_fields = 6,
-            .container_assoc_index = &global_env->graphic_containers.Rect
-        },
-        (struct ContainerType) {
-            .name = "Line",
-            .fields = (char*[]) {"x0", "y0", "x1", "y1", "color"},
-            .nb_fields = 5,
-            .container_assoc_index = &global_env->graphic_containers.Line
-        },
-        (struct ContainerType) {
-            .name = "Text",
-            .fields = (char*[]) {"text", "x", "y", "fgcolor", "bgcolor", "size"},
-            .nb_fields = 6,
-            .container_assoc_index = &global_env->graphic_containers.Text
-        },
-        (struct ContainerType) {
-            .name = "Triangle",
-            .fields = (char*[]) {"x0", "y0", "x1", "y1", "x2", "y2", "color"},
-            .nb_fields = 7,
-            .container_assoc_index = &global_env->graphic_containers.Triangle
-        },
-        (struct ContainerType) {
-            .name = "Polygon",
-            .fields = (char*[]) {"points", "color"},
-            .nb_fields = 2,
-            .container_assoc_index = &global_env->graphic_containers.Polygon
-        },
-        (struct ContainerType) {
-            .name = "Ellipse",
-            .fields = (char*[]) {"x", "y", "a", "b", "color", "filled"},
-            .nb_fields = 6,
-            .container_assoc_index = &global_env->graphic_containers.Ellipse
-        },
-        (struct ContainerType) {
-            .name = "FloodFill",
-            .fields = (char*[]) {"x", "y", "color"},
-            .nb_fields = 3,
-            .container_assoc_index = &global_env->graphic_containers.FloodFill
-        }
-    };
-
-    for (int i = 0 ; i < nb_types ; i++) {
-        int index = 0; // l'indice du container dans CONTAINERS
-
-        // on regarde si ce type de container existe déjà
-        if (strlist_inList(global_env->CONTAINERS, container_types[i].name)) {
-            index = strlist_index(global_env->CONTAINERS, container_types[i].name);
-        }
-        else {
-            index = global_env->CONTAINERS->len;
-            strlist_append(global_env->CONTAINERS, strdup(container_types[i].name));
-            nelist_append(global_env->ATTRIBUTES, NEO_VOID);
-        }
-
-        *container_types[i].container_assoc_index = index; // on associe le type de container à son indice dans CONTAINERS
-
-        // crée la NeList des attributs
-        NeList* fields = nelist_create(container_types[i].nb_fields);
-        for (int j = 0 ; j < container_types[i].nb_fields ; j++) {
-            fields->tab[j] = neo_str_create(strdup(container_types[i].fields[j]));
-        }
-
-        // et on met la liste d'attributs dans le tableau d'attributs global
-        if (!neo_is_void(global_env->ATTRIBUTES->tab[index]) && !nelist_equal(neo_to_list(global_env->ATTRIBUTES->tab[index]), fields)) {
-            // si on met pas ce garde fou, on peut overrider le type de container en silence
-            nelist_destroy(fields);
-            neon_fail(116);
-            return;
-        }
-
-        neobject_destroy(global_env->ATTRIBUTES->tab[index]);
-        global_env->ATTRIBUTES->tab[index] = gc_extern_neo_list_convert(fields);
-    }
-
-
-    // functions
-    int nb_functions = 8;
-
-    char* names[] = {
-        "getKey",
-        "draw",
-        "setPixel",
-        "getPixel",
-        "setTextTransparentColor",
-        "getTextWidth",
-        "rgb",
-        "menu"
-    };
-
-    Function functions[] = {
-        (Function) {
-            .ptr = getKey,
-            .help = "Returns the code of the last key pressed or 0 if no key was pressed",
-            .nbArgs = 0,
-            .typeArgs = NULL,
-            .typeRetour = TYPE_INTEGER
-        },
-        (Function) {
-            .ptr = draw,
-            .help = "Draws anything drawable",
-            .nbArgs = -1,
-            .typeArgs = (int[]) {TYPE_UNSPECIFIED},
-            .typeRetour = TYPE_NONE
-        },
-        (Function) {
-            .ptr = setPixel,
-            .help = "Sets the indicated pixel to the specified color",
-            .nbArgs = 3,
-            .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED, TYPE_INTEGER},
-            .typeRetour = TYPE_NONE
-        },
-        (Function) {
-            .ptr = getPixel,
-            .help = "Returns the color of the specified pixel, None if the pixel is not within the screen boundaries",
-            .nbArgs = 2,
-            .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
-            .typeRetour = TYPE_INTEGER
-        },
-        (Function) {
-            .ptr = setTextTransparentColor,
-            .help = "Sets the color that will be used for transparent while drawing text",
-            .nbArgs = 1,
-            .typeArgs = (int[]) {TYPE_INTEGER},
-            .typeRetour = TYPE_NONE
-        },
-        (Function) {
-            .ptr = getTextWidth,
-            .help = "Returns the pixel width of a given Text object",
-            .nbArgs = 1,
-            .typeArgs = (int[]) {TYPE_CONTAINER},
-            .typeRetour = TYPE_INTEGER
-        },
-        (Function) {
-            .ptr = rgb,
-            .help = "Returns a number in range 0-255 corresponding approximatively to the rgb color",
-            .nbArgs = 3,
-            .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
-            .typeRetour = TYPE_INTEGER
-        },
-        (Function) {
-            .ptr = menu,
-            .help = "Displays a menu for choosing between a list of items.\nThe first argument is the title of the menu.\nThe second argument is the list of items. It must me a list of strings.\nThe third argument is the text to be displayed if there are no elements in the list of items",
-            .nbArgs = 3,
-            .typeArgs = (int[]) {TYPE_STRING, TYPE_LIST, TYPE_STRING},
-            .typeRetour = TYPE_UNSPECIFIED
-        }
-    };
-
-    for (int i = 0 ; i < nb_functions ; i++)
-    {
-        Function f = functions[i];
-        NeObj func = neo_fun_create(f.ptr, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
-
-        Var var = get_var(names[i]);
-        replace_var(var, func);
-    }
-    return;
-
-}
 
 bool in_screen(intptr_t x, intptr_t y) {
     return x >= 0 && x < 320 && y >= 0 && y < 240;
@@ -553,8 +377,9 @@ void draw_obj(NeObj obj) {
             neon_fail(14);
             return;
         }
-
-        neobject_destroy(callUserFunc(fun, NULL, NEO_VOID));
+        NeList* args = nelist_create(0);
+        neobject_destroy(callUserFunc(fun, args, NEO_VOID));
+        nelist_destroy(args);
     }
     else if (NEO_TYPE(obj) == TYPE_BUILTINFUNC) {
         Function* fun = neo_to_function(obj);
@@ -564,9 +389,9 @@ void draw_obj(NeObj obj) {
             return;
         }
 
-        NeObj (*ptr) (NeList*) = fun->ptr;
-
-        neobject_destroy(ptr(NULL));
+        NeList* args = nelist_create(0);
+        neobject_destroy(call_function(fun->module, fun->id, args));
+        nelist_destroy(args);
     }
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         draw_nelist(neo_to_list(obj));
@@ -724,4 +549,203 @@ NeObj menu(NeList* args) {
     }
     gfx_SetTextTransparentColor(global_env->text_transparent_color);
     return neo_none_create();
+}
+
+
+
+
+
+NeObj (*graphicfunctions_pointers[NBGRAPHICFUNC])(NeList*) = {
+    getKey,
+    draw,
+    setPixel,
+    getPixel,
+    setTextTransparentColor,
+    getTextWidth,
+    rgb,
+    menu
+};
+
+
+char* graphicfunctions_names[NBGRAPHICFUNC] = {
+    "getKey",
+    "draw",
+    "setPixel",
+    "getPixel",
+    "setTextTransparentColor",
+    "getTextWidth",
+    "rgb",
+    "menu"
+};
+
+
+const Function graphicfunctions[NBGRAPHICFUNC] = {
+    (Function) {
+        .help = "Returns the code of the last key pressed or 0 if no key was pressed",
+        .nbArgs = 0,
+        .typeArgs = NULL,
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Draws anything drawable",
+        .nbArgs = -1,
+        .typeArgs = (int[]) {TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Sets the indicated pixel to the specified color",
+        .nbArgs = 3,
+        .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED, TYPE_INTEGER},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Returns the color of the specified pixel, None if the pixel is not within the screen boundaries",
+        .nbArgs = 2,
+        .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Sets the color that will be used for transparent while drawing text",
+        .nbArgs = 1,
+        .typeArgs = (int[]) {TYPE_INTEGER},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Returns the pixel width of a given Text object",
+        .nbArgs = 1,
+        .typeArgs = (int[]) {TYPE_CONTAINER},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Returns a number in range 0-255 corresponding approximatively to the rgb color",
+        .nbArgs = 3,
+        .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Displays a menu for choosing between a list of items.\nThe first argument is the title of the menu.\nThe second argument is the list of items. It must me a list of strings.\nThe third argument is the text to be displayed if there are no elements in the list of items",
+        .nbArgs = 3,
+        .typeArgs = (int[]) {TYPE_STRING, TYPE_LIST, TYPE_STRING},
+        .typeRetour = TYPE_UNSPECIFIED
+    }
+};
+
+
+
+NeObj get_graphicfunction(int id) {
+    Function f = graphicfunctions[id];
+    return neo_fun_create(id, GraphicModule, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
+}
+
+const char* get_graphicfunction_name(int id) {
+    return graphicfunctions_names[id];
+}
+
+NeObj call_graphicfunction(int id, NeList* list) {
+    return graphicfunctions_pointers[id](list);
+}
+
+
+
+void init_graphicmodule(NeonEnv* env) {
+    int nb_types = 9;
+
+    struct ContainerType container_types[] = {
+        (struct ContainerType) {
+            .name = "Point",
+            .fields = (char*[]) {"x", "y"},
+            .nb_fields = 2,
+            .container_assoc_index = &env->graphic_containers.Point
+        },
+        (struct ContainerType) {
+            .name = "Circle",
+            .fields = (char*[]) {"x", "y", "radius", "color", "filled"},
+            .nb_fields = 5,
+            .container_assoc_index = &env->graphic_containers.Circle
+        },
+        (struct ContainerType) {
+            .name = "Rect",
+            .fields = (char*[]) {"x", "y", "width", "height", "color", "filled"},
+            .nb_fields = 6,
+            .container_assoc_index = &env->graphic_containers.Rect
+        },
+        (struct ContainerType) {
+            .name = "Line",
+            .fields = (char*[]) {"x0", "y0", "x1", "y1", "color"},
+            .nb_fields = 5,
+            .container_assoc_index = &env->graphic_containers.Line
+        },
+        (struct ContainerType) {
+            .name = "Text",
+            .fields = (char*[]) {"text", "x", "y", "fgcolor", "bgcolor", "size"},
+            .nb_fields = 6,
+            .container_assoc_index = &env->graphic_containers.Text
+        },
+        (struct ContainerType) {
+            .name = "Triangle",
+            .fields = (char*[]) {"x0", "y0", "x1", "y1", "x2", "y2", "color"},
+            .nb_fields = 7,
+            .container_assoc_index = &env->graphic_containers.Triangle
+        },
+        (struct ContainerType) {
+            .name = "Polygon",
+            .fields = (char*[]) {"points", "color"},
+            .nb_fields = 2,
+            .container_assoc_index = &env->graphic_containers.Polygon
+        },
+        (struct ContainerType) {
+            .name = "Ellipse",
+            .fields = (char*[]) {"x", "y", "a", "b", "color", "filled"},
+            .nb_fields = 6,
+            .container_assoc_index = &env->graphic_containers.Ellipse
+        },
+        (struct ContainerType) {
+            .name = "FloodFill",
+            .fields = (char*[]) {"x", "y", "color"},
+            .nb_fields = 3,
+            .container_assoc_index = &env->graphic_containers.FloodFill
+        }
+    };
+
+    for (int i = 0 ; i < nb_types ; i++) {
+        int index = 0; // l'indice du container dans CONTAINERS
+
+        // on regarde si ce type de container existe déjà
+        if (strlist_inList(env->CONTAINERS, container_types[i].name)) {
+            index = strlist_index(env->CONTAINERS, container_types[i].name);
+        }
+        else {
+            index = env->CONTAINERS->len;
+            strlist_append(env->CONTAINERS, strdup(container_types[i].name));
+            nelist_append(env->ATTRIBUTES, NEO_VOID);
+        }
+
+        *container_types[i].container_assoc_index = index; // on associe le type de container à son indice dans CONTAINERS
+
+        // crée la NeList des attributs
+        NeList* fields = nelist_create(container_types[i].nb_fields);
+        for (int j = 0 ; j < container_types[i].nb_fields ; j++) {
+            fields->tab[j] = neo_str_create(strdup(container_types[i].fields[j]));
+        }
+
+        // et on met la liste d'attributs dans le tableau d'attributs global
+        if (!neo_is_void(env->ATTRIBUTES->tab[index]) && !nelist_equal(neo_to_list(env->ATTRIBUTES->tab[index]), fields)) {
+            // si on met pas ce garde fou, on peut overrider le type de container en silence
+            nelist_destroy(fields);
+            neon_fail(116);
+            return;
+        }
+
+        neobject_destroy(env->ATTRIBUTES->tab[index]);
+        env->ATTRIBUTES->tab[index] = gc_extern_neo_list_convert(fields);
+    }
+
+    
+
+    for (int i = 0 ; i < NBGRAPHICFUNC ; i++) {
+        Var var = get_var((char*)get_graphicfunction_name(i));
+        replace_var(var, get_graphicfunction(i));
+    }
+    return;
+
 }

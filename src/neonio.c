@@ -20,7 +20,7 @@
 #include <ti/vars.h>
 #include <fileioc.h>
 #include "extern/nio_ce/headers/nspireio.h"
-#include "headers/graphics.h"
+#include "headers/graphicmodule.h"
 #endif
 
 

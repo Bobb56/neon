@@ -41,9 +41,9 @@ static const char* error_messages[NB_ERRORS] = {
     "Incompatible keyword used in an expression",
     "Block instruction line not followed by an instruction block (e.g., a lone if() statement)",
     "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
-    "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
-    "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
-    "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
+    "This module does not exist",
+    "",
+    "",
     "Lone block of instructions",
     "Incorrect statement definition",
     "Incorrect number of arguments when calling a built-in function",
@@ -108,7 +108,7 @@ static const char* error_messages[NB_ERRORS] = {
     "':=' outside function call or function definition",
     "Bad arguments definition in function definition",
     "Use of '...' outside function definition",
-    "",
+    "This module is unavailable on this platform",
     "Use of return outside function",
     "Can only call a user-defined function in parallel",
     "await takes exactly one argument",
@@ -169,7 +169,7 @@ static const int error_codes_exceptions[NB_ERRORS] = {
     0,
     0,
     0,
-    0,
+    15,
     0,
     0,
     0,
@@ -236,7 +236,7 @@ static const int error_codes_exceptions[NB_ERRORS] = {
     0,
     0,
     0,
-    9,
+    15,
     0,
     0,
     0,
@@ -364,16 +364,16 @@ void printError(int code)
         printString(" (");
         setColor(DEFAULT);
 
-        printString("C");
+        printString("C:");
         printInt(code);
         
         if (global_env->ERROR_NEON_SOURCE_ID != 0) {
-            setColor(GREEN); printString(":"); setColor(DEFAULT); printString("F");
+            printString("-F:");
             printInt(global_env->ERROR_NEON_SOURCE_ID);
         }
 
         if (global_env->ERROR_NEON_LINE_NUMBER != 0) {
-            setColor(GREEN); printString(":"); setColor(DEFAULT); printString("L");
+            printString("-L:");
             printInt(global_env->ERROR_NEON_LINE_NUMBER);
         }
 

@@ -1329,7 +1329,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
         if (!intlist_inList(&types_debut, ast[0]->type) || (ast[0]->type == TYPE_OPERATOR && !(gramm & VARRIGHT) && !(gramm & RIGHT) && !(gramm & SPECIAL)))
         {
-            neon_fail(32);
+            neon_fail(30);
             global_env->LINENUMBER = lines->tab[offset];
             return ;
         }
@@ -1383,7 +1383,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
             if ((plusieursTokens && (!intlist_inList(&types_fin, ast[i_act]->type) || (ast[i_act]->type == TYPE_OPERATOR && !(gramm & VARLEFT) && !(gramm & SPECIAL)))) || (!plusieursTokens && !intlist_inList(&types_fin, ast[0]->type)))
             {
-                neon_fail(32);
+                neon_fail(30);
                 global_env->LINENUMBER = lines->tab[offset + i_act];
                 return ;
             }
@@ -1849,7 +1849,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
 
         
         /*else if (TEStep == 1 && typeact != TYPE_ENDOFLINE) {
-            neon_fail(33;
+            neon_fail(30);
             return;
         }*/
         
@@ -1879,7 +1879,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             if (typeact == TYPE_BLOCKIF || typeact == TYPE_BLOCKELSE || typeact == TYPE_BLOCKELIF)
                 conBlockStep = 2;
             else if (typeact != TYPE_ENDOFLINE) {
-                neon_fail(33);
+                neon_fail(30);
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
@@ -1889,7 +1889,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             if (typeact == TYPE_BLOCK)
                 conBlockStep = 1;
             else if (typeact != TYPE_ENDOFLINE) {
-                neon_fail(33);
+                neon_fail(30);
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
@@ -1915,7 +1915,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             isPotentiallyTE = false;
         }
         /*else if (ast[debStat]->type == TYPE_STATEMENTEXCEPT) {
-            neon_fail(33;
+            neon_fail(30);
             return;
         }*/
 
@@ -1924,7 +1924,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             TEStep = 1;
         }
         else if (TEStep == 2 && typeact != TYPE_ENDOFLINE) {
-            neon_fail(33);
+            neon_fail(30);
             global_env->LINENUMBER = lines->tab[offset + i];
             return;
         }

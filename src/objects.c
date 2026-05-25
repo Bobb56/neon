@@ -18,6 +18,7 @@
 #include "headers/neon.h"
 #include "headers/errors.h"
 #include "headers/trees.h"
+#include "headers/nativefunctions.h"
 
 
 
@@ -398,10 +399,10 @@ bool is_number(NeObj obj) {
 
 ///////////////// TYPE_FUNCTION //////////////////
 
-NeObj neo_fun_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const int* typeArgs, int typeRetour)
+NeObj neo_fun_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour)
 {
     NeObj neo = neobject_create(TYPE_FONCTION);
-    neo.function = function_create(ptr, help, nbArgs, typeArgs, typeRetour);
+    neo.function = function_create(id, module, help, nbArgs, typeArgs, typeRetour);
 
     return neo;
 }
@@ -412,10 +413,11 @@ void function_destroy(Function* fun) {
 }
 
 
-Function* function_create(NeObj (*ptr)(NeList *), const char* help, int nbArgs, const int* typeArgs, int typeRetour)
+Function* function_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour)
 {
     Function* fun = neon_malloc(sizeof(Function));
-    fun->ptr = ptr;
+    fun->id = id;
+    fun->module = module;
     fun->nbArgs = nbArgs;
     fun->help = help;
     fun->typeRetour = typeRetour;
@@ -446,9 +448,7 @@ NeObj functionCall(NeObj fun, NeList* args)
         neon_fail(36);// nombre d'arguments invalide pour appeler cette fonction
         return NEO_VOID;
     }
-    NeObj (*ptr) (NeList*) = f->ptr;
-    NeObj ret = ptr(args);
-    return ret;
+    return call_function(f->module, f->id, args);
 }
 
 
@@ -1764,7 +1764,7 @@ bool neo_equal(NeObj _op1, NeObj _op2)
     {
         if (NEO_TYPE(_op2) == TYPE_FONCTION)
         {
-            return _op1.function->ptr == _op2.function->ptr;
+            return _op1.function->id == _op2.function->id && _op1.function->module == _op2.function->module;
         }
         else
         {

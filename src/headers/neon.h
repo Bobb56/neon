@@ -9,7 +9,7 @@
 
 #ifdef TI_EZ80
 #include "extern/nio_ce/headers/nspireio.h"
-#include "graphics.h"
+#include "graphicmodule.h"
 #endif
 
 typedef struct NeonEnv {

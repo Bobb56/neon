@@ -3,7 +3,9 @@
 
 #include "objects.h"
 
-#define ARG(n)      args->tab[n]
+#define ARG(n)                  args->tab[n]
+
+#define NBGRAPHICFUNC           8
 
 struct ContainersAssoc {
     int Rect;
@@ -34,7 +36,6 @@ struct ContainerType {
 #define NEON_PALETTE_BLUE               NEON_PALETTE_COLOR(0,0,3)
 
 
-void initGraphics(void);
 int neon_getKey(void);
 void draw_nelist(NeList* list);
 void draw_obj(NeObj obj);
@@ -48,5 +49,11 @@ NeObj setTextTransparentColor(NeList* args);
 NeObj getTextWidth(NeList* args);
 NeObj rgb(NeList* args);
 NeObj menu(NeList* args);
+
+
+void init_graphicmodule(NeonEnv* env);
+NeObj call_graphicfunction(int id, NeList* list);
+const char* get_graphicfunction_name(int id);
+NeObj get_graphicfunction(int id);
 
 #endif

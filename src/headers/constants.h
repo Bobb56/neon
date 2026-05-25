@@ -51,6 +51,13 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 
+// Modules accessibles en fonction de la plateforme
+#ifdef TI_EZ80
+    #define HAS_GRAPHIC_MODULE
+#endif
+
+
+
 #ifdef LINUX_AMD64
     #define PLATFORM "LINUX_AMD64"
 #endif
@@ -114,7 +121,9 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #define UNIT ((void*)-1) // valeur de pointeur spéciale comme NULL
 
-
+// Définition des tags
+#define BUILTINFUNCTION         1
+#define MODULE_GRAPHICS         2
 
 // definition des types d’arguments pris par les operateurs
 // pour construire un type d'opérateur, on fait GRAMMAR ou bien GRAMMAR | LAZY s'il est paresseux

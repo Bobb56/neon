@@ -1,3 +1,4 @@
+#include "headers/nativefunctions.h"
 #define NEON_SOURCE_ID 1
 
 #include <string.h>
@@ -6,7 +7,7 @@
 
 #include "headers/constants.h"
 #include "headers/neonio.h"
-#include "headers/builtinfunctions.h"
+#include "headers/standardmodule.h"
 #include "headers/dynarrays.h"
 #include "headers/gc.h"
 #include "headers/objects.h"
@@ -22,7 +23,6 @@
 #ifdef TI_EZ80
 #include <sys/rtc.h>
 #include <fileioc.h>
-#include "headers/graphics.h"
 #endif
 
 #ifdef LINUX
@@ -1168,19 +1168,22 @@ NeObj _setColor_(NeList* args) {
 }
 
 
-NeObj _initGraphics_(NeList* args) {
-    #if !defined(TI_EZ80)
-    neon_fail(115);
-    return NEO_VOID;
-    #else
+NeObj _init_(NeList* args) {
+    for (int i=0 ; i < args->len ; i++) {
+        char* moduleName = neo_to_string(ARG(i));
 
-    // fonction pour charger en mémoire les fonctions graphiques définies dans graphics.c et définir les types de container utilisés
-    initGraphics();
-
-    #endif
-
+        if (strcmp(moduleName, "graphics") == 0) {
+            init_module(GraphicModule, global_env);
+        }
+        else {
+            neon_fail(31);
+            return NEO_VOID;
+        }
+    }
     return neo_none_create();
 }
+
+
 
 // détecte les fichiers commençant par une certaine chaîne de caractères
 NeObj _detectFiles_(NeList* args) {
@@ -1331,4 +1334,532 @@ NeObj _deserialize_(NeList* args) {
     NeStream_close(stream);
     return_on_error(NEO_VOID);
     return neo;
+}
+
+
+
+NeObj (*builtinfunctions_pointers[NBBUILTINFUNC])(NeList*) = {
+    _print_,
+    _input_,
+    _nbr_,
+    _str_,
+    _len_,
+    _substring_,
+    _exit_,
+    _append_,
+    _remove_,
+    _insert_,
+    _type_,
+    _reverse_,
+    _eval_,
+    _clear_,
+    _help_,
+    _randint_,
+    _failwith_,
+    _time_,
+    _assert_,
+    _output_,
+    _chr_,
+    _ord_,
+    _list_comp_,
+    _create_exception_,
+    _raise_,
+    _int_,
+    _index_,
+    _replace_,
+    _count_,
+    _list_,
+    _sort_asc_,
+    _sort_desc_,
+    _sin_,
+    _cos_,
+    _tan_,
+    _deg_,
+    _rad_,
+    _sqrt_,
+    _ln_,
+    _exp_,
+    _log_,
+    _log2_,
+    _round_,
+    _abs_,
+    _ceil_,
+    _floor_,
+    _readFile_,
+    _writeFile_,
+    _setFunctionDoc_,
+    _setAtomicTime_,
+    _copy_,
+    _load_namespace_,
+    _gc_,
+    _setColor_,
+    _init_,
+    _detectFiles_,
+    _safeExec_,
+    _bin_,
+    _hex_,
+    _serialize_,
+    _deserialize_
+};
+
+
+
+const char* const builtinfunctions_names[] = {
+    "print",
+    "input",
+    "nbr",
+    "str",
+    "len",
+    "sub",
+    "exit",
+    "append",
+    "remove",
+    "insert",
+    "type",
+    "reverse",
+    "eval",
+    "clear",
+    "help",
+    "randint",
+    "failwith",
+    "time",
+    "assert",
+    "output",
+    "chr",
+    "ord",
+    "listComp",
+    "createException",
+    "raise",
+    "int",
+    "index",
+    "replace",
+    "count",
+    "list",
+    "sortAsc",
+    "sortDesc",
+    "sin",
+    "cos",
+    "tan",
+    "deg",
+    "rad",
+    "sqrt",
+    "ln",
+    "exp",
+    "log",
+    "log2",
+    "round",
+    "abs",
+    "ceil",
+    "floor",
+    "readFile",
+    "writeFile",
+    "setFunctionDoc",
+    "setAtomicTime",
+    "copy",
+    "loadNamespace",
+    "gc",
+    "setColor",
+    "init",
+    "detectFiles",
+    "safeExec",
+    "bin",
+    "hex",
+    "serialize",
+    "deserialize"
+};
+
+
+
+static const Function builtinfunctions[] = {
+    (Function) {
+        .help = "Displays arguments in the terminal",
+        .nbArgs = -1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Displays the given argument and prompts the user to input in the terminal. Returns the entered value.",
+        .nbArgs = -1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_STRING
+    },
+    (Function) {
+        .help = "Converts a string into a number.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_UNSPECIFIED
+    },
+    (Function) {
+        .help = "Converts any object into a string.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_STRING
+    },
+    (Function) {
+        .help = "Returns the length of an object.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Performs substring extraction. sub(\"hello\", 1, 4) returns \"ell\".",
+        .nbArgs = 3,
+        .typeArgs = (int[]){TYPE_STRING, TYPE_INTEGER, TYPE_INTEGER},
+        .typeRetour = TYPE_STRING
+    },
+    (Function) {
+        .help = "Exits the Neon interpreter.",
+        .nbArgs = 0,
+        .typeArgs = NULL,
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Adds an element to a list.",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_LIST, TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Removes an element from a list.",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_LIST, TYPE_INTEGER},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Inserts an element into a list.",
+        .nbArgs = 3,
+        .typeArgs = (int[]){TYPE_LIST, TYPE_UNSPECIFIED, TYPE_INTEGER},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Returns the type of an object.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_STRING
+    },
+    (Function) {
+        .help = "Reverses the characters in a string or reverses a list. Returns the reversed object without modifying the original one",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_UNSPECIFIED
+    },
+    (Function) {
+        .help = "Evaluates the given string of characters and returns the result.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_STRING
+    },
+    (Function) {
+        .help = "Clears the terminal.",
+        .nbArgs = 0,
+        .typeArgs = NULL,
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "This function displays all kinds of information on objects and modules.\nType help() for more information.",
+        .nbArgs = -1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Returns a random integer between two integers.",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_INTEGER, TYPE_INTEGER},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Displays the provided text in the terminal and exits the program.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Returns the time elapsed since 1970 in seconds.",
+        .nbArgs = 0,
+        .typeArgs = NULL,
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Stops the program if at least 1 assertion has failed.",
+        .nbArgs = -1,
+        .typeArgs = (int[]){TYPE_BOOL},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Puts the given arguments on the terminal without spaces or \\n.",
+        .nbArgs = -1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Returns the ASCII character associated to an integer.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_INTEGER},
+        .typeRetour = TYPE_STRING
+    },
+    (Function) {
+        .help = "Returns the ASCII value of the given character.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Arguments : index, start, end, step, condition, value\nEvaluates value for all indices between start and end according to step, and adds it to the list if condition is true.\nindex must be the name of the variable used, and condition and value must be string expressions.",
+        .nbArgs = 6,
+        .typeArgs = (int[]){TYPE_STRING, TYPE_INTEGER, TYPE_INTEGER, TYPE_INTEGER, TYPE_STRING, TYPE_STRING},
+        .typeRetour = TYPE_LIST
+    },
+    (Function) {
+        .help = "Creates an Exception object with the given name.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_EXCEPTION
+    },
+    (Function) {
+        .help = "Exits the program with the given exception and displays the given message",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_EXCEPTION, TYPE_STRING},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Converts an object into an integer",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Returns the index of an element in a list or the index of a string in another string",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "replace(str, str1, str2) returns a string in which all occurrences of str1 have been replaced by str2 in str.",
+        .nbArgs = 3,
+        .typeArgs = (int[]){TYPE_STRING, TYPE_STRING, TYPE_STRING},
+        .typeRetour = TYPE_STRING
+    },
+    (Function) {
+        .help = "Counts the number of occurrences in a list or a string.",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_INTEGER
+    },
+    (Function) {
+        .help = "Separates every character of a string in a list.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_LIST
+    },
+    (Function) {
+        .help = "Sorts a list in ascending order.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_LIST},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Sorts a list in descending order.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_LIST},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "sin: Sine function",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "cos: Cosine function",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "tan: Tangent function",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "deg: Convert angle from radians to degrees",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "rad: Convert angle from degrees to radians",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "sqrt: Square root function",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "ln: Natural logarithm (base e)",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "exp: Exponential function (e^x)",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "log: Logarithm (base 10)",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "log2: Logarithm (base 2)",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "round: Round to the nearest real number with the given precision",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_DOUBLE, TYPE_INTEGER},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "abs: Absolute value",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_DOUBLE},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "ceil: Ceiling function (smallest integer greater than or equal to)",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_DOUBLE},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "floor: Floor function (largest integer less than or equal to)",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_DOUBLE},
+        .typeRetour = TYPE_DOUBLE
+    },
+    (Function) {
+        .help = "Returns the content of the file whose name was given",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_STRING
+    },
+    (Function) {
+        .help = "Writes the given string in the file whose name was given. The syntax is writeFile(name, content)",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_STRING, TYPE_STRING},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Sets a string documentation for a user-defined function or method",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_USERFUNC, TYPE_STRING},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Time to allow for each process before switching",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_INTEGER},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Performs a deep copy of an object, preserving the pointer dependencies",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_UNSPECIFIED
+    },
+    (Function) {
+        .help = "Loads any variable from a given namespace without the namespace prefix",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Calls the Garbage Collector",
+        .nbArgs = 0,
+        .typeArgs = NULL,
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Changes the writing text color in console if available.\nColors: red, green, blue and white",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Initializes a native module",
+        .nbArgs = -1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_NONE
+    },
+    (Function) {
+        .help = "Returns a list of all AppVars starting by a specific string",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_LIST
+    },
+    (Function) {
+        .help = "Executes a Neon file with the given arguments in a separate environment",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_STRING, TYPE_LIST},
+        .typeRetour = TYPE_NONE
+    },
+    {
+        .help = "Converts an integer into its binary representation",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_INTEGER},
+        .typeRetour = TYPE_STRING
+    },
+    {
+        .help = "Converts an integer into its hexa-decimal representation",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_INTEGER},
+        .typeRetour = TYPE_STRING
+    },
+    {
+        .help = "Writes a Neon object into a file",
+        .nbArgs = 2,
+        .typeArgs = (int[]){TYPE_STRING, TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_NONE
+    },
+    {
+        .help = "Reads a Neon object from a file created by the serialize function",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_STRING},
+        .typeRetour = TYPE_UNSPECIFIED
+    }
+};
+
+
+
+NeObj get_standardfunction(int id) {
+    Function f = builtinfunctions[id];
+    return neo_fun_create(id, StandardModule, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
+}
+
+const char* get_standardfunction_name(int id) {
+    return builtinfunctions_names[id];
+}
+
+NeObj call_standardfunction(int id, NeList* list) {
+    return builtinfunctions_pointers[id](list);
+}
+
+
+void init_standardmodule(NeonEnv* env)
+{
+    for (int i = 0 ; i < NBBUILTINFUNC ; i++) {
+        strlist_append(env->NOMS, strdup(get_standardfunction_name(i)));
+        nelist_append(env->ADRESSES, get_standardfunction(i));
+    }
+    return;
 }

@@ -435,7 +435,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             int lenNomInd = ast[0]->fin + 1 - offset;
 
             if (tokens->len - 1 == ast[0]->fin + 2 - offset) { // pas d'arguments
-                neon_fail(31);
+                neon_fail(30);
                 global_env->LINENUMBER = lines->tab[offset];
                 return TREE_VOID;
             }
@@ -536,7 +536,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             if (tokeq(tokens->tab[0], "..."))
                 neon_fail(97);
             else {
-                neon_fail(32);
+                neon_fail(30);
             }
             global_env->LINENUMBER = lines->tab[offset];
 
