@@ -1,10 +1,11 @@
+#define NEON_SOURCE_ID 3
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
-#include "headers/neon.h"
 #include "headers/errors.h"
 
 // fonctions de copies. Servent à "déplacer" un tableau de la pile vers le tas
@@ -73,7 +74,7 @@ toklist toklist_create(int len)
   list.tab=neon_malloc((1<<list.capacity)*sizeof(Token));
 
   if (list.tab == NULL) {
-    global_env->CODE_ERROR = 12;
+    neon_fail(12);
     return list;
   }
   
@@ -127,7 +128,7 @@ void toklist_append(toklist* list, Token chaine)
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réallocation de list.tab
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -165,7 +166,7 @@ void toklist_resize(toklist* list, int newLen)
     
     if (tmp == NULL)
     {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12);
         return ;
     }
     
@@ -184,7 +185,7 @@ void toklist_remove(toklist* list, int index)
   
   if (index >= list->len)
   {
-    global_env->CODE_ERROR = 38;
+    neon_fail(38);
     return ;
   }
   
@@ -252,7 +253,7 @@ int toklist_index(toklist* list, char* chaine)
     }
     
   }
-  global_env->CODE_ERROR = 18;
+  neon_fail(18);
   return -1;
 }
 
@@ -266,7 +267,7 @@ int strlist_token_index(strlist* list, Token chaine)
       return i;
     }
   }
-  global_env->CODE_ERROR = 18;
+  neon_fail(18);
   return -1;
 }
 
@@ -276,7 +277,7 @@ void toklist_insert(toklist* list, Token chaine, int index)//ajoute un élément
 {
   if (index > list->len)
   {
-    global_env->CODE_ERROR = 38;
+    neon_fail(38);
     return ;
   }
   
@@ -287,7 +288,7 @@ void toklist_insert(toklist* list, Token chaine, int index)//ajoute un élément
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réallocation de list.tab
 
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return;
     }
 
@@ -314,7 +315,7 @@ ptrlist* ptrlist_create(void)
     ptrlist* l = neon_malloc(sizeof(ptrlist));
 
     if (l == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return NULL;
     }
 
@@ -335,7 +336,7 @@ void ptrlist_append(ptrlist* q, void* t)
     {
         ptrlist* chainon = neon_malloc(sizeof(ptrlist));//on crée une copie du premier chaînon
         if (chainon == NULL) {
-          global_env->CODE_ERROR = 12;
+          neon_fail(12);
           return;
         }
         chainon->tete = q->tete;
@@ -442,7 +443,7 @@ void ptrlist_replace(ptrlist* liste, void* aRemplacer, void* nvlleValeur)
     
     if (ptr->queue == NULL && ptr->tete != aRemplacer)
     {
-        global_env->CODE_ERROR = 65;
+        neon_fail(65;
         return ;
     }
     
@@ -509,7 +510,7 @@ void ptrlist_remove(ptrlist* list, void* l, bool error)
     // l'élément n'a pas été trouvé
     if (ptr->queue == NULL && ptr->tete != l && error)
     {
-        global_env->CODE_ERROR = 65;
+        neon_fail(65);
         return ;
     }
     else if (ptr->queue == NULL && ptr->tete != l)
@@ -600,7 +601,7 @@ intlist intlist_create(int len)// crée une liste d'entiers
   list.tab=neon_malloc((1<<list.capacity)*sizeof(int));//initialise le tableau de longueur len avec de zéros
 
   if (list.tab == NULL) {
-    global_env->CODE_ERROR = 12;
+    neon_fail(12);
     return list;
   }
   
@@ -649,7 +650,7 @@ void intlist_append(intlist* list,int nombre)//ajoute un élément à la fin de 
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int));//réallocation de list.tab
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -673,13 +674,13 @@ void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la n
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int));//réalloue un pointeur de la nouvelle taille
 
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return;
     }
     
     if (tmp == NULL)
     {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12);
         return;
     }
     
@@ -705,7 +706,7 @@ void intlist_remove(intlist* list,int index)//supprime un élément de la liste
 {
   if (index >= list->len)
   {
-    global_env->CODE_ERROR = 38;
+    neon_fail(38);
     return ;
   }
   
@@ -719,7 +720,7 @@ void intlist_remove(intlist* list,int index)//supprime un élément de la liste
     list->capacity--;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int));//réalloue un nouveau pointeur de la bonne taille
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return;
     }
 
@@ -774,7 +775,7 @@ int intlist_index(intlist* list, int nombre)
     }
     
   }
-  global_env->CODE_ERROR = 18;
+  neon_fail(18);
   return 1;
 }
 
@@ -784,7 +785,7 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
 {
   if (index > list->len)
   {
-    global_env->CODE_ERROR = 38;
+    neon_fail(38);
     return ;
   }
   
@@ -794,7 +795,7 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int));//réallocation de list.tab
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -826,7 +827,7 @@ int intlist_max(intlist* list)
   }
   else
   {
-      global_env->CODE_ERROR = 38;
+      neon_fail(38);
       return EXIT_FAILURE;
   }
   return EXIT_FAILURE;
@@ -847,7 +848,7 @@ intptrlist intptrlist_create(int len)// crée une liste d'entiers
   list.tab=neon_malloc((1<<list.capacity)*sizeof(int*));//initialise le tableau de longueur len avec de zéros
 
   if (list.tab == NULL) {
-    global_env->CODE_ERROR = 12;
+    neon_fail(12);
     return list;
   }
   
@@ -867,7 +868,7 @@ void intptrlist_append(intptrlist* list, void* ptr)//ajoute un élément à la f
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int*));//réallocation de list.tab
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -906,7 +907,7 @@ strlist* strlist_create(int len)
   strlist* list = neon_malloc(sizeof(strlist));
 
   if (list == NULL) {
-    global_env->CODE_ERROR = 12;
+    neon_fail(12);
     return NULL;
   }
   
@@ -918,7 +919,7 @@ strlist* strlist_create(int len)
   list->tab=neon_malloc((1<<list->capacity)*sizeof(char*));
 
   if (list->tab == NULL) {
-    global_env->CODE_ERROR = 12;
+    neon_fail(12);
     neon_free(list);
     return NULL;
   }
@@ -982,7 +983,7 @@ void strlist_append(strlist* list, char *chaine)
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(char*));//réallocation de list.tab
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -1030,13 +1031,13 @@ void strlist_resize(strlist* list, int newLen, bool freeElement)
       
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(char*));//réalloue un pointeur de la nouvelle taille
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12;
       return;
     }
     
     if (tmp == NULL)
     {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12;
         return ;
     }
     
@@ -1062,7 +1063,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
   
   if (index >= list->len)
   {
-    global_env->CODE_ERROR = 38;
+    neon_fail(38;
     return ;
   }
   
@@ -1079,7 +1080,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
     list->capacity--;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(char*));//réalloue un nouveau pointeur de la bonne taille
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12;
       return;
     }
     list->tab = tmp;
@@ -1152,7 +1153,7 @@ int strlist_index(strlist* list, char* chaine)
     }
     
   }
-  global_env->CODE_ERROR = 18;
+  neon_fail(18);
   return -1;
 }
 
@@ -1164,7 +1165,7 @@ void strlist_insert(strlist* list,char* chaine, int index)//ajoute un élément 
 {
   if (index > list->len)
   {
-    global_env->CODE_ERROR = 38;
+    neon_fail(38;
     return ;
   }
   
@@ -1174,7 +1175,7 @@ void strlist_insert(strlist* list,char* chaine, int index)//ajoute un élément 
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(char*));//réallocation de list.tab
     if (tmp == NULL) {
-      global_env->CODE_ERROR = 12;
+      neon_fail(12;
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab

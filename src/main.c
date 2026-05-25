@@ -1,12 +1,14 @@
+#define NEON_SOURCE_ID 10
+
 #include <string.h>
 
 #include "headers/constants.h"
 #include "headers/neon.h"
-#include "headers/runtime.h"
-#include "headers/errors.h"
 #include "headers/neonio.h"
-#include "headers/serialization.h"
 
+#ifdef TI_EZ80
+#include "headers/errors.h"
+#endif
 
 /*
 CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
@@ -17,8 +19,6 @@ Liste des choses qui ne marchent pas
 _____________________
 
 Potentielles futures erreurs :
--> Désérialisation de f ne calcule pas la même chose
--> la version désérialisée de f ne veut pas être supprimée
 ------------------------------
 S'il y a des problèmes liés aux piles et tout, bien vérifier les tailles des contextes des fonctions et regarder si on gère ça correctement
 
@@ -33,10 +33,11 @@ on ne le crée pas dans global_env->FONCTIONS)
 Avancement et choses à faire :
 -------------------------------
 PLUS TARD
+--> Sérialiser fonctions built-in et promesses
 --> Comparer les TreeBuffer pour comparer des fonctions ?
---> Ajouter compteur de références dans le treebuffer
 --> Ajouter un header dans le fichier de sérialisation d'objets qui permet de rendre compatibles entre eux des runtimes (exemple : donner l'association nom de variable/indice dans ADRESSES, les champs de containers, etc)
 --> Sauvegarder un environnement entier
+--> Faire un fichier de test pour la sérialisation
 --> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
@@ -58,16 +59,6 @@ int main(void) {
 #else
 int main (int argc, char* argv[]) {
 #endif
-
-    /*FILE* f = fopen("test2.dat", "w+");
-    write_number_value2(f, -1);
-    fclose(f);
-    f = fopen("test2.dat", "r");
-    printf("Read value : %ld\n", read_number_value2(f));
-    fclose(f);*/
-
-
-
     int error = neonInit();
     if (error < 0)
         return 0;

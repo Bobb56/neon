@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 11
+
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -33,7 +35,7 @@ NeonEnv* global_env = NULL;
     #include <signal.h>
 
     void handle_signal(int sig) {
-        global_env->CODE_ERROR = 104;
+        neon_fail(104);
     }
 #endif
 
@@ -44,7 +46,7 @@ NeonEnv* global_env = NULL;
     // Fonction de gestion du signal
     BOOL WINAPI ctrlHandler(DWORD signal) {
         if (signal == CTRL_C_EVENT) {
-            global_env->CODE_ERROR = 104;
+            neon_fail(104);
             return TRUE;  // Renvoyer TRUE pour indiquer que l'événement a été traité
         }
         return FALSE;
@@ -872,7 +874,7 @@ void terminal(void)
     TreeBuffer tb;
         
     while (true) {
-        global_env->CODE_ERROR = 0; // réinitialise les erreurs
+        neon_reset_error(); // réinitialise les erreurs
 
         if (global_env->FILENAME != NULL)
             neon_free(global_env->FILENAME);
@@ -881,13 +883,13 @@ void terminal(void)
         exp = inputCode(SEQUENCE_ENTREE);
 
         if (exp == NULL && global_env->CODE_ERROR == 0) // pour afficher le keyboardInterrupt
-            global_env->CODE_ERROR = 104;
+            neon_fail(104);
         
         // quand l'utilisateur appuie sur CTRL-D, ça met CODE_ERROR à 1
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
         {
             printError(global_env->CODE_ERROR);
-            global_env->CODE_ERROR = 0;
+            neon_reset_error();
             continue;
         }
         else if (global_env->CODE_ERROR == 1)
@@ -1008,7 +1010,7 @@ void importFile(char* filename)
     return_on_error();
 
     if (program == NULL) {
-        global_env->CODE_ERROR = 67;
+        neon_fail(67);
         return ;
     }
 

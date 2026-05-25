@@ -1,4 +1,5 @@
-#include <endian.h>
+#define NEON_SOURCE_ID 22
+
 #include <stdint.h>
 #include <stdlib.h>
 #include "headers/trees.h"
@@ -120,7 +121,7 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
 
     if (tmp == NULL) {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12);
         return TREE_VOID;
     }
 
@@ -306,7 +307,7 @@ void TreeListTemp_append(struct TreeListTemp* tree_list, TreeBufferIndex tree) {
     }
 
     if (ptr == NULL) {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12);
         return;
     }
 

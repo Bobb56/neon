@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 16
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -89,7 +91,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
         p->stack = allocate_new_stack();
 
         if (p->stack == NULL) {
-            global_env->CODE_ERROR = 12;
+            neon_fail(12);
             ContextStack_destroy(&p->var_loc);
             neon_free(p->varsToSave);
             neon_free(p);
@@ -107,7 +109,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
         p->stack = allocate_new_stack();
 
         if (p->stack == NULL) {
-            global_env->CODE_ERROR = 12;
+            neon_fail(12);
             ContextStack_destroy(&p->var_loc);
             neon_free(p->varsToSave);
             neon_free(p);

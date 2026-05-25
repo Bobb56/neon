@@ -1,7 +1,8 @@
+#define NEON_SOURCE_ID 2
+
 #include "headers/contexts.h"
 #include "headers/errors.h"
 #include "headers/objects.h"
-#include "headers/neon.h"
 #include <string.h>
 
 
@@ -18,16 +19,13 @@ void ContextStack_init(ContextStack* stack)
     stack->tab=neon_malloc((1<<stack->capacity)*sizeof(NeSave));
 
     if (stack->tab == NULL) {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12);
         return;
     }
   
     stack->len = 0;
     return;
 }
-
-
-
 
 
 
@@ -39,7 +37,7 @@ void ContextStack_append(ContextStack* stack, NeSave nesave)
         stack->capacity++;
         tmp = neon_realloc(stack->tab, (1<<stack->capacity)*sizeof(NeSave));//réallocation de list.tab
         if (tmp == NULL) {
-            global_env->CODE_ERROR = 12;
+            neon_fail(12);
             return;
         }
         stack->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -64,16 +62,12 @@ void ContextStack_destroy(ContextStack* stack)
 NeSave ContextStack_pop(ContextStack* stack)
 {
     if (stack->len == 0) {
-        global_env->CODE_ERROR = 38;
+        neon_fail(38);
         return (NeSave){0};
     }
   
     return stack->tab[--stack->len];
 }
-
-
-
-
 
 
 

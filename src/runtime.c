@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 17
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -56,7 +58,7 @@ bool neoIsTrue(NeObj expr)
     }
     else
     {
-        global_env->CODE_ERROR = 20;
+        neon_fail(20);
     }
     return false;
 }
@@ -109,7 +111,7 @@ void interrupt(void) {
     bool key_state = kb_On;
     kb_ClearOnLatch();
     if (key_state) {
-        global_env->CODE_ERROR = 104;
+        neon_fail(104);
         return;
     }
     #endif
@@ -440,10 +442,10 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 // opérateur normal qui prend des objets en arguments
 
                 if (tree_bin_op->op == 37) { // opérateur :=
-                    global_env->CODE_ERROR = 95;
+                    neon_fail(95);
                     return NEO_VOID;
                 } else if (tree_bin_op->op == 35) { // opérateur :
-                    global_env->CODE_ERROR = 92;
+                    neon_fail(92);
                     return NEO_VOID;
                 }
                                     
@@ -543,7 +545,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             TreeBufferIndex maintree = treeParCall(tb, tree)->expr;
                 
             if (TREE_TYPE(tree_buffer, maintree) != TypeFunctioncall) {
-                global_env->CODE_ERROR = 100;
+                neon_fail(100);
                 return NEO_VOID;
             }
 
@@ -554,7 +556,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             }
 
             if (NEO_TYPE(fixed_func) != TYPE_USERFUNC) {
-                global_env->CODE_ERROR = 100;
+                neon_fail(100);
                 neobject_destroy(fixed_func);
                 return NEO_VOID;
             }
@@ -603,7 +605,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
         
                 if (!funcArgsCheck(fun, args))
                 {
-                    global_env->CODE_ERROR = 14;
+                    neon_fail(14);
                     nelist_destroy(args);
                     neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                     return NEO_VOID;
@@ -632,7 +634,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 int tree_fun_call_nb_args = treelistLength(tb, tree_fun_call->args);
 
                 if (tree_fun_call_nb_args > fun->nbArgs && ! fun->unlimited_arguments) {
-                    global_env->CODE_ERROR = 6;
+                    neon_fail(6);
                     neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                     return NEO_VOID;
                 }
@@ -706,7 +708,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     // Ainsi elles ne seront pas remplacés sauf si on l'indique explicitement
                     for (int i = fun->nbArgs - fun->nbOptArgs ; i < fun -> nbArgs ; i++) {
                         if (i == 0 && neo_isMethod(function)) {
-                            global_env->CODE_ERROR = 110;
+                            neon_fail(110);
                             nelist_destroy(arguments);
                             neobject_destroy(function);
                             return NEO_VOID;
@@ -726,7 +728,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                             if (TREE_TYPE(tb, treeBinOp(tb, treelistGet(tb, tree_fun_call->args)[i])->left) != TypeVariable) {
                                 nelist_destroy(arguments);
                                 neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                global_env->CODE_ERROR = 93;
+                                neon_fail(93);
                                 return NEO_VOID;
                             }
 
@@ -735,14 +737,14 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                             if (index == fun->nbArgs) {
                                 nelist_destroy(arguments);
                                 neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                global_env->CODE_ERROR = 93;
+                                neon_fail(93);
                                 return NEO_VOID;
                             }
                             
                             if (index < fun->nbArgs - fun->nbOptArgs && !neo_is_void(arguments->tab[index])) {
                                 nelist_destroy(arguments);
                                 neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                global_env->CODE_ERROR = 94;
+                                neon_fail(94);
                                 return NEO_VOID;
                             }
                             // et on évalue l'argument envoyé
@@ -790,14 +792,14 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                                 arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
 
                                 if (neo_is_void(arguments->tab[i])) {
-                                    global_env->CODE_ERROR = 7;
+                                    neon_fail(7);
                                     neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                                     nelist_destroy(arguments);
                                     return NEO_VOID;
                                 }
 
                                 if (i == 0 && neo_isMethod(function)) { // le premier argument d'une méthode ne peut pas être un argument optionnel
-                                    global_env->CODE_ERROR = 110;
+                                    neon_fail(110);
                                     nelist_destroy(arguments);
                                     neobject_destroy(function);
                                     return NEO_VOID;
@@ -843,13 +845,13 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             else if (NEO_TYPE(function) == TYPE_EMPTY)
             {
-                global_env->CODE_ERROR = 8;
+                neon_fail(8);
                 neobject_destroy(function);
                 return NEO_VOID;
             }
             else
             {
-                global_env->CODE_ERROR = 9;
+                neon_fail(9);
                 neobject_destroy(function);
                 return NEO_VOID;
             }
@@ -874,7 +876,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             // on vérifie que nos objets ont bien les types attendus
             if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
             {
-                global_env->CODE_ERROR = 15;
+                neon_fail(15);
                 return NEO_VOID;
             }
 
@@ -882,7 +884,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             {
                 neobject_destroy(index);
                 neobject_destroy(obj);
-                global_env->CODE_ERROR = 16;
+                neon_fail(16);
                 return NEO_VOID;
             }
             
@@ -893,13 +895,13 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             // vérifications supplémentaires
             if (NEO_TYPE(obj) == TYPE_EMPTY)
             {
-                global_env->CODE_ERROR = 17;
+                neon_fail(17);
                 neobject_destroy(obj);
                 return NEO_VOID;
             }
             else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
             {
-                global_env->CODE_ERROR = 18;
+                neon_fail(18);
                 neobject_destroy(obj);
                 return NEO_VOID;
             }
@@ -956,7 +958,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             {
                 // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
                 neobject_destroy(neo);
-                global_env->CODE_ERROR = 80;
+                neon_fail(80);
                 return NEO_VOID;
             }
 
@@ -988,7 +990,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 // replace_var(treeVar(tb, tree)->var, const_value);
                 // return neo_copy(const_value);
                 // CONSTEST }
-                global_env->CODE_ERROR = 5;
+                neon_fail(5);
                 return NEO_VOID;
             }
 
@@ -1003,12 +1005,12 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
         default:
         {
             printString("Unrecognized tree type\n");
-            global_env->CODE_ERROR = 19;
+            neon_fail(19);
             return NEO_VOID;
         }
 
     }
-    global_env->CODE_ERROR = 19;
+    neon_fail(19);
     return NEO_VOID;
 }
 
@@ -1050,7 +1052,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
 
             if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
             {
-                global_env->CODE_ERROR = 15;
+                neon_fail(15);
                 return NULL;
             }
 
@@ -1058,7 +1060,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             if (NEO_TYPE(index) != TYPE_INTEGER)
             {
                 neobject_destroy(index);
-                global_env->CODE_ERROR = 16;
+                neon_fail(16);
                 return NULL;
             }
             
@@ -1068,12 +1070,12 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
 
             if (NEO_TYPE(obj) == TYPE_EMPTY)
             {
-                global_env->CODE_ERROR = 17;
+                neon_fail(17);
                 return NULL;
             }
             else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
             {
-                global_env->CODE_ERROR = 18;
+                neon_fail(18);
                 return NULL;
             }
             
@@ -1083,7 +1085,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
                 return nelist_nth_addr(neo_to_list(obj), index2);
             }
             else {
-                global_env->CODE_ERROR = 105;
+                neon_fail(105);
                 return NULL;
             }
         }
@@ -1101,7 +1103,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             {
                 // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
                 neobject_destroy(neo);
-                global_env->CODE_ERROR = 80;
+                neon_fail(80);
                 return NULL;
             }
 
@@ -1122,12 +1124,12 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
 
         default:
         {
-            global_env->CODE_ERROR = 89;
+            neon_fail(89);
             return NULL;
         }
     }
 
-    global_env->CODE_ERROR = 89;
+    neon_fail(89);
     return NULL;
 }
 
@@ -1291,7 +1293,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
 
         if (NEO_TYPE(step) != TYPE_INTEGER) {
             neobject_destroy(step);
-            global_env->CODE_ERROR = 108;
+            neon_fail(108);
             return 0;
         }
 
@@ -1330,7 +1332,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         tempMax = eval_aux(tb, FOR_ARG(tb, tree, 1));
     }
     else {
-        global_env->CODE_ERROR = 108;
+        neon_fail(108);
         return 0;
     }
 
@@ -1343,7 +1345,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
     {
         neobject_destroy(start);
         neobject_destroy(tempMax);
-        global_env->CODE_ERROR = 10;
+        neon_fail(10);
         return 0;
     }
 
@@ -1354,7 +1356,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
 
     // on récupère le variant de boucle
     if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
-        global_env->CODE_ERROR = 111;
+        neon_fail(111);
         neobject_destroy(tempMax);
         return 0;
     }
@@ -1427,7 +1429,7 @@ int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_lis
 
     // on récupère le variant de boucle
     if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
-        global_env->CODE_ERROR = 111;
+        neon_fail(111);
         return 0;
     }
 
@@ -1486,7 +1488,7 @@ int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_s
 
     // on récupère le variant de boucle
     if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
-        global_env->CODE_ERROR = 111;
+        neon_fail(111);
         return 0;
     }
 
@@ -1611,7 +1613,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                             if (NEO_TYPE(exception) != TYPE_EXCEPTION)
                             {
-                                global_env->CODE_ERROR = 78;
+                                neon_fail(78);
                                 return int_ret;
                             }
                             else
@@ -1676,13 +1678,13 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     if (param_length > 1)
                     {
-                        global_env->CODE_ERROR = 21;
+                        neon_fail(21);
                         return 0;
                     }
                     
                     if (!neo_is_void(global_env->RETURN_VALUE)) // c'est pas correct, car on ne peut pas renvoyer une valeur alors que la précédente n'a pas été récupérée
                     {
-                        global_env->CODE_ERROR = 99;
+                        neon_fail(99);
                         return 0;
                     }
 
@@ -1738,12 +1740,12 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     if (param_length == 0) // il faut au moins un argument
                     {
-                        global_env->CODE_ERROR = 69;
+                        neon_fail(69);
                         return 0;
                     }
                     else if (global_env->process_cycle->process->var_loc.len == 0)
                     {
-                        global_env->CODE_ERROR = 70;
+                        neon_fail(70);
                         return 0;
                     }
 
@@ -1761,7 +1763,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     if (param_length > 1)
                     {
-                        global_env->CODE_ERROR = 101;
+                        neon_fail(101);
                         return 0;
                     }
 
@@ -1866,7 +1868,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 
                 if (TREE_TYPE(tb, FOR_ARG(tb, treelist_array[inst], 0)) != TypeVariable)
                 {
-                    global_env->CODE_ERROR = 22;
+                    neon_fail(22);
                     return 0;
                 }
 
@@ -1883,12 +1885,12 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 
                 if (TREE_TYPE(tb, FOR_ARG(tb, treelist_array[inst], 0)) != TypeVariable)
                 {
-                    global_env->CODE_ERROR = 22;
+                    neon_fail(22);
                     return 0;
                 }
 
                 if (FOR_NBARGS(tb, treelist_array[inst]) != 2) {
-                    global_env->CODE_ERROR = 109;
+                    neon_fail(109);
                     return 0;
                 }
 
@@ -1909,7 +1911,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 }
                 else {
                     neobject_destroy(iterable);
-                    global_env->CODE_ERROR = 109;
+                    neon_fail(109);
                     return 0;
                 }
 

@@ -17,6 +17,11 @@ typedef struct NeonEnv {
     // permet de déclencher un signal d'erreur à travers toute la chaîne de traitement de Neon.
     // la règle est : si CODE_ERROR est non nul, il faut détruire les objets que l'on a créés dans cette fonction, et retourner
     int CODE_ERROR;
+    // parfois, le même code d'erreur peut être déclenché à plusieurs endroits dans Neon. Les 2 champs suivants permettent de différencier ces endroits-là quand on lancer une erreur
+    // Chaque fichier source a une constante NEON_SOURCE_ID. Correspond à la constante du fichier dans lequel a été lancée l'erreur
+    int ERROR_NEON_SOURCE_ID;
+    // Correspond au numéro de ligne (dans le code source de Neon) auquel l'erreur a été déclenchée
+    int ERROR_NEON_LINE_NUMBER;
 
     // cette variable indique le nombre d'instructions exécuté sur chaque processus avant de passer au suivant
     // il s'agit d'une variable et non d'une constante car la fonction setAtomicTime doit pouvoir le modifier

@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 13
+
 // bibliothèque générale de structures des données Neon
 
 #include <stdint.h>
@@ -53,7 +55,7 @@ Var get_var_from_addr(NeObj* obj) {
 Var get_var(char* name) {
     int index = strlist_index(global_env->NOMS,name);
     if (index < 0) { // on crée la variable
-        global_env->CODE_ERROR = 0;
+        neon_reset_error();
         strlist_append(global_env->NOMS, strdup(name));
         nelist_append(global_env->ADRESSES, neo_empty_create());
         return global_env->ADRESSES->len - 1;
@@ -172,7 +174,7 @@ int get_field_index(Container* c, char* name) {
 
     if (index == list->len - 1 && strcmp(neo_to_string(list->tab[index]), name) != 0)
     {
-        global_env->CODE_ERROR = 82;
+        neon_fail(82);
         return -1;
     }
     return index;
@@ -265,7 +267,7 @@ char* neo_container_str(NeObj neo) {
         
         if (NEO_TYPE(obj) != TYPE_STRING) {
             neobject_destroy(obj);
-            global_env->CODE_ERROR = 118;
+            neon_fail(118);
             return NULL;
         }
 
@@ -361,7 +363,7 @@ intptr_t randint(intptr_t min, intptr_t max) {
 
     if (min >= max)
     {
-        global_env->CODE_ERROR = 64;// la fonction randint prend en argument un entier positif
+        neon_fail(64);// la fonction randint prend en argument un entier positif
         return 0;
     }
 
@@ -441,7 +443,7 @@ NeObj functionCall(NeObj fun, NeList* args)
     Function* f = fun.function;
     if (f->nbArgs != -1 && f->nbArgs != args->len)
     {
-        global_env->CODE_ERROR = 36;// nombre d'arguments invalide pour appeler cette fonction
+        neon_fail(36);// nombre d'arguments invalide pour appeler cette fonction
         return NEO_VOID;
     }
     NeObj (*ptr) (NeList*) = f->ptr;
@@ -930,7 +932,7 @@ NeObj nelist_nth(NeList* list, int index) {
 void nelist_insert(NeList* list,NeObj neo, int index)//ajoute un élément à la place indiquée
 {
     if (index > list->len) {
-        global_env->CODE_ERROR = 37; // out of range
+        neon_fail(37); // out of range
         return ;
     }
   
@@ -959,7 +961,7 @@ void nelist_remove(NeList* list,int index)
 {
     if (index >= list->len)
     {
-        global_env->CODE_ERROR = 38;//out of range
+        neon_fail(38);//out of range
         return ;
     }
   
@@ -994,7 +996,7 @@ int nelist_index(NeList* liste, NeObj neo)
             return i;
         }
     }
-    global_env->CODE_ERROR = 39; // cet objet n'existe pas
+    neon_fail(39); // cet objet n'existe pas
     
     return -1;
 }
@@ -1009,7 +1011,7 @@ int nelist_index2(NeList* l, NeObj neo)
         if (neo_equal(neo, l->tab[i]))
             return i;
     }
-    global_env->CODE_ERROR = 88;
+    neon_fail(88);
     return -1;
 }
 
@@ -1440,7 +1442,7 @@ void neobject_aff(NeObj neo)
             int index = nelist_index(global_env->ADRESSES, neo);
             if (index == -1) {
                 printString("<anonymous>");
-                global_env->CODE_ERROR = 0;
+                neon_reset_error();
             }
             else {
                 printString(global_env->NOMS->tab[index]);
@@ -1556,7 +1558,7 @@ char* neobject_str(NeObj neo)
             int index = nelist_index(global_env->ADRESSES, neo);
             if (index == -1) {
                 ret = addStr(ret, "<anonymous>");
-                global_env->CODE_ERROR = 0;
+                neon_reset_error();
             }
             else {
                 ret = addStr(ret, global_env->NOMS->tab[index]);
@@ -1654,14 +1656,16 @@ char* type(NeObj neo)
     }
     if (NEO_TYPE(neo) == TYPE_EMPTY)
     {
-        return "Undefined";
+        return "undefined";
     }
 
     if (NEO_TYPE(neo) == TYPE_UNSPECIFIED)
         return "unspecified type";
 
-    return "NoneType";
+    if (NEO_TYPE(neo) == TYPE_NONE)
+        return "NoneType";
 
+    return NULL;
 }
 
 
@@ -1872,7 +1876,7 @@ int neo_compare(NeObj a, NeObj b)
     else
     {
         //erreur
-        global_env->CODE_ERROR = 90;
+        neon_fail(90);
         return 0;
     }
 }
@@ -1975,7 +1979,7 @@ NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname) {
     char* container_name = global_env->CONTAINERS->tab[c->type];
     int index = function_module(container_name, opname);
     if (index == -1) {
-        global_env->CODE_ERROR = 107;
+        neon_fail(107);
         return NEO_VOID;
     }
     else {
@@ -2002,7 +2006,7 @@ NeObj callOverloadedUnaryOperator(NeObj op1, char* opname) {
     char* container_name = global_env->CONTAINERS->tab[c->type];
     int index = function_module(container_name, opname);
     if (index == -1) {
-        global_env->CODE_ERROR = 107;
+        neon_fail(107);
         return NEO_VOID;
     }
     else {

@@ -16,6 +16,7 @@ typedef uint8_t PointerType;
 #define UserFuncPtr             5
 #define CharStarPtr             6
 #define ContainerNeListPtr      (NeListPtr | GC_EXTERN)
+#define UserFuncOptArgsPtr      (NeListPtr | GC_EXTERN)
 
 typedef union {
     String* string;

@@ -1,8 +1,9 @@
+#define NEON_SOURCE_ID 14
+
 #include <string.h>
 #include <math.h>
 
 #include "headers/neobj.h"
-#include "headers/neonio.h"
 #include "headers/objects.h"
 #include "headers/strings.h"
 #include "headers/runtime.h"
@@ -97,7 +98,7 @@ NeObj _add(NeObj _op1, NeObj _op2) {
     else
     {
       // Erreur : types non supportes pour l addition
-      global_env->CODE_ERROR = 40;
+      neon_fail(40);
       return NEO_VOID;
     }
   }
@@ -118,14 +119,14 @@ NeObj _add(NeObj _op1, NeObj _op2) {
       else
       {
         // Erreur : types non supportes pour l addition
-        global_env->CODE_ERROR = 40;
+        neon_fail(40);
         return NEO_VOID;
       }
   }
   else
   {
     // Erreur : types non supportes pour l addition
-    global_env->CODE_ERROR = 40;
+    neon_fail(40);
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -185,7 +186,7 @@ NeObj _sub(NeObj _op1, NeObj _op2)
   else
   {
     // Erreur : types non supportes pour la soustraction
-    global_env->CODE_ERROR = 41;
+    neon_fail(41);
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -214,7 +215,7 @@ NeObj _div(NeObj _op1, NeObj _op2)
   else
   {
     // Erreur : types non supportes pour la division
-    global_env->CODE_ERROR = 42;
+    neon_fail(42);
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -341,7 +342,7 @@ NeObj _mul(NeObj _op1, NeObj _op2)
   }
   else
   {
-    global_env->CODE_ERROR = 43; //unsupported types for mul
+    neon_fail(43); //unsupported types for mul
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -364,14 +365,14 @@ NeObj _mod(NeObj _op1, NeObj _op2)
   {
     if (neo_to_integer(_op2) == 0)
     {
-        global_env->CODE_ERROR = 44;
+        neon_fail(44);
         return NEO_VOID;
     }
     return neo_integer_create(neo_to_integer(_op1) % neo_to_integer(_op2));
   }
   else
   {
-    global_env->CODE_ERROR = 44; // unsupported types
+    neon_fail(44); // unsupported types
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -386,7 +387,7 @@ NeObj _eucl(NeObj _op1, NeObj _op2)
 
   if (NEO_TYPE(_op2) == TYPE_INTEGER && neo_to_integer(_op2) == 0)
   {
-      global_env->CODE_ERROR = 45;
+      neon_fail(45);
       return NEO_VOID;
   }
   
@@ -431,7 +432,7 @@ NeObj _eucl(NeObj _op1, NeObj _op2)
   }
   else
   {
-    global_env->CODE_ERROR = 46;
+    neon_fail(46);
     return NEO_VOID;
   }
   return NEO_VOID;
@@ -474,7 +475,7 @@ NeObj _xor(NeObj op1, NeObj op2)
 {
   if ((NEO_TYPE(op1) != TYPE_BOOL && NEO_TYPE(op1) != TYPE_INTEGER) || (NEO_TYPE(op2) != TYPE_BOOL && NEO_TYPE(op2) != TYPE_INTEGER))
   {
-      global_env->CODE_ERROR = 49;
+      neon_fail(49);
       return NEO_VOID;
   }
   
@@ -505,7 +506,7 @@ NeObj _pow(NeObj _op1, NeObj _op2)
   }
   else
   {
-      global_env->CODE_ERROR = 50;
+      neon_fail(50);
       return NEO_VOID;
   }
   return NEO_VOID;
@@ -537,7 +538,7 @@ NeObj _infEqual(NeObj op1, NeObj op2)
     bool res = neo_compare(op1, op2) <= 0;
     if (global_env->CODE_ERROR != 0)
     {
-        global_env->CODE_ERROR = 52;
+        neon_fail(52);
         return NEO_VOID;
     }
     
@@ -553,7 +554,7 @@ NeObj _supEqual(NeObj op1, NeObj op2)
     bool res = neo_compare(op1, op2) >= 0;
     if (global_env->CODE_ERROR != 0)
     {
-        global_env->CODE_ERROR = 53;
+        neon_fail(53);
         return NEO_VOID;
     }
     
@@ -570,7 +571,7 @@ NeObj _inf(NeObj op1, NeObj op2)
     bool res = neo_compare(op1, op2) < 0;
     if (global_env->CODE_ERROR != 0)
     {
-        global_env->CODE_ERROR = 54;
+        neon_fail(54);
         return NEO_VOID;
     }
     
@@ -586,7 +587,7 @@ NeObj _sup(NeObj op1, NeObj op2)
     bool res = neo_compare(op1, op2) > 0;
     if (global_env->CODE_ERROR != 0)
     {
-        global_env->CODE_ERROR = 55;
+        neon_fail(55);
         return NEO_VOID;
     }
     
@@ -604,7 +605,7 @@ NeObj _affect(NeObj op2, NeObj* op1)
     //neobject_destroy(op1);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
-        global_env->CODE_ERROR = 56; // unedfined var
+        neon_fail(56); // unedfined var
         return NEO_VOID;
     }
     else
@@ -630,7 +631,7 @@ NeObj _affectNone(NeObj* op1, NeObj op2)
     //neobject_destroy(op1);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
-        global_env->CODE_ERROR = 56; // unedfined var
+        neon_fail(56); // unedfined var
         return NEO_VOID;
     }
     else
@@ -657,7 +658,7 @@ void _affect2(NeObj* op1, NeObj op2)
     //neobject_destroy(op1);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
-        global_env->CODE_ERROR = 56;//undefined var
+        neon_fail(56);//undefined var
         return ;
     }
     else
@@ -705,7 +706,7 @@ NeObj _goIn(NeObj op2, NeObj op1)
     else
     {
       // Erreur : Vous devez procéder comme suit valeur ->  \"nom_variable\"
-      global_env->CODE_ERROR = 57;
+      neon_fail(57);
     }
 
     return NEO_VOID;
@@ -725,7 +726,7 @@ NeObj _goIn(NeObj op2, NeObj op1)
 NeObj _addEqual(NeObj* op1, NeObj op2)
 {
     if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return NEO_VOID;
     }
 
@@ -745,7 +746,7 @@ NeObj _addEqual(NeObj* op1, NeObj op2)
 NeObj _subEqual(NeObj* op1, NeObj op2)
 {
     if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return NEO_VOID;
     }
 
@@ -764,7 +765,7 @@ NeObj _subEqual(NeObj* op1, NeObj op2)
 NeObj _mulEqual(NeObj* op1, NeObj op2)
 {
     if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return NEO_VOID;
     }
 
@@ -783,7 +784,7 @@ NeObj _mulEqual(NeObj* op1, NeObj op2)
 NeObj _divEqual(NeObj* op1, NeObj op2)
 {
     if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return NEO_VOID;
     }
 
@@ -809,11 +810,11 @@ NeObj _incr(NeObj* op1)
         new = neo_double_create(neo_to_double(*op1) + (double)1);
     }
     else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return NEO_VOID;
     }
     else {
-        global_env->CODE_ERROR = 40;
+        neon_fail(40);
         return NEO_VOID;
     }
 
@@ -830,11 +831,11 @@ void _incr2(NeObj* op1, int incr) {
         new = neo_double_create(neo_to_double(*op1) + (double)1);
     }
     else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return ;
     }
     else {
-        global_env->CODE_ERROR = 40;
+        neon_fail(40);
         return ;
     }
 
@@ -854,11 +855,11 @@ NeObj _decr(NeObj* op1)
         new = neo_double_create(neo_to_double(*op1) - (double)1);
     }
     else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return NEO_VOID;
     }
     else {
-        global_env->CODE_ERROR = 40;
+        neon_fail(40);
         return NEO_VOID;
     }
 
@@ -873,7 +874,7 @@ NeObj _not(NeObj op1)
 {
   if (NEO_TYPE(op1) != TYPE_BOOL && NEO_TYPE(op1) != TYPE_INTEGER)
   {
-        global_env->CODE_ERROR = 58;
+        neon_fail(58);
         return NEO_VOID;
   }
 
@@ -892,14 +893,14 @@ NeObj _ref(NeObj* op1)
 {
     if (NEO_TYPE((*op1)) == TYPE_EMPTY)
     {
-        global_env->CODE_ERROR = 59; // undefined var
+        neon_fail(59); // undefined var
         return NEO_VOID;
     }
     
     int index = get_var_from_addr(op1);
 
     if (index < 0) {
-      global_env->CODE_ERROR = 5;
+      neon_fail(5);
       return NEO_VOID;
     }
 
@@ -934,7 +935,7 @@ NeObj _minus(NeObj op1)
     }
     else
     {
-        global_env->CODE_ERROR = 61; // types non supportés par l'opérateur moins (unaire)
+        neon_fail(61); // types non supportés par l'opérateur moins (unaire)
         return NEO_VOID;
     }
 
@@ -945,7 +946,7 @@ NeObj _minus(NeObj op1)
 NeObj _del(NeObj* op1)
 {
     if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return NEO_VOID;
     }
     neobject_destroy(*op1);
@@ -964,7 +965,7 @@ NeObj _exponent(NeObj op1, NeObj op2)
   }
   else
   {
-      global_env->CODE_ERROR = 50;
+      neon_fail(50);
       return NEO_VOID;
   }
   return NEO_VOID;
@@ -998,7 +999,7 @@ NeObj _in(NeObj op1, NeObj op2)
 
     if (NEO_TYPE(op2) != TYPE_LIST)
     {
-        global_env->CODE_ERROR = 79;
+        neon_fail(79);
         return NEO_VOID;
     }
     else
@@ -1018,7 +1019,7 @@ NeObj _swap(NeObj* op1, NeObj* op2)
 
 NeObj _deref(NeObj op1) {
     if (NEO_TYPE(op1) != TYPE_STRING) {
-        global_env->CODE_ERROR = 60; // ceci n'est pas une chaine de caractères
+        neon_fail(60); // ceci n'est pas une chaine de caractères
         return NEO_VOID;
     }
 
@@ -1026,7 +1027,7 @@ NeObj _deref(NeObj op1) {
 
     if(!strlist_inList(global_env->NOMS, nom))
     {
-        global_env->CODE_ERROR = 5;
+        neon_fail(5);
         return NEO_VOID;
     }
         

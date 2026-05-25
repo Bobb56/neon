@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 12
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -28,7 +30,7 @@
     NeStream NeStream_open(char* name, char* mode) {
         FILE* stream = fopen(name, mode);
         if (stream == NULL)
-            global_env->CODE_ERROR = 67;
+            neon_fail(67);
         return stream;
     }
 
@@ -51,7 +53,7 @@
         FILE* fichier = fopen(filename, "rt");//lit le fichier
         if (fichier == NULL)
         {
-            global_env->CODE_ERROR = 67;
+            neon_fail(67);
             return NULL;
         }
         
@@ -102,7 +104,7 @@
         FILE* fichier = fopen(filename, "w+");
         if (fichier == NULL)
         {
-            global_env->CODE_ERROR = 67;
+            neon_fail(67);
             return;
         }
 
@@ -126,7 +128,7 @@
             if (err != 1)
             {
                 neon_free(var);
-                global_env->CODE_ERROR = 104;
+                neon_fail(104);
                 return NULL;
             }
             
@@ -141,7 +143,7 @@
             if (ptrtest==NULL)
             {
                 neon_free(newVar);
-                global_env->CODE_ERROR = 66;
+                neon_fail(66);
                 return NULL;
             }
             
@@ -153,7 +155,7 @@
             char* str = linenoise(text);
 
             if (str == NULL) {
-                global_env->CODE_ERROR = 104;
+                neon_fail(104);
                 return NULL;
             }
             else if (strlen(str) > 0) { // Ajout de la ligne à l'historique
@@ -181,7 +183,7 @@
             
             if (err < 0 || (unsigned)err != strlen(strNombre))
             {
-                global_env->CODE_ERROR = 66;
+                neon_fail(66);
                 neon_free(strNombre);
                 return 0;
             }
@@ -235,7 +237,7 @@
     NeStream NeStream_open(char* name, char* mode) {
         uint8_t stream = ti_Open(name, mode);
         if (stream == 0)
-            global_env->CODE_ERROR = 67;
+            neon_fail(67);
         return stream;
     }
 
@@ -287,7 +289,7 @@
         uint8_t fichier = ti_Open(filename, "r"); //ouvre l'AppVar
         if (fichier == 0)
         {
-            global_env->CODE_ERROR = 67;
+            neon_fail(67);
             return NULL;
         }
         
@@ -342,7 +344,7 @@
         uint8_t fichier = ti_Open(filename, "w"); //ouvre l'AppVar
         if (fichier == 0)
         {
-            global_env->CODE_ERROR = 67;
+            neon_fail(67);
             return;
         }
         
@@ -358,7 +360,7 @@
         char* var = neon_malloc(501*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
         
         if (var == NULL) {
-            global_env->CODE_ERROR = 12;
+            neon_fail(12);
             return NULL;
         }
         
@@ -368,7 +370,7 @@
     
         if (!nio_getsn(var, 500))
         {
-            global_env->CODE_ERROR = 1;
+            neon_fail(1);
             return NULL;
         }
 
@@ -376,7 +378,7 @@
         char* newVar = neon_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
 
         if (newVar == NULL) {
-            global_env->CODE_ERROR = 12;
+            neon_fail(12);
             neon_free(var);
             return NULL;
         }
@@ -387,7 +389,7 @@
     
         if (ptrtest == NULL) {
             neon_free(newVar);
-            global_env->CODE_ERROR = 66;
+            neon_fail(66);
             return NULL;
         }
     
@@ -492,7 +494,7 @@ double str_to_double(char *string)//convertit une chaîne de caractère en nombr
 int unitCharToInt(char car, int base)
 {
     if (car != '0' && car != '1' && base == 2) // le binaire n'autorise que 0 ou 1
-        global_env->CODE_ERROR = 73;
+        neon_fail(73);
     
     if (isdigit(car))
         return car - '0';
@@ -501,7 +503,7 @@ int unitCharToInt(char car, int base)
     else if (car >= 'A' && car <= 'F')
         return car - 'A' + 10;
 
-    global_env->CODE_ERROR = 73;
+    neon_fail(73);
     return 0;
 }
 

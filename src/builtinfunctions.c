@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 1
+
 #include <string.h>
 #include <time.h>
 #include <math.h>
@@ -94,9 +96,7 @@ NeObj _input_(NeList* args)
         char* entree = input(chaine);
         neon_free(chaine);
 
-        if (global_env->CODE_ERROR != 0) {
-            return NEO_VOID;
-        }
+        return_on_error(NEO_VOID);
 
     #endif
     return neo_str_create(entree);
@@ -113,8 +113,7 @@ NeObj _nbr_(NeList* args)
     }
     else {
         double ret = str_to_double(string);
-        if (global_env->CODE_ERROR != 0)
-            return NEO_VOID;
+        return_on_error(NEO_VOID);
         return neo_double_create(ret);
     }
 }
@@ -142,7 +141,7 @@ NeObj _len_(NeList* args)
     }
     else
     {
-        global_env->CODE_ERROR = 4; // cet objet n'a pas de longueur
+        neon_fail(4); // cet objet n'a pas de longueur
         return NEO_VOID;
     }
   
@@ -161,7 +160,7 @@ NeObj _substring_(NeList* args)
 
 NeObj _exit_(NeList* args)
 {
-  global_env->CODE_ERROR = 1;
+  neon_fail(1);
   return NEO_VOID;
 }
 
@@ -233,7 +232,7 @@ NeObj _reverse_(NeList* args)
     }
     else
     {
-        global_env->CODE_ERROR = 62; // unsupported types for reverse
+        neon_fail(62); // unsupported types for reverse
         return NEO_VOID;
     }
 }
@@ -248,14 +247,14 @@ NeObj _eval_(NeList* args)
     
     TreeBuffer tb = createExpressionTree(exp, false);
 
-    if (global_env->CODE_ERROR != 0) {
+    if_error {
         neon_free(sov);
         return NEO_VOID;
     }
 
     NeObj res = tb_eval_aux(&tb);
 
-    if (global_env->CODE_ERROR != 0)
+    if_error
         neon_free(sov);
     else
         global_env->FILENAME = sov;
@@ -348,7 +347,7 @@ NeObj _help_(NeList* args)
                 int index = nelist_index(global_env->ADRESSES, ARG(i));
                 if (index == -1) {
                     printString("<anonymous>");
-                    global_env->CODE_ERROR = 0;
+                    neon_reset_error();
                 }
                 else {
                     printString(global_env->NOMS->tab[index]);
@@ -568,7 +567,7 @@ NeObj _failwith_(NeList* args)
     setColor(DEFAULT);
     printErrSource(global_env->FILENAME, global_env->LINENUMBER);
 
-    global_env->CODE_ERROR = 1;
+    neon_fail(1);
     
     return NEO_VOID;
 }
@@ -593,7 +592,7 @@ NeObj _assert_(NeList* args)
     {
         if (!neo_is_true(ARG(i)))
         {
-            global_env->CODE_ERROR = 71;
+            neon_fail(71);
             return NEO_VOID;
         }
     }
@@ -662,7 +661,7 @@ NeObj _list_comp_(NeList* args)
     if (NEO_TYPE(ARG(1)) != TYPE_INTEGER || NEO_TYPE(ARG(2)) != TYPE_INTEGER || NEO_TYPE(ARG(3)) != TYPE_INTEGER) {
         if (sov_FILENAME != NULL)
             neon_free(sov_FILENAME);
-        global_env->CODE_ERROR = 112;
+        neon_fail(112);
         return NEO_VOID;
     }
     
@@ -671,8 +670,7 @@ NeObj _list_comp_(NeList* args)
     // un premier TreeBuffer contenant l'expression de la condition
     TreeBuffer cond = createExpressionTree(neo_to_string(ARG(4)), false);
 
-    if (global_env->CODE_ERROR != 0)
-    {
+    if_error {
         TreeBuffer_destroy(&cond);
         if (sov_FILENAME != NULL)
             neon_free(sov_FILENAME);
@@ -682,8 +680,7 @@ NeObj _list_comp_(NeList* args)
     // un second TreeBuffer contenant l'expression de la valeur
     TreeBuffer val = createExpressionTree(neo_to_string(ARG(5)), false);
 
-    if (global_env->CODE_ERROR != 0)
-    {
+    if_error {
         TreeBuffer_destroy(&cond);
         if (sov_FILENAME != NULL)
             neon_free(sov_FILENAME);
@@ -697,7 +694,7 @@ NeObj _list_comp_(NeList* args)
     {
         NeObj bo = tb_eval_aux(&cond);
 
-        if (global_env->CODE_ERROR != 0) {
+        if_error {
             TreeBuffer_destroy(&cond);
             TreeBuffer_destroy(&val);
             neobject_destroy(liste);
@@ -711,7 +708,7 @@ NeObj _list_comp_(NeList* args)
             NeObj neo = tb_eval_aux(&val);
             neo_list_append(liste, neo);
 
-            if (global_env->CODE_ERROR != 0) {
+            if_error {
                 neobject_destroy(bo);
                 neobject_destroy(liste);
                 TreeBuffer_destroy(&cond);
@@ -768,10 +765,11 @@ NeObj _create_exception_(NeList* args)
 }
 
 
-NeObj _raise_(NeList* args)
-{
-    global_env->EXCEPTION = neo_to_string(ARG(1));
-    global_env->CODE_ERROR = -get_exception_code(ARG(0));
+NeObj _raise_(NeList* args) {
+    neon_raise_user_exception(
+        get_exception_code(ARG(0)),
+        neo_to_string(ARG(1))
+    );
     return NEO_VOID;
 }
 
@@ -785,7 +783,7 @@ NeObj _int_(NeList* args)
     else if (NEO_TYPE(ARG(0)) == TYPE_STRING && is_integer(neo_to_string(ARG(0))))
         return neo_integer_create(str_to_int(neo_to_string(ARG(0))));
     else {
-        global_env->CODE_ERROR = 113;
+        neon_fail(113);
         return NEO_VOID;
     }
     
@@ -796,14 +794,14 @@ NeObj _index_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) == TYPE_STRING) {
         if (NEO_TYPE(ARG(1)) != TYPE_STRING) {
-            global_env->CODE_ERROR = 121;
+            neon_fail(121);
             return NEO_VOID;
         }
         char* string = neo_to_string(ARG(0));
         char* search = neo_to_string(ARG(1));
         int index = string_index(string, search);
         if (index == -1) {
-            global_env->CODE_ERROR = 88;
+            neon_fail(88);
             return NEO_VOID;
         }
         else {
@@ -819,7 +817,7 @@ NeObj _index_(NeList* args)
         return NEO_VOID;
     }
     else {
-        global_env->CODE_ERROR = 121;
+        neon_fail(121);
         return NEO_VOID;
     }
 }
@@ -859,7 +857,7 @@ NeObj _count_(NeList* args)
     }
     else
     {
-        global_env->CODE_ERROR = 14;
+        neon_fail(14);
         return NEO_VOID;
     }
 }
@@ -922,8 +920,7 @@ NeObj _sort_asc_(NeList* args)
 
     quickSort(l->tab, 0, l->len - 1, neo_compare);
 
-    if (global_env->CODE_ERROR != 0)
-        return NEO_VOID;
+    return_on_error(NEO_VOID);
     
     return neo_none_create();
 }
@@ -936,8 +933,7 @@ NeObj _sort_desc_(NeList* args)
 
     quickSort(l->tab, 0, l->len - 1, neo_compare2);
 
-    if (global_env->CODE_ERROR != 0)
-        return NEO_VOID;
+    return_on_error(NEO_VOID);
     
     return neo_none_create();
 }
@@ -946,7 +942,7 @@ NeObj _sort_desc_(NeList* args)
 NeObj _sin_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     return neo_double_create(sin(neo_to_double(ARG(0))));
@@ -956,7 +952,7 @@ NeObj _sin_(NeList* args)
 NeObj _cos_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     return neo_double_create(cos(neo_to_double(ARG(0))));
@@ -966,7 +962,7 @@ NeObj _cos_(NeList* args)
 NeObj _tan_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     return neo_double_create(tan(neo_to_double(ARG(0))));
@@ -976,7 +972,7 @@ NeObj _tan_(NeList* args)
 NeObj _deg_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     double angle = neo_to_double(ARG(0));
@@ -987,7 +983,7 @@ NeObj _deg_(NeList* args)
 NeObj _rad_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     double angle = neo_to_double(ARG(0));
@@ -998,7 +994,7 @@ NeObj _rad_(NeList* args)
 NeObj _sqrt_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     return neo_double_create(sqrt(neo_to_double(ARG(0))));
@@ -1008,7 +1004,7 @@ NeObj _sqrt_(NeList* args)
 NeObj _ln_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     return neo_double_create(log(neo_to_double(ARG(0))));;
@@ -1018,7 +1014,7 @@ NeObj _ln_(NeList* args)
 NeObj _exp_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     return neo_double_create(exp(neo_to_double(ARG(0))));
@@ -1028,7 +1024,7 @@ NeObj _exp_(NeList* args)
 NeObj _log_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     return neo_double_create(log10(neo_to_double(ARG(0))));
@@ -1038,7 +1034,7 @@ NeObj _log_(NeList* args)
 NeObj _log2_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        global_env->CODE_ERROR = 114;
+        neon_fail(114);
         return NEO_VOID;
     }
     return neo_double_create(log2(neo_to_double(ARG(0))));
@@ -1079,8 +1075,7 @@ NeObj _readFile_(NeList* args)
 {
     char* res = openFile(neo_to_string(ARG(0)));
 
-    if (global_env->CODE_ERROR != 0)
-        return NEO_VOID;
+    return_on_error(NEO_VOID);
     
     return neo_str_create(res);
 }
@@ -1091,8 +1086,7 @@ NeObj _writeFile_(NeList* args)
 {
     writeFile(neo_to_string(ARG(0)),neo_to_string(ARG(1)));
 
-    if (global_env->CODE_ERROR != 0)
-        return NEO_VOID;
+    return_on_error(NEO_VOID);
     
     return neo_none_create();
 }
@@ -1115,7 +1109,7 @@ NeObj _setAtomicTime_(NeList* args) {
 
     if (global_env->ATOMIC_TIME < 1)
     {
-        global_env->CODE_ERROR = 102;
+        neon_fail(102);
         return NEO_VOID;
     }
     return neo_none_create();
@@ -1176,7 +1170,7 @@ NeObj _setColor_(NeList* args) {
 
 NeObj _initGraphics_(NeList* args) {
     #if !defined(TI_EZ80)
-    global_env->CODE_ERROR = 115;
+    neon_fail(115);
     return NEO_VOID;
     #else
 
@@ -1214,7 +1208,7 @@ NeObj _detectFiles_(NeList* args) {
 
     rep = opendir(".");
     if (rep == NULL) {
-        global_env->CODE_ERROR = 119;
+        neon_fail(119);
         return NEO_VOID;
     }
 
@@ -1230,7 +1224,7 @@ NeObj _detectFiles_(NeList* args) {
                 FILE* file = fopen(entree->d_name, "r");
 
                 if (file == NULL) {
-                    global_env->CODE_ERROR = 119;
+                    neon_fail(119);
                     neobject_destroy(files);
                     neon_free(buffer);
                     return NEO_VOID;
@@ -1245,7 +1239,7 @@ NeObj _detectFiles_(NeList* args) {
         } else {
             neobject_destroy(files);
             neon_free(buffer);
-            global_env->CODE_ERROR = 119;
+            neon_fail(119);
             return NEO_VOID;
         }
     }
@@ -1261,7 +1255,7 @@ NeObj _detectFiles_(NeList* args) {
     HANDLE handle = FindFirstFile(".\\*", &fichier);
 
     if (handle == INVALID_HANDLE_VALUE) {
-        global_env->CODE_ERROR = 119;
+        neon_fail(119;
         neobject_destroy(files);
         neon_free(buffer);
         return NEO_VOID;
@@ -1274,7 +1268,7 @@ NeObj _detectFiles_(NeList* args) {
             FILE* file = fopen(fichier.cFileName, "r");
 
             if (file == NULL) {
-                global_env->CODE_ERROR = 119;
+                neon_fail(119;
                 neobject_destroy(files);
                 neon_free(buffer);
                 return NEO_VOID;

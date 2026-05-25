@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 19
+
 /*
 Cette bibliothèque gère une deuxième zone mémoire utilisée pour désengorger le heap
 Cette mémoire est divisée en deux zones : la zone permanente, suivie de la zone temporaire.
@@ -76,7 +78,7 @@ void side_memory_end(void) {
 void* side_memory_alloc(int size) {
     void* alloc_area = pointer;
     if (pointer + size >= initial_base_pointer + buffer_size) {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12);
         return NULL;
     }
     pointer += size;
@@ -90,7 +92,7 @@ void* side_memory_hard_alloc(int size) {
 
     void* alloc_area = base_pointer;
     if (base_pointer + size >= initial_base_pointer + buffer_size) {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12);
         return NULL;
     }
     base_pointer += size;

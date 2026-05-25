@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 7
+
 // cette bibliothèque est spécifique à ez80
 
 #include <string.h>
@@ -105,7 +107,7 @@ void initGraphics(void) {
         if (!neo_is_void(global_env->ATTRIBUTES->tab[index]) && !nelist_equal(neo_to_list(global_env->ATTRIBUTES->tab[index]), fields)) {
             // si on met pas ce garde fou, on peut overrider le type de container en silence
             nelist_destroy(fields);
-            global_env->CODE_ERROR = 116;
+            neon_fail(116);
             return;
         }
 
@@ -317,7 +319,7 @@ NeObj getTextWidth(NeList* args) {
     Container* c = neo_to_container(ARG(0));
 
     if (c->type != global_env->graphic_containers.Text) {
-        global_env->CODE_ERROR = 14;
+        neon_fail(14);
         return neo_none_create();
     }
 
@@ -327,7 +329,7 @@ NeObj getTextWidth(NeList* args) {
         NEO_TYPE(c->data->tab[3]) != TYPE_INTEGER ||
         NEO_TYPE(c->data->tab[4]) != TYPE_INTEGER ||
         NEO_TYPE(c->data->tab[5]) != TYPE_INTEGER) {
-            global_env->CODE_ERROR = 117;
+            neon_fail(117);
             return neo_none_create();
     }
     char* text = neo_to_string(c->data->tab[0]);
@@ -367,7 +369,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(2)) ||
                 NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(4)) != TYPE_BOOL) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
             }
             intptr_t x = neo_to_integer(ARG(0));
@@ -389,7 +391,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_BOOL) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
             }
             intptr_t x = neo_to_integer(ARG(0));
@@ -411,7 +413,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(2)) ||
                 !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
             }
             intptr_t x0 = neo_to_integer(ARG(0));
@@ -430,7 +432,7 @@ void draw_obj(NeObj obj) {
                 NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_INTEGER) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
             }
             char* text = neo_to_string(ARG(0));
@@ -456,7 +458,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(4)) ||
                 !is_number(ARG(5)) ||
                 NEO_TYPE(ARG(6)) != TYPE_INTEGER) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
             }
             intptr_t x0 = neo_to_integer(ARG(0));
@@ -473,7 +475,7 @@ void draw_obj(NeObj obj) {
         else if (c->type == global_env->graphic_containers.Polygon) { // draws a polygon
             if (NEO_TYPE(ARG(0)) != TYPE_LIST ||
                 NEO_TYPE(ARG(1)) != TYPE_INTEGER) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
             }
             NeList* points = neo_to_list(ARG(0));
@@ -483,7 +485,7 @@ void draw_obj(NeObj obj) {
 
             for (int i = 0 ; i < points->len ; i++) {
                 if (NEO_TYPE(points->tab[i]) != TYPE_CONTAINER) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
                 }
                 Container* point = neo_to_container(points->tab[i]);
@@ -491,7 +493,7 @@ void draw_obj(NeObj obj) {
                 if (point->type != global_env->graphic_containers.Point ||
                     !is_number(point->data->tab[0]) ||
                     !is_number(point->data->tab[1])) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
                 }
 
@@ -510,7 +512,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_BOOL) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
             }
             intptr_t x = neo_to_integer(ARG(0));
@@ -530,7 +532,7 @@ void draw_obj(NeObj obj) {
             if (!is_number(ARG(0)) ||
                 !is_number(ARG(1)) ||
                 NEO_TYPE(ARG(2)) != TYPE_INTEGER) {
-                    global_env->CODE_ERROR = 117;
+                    neon_fail(117);
                     return;
             }
             intptr_t x = neo_to_integer(ARG(0));
@@ -548,7 +550,7 @@ void draw_obj(NeObj obj) {
         UserFunc* fun = neo_to_userfunc(obj);
 
         if (fun->nbArgs != 0) {
-            global_env->CODE_ERROR = 14;
+            neon_fail(14);
             return;
         }
 
@@ -558,7 +560,7 @@ void draw_obj(NeObj obj) {
         Function* fun = neo_to_function(obj);
 
         if (fun->nbArgs != 0) {
-            global_env->CODE_ERROR = 14;
+            neon_fail(14);
             return;
         }
 

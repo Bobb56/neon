@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 24
+
 /*
 Modifié par Raphaël Le Puillandre pour Neon afin de rendre compatible la bibliothèque avec l'utilisation de couleurs ANSI
 -> lignes 575 à 582, 921 à 934 et 657 à 665
@@ -116,7 +118,7 @@ linenoise.c -- guerrilla line editing library against the idea that a
 
 #include "linenoise.h"
 #include "../headers/neonio.h"
-#include "../headers/neon.h"
+#include "../headers/errors.h"
 
 
 #include <termios.h>
@@ -1027,7 +1029,7 @@ char *linenoiseEditFeed(struct linenoiseState *l) {
             history_len--;
             free(history[history_len]);
             errno = ENOENT;
-            global_env->CODE_ERROR = 1;
+            neon_fail(1);
             return "\0";
         }
         break;
@@ -1221,7 +1223,7 @@ static char *linenoiseNoTTY(void) {
         if (c == EOF || c == '\n') {
 
             if (c == EOF)
-                global_env->CODE_ERROR = 1; // quand on lit EOF, c'est qu'on a appuyé sur CTRL-D
+                neon_fail(1); // quand on lit EOF, c'est qu'on a appuyé sur CTRL-D
 
             if (c == EOF && len == 0) {
                 free(line);

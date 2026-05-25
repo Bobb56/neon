@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 20
+
 #include <string.h>
 #include <ctype.h>
 
@@ -353,14 +355,14 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
     int longueur = fin-debut;
   
     if (longueur < 0) {
-        global_env->CODE_ERROR = 67;
+        neon_fail(67);
         return NULL;
     }
   
     char* newStr = neon_malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
 
     if (newStr == NULL) {
-        global_env->CODE_ERROR = 12;
+        neon_fail(12);
         return NULL;
     }
 
@@ -368,7 +370,7 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
     for (int i=0 ; i < longueur ; i++) {
         // si on dépasse string, on quitte avec une erreur
         if (string[i+debut] == '\0') {
-            global_env->CODE_ERROR = 67;
+            neon_fail(67);
             return NULL;
         }
 
@@ -487,7 +489,7 @@ char* subReplace(char* string, int len, int debut, int longueur, char* remplacem
 {
     if ((unsigned) (debut+longueur) > strlen(string))
     {
-        global_env->CODE_ERROR = 67;
+        neon_fail(67);
         return 0;
     }
     
@@ -640,7 +642,7 @@ bool is_module(char* module) {
 int function_module(char* module, char* function) {
     char* functionName = addStr2(addStr(module, "~"), function);
     int n = strlist_index(global_env->NOMS, functionName);
-    global_env->CODE_ERROR = 0;
+    neon_reset_error();
     neon_free(functionName);
 
     if (n < 0 || (NEO_TYPE(global_env->ADRESSES->tab[n]) != TYPE_USERFUNC))

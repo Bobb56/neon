@@ -1,4 +1,5 @@
-#include <stddef.h>
+#define NEON_SOURCE_ID 4
+
 #include <stdlib.h>
 
 #include "headers/neonio.h"
@@ -290,6 +291,26 @@ int get_exception_from_code_error(int code_error) {
     return error_codes_exceptions[code_error];
 }
 
+
+void neon_reset_error(void) {
+    global_env->CODE_ERROR = 0;
+    global_env->ERROR_NEON_LINE_NUMBER = 0;
+    global_env->ERROR_NEON_SOURCE_ID = 0;
+}
+
+void neon_set_error(int code_error, int line, int source_id) {
+    global_env->CODE_ERROR = code_error;
+    global_env->ERROR_NEON_LINE_NUMBER = line;
+    global_env->ERROR_NEON_SOURCE_ID = source_id;
+}
+
+void neon_raise_user_exception(int exception_code, char* message) {
+    global_env->CODE_ERROR = -exception_code;
+    global_env->EXCEPTION = message;
+}
+
+
+
 /*
 void* neon_malloc(size_t size) {
     memory += size;
@@ -337,7 +358,27 @@ void printError(int code)
         printString(": ");
         
         printString((char*)error_messages[code]);
-        setColor(GREEN); printString(" (");setColor(DEFAULT);printInt(code);setColor(GREEN);printString(")");
+
+        // Affichage de la référence exacte de l'erreur
+        setColor(GREEN);
+        printString(" (");
+        setColor(DEFAULT);
+
+        printString("C");
+        printInt(code);
+        
+        if (global_env->ERROR_NEON_SOURCE_ID != 0) {
+            setColor(GREEN); printString(":"); setColor(DEFAULT); printString("F");
+            printInt(global_env->ERROR_NEON_SOURCE_ID);
+        }
+
+        if (global_env->ERROR_NEON_LINE_NUMBER != 0) {
+            setColor(GREEN); printString(":"); setColor(DEFAULT); printString("L");
+            printInt(global_env->ERROR_NEON_LINE_NUMBER);
+        }
+
+        setColor(GREEN);
+        printString(")");
     }
     setColor(DEFAULT);
     newLine();

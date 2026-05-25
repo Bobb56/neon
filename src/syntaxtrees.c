@@ -1,3 +1,5 @@
+#define NEON_SOURCE_ID 21
+
 #include <string.h>
 #include <math.h>
 #include "headers/constants.h"
@@ -118,8 +120,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
     // tous les tokens sont des retours à la ligne
     if (count == real_length) {
         global_env->LINENUMBER = lines->tab[offset];
-        debug("z0\n");
-        global_env->CODE_ERROR = 30;
+        neon_fail(30);
         return TREE_VOID;
     }
 
@@ -232,7 +233,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                     if (argsAst[i]->type != TYPE_VARIABLE || !tokeq(argsTok.tab[i+1],":")) // le champ n'a pas un nom correct ou n'est pas suivi de :
                     {
-                        global_env->CODE_ERROR = 87;
+                        neon_fail(87);
                         global_env->LINENUMBER = lines->tab[offset + argsAst_offset + i];
                         NeTree_destroy(tb, t1);
                         TreeListTemp_destroy(tb, &temptreelist);
@@ -270,7 +271,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                 if (i+2 >= argsTok.len && i < argsTok.len) // c'est que la définition du container est incorrecte
                 {
-                    global_env->CODE_ERROR = 87;
+                    neon_fail(87);
                     global_env->LINENUMBER = lines->tab[offset + argsAst_offset + i];
                     return TREE_VOID;
                 }
@@ -279,7 +280,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                 if (global_env->CODE_ERROR == 18) // si le type n'existe pas déjà
                 {
-                    global_env->CODE_ERROR = 0;
+                    neon_reset_error();
 
                     // il faut vérifier qu'il n'y a pas déjà le même nom d'attribut
                     for (int i=0 ; i < temptreelist.len ; i++)
@@ -290,7 +291,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                                                    treeAttrLit(tb, temptreelist.trees[j])->name
                                             ) == 0) //doublon
                             {
-                                global_env->CODE_ERROR = 86;
+                                neon_fail(86);
                                 global_env->LINENUMBER = treeAttrLit(tb, temptreelist.trees[i])->line;
                                 TreeListTemp_destroy(tb, &temptreelist);
                                 return TREE_VOID;
@@ -321,7 +322,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                     if (noms->len != temptreelist.len)
                     {
-                        global_env->CODE_ERROR = 83;
+                        neon_fail(83);
                         global_env->LINENUMBER = treeContLit(tb, tree)->line;
                         TreeListTemp_destroy(tb, &temptreelist);
                         return TREE_VOID;
@@ -348,7 +349,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                         if (!bo)
                         {
-                            global_env->CODE_ERROR = 83;
+                            neon_fail(83);
                             global_env->LINENUMBER = treeContLit(tb, tree) ->line;
                             TreeListTemp_destroy(tb, &temptreelist);
                             if (attributes.trees != NULL)
@@ -434,7 +435,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             int lenNomInd = ast[0]->fin + 1 - offset;
 
             if (tokens->len - 1 == ast[0]->fin + 2 - offset) { // pas d'arguments
-                global_env->CODE_ERROR = 31;
+                neon_fail(31);
                 global_env->LINENUMBER = lines->tab[offset];
                 return TREE_VOID;
             }
@@ -533,16 +534,16 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
         }
         else if (ast[0]->type != TYPE_PARENTHESE1 && ast[0]->type != TYPE_PARENTHESE2 && ast[0]->type != TYPE_ENDOFLINE) { // si c'est des parenthèses ou un retour à la ligne, on ignore
             if (tokeq(tokens->tab[0], "..."))
-                global_env->CODE_ERROR = 97;
+                neon_fail(97);
             else {
-                global_env->CODE_ERROR = 32;
+                neon_fail(32);
             }
             global_env->LINENUMBER = lines->tab[offset];
 
             return TREE_VOID;
         }
         else {
-            global_env->CODE_ERROR = 19;
+            neon_fail(19);
             return TREE_VOID;
         }
         
@@ -554,7 +555,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
         
         if (nbVirgules > 0)
         {
-            global_env->CODE_ERROR = 30;
+            neon_fail(30);
             return TREE_VOID;
         }
         else
@@ -566,15 +567,14 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
             if (index < 0) {
                 toklist_aff(tokens);
-                debug("z1\n");
-                global_env->CODE_ERROR = 30;
+                neon_fail(30);
                 global_env->LINENUMBER = lines->tab[offset];
                 return TREE_VOID;
             }
             
             if (tokeq(tokens->tab[index], ":")) // erreur : l'opérateur : n'est pas un opérateur normal
             {
-                global_env->CODE_ERROR = 92;
+                neon_fail(92);
                 global_env->LINENUMBER = lines->tab[offset + index];
                 return TREE_VOID;
             }
@@ -613,7 +613,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     {
                         NeTree_destroy(tb, tree);
                         NeTree_destroy(tb, arg0);
-                        global_env->CODE_ERROR = 72;
+                        neon_fail(72);
                         global_env->LINENUMBER = lines->tab[offset];
                         return TREE_VOID;
                     }
@@ -672,7 +672,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                             if (r == -1) { // cet ast n'arrivera jamais à un type variable
                                 neon_free(stack_sov_fin.tab);
                                 neon_free(stack_sov_typ.tab);
-                                global_env->CODE_ERROR = 82;
+                                neon_fail(82);
                                 global_env->LINENUMBER = lines->tab[offset + index + 1];
                                 return TREE_VOID;
                             }
@@ -750,7 +750,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     return_on_error(TREE_VOID);
 
                     if (TREE_TYPE(func_buf, func_buf->entry_point) != TypeFunctioncall) { // pour parallel
-                        global_env->CODE_ERROR = 100;
+                        neon_fail(100);
                         global_env->LINENUMBER = lines->tab[offset];
                         return TREE_VOID;
                     }
@@ -778,13 +778,13 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
             else if (typeOperande == 0) {
                 // cas des opérateurs inertes comme ... : il ne doit pas être en dehors d'une définition de fonction
-                global_env->CODE_ERROR = 97;
+                neon_fail(97);
                 global_env->LINENUMBER = lines->tab[offset];
                 return TREE_VOID;
             }
 
             else {
-                global_env->CODE_ERROR = 19;
+                neon_fail(19);
                 return TREE_VOID;
             }
             
@@ -792,7 +792,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
         
     }
     else {
-        global_env->CODE_ERROR = 19;
+        neon_fail(19);
         return TREE_VOID;
     }
 
@@ -1268,7 +1268,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                     }
                     else if (ast_index(argsAst, i, args_offset) < ast_length(argsAst, argsTok.len, args_offset) - 1 && !tokeq(argsTok.tab[i+1], ",")) {
                         // erreur de syntaxe
-                        global_env->CODE_ERROR = 96;
+                        neon_fail(96);
                         global_env->LINENUMBER = lines->tab[offset + args_offset + i];
                         TreeListTemp_destroy(tb, &opt_args);
                         neon_free(liste);
@@ -1277,7 +1277,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                     else { // argument non optionnel
                         if (unlimited_arguments) {
                             // erreur : on ne peut pas mettre d'arguments obligatoires après ...
-                            global_env->CODE_ERROR = 96;
+                            neon_fail(96);
                             global_env->LINENUMBER = lines->tab[offset + args_offset + i];
                             TreeListTemp_destroy(tb, &opt_args);
                             neon_free(liste);
@@ -1299,7 +1299,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                     unlimited_arguments = true;
                 }
                 else {
-                    global_env->CODE_ERROR = 96;
+                    neon_fail(96);
                     global_env->LINENUMBER = lines->tab[offset + args_offset + i];
                     TreeListTemp_destroy(tb, &opt_args);
                     neon_free(liste);
@@ -1314,7 +1314,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
 
     if (isMethod) { // pour être une méthode il faut avoir au moins un argument
         if (liste_index == 0) {
-            global_env->CODE_ERROR = 110;
+            neon_fail(110);
             return TREE_VOID;
         }
         else
