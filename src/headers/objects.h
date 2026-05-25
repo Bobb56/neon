@@ -49,7 +49,7 @@ struct Function
     int id;
     const char* help;
     int nbArgs;
-    int* typeArgs;
+    const int* typeArgs;
     int typeRetour;
 };
 
@@ -160,6 +160,7 @@ char* neobject_str(NeObj);
 char* nelist_str(NeList*);
 NeObj neo_list_convert(NeList* list);
 NeObj gc_extern_neo_list_convert(NeList* list);
+void function_destroy(Function* f);
 Function* function_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour);
 NeObj neo_fun_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour);
 bool funcArgsCheck(Function* fun, NeList* args);

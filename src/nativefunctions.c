@@ -3,6 +3,7 @@
 #include "headers/nativefunctions.h"
 #include "headers/standardmodule.h"
 #include "headers/errors.h"
+#include <stdio.h>
 
 #ifdef HAS_GRAPHIC_MODULE
 #include "headers/graphicmodule.h"
@@ -25,13 +26,43 @@ void init_module(Module module, NeonEnv* env) {
 }
 
 
-NeObj call_function(Module module, int id, NeList* args) {
+NeObj call_function(int id, Module module, NeList* args) {
     switch (module) {
         case StandardModule:
             return call_standardfunction(id, args);
 #ifdef HAS_GRAPHIC_MODULE
         case GraphicModule:
             return call_graphicfunction(id, args);
+#endif
+        default:
+            neon_fail(98);
+            return NEO_VOID;
+    }
+}
+
+
+const char* get_function_name(int id, Module module) {
+    switch (module) {
+        case StandardModule:
+            return get_standardfunction_name(id);
+#ifdef HAS_GRAPHIC_MODULE
+        case GraphicModule:
+            return get_graphicfunction_name(id);
+#endif
+        default:
+            neon_fail(98);
+            return NULL;
+    }
+}
+
+
+NeObj get_function(int id, int module) {
+    switch (module) {
+        case StandardModule:
+            return get_standardfunction(id);
+#ifdef HAS_GRAPHIC_MODULE
+        case GraphicModule:
+            return get_graphicfunction(id);
 #endif
         default:
             neon_fail(98);

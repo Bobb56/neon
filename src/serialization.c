@@ -10,6 +10,7 @@
 #include "headers/sidememory.h"
 #include "headers/trees.h"
 #include "headers/neon.h"
+#include "headers/nativefunctions.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -17,8 +18,27 @@
 
 /*
 TODO
-- Il faut écrire la structure des types de Containers utilisés en en-tête du fichier
-- Écrire plein d'autres trucs en en-tête du fichier
+- Il faut écrire la structure des types de Containers utilisés en en-tête du fichier, ainsi que les noms de variables utilisés et les types d'exceptions utilisés
+
+Procédé lors de la lecture de l'en-tête :
+Containers :
+------------
+Fabrication d'une liste d'association type de container du fichier -> type de container de l'environnement
+En créant les types de containers nécessaires si inexistants
+
+
+Variables :
+------------
+Fabrication d'une liste d'association variable du fichier -> variable de l'environnement
+En créant les nouvelles variables avec les bons noms si besoin
+
+Exceptions :
+------------
+Fabrication d'une liste d'association code exception du fichier -> code exception de l'environnement
+En créant les nouvelles exceptions si besoin
+
+TODO : Il faut que dans les fonctions d'écriture finale des objets, au même niveau que celui où on remplace les pointeurs internes des objets par des indices de la table des pointeurs, on remplace les indices de variables, les exceptions et les types de containers par leurs indices dans la table des containers, variables, exceptions
+
 
 */
 
@@ -35,6 +55,14 @@ Procédé de la désérialisation :
 - Désérialisation itérative de tous les pointeurs et reconstruction de la table des pointeurs
 - Parcours de tout l'objet pour restaurer les pointeurs dedans
 */
+
+
+
+
+
+bool hasPointer(NeObj obj) {
+    return (NEO_TYPE(obj) & HEAP_ALLOCATED) && NEO_TYPE(obj) != TYPE_PROMISE;
+}
 
 
 PointerType getPointerType(NeObj neo) {
@@ -113,26 +141,109 @@ intptr_t read_number_value(NeStream stream) {
 }
 
 
+void write_string_value(NeStream stream, char* string) {
+    int size = strlen(string) + 1;
+    write_number_value(stream, size);
+    NeStream_write(stream, string, size);
+}
+
+char* read_string_value(NeStream stream) {
+    int size = read_number_value(stream);
+    return_on_error(NULL);
+
+    // Lecture de la chaîne de caractères
+    char* string = neon_malloc(size);
+    if (!NeStream_read(stream, string, size)) {
+        neon_free(string);
+        neon_fail(122);
+        return NULL;
+    }
+    return string;
+}
+
+
+// Écrit le header contenant les informations sur les types de containers de containersTable
+void write_containers_header(NeStream stream, intlist* containersTable) {
+    // Écriture de la taille de la table
+    write_number_value(stream, containersTable->len);
+
+    // Écriture de chaque élément de la table
+    for (int i=0 ; i < containersTable->len ; i++) {
+        int container_type = containersTable->tab[i];
+        NeList* attributes = neo_to_list(global_env->ATTRIBUTES->tab[container_type]);
+
+        // Écriture du nom du container
+        write_string_value(stream, global_env->CONTAINERS->tab[container_type]);
+
+        // Écriture du nombre de champs du container
+        write_number_value(stream, attributes->len);
+
+        // Écriture de chaque nom de champ du container
+        for (int j=0 ; j < attributes->len ; j++) {
+            write_string_value(stream, neo_to_string(attributes->tab[j]));
+        }
+    }
+}
+
+
+
+void write_exceptions_header(NeStream stream, intlist* exceptionsTable) {
+    // Écriture de la taille de la table
+    write_number_value(stream, exceptionsTable->len);
+
+    for (int i=0 ; i < exceptionsTable->len ; i++) {
+        int exceptionCode = exceptionsTable->tab[i];
+
+        // Écriture du nom de l'exception
+        write_string_value(stream, global_env->EXCEPTIONS->tab[exceptionCode]);
+    }
+}
+
+
+
+void write_variables_header(NeStream stream, intlist* varsTable) {
+    // Écriture de la taille de la table
+    write_number_value(stream, varsTable->len);
+
+    for (int i=0 ; i < varsTable->len ; i++) {
+        Var var = varsTable->tab[i];
+
+        // Écriture du nom de la variable
+        write_string_value(stream, global_env->NOMS->tab[var]);
+    }
+}
+
 
 
 /*
 Cette fonction parcourt un objet et ajoute à la table des pointeurs tous les pointeurs internes de cet objet
 */
-void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable) {
-    if (!neo_is_void(obj) && (NEO_TYPE(obj) & HEAP_ALLOCATED) && intptrlist_index(ptrTable, obj.refc_ptr) == -1) {
+void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* expt) {
+    if (hasPointer(obj) && intptrlist_index(ptrTable, obj.refc_ptr) == -1) {
         intlist_append(typesTable, getPointerType(obj));
         intptrlist_append(ptrTable, obj.refc_ptr);
 
         if (NEO_TYPE(obj) == TYPE_LIST) {
-            update_ptr_table_list(obj.nelist, ptrTable, typesTable);
+            update_ptr_table_list(obj.nelist, ptrTable, typesTable, containers, vars, expt);
         }
         else if (NEO_TYPE(obj) == TYPE_CONTAINER) {
+            // Mise à jour de la liste des containers utilisés
+            if (!intlist_inList(vars, obj.container->type))
+                intlist_append(vars, obj.container->type);
+
+            // Ajout du pointeur de la nelist
             intlist_append(typesTable, ContainerNeListPtr);
             intptrlist_append(ptrTable, obj.container->data);
-            update_ptr_table_list(obj.container->data, ptrTable, typesTable);
+            update_ptr_table_list(obj.container->data, ptrTable, typesTable, containers, vars, expt);
         }
         else if (NEO_TYPE(obj) == TYPE_USERFUNC || NEO_TYPE(obj) == TYPE_PARTIALFUNC) {
-            // Ajout du TreeBuffer
+            // Mise à jour de la liste des variables utilisées
+            for (int i=0 ; i < obj.userfunc->nbArgs ; i++) {
+                if (!intlist_inList(vars, obj.userfunc->args[i]))
+                    intlist_append(vars, obj.userfunc->args[i]);
+            }
+
+            // Ajout du TreeBuffer à la liste des pointeurs
             TreeBuffer* tb = obj.userfunc->tree_buffer;
             if (intptrlist_index(ptrTable, tb) == -1) {
                 intlist_append(typesTable, TreeBufferPtr);
@@ -140,7 +251,13 @@ void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable) 
             }
             
             // Update the pointer table with some pointers that are not stored directly in the TreeBuffer (the NeObjects for instance)
-            void* args[] = {(void*)ptrTable, (void*)typesTable};
+            void* args[] = {
+                (void*)ptrTable,
+                (void*)typesTable,
+                (void*)containers,
+                (void*)vars,
+                (void*)expt
+            };
             TreeBuffer_iter(tb, NeTree_update_ptr_table, args);
 
             // Ajout des arguments optionnels
@@ -149,15 +266,21 @@ void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable) 
             if (opt_args != NULL && intptrlist_index(ptrTable, opt_args) == -1) {
                 intlist_append(typesTable, UserFuncOptArgsPtr);
                 intptrlist_append(ptrTable, opt_args);
-                update_ptr_table_list(opt_args, ptrTable, typesTable);
+                update_ptr_table_list(opt_args, ptrTable, typesTable, containers, vars, expt);
             }
         }
     }
+    else if (NEO_TYPE(obj) == TYPE_EXCEPTION) {
+        // Mise à jour de la liste des exceptions utilisées
+        int code = get_exception_code(obj);
+        if (!intlist_inList(expt, code))
+            intlist_append(expt, code);
+    }
 }
 
-void update_ptr_table_list(NeList* list, intptrlist* ptrTable, intlist* typesTable) {
+void update_ptr_table_list(NeList* list, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* expt) {
     for (int i=0 ; i < list->len ; i++) {
-        update_ptr_table_obj(list->tab[i], ptrTable, typesTable);
+        update_ptr_table_obj(list->tab[i], ptrTable, typesTable, containers, vars, expt);
     }
 }
 
@@ -168,24 +291,27 @@ Cette fonction ajoute à la table des pointeurs tous les pointeurs internes d'un
 void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, void* args) {
     intptrlist* ptrTable = ((void**)args)[0];
     intlist* typesTable = ((void**)args)[1];
+    intlist* containers = ((void**)args)[2];
+    intlist* vars = ((void**)args)[3];
+    intlist* expt = ((void**)args)[4];
 
     if (TREE_ISVOID(tree))
         return;
     
     switch (TREE_TYPE(tb, tree)) {
         case TypeConst:
-            update_ptr_table_obj(treeConst(tb, tree)->obj, ptrTable, typesTable);
+            update_ptr_table_obj(treeConst(tb, tree)->obj, ptrTable, typesTable, containers, vars, expt);
             break;
         
         case TypeFunctiondef:
             intptrlist_append(ptrTable, treeFDef(tb, tree)->name);
             intlist_append(typesTable, CharStarPtr);
 
-            update_ptr_table_obj(treeFDef(tb, tree)->object, ptrTable, typesTable);
+            update_ptr_table_obj(treeFDef(tb, tree)->object, ptrTable, typesTable, containers, vars, expt);
             break;
         
         case TypeFunctioncall:
-            update_ptr_table_obj(treeFCall(tb, tree)->function_obj, ptrTable, typesTable);
+            update_ptr_table_obj(treeFCall(tb, tree)->function_obj, ptrTable, typesTable, containers, vars, expt);
             break;
         
         case TypeAttribute:
@@ -213,7 +339,7 @@ La représentation ne correspond pas à la représentation réelle d'un NeObj en
 */
 void serialize_partial_neobject_opt(NeStream stream, NeObj neo, intptrlist* ptrTable) {
     NeStream_write(stream, &neo.type, 1);
-    if (NEO_TYPE(neo) & HEAP_ALLOCATED) {
+    if (hasPointer(neo)) {
         intptr_t index = intptrlist_index(ptrTable, neo.refc_ptr);
         write_number_value(stream, index);
     }
@@ -229,7 +355,7 @@ L'objet écrit correspond exactement à un NeObj
 */
 void serialize_partial_neobject(NeStream stream, NeObj neo, intptrlist* ptrTable) {
     NeStream_write(stream, &neo.type, 1);
-    if (NEO_TYPE(neo) & HEAP_ALLOCATED) {
+    if (hasPointer(neo)) {
         neo.integer = intptrlist_index(ptrTable, neo.refc_ptr);
     }
     NeStream_write(stream, &neo.integer, sizeof(intptr_t));
@@ -259,7 +385,7 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
                 memcpy(buffer, tree, sizeof(struct ConstObj));
                 struct ConstObj* copy = buffer;
                 
-                if (NEO_TYPE(copy->obj) & HEAP_ALLOCATED) {
+                if (hasPointer(copy->obj)) {
                     copy->obj.integer = intptrlist_index(ptrTable, copy->obj.refc_ptr);
                 }
 
@@ -274,7 +400,7 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
                 struct FunctionDef* copy = buffer;
 
                 copy->name = (char*)(intptr_t)intptrlist_index(ptrTable, copy->name);
-                if (NEO_TYPE(copy->object) & HEAP_ALLOCATED) {
+                if (hasPointer(copy->object)) {
                     copy->object.integer = intptrlist_index(ptrTable, copy->object.refc_ptr);
                 }
 
@@ -288,7 +414,7 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
                 memcpy(buffer, tree, sizeof(struct FunctionCall));
                 struct FunctionCall* copy = buffer;
 
-                if (NEO_TYPE(copy->function_obj) & HEAP_ALLOCATED) {
+                if (hasPointer(copy->function_obj)) {
                     copy->function_obj.integer = intptrlist_index(ptrTable, copy->function_obj.refc_ptr);
                 }
 
@@ -375,17 +501,13 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
 
             case CharStarPtr: {
                 // Écriture de la taille des données du pointeur
-                int size = strlen(ptr.charstar) + 1;
-                write_number_value(stream, size);
-                NeStream_write(stream, ptr.charstar, size);
+                write_string_value(stream, ptr.charstar);
                 break;
             }
 
             case StringPtr: {
                 // Écriture de la taille des données du pointeur
-                int size = strlen(ptr.string->string) + 1;
-                write_number_value(stream, size);
-                NeStream_write(stream, ptr.string->string, size);
+                write_string_value(stream, ptr.string->string);
                 break;
             }
 
@@ -423,9 +545,7 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
                     write_number_value(stream, -1);
                 }
                 else {
-                    int size = strlen(ptr.userfunc->doc) + 1;
-                    write_number_value(stream, size);
-                    NeStream_write(stream, ptr.userfunc->doc, size);
+                    write_string_value(stream, ptr.userfunc->doc);
                 }
                 
                 NeStream_write(stream, &ptr.userfunc->code, sizeof(TreeBufferIndex));
@@ -450,6 +570,16 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
 
                 // Écriture des données (size octets)
                 serialize_treebuffer_block(stream, ptr.treebuffer, ptrTable);
+                break;
+            }
+
+            case FunctionPtr: {
+                // Écriture de l'id de la fonction
+                write_number_value(stream, ptr.function->id);
+
+                // Écriture du module de la fonction
+                write_number_value(stream, ptr.function->module);
+                break;
             }
         }
     }
@@ -464,16 +594,29 @@ Fonction pour entièrement sérialiser un objet Neon
 void neobject_serialize(NeStream stream, NeObj neo) {
     // Table qui stocke quels pointeurs ont été sérialisés
     intptrlist ptrTable = intptrlist_create(0);
+
     // Table qui stocke les types des pointeurs de la table ptrTable
     intlist typesTable = intlist_create(0);
 
+    // Table qui stocke tous les types de containers utilisés par l'objet à sérialiser
+    intlist containersTable = intlist_create(0);
+
+    // Table qui stocke toutes les variables de l'environnement actuel utilisées par l'objet à sérialiser
+    intlist varsTable = intlist_create(0);
+
+    // Table qui stocke toutes les exceptions utilisées par l'objet à sérialiser
+    intlist exceptionsTable = intlist_create(0);
+
     // On construit la table de tous les pointeurs (les sommets du graphe des objets)
-    update_ptr_table_obj(neo, &ptrTable, &typesTable);
+    update_ptr_table_obj(neo, &ptrTable, &typesTable, &containersTable, &varsTable, &exceptionsTable);
 
     // On écrit chaque objet (chaque sommet dans le graphe des objets) en remplaçant les références à d'autres objets par les indices de ces objets dans la table des pointeurs
     serialize_all_pointers(stream, &ptrTable, &typesTable);
     serialize_partial_neobject_opt(stream, neo, &ptrTable);
 
+    neon_free(varsTable.tab);
+    neon_free(containersTable.tab);
+    neon_free(exceptionsTable.tab);
     neon_free(ptrTable.tab);
     neon_free(typesTable.tab);
 }
@@ -734,6 +877,21 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 break;
             }
 
+            case FunctionPtr: {
+                int id = read_number_value(stream);
+                return_on_error();
+
+                int module = read_number_value(stream);
+                return_on_error();
+
+                NeObj fun = get_function(id, module);
+                *(fun.refc_ptr) = 0;
+
+                intptrlist_append(ptrTable, neo_to_function(fun));
+                intlist_append(typesTable, FunctionPtr);
+                break;
+            }
+
             default: {
                 neon_fail(122);
                 return;
@@ -818,7 +976,7 @@ void solve_pointers_treebuffer(TreeBuffer* tb, intptrlist* ptrTable, intlist* ty
 Restitue tous les pointeurs dans les objets, met à jour les compteurs de références, et ajoute les objets finaux au Garbage Collector
 */
 void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable) {
-    if (NEO_TYPE(*neo) & HEAP_ALLOCATED) {
+    if (hasPointer(*neo)) {
         neo->refc_ptr = ptrTable->tab[neo->integer];
         // Incrémentation du compteur de références du pointeur que l'on vient d'écrire
         (*neo->refc_ptr) += 1;
@@ -864,6 +1022,17 @@ void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable) {
                 neo_userfunc_convert(neo->userfunc);
         }
     }
+    else if (NEO_TYPE(*neo) == TYPE_PROMISE) { // Vérification que la promesse est valide
+        int index = intptrlist_index(&global_env->PROMISES_CNT, neo->refc_ptr);
+        if (index == -1) {
+            neon_fail(122);
+            return;
+        }
+        else {
+            // On incrémente le nombre de promesses du processus associé
+            *(neo->refc_ptr) += 1;
+        }
+    }
 }
 
 
@@ -906,6 +1075,10 @@ void free_pointer(PointerUnion ptr, PointerType ptrType) {
             if (ptr.userfunc->doc != NULL)
                 neon_free(ptr.userfunc->doc);
             neon_free(ptr.userfunc);
+            return;
+        
+        case FunctionPtr:
+            function_destroy(ptr.function);
             return;
     }
 }

@@ -633,15 +633,21 @@ const Function graphicfunctions[NBGRAPHICFUNC] = {
 
 
 NeObj get_graphicfunction(int id) {
+    neon_assert(id >= 0 && id < NBBUILTINFUNC, NEO_VOID);
+    
     Function f = graphicfunctions[id];
     return neo_fun_create(id, GraphicModule, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
 }
 
 const char* get_graphicfunction_name(int id) {
+    neon_assert(id >= 0 && id < NBBUILTINFUNC, NULL);
+
     return graphicfunctions_names[id];
 }
 
 NeObj call_graphicfunction(int id, NeList* list) {
+    neon_assert(id >= 0 && id < NBBUILTINFUNC, NEO_VOID);
+
     return graphicfunctions_pointers[id](list);
 }
 

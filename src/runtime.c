@@ -592,7 +592,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             // ensuite, pour évaluer les arguments, on fait bien la boucle sur tree->sons[1]
             
-            if (NEO_TYPE(function) == TYPE_FONCTION)
+            if (NEO_TYPE(function) == TYPE_BUILTINFUNC)
             {
                 Function* fun = neo_to_function(function);
                 NeList* args = treeToList(tb, tree_fun_call->args);

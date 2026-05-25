@@ -157,7 +157,7 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 #define TYPE_UNSPECIFIED        127
-#define TYPE_FONCTION           (0 | HEAP_ALLOCATED)
+#define TYPE_FONCTION           0
 #define TYPE_LISTINDEX          1
 #define TYPE_OPERATOR           2
 #define TYPE_STRING             (3 | HEAP_ALLOCATED)
@@ -211,7 +211,7 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #define TYPE_SYNTAXTREE         47
 
-#define TYPE_BUILTINFUNC        48
+#define TYPE_BUILTINFUNC        (48 | HEAP_ALLOCATED)
 #define TYPE_PARTIALFUNC        (49 | HEAP_ALLOCATED)
 #define TYPE_USERFUNC           (50 | HEAP_ALLOCATED)
 #define TYPE_CONTAINER          (51 | HEAP_ALLOCATED)

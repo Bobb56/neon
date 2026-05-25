@@ -30,14 +30,11 @@ typedef union {
     void* pointer;
 } PointerUnion;
 
-void write_number_value2(NeStream stream, intptr_t value);
-intptr_t read_number_value2(NeStream stream);
-
 NeObj neobject_deserialize(NeStream stream);
 void neobject_serialize(NeStream stream, NeObj neo);
 
 void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, void* args);
-void update_ptr_table_list(NeList* list, intptrlist* ptrTable, intlist* typesTable);
+void update_ptr_table_list(NeList* list, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* expt);
 void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable);
 void solve_pointers(NeObj* neo, intptrlist* ptrTable, intlist* typesTable);
 #endif

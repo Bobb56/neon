@@ -401,14 +401,13 @@ bool is_number(NeObj obj) {
 
 NeObj neo_fun_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour)
 {
-    NeObj neo = neobject_create(TYPE_FONCTION);
+    NeObj neo = neobject_create(TYPE_BUILTINFUNC);
     neo.function = function_create(id, module, help, nbArgs, typeArgs, typeRetour);
 
     return neo;
 }
 
 void function_destroy(Function* fun) {
-    neon_free(fun->typeArgs);
     neon_free(fun);
 }
 
@@ -422,20 +421,7 @@ Function* function_create(int id, Module module, const char* help, int nbArgs, c
     fun->help = help;
     fun->typeRetour = typeRetour;
     fun->refc = 1;
-
-    // copie de typeArgs dans le tas
-    if (nbArgs == -1)
-    {
-        fun->typeArgs = neon_malloc(sizeof(int));
-        fun->typeArgs[0] = typeArgs[0];
-    }
-    else
-    {
-        fun->typeArgs = neon_malloc(sizeof(int)*nbArgs);
-        for (int i = 0 ; i < nbArgs ; i++)
-            fun->typeArgs[i] = typeArgs[i];
-    }
-    
+    fun->typeArgs = typeArgs;
     return fun;
 }
 
@@ -448,10 +434,8 @@ NeObj functionCall(NeObj fun, NeList* args)
         neon_fail(36);// nombre d'arguments invalide pour appeler cette fonction
         return NEO_VOID;
     }
-    return call_function(f->module, f->id, args);
+    return call_function(f->id, f->module, args);
 }
-
-
 
 
 
@@ -1311,7 +1295,7 @@ int neobject_getsize(NeObj neo) {
             return sizeof(NeObj) + nelist_getsize(neo.nelist);
         }
 
-        else if (NEO_TYPE(neo) == TYPE_FONCTION) {
+        else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
             return sizeof(NeObj) + sizeof(Function) + sizeof(int) * neo.function->nbArgs + strlen(neo.function->help) + 1;
         }
 
@@ -1355,7 +1339,7 @@ void general_neobject_destroy(NeObj neo, bool gc_extern)
                     gc_remove_nelist(neo.nelist);
                 nelist_destroy(neo.nelist);
             }
-            else if (NEO_TYPE(neo) == TYPE_FONCTION) {
+            else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
                 function_destroy(neo.function);
             }
 
@@ -1425,8 +1409,11 @@ void neobject_aff(NeObj neo)
         else if (NEO_TYPE(neo) == TYPE_NONE) {
             printString("None");
         }
-        else if (NEO_TYPE(neo) == TYPE_FONCTION) {
-            printString("<built-in function>");
+        else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
+            Function* f = neo_to_function(neo);
+            printString("<built-in function ");
+            printString((char*)get_function_name(f->id, f->module));
+            printString(">");
         }
 
         else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
@@ -1540,9 +1527,11 @@ char* neobject_str(NeObj neo)
         {
             ret = strdup("None");
         }
-        else if (NEO_TYPE(neo) == TYPE_FONCTION)
-        {        
-            ret = strdup("<built-in function>");
+        else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC)
+        {
+            Function* f = neo_to_function(neo);
+            ret = addStr("<built-in function ", (char*)get_function_name(f->id, f->module));
+            ret = addStr2(ret, ">");
         }
 
         else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
@@ -1629,7 +1618,7 @@ char* type(NeObj neo)
     if (NEO_TYPE(neo) == TYPE_DOUBLE)
         return "Real";
 
-    if (NEO_TYPE(neo) == TYPE_FONCTION)
+    if (NEO_TYPE(neo) == TYPE_BUILTINFUNC)
         return "Built-in function";
 
     if (NEO_TYPE(neo) == TYPE_LIST)
@@ -1760,9 +1749,9 @@ bool neo_equal(NeObj _op1, NeObj _op2)
         }
     }
 
-    else if (NEO_TYPE(_op1) == TYPE_FONCTION)
+    else if (NEO_TYPE(_op1) == TYPE_BUILTINFUNC)
     {
-        if (NEO_TYPE(_op2) == TYPE_FONCTION)
+        if (NEO_TYPE(_op2) == TYPE_BUILTINFUNC)
         {
             return _op1.function->id == _op2.function->id && _op1.function->module == _op2.function->module;
         }

@@ -272,8 +272,8 @@ NeObj _clear_(NeList* args)
 }
 
 
-NeObj _help_(NeList* args)
-{
+NeObj _help_(NeList* args) {
+    printf("Exécution de help\n");
     if (args->len == 0) { // affiche l'ensemble des fonctions disponibles
         setColor(GREEN);printString("Neon v");printString(VERSION);setColor(DEFAULT);printString(" for ");
         printString(PLATFORM);printString(", compiled on ");printString(__TIMESTAMP__);newLine();        
@@ -388,7 +388,7 @@ NeObj _help_(NeList* args)
                     printString("No documentation available for this function.");
                 newLine();
             }
-            else if (NEO_TYPE(ARG(i)) == TYPE_FONCTION)
+            else if (NEO_TYPE(ARG(i)) == TYPE_BUILTINFUNC)
             {
                 Function* fun = neo_to_function(ARG(i));
                 printString("Built-in function ");
@@ -396,7 +396,7 @@ NeObj _help_(NeList* args)
                 // Affichage de la signature
 
                 setColor(BLUE);
-                printString(global_env->NOMS->tab[nelist_index2(global_env->ADRESSES,ARG(i))]);
+                printString((char*)get_function_name(fun->id, fun->module));
                 setColor(DEFAULT);
 
                 printString("(");
@@ -1842,21 +1842,26 @@ static const Function builtinfunctions[] = {
 
 
 NeObj get_standardfunction(int id) {
+    neon_assert(id >= 0 && id < NBBUILTINFUNC, NEO_VOID);
+
     Function f = builtinfunctions[id];
     return neo_fun_create(id, StandardModule, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
 }
 
 const char* get_standardfunction_name(int id) {
+    neon_assert(id >= 0 && id < NBBUILTINFUNC, NULL);
+
     return builtinfunctions_names[id];
 }
 
 NeObj call_standardfunction(int id, NeList* list) {
+    neon_assert(id >= 0 && id < NBBUILTINFUNC, NEO_VOID);
+
     return builtinfunctions_pointers[id](list);
 }
 
 
-void init_standardmodule(NeonEnv* env)
-{
+void init_standardmodule(NeonEnv* env) {
     for (int i = 0 ; i < NBBUILTINFUNC ; i++) {
         strlist_append(env->NOMS, strdup(get_standardfunction_name(i)));
         nelist_append(env->ADRESSES, get_standardfunction(i));
