@@ -230,7 +230,6 @@ struct ParallelCall {
 size_t type_size(TreeType type);
 
 #define TreeList_destroy(...)
-#define TreeListTemp_destroy(...)
 #define NeTree_destroy(...)
 
 int TreeBuffer_init(TreeBuffer*);
@@ -243,6 +242,7 @@ TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line);
 void TreeListTemp_init(struct TreeListTemp* tree_list);
 void TreeListTemp_append(struct TreeListTemp* tree_list, TreeBufferIndex tree);
 void TreeListTemp_insert(struct TreeListTemp* tree_list, TreeBufferIndex tree, int index);
+void TreeListTemp_destroy(TreeBuffer* tb, struct TreeListTemp* temp_list);
 TreeBufferIndex TreeList_alloc(TreeBuffer* tb, uint16_t length);
 TreeBufferIndex TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list);
 

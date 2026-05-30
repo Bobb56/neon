@@ -44,7 +44,7 @@ static const char* error_messages[NB_ERRORS] = {
     "Improper use of an operator; incompatible types used consecutively or an unknown/incompatible type",
     "This module does not exist",
     "Unable to deserialize container object because it is incompatible with an already existing container type",
-    "",
+    "A non optional argument cannot follow optional arguments or unlimited arguments marker \"...\"",
     "Lone block of instructions",
     "Incorrect statement definition",
     "Incorrect number of arguments when calling a built-in function",

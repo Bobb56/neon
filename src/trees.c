@@ -351,6 +351,10 @@ TreeBufferIndex TreeList_alloc(TreeBuffer* tb, uint16_t length) {
     return list;
 }
 
+void TreeListTemp_destroy(TreeBuffer* tb, struct TreeListTemp* temp_list) {
+    neon_free(temp_list->trees);
+}
+
 
 TreeBufferIndex TreeListTemp_dump(TreeBuffer* tb, struct TreeListTemp* temp_list) {
     TreeBufferIndex list = TreeList_alloc(tb, temp_list->len);

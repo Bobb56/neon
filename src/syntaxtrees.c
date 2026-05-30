@@ -1183,8 +1183,7 @@ TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tok
 
 
 
-TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset, _Bool isMethod)
-{
+TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset, _Bool isMethod) {
     int i = 0;
     while (!tokeq(tokens->tab[i], "{")) i++;
     // ici, i a la valeur de l'index de la première accolade
@@ -1194,14 +1193,11 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
     // on alloue l'arbre syntaxTree dans le TreeBuffer global des fonctions
     TreeBuffer* functionBody = TreeBuffer_persistent_syntaxtree(ast + i + 1, &codeTok, lines, offset + i + 1);
 
-    if_error {
-        return TREE_VOID;
-    }
+    return_on_error(TREE_VOID);
 
     Token name = tokens->tab[1];
 
     toklist argsTok = (toklist) {.tab = tokens->tab + 3, .len = i - 4};
-
 
     Ast** argsAst = ast + 3;
     int args_offset = offset + 3;
@@ -1212,23 +1208,23 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
     int liste_index = 0;
 
     int nbOptArgs = 0;
-    _Bool unlimited_arguments = false;
-    
+    bool unlimited_arguments = false;
+
+    // On oblige syntaxiquement à ne pas mettre d'arguments obligatoires après des arguments optionnels
+    // Donc ce booléen passe à true au premier argument optionnel trouvé
+    bool optional_arguments_state = false;
+
     // création des arguments de la fonction
     struct TreeListTemp opt_args;
     TreeListTemp_init(&opt_args);
     
 
-    if (argsTok.len > 0) // si la fonction a des arguments
-    {
+    if (argsTok.len > 0) { // si la fonction a des arguments
         // il faut maintenant définir chaque variable dont le nom est dans tokens
         
-        for (i = 0 ; i < argsTok.len ; i = argsAst[i]->fin - args_offset + 1)
-        {
-            if (!tokeq(argsTok.tab[i], ",")) // si ce n'est pas une virgule, c'est une variable (enfin on vérifie)
-            {
-                if (argsAst[i]->type == TYPE_VARIABLE)
-                {
+        for (i = 0 ; i < argsTok.len ; i = argsAst[i]->fin - args_offset + 1) {
+            if (!tokeq(argsTok.tab[i], ",")) { // si ce n'est pas une virgule, c'est une variable (enfin on vérifie)
+                if (argsAst[i]->type == TYPE_VARIABLE) {
                     char sov = stringize(argsTok.tab[i]);
                     liste[liste_index++] = get_var(argsTok.tab[i].debut);
                     unstringize(argsTok.tab[i], sov);
@@ -1237,8 +1233,12 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
 
                     if (ast_index(argsAst, i, args_offset) < ast_length(argsAst, argsTok.len, args_offset) - 2 && tokeq(argsTok.tab[argsAst[i]->fin - args_offset + 1], ":=")) // argument optionnel
                     {
+                        // On passe en arguments optionnels
+                        optional_arguments_state = true;
+
+
                         if (unlimited_arguments)
-                            nbOptArgs++;
+                            nbOptArgs++; // Il s'agit d'un argument vraiment optionnel
 
                         // dans ce cas, on évalue l'expression et on l'ajoute à la liste opt_args
                         int j = i;
@@ -1275,9 +1275,9 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                         return TREE_VOID;
                     }
                     else { // argument non optionnel
-                        if (unlimited_arguments) {
+                        if (unlimited_arguments || optional_arguments_state) {
                             // erreur : on ne peut pas mettre d'arguments obligatoires après ...
-                            neon_fail(96);
+                            neon_fail(33);
                             global_env->LINENUMBER = lines->tab[offset + args_offset + i];
                             TreeListTemp_destroy(tb, &opt_args);
                             neon_free(liste);
@@ -1557,7 +1557,7 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
         }
 
         else if (expression && ast[index]->type == TYPE_ENDOFLINE) { // si l'expression est terminée, on la compute
-            
+
             // compute an expression between exprStart and index
             toklist exprToks = (toklist) {.tab = tokens->tab + exprStart, .len = index - exprStart};
 

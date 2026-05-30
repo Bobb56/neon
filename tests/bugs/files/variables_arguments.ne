@@ -10,11 +10,12 @@ function sum(...) do
 end
 
 
-function f(x, y:=5, z, ..., t:=12) do
-    return (x + 2*y + 10*z + len(__local_args__) - 42*t)
+function f(x, y, z:=5, ..., t:=12) do
+    return (x + 2*z + 10*y + len(__local_args__) - 42*t)
 end
 
-assert(f(1, 2, 3) == -469)
-assert(f(x := 1, z := 4) == -453)
+assert(f(1, 2, 3) == -477)
+assert(f(99, y := 4, z := 18) == -329)
 assert(f(0, 0, 0, 0, 0, 0, 0, 0, 0) == -498)
-assert(f(0, 0, 0, 0, t := 0, 0, 0, 0, 0, 0) == 6)
+assert(f(0, 0, 0, 0, t := 0) == 1)
+assert(sum(1,2,3,4,5,6,7,8,9,10) == 55)

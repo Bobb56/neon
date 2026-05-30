@@ -16,7 +16,6 @@
 #include "headers/strings.h"
 #include "headers/lowlevel.h"
 #include "headers/processcycle.h"
-#include "headers/neonio.h"
 #include "headers/trees.h"
 
 
@@ -205,6 +204,15 @@ NeList* treeToList(TreeBuffer* tb, TreeBufferIndex tree_list) {
 
     return l;
 }
+
+// Cette fonction assigne 
+//
+void assignArg(Var var, NeObj obj) {
+
+}
+
+
+
 
 
 
@@ -597,7 +605,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 Function* fun = neo_to_function(function);
                 NeList* args = treeToList(tb, tree_fun_call->args);
 
-                if (global_env->CODE_ERROR != 0) {
+                if_error {
                     neobject_destroy(function);
                     return NEO_VOID;
                 }
@@ -610,13 +618,13 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                     return NEO_VOID;
                 }
-                    
+                
                 NeObj retour = functionCall(function, args);
 
                 nelist_destroy(args);
                 neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                 
-                if (global_env->CODE_ERROR != 0) {
+                if_error {
                     neobject_destroy(retour);
                     return NEO_VOID;
                 }
@@ -632,6 +640,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 fun->runningInstances += 1;
 
                 int tree_fun_call_nb_args = treelistLength(tb, tree_fun_call->args);
+                TreeBufferIndex* arg_tree = treelistGet(tb, tree_fun_call->args);
 
                 if (tree_fun_call_nb_args > fun->nbArgs && ! fun->unlimited_arguments) {
                     neon_fail(6);
@@ -639,207 +648,106 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     return NEO_VOID;
                 }
 
-                // on compte le nombre d'arguments très facultatifs
-                int given_nbOptArgs = 0;
-                // On regarde s'il y a des arguments donnés sous forme de var := valeur 
-                bool key_arguments = false;
+                // On va stocker les arguments dans des tableaux avant de les affecter afin de ne pas mélanger les contextes : évaluation dans le contexte extérieur, puis affectation dans le contexte intérieur
+                Var* variables = neon_malloc(sizeof(Var) * tree_fun_call_nb_args);
+                NeObj* values = neon_malloc(sizeof(NeObj) * tree_fun_call_nb_args);
+                
 
+                // Définition de __local_args__ dans le cas où la fonction peut prendre un nombre illimité d'arguments
+                NeObj local_args = NEO_VOID;
+                if (fun->unlimited_arguments) {
+                    local_args = neo_list_create(0);
+                }
+
+                // Affectation des arguments aux variables
                 for (int i = 0 ; i < tree_fun_call_nb_args ; i++) {
-                    if (TREE_TYPE(tb, treelistGet(tb, tree_fun_call->args)[i]) == TypeBinaryOp && treeBinOp(tb, treelistGet(tb, tree_fun_call->args)[i])->op == 37) { // on est sur du :=
-                        key_arguments = true;
-
-                        int index = 0;
-                        while (index < fun->nbArgs && fun->args[index] != treeVar(tb, treeBinOp(tb, treelistGet(tb, tree_fun_call->args)[i])->left)->var) index++;
-
-                        if (index >= fun->nbArgs - fun->nbOptArgs && index < fun->nbArgs)
-                            given_nbOptArgs ++;
+                    // Si il s'agit d'un argument nommé, on affecte directement la variable
+                    if (TREE_TYPE(tb, arg_tree[i]) == TypeBinaryOp && treeBinOp(tb, arg_tree[i])->op == 37) {
+                        variables[i] = treeVar(tb, treeBinOp(tb, arg_tree[i])->left)->var;
+                        values[i] = eval_aux(tb, treeBinOp(tb, arg_tree[i])->right);
+                    }
+                    // Il s'agit d'un argument normal non nommé (c'est à dire pas un argument ayant sa place dans __local_args__)
+                    else if (i < fun->nbArgs - fun->nbOptArgs) {
+                        variables[i] = fun->args[i];
+                        values[i] = eval_aux(tb, arg_tree[i]);
+                    }
+                    // Il s'agit d'un argument qui doit aller dans __local_args__
+                    else if (!fun->unlimited_arguments) {
+                        neon_fail(6);
+                        fun->runningInstances -= 1;
+                        neobject_destroy(function);
+                        return NEO_VOID;
+                    }
+                    else {
+                        neo_list_append(local_args, eval_aux(tb, arg_tree[i]));
                     }
                 }
 
-                // Ici on fait une distinction entre les appels simples et les appels avec key arguments, arguments optionnels etc
-                // pour des questions de performance
 
-                // Fonction avec appel direct (sans arguments optionnels ni arguments échangés)
-                if (!fun->unlimited_arguments && fun->opt_args == NULL && !key_arguments) {
+                // Affectation des arguments
 
-                    NeList* arguments = treeToList(tb, tree_fun_call->args);
+                // Ouverture du nouveau contexte
+                newContext(&global_env->process_cycle->process->var_loc);
+                // on sauvegarde les "variables à sauvegarder" de ce processus avant d'en ajouter d'autres
+                ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
 
-                    // exécution de la fonction
+                // Affectation des valeurs de values dans les variables de variables
+                for (int var_index = 0 ; var_index < tree_fun_call_nb_args ; var_index++) {
+                    Var variable = variables[var_index];
+                    local(variable, &global_env->process_cycle->process->var_loc);
+                    save_later(global_env->process_cycle->process->varsToSave, variable);
+                    
+                    replace_var(variable, values[var_index]);
+                }
+                neon_free(variables);
+                neon_free(values);
 
-                    NeObj ret;
-                    if (neo_isMethod(function)) {
-                        NeObj* self = get_address(tb, treelistGet(tb, tree_fun_call->args)[0]);
-                        ret = callUserMethod(fun, self, arguments, NEO_VOID);
-                    }
-                    else
-                        ret = callUserFunc(fun, arguments, NEO_VOID);
+                // Affectation de __local_args__
+                if (fun->unlimited_arguments) {
+                    Var var = get_var("__local_args__");
+                    save_later(global_env->process_cycle->process->varsToSave, var);
+                    local(var, &global_env->process_cycle->process->var_loc);
+                    replace_var(var, local_args);
+                }
 
-                    fun->runningInstances -= 1;
-                    neobject_destroy(function);
-                    nelist_destroy(arguments);
+                int ret_code = exec_aux(fun->tree_buffer, fun->code);
 
-                    return_on_error(NEO_VOID);
+                fun->runningInstances -= 1;
+                neobject_destroy(function);
 
-                    // ainsi si une return_value n'est pas à NULL c'est que forcément la valeur n'a pas été récupérée
-                    return ret;
+                if_error {
+                    deleteContext(&global_env->process_cycle->process->var_loc);
+                    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+                    return NEO_VOID;
+                }
+
+
+                // Si la fonction est une méthode on va modifier en place l'objet
+                if (fun->isMethod) {
+                    NeObj self_final_value = neo_copy(get_var_value(fun->args[0]));
+
+                    deleteContext(&global_env->process_cycle->process->var_loc);
+                    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+
+                    NeObj* self_address = get_address(tb, arg_tree[0]);
+                    neobject_destroy(*self_address);
+                    *self_address = self_final_value;
                 }
                 else {
-                
-                    // on sait maintenant que le nombre d'arguments réel final est :
-                    // -> Si tree->nbSons > fun->nbArgs : tree->nbSons - given_nbOptArgs
-                    // -> Sinon, fun->nbArgs
-
-                    // calcule le nombre d'arguments de cet appel de fonction
-                    int nb_arguments = (fun->unlimited_arguments && tree_fun_call_nb_args > fun->nbArgs - fun->nbOptArgs) ? tree_fun_call_nb_args + fun->nbOptArgs - given_nbOptArgs : fun->nbArgs;
-                    
-                    // et on crée la liste qui va contenir ces arguments
-                    NeList* arguments = nelist_create(nb_arguments);
-
-                    // initialise la liste avec des NEO_VOID pour savoir facilement si une case est encore vierge
-                    for (int i = 0 ; i < arguments->len ; i++)
-                        arguments->tab[i] = NEO_VOID;
-
-                    
-                    // pour les méthodes, on leur envoie l'adresse de l'objet à modifier
-                    NeObj* self = NULL;
-
-
-                    // on peut commencer par mettre à leur valeur par défaut les variables définies après ...
-                    // Ainsi elles ne seront pas remplacés sauf si on l'indique explicitement
-                    for (int i = fun->nbArgs - fun->nbOptArgs ; i < fun -> nbArgs ; i++) {
-                        if (i == 0 && neo_isMethod(function)) {
-                            neon_fail(110);
-                            nelist_destroy(arguments);
-                            neobject_destroy(function);
-                            return NEO_VOID;
-                        }
-                        arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
-                    }
-
-
-                    // 1ère boucle pour placer les arguments à des endroits où ils ne bougeront pas
-                    for (int i = 0 ; i < tree_fun_call_nb_args ; i++) {
-                        // on commence par remplir les éléments donnés dans le mauvais ordre (avec :=)
-                        if (TREE_TYPE(tb, treelistGet(tb, tree_fun_call->args)[i]) == TypeBinaryOp && treeBinOp(tb, treelistGet(tb, tree_fun_call->args)[i])->op == 37) { // on est sur du :=
-                            // on regarde la variable de gauche, et on met le truc au bon endroit
-                            // on récupère l'index du vrai argument dans fun->args, et on le met au bon endroit dans arguments
-                            int index = 0;
-
-                            if (TREE_TYPE(tb, treeBinOp(tb, treelistGet(tb, tree_fun_call->args)[i])->left) != TypeVariable) {
-                                nelist_destroy(arguments);
-                                neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                neon_fail(93);
-                                return NEO_VOID;
-                            }
-
-                            while (index < fun->nbArgs && fun->args[index] != treeVar(tb, treeBinOp(tb, treelistGet(tb, tree_fun_call->args)[i])->left)->var) index++;
-
-                            if (index == fun->nbArgs) {
-                                nelist_destroy(arguments);
-                                neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                neon_fail(93);
-                                return NEO_VOID;
-                            }
-                            
-                            if (index < fun->nbArgs - fun->nbOptArgs && !neo_is_void(arguments->tab[index])) {
-                                nelist_destroy(arguments);
-                                neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                neon_fail(94);
-                                return NEO_VOID;
-                            }
-                            // et on évalue l'argument envoyé
-                            arguments->tab[index] = eval_aux(tb, treeBinOp(tb, treelistGet(tb, tree_fun_call->args)[i])->right);
-
-                            if (global_env->CODE_ERROR != 0) {
-                                nelist_destroy(arguments);
-                                neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                return NEO_VOID;
-                            }
-                            else if (index == 0 && neo_isMethod(function)) {
-                                self = get_address(tb, treeBinOp(tb, treelistGet(tb, tree_fun_call->args)[i])->right); // on vient d'évaluer le premier argument
-                            }
-                        }
-                    }
-
-                    // deuxième boucle pour insérer dans l'ordre et en évitant les := les arguments restants
-                    int index = 0; // on remplit petit à petit arguments avec les arguments restants
-                    while (index < arguments->len && !neo_is_void(arguments->tab[index])) index++;
-
-                    for (int i = 0 ; index < arguments->len && i < tree_fun_call_nb_args ; i++) {
-                        
-                        if (TREE_TYPE(tb, treelistGet(tb, tree_fun_call->args)[i]) != TypeBinaryOp || treeBinOp(tb, treelistGet(tb, treeFCall(tb, tree)->args)[i])->op != 37) {
-                            arguments->tab[index] = eval_aux(tb, treelistGet(tb, tree_fun_call->args)[i]);
-
-                            if (global_env->CODE_ERROR != 0) {
-                                nelist_destroy(arguments);
-                                neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                return NEO_VOID;
-                            }
-                            else if (index == 0 && neo_isMethod(function)) { // on vient d'évaluer le premier argument
-                                self = get_address(tb, treelistGet(tb, tree_fun_call->args)[i]);
-                            }
-
-                            while (index < arguments->len && !neo_is_void(arguments->tab[index])) index++;
-                        }
-                    }
-                    // c'est un choix philosophique : si f attend x, y facultatif et z, alors f(1,2) ne fonctionnera pas car il manque z
-                    // pour mettre uniquement le x et le z, il y a une syntaxe pour le faire
-
-                    if (tree_fun_call_nb_args < fun->nbArgs) {
-                        // à ce stade-là, certains champs de arguments sont encore vides, on va donc parcourir une dernière fois afin de lui associer les expressions définies lors de la définition de la fonction
-                        for (int i = 0 ; i < fun->nbArgs ; i++) {
-                            if (neo_is_void(arguments->tab[i])) { // c'est précisément le cas où l'utilisateur n'a rien mis
-                                arguments->tab[i] = neo_copy(nelist_nth(fun->opt_args, i));
-
-                                if (neo_is_void(arguments->tab[i])) {
-                                    neon_fail(7);
-                                    neobject_destroy(function); // on supprime la fonction que l'on vient de créer
-                                    nelist_destroy(arguments);
-                                    return NEO_VOID;
-                                }
-
-                                if (i == 0 && neo_isMethod(function)) { // le premier argument d'une méthode ne peut pas être un argument optionnel
-                                    neon_fail(110);
-                                    nelist_destroy(arguments);
-                                    neobject_destroy(function);
-                                    return NEO_VOID;
-                                }
-                            }
-                        }
-                    }
-
-
-                    // création de la liste local_args
-                    NeObj neo_local_args = NEO_VOID;
-                    if (fun->unlimited_arguments) {
-                        // on raccourcit args, et on crée la liste locale
-                        int len = (arguments->len - given_nbOptArgs > fun->nbArgs - fun->nbOptArgs) ? arguments->len - fun->nbArgs : 0;
-
-                        NeList* local_args = nelist_create(len);
-                        for (int i = 0 ; i < len ; i++) {
-                            local_args->tab[i] = nelist_nth(arguments, fun->nbArgs + i);
-                        }
-                        neo_local_args = neo_list_convert(local_args);
-                    }
-
-
-                    // exécution de la fonction
-
-                    NeObj ret;
-                    if (neo_isMethod(function))
-                        ret = callUserMethod(fun, self, arguments, neo_local_args);
-                    else
-                        ret = callUserFunc(fun, arguments, neo_local_args);
-                    
-                    fun->runningInstances -= 1;
-                    neobject_destroy(function);
-                    nelist_destroy(arguments);
-
-                    return_on_error(NEO_VOID);
-
-                    // ainsi si une return_value n'est pas à NULL c'est que forcément la valeur n'a pas été récupérée
-                    return ret;
+                    // et on démonte le contexte de la fonction
+                    deleteContext(&global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
+                    // on enlève les variables qu'on avait marquées comme "à sauvegarder"
+                    // on enlève une à une toutes les variables qu'on avait rajoutées
+                    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
                 }
+
+                if (ret_code == EXIT_RETURN) {
+                    NeObj sov = global_env->RETURN_VALUE;
+                    global_env->RETURN_VALUE = NEO_VOID; // pour dire que l'on l'a utilisé
+                    return sov;
+                }
+                else
+                    return neo_none_create();
                 
             }
 

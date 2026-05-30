@@ -16,6 +16,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > set_stack_pointer
 
 Liste des choses qui ne marchent pas
+function f() do end
 _____________________
 
 Potentielles futures erreurs :
@@ -47,6 +48,7 @@ NOUVEAUTéS après la mise à jour 4.1 :
 - Ajout des fonctions bin et hex pour convertir des nombres en décimal et binaire
 - Ajout des fonctions serialize et deserialize pour sauvegarder n'importe quel objet Neon dans un fichier
 - Suppression de la fonction initGraphics et remplacement par une fonction init qui prend des noms de modules natifs en arguments et les initialise
+- Restriction des règles des arguments optionnels dans les fonctions
 */
 
 
