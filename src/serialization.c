@@ -216,7 +216,7 @@ void read_containers_header(NeStream stream, intlist* containersTable) {
             nelist_append(global_env->ATTRIBUTES, gc_extern_neo_list_convert(attributes));
         }
         else if (nb_fields != neo_list_len(global_env->ATTRIBUTES->tab[container_index])) {
-            neon_fail(122);
+            neon_fail(32);
             neon_free(containerName);
             return;
         }
@@ -229,7 +229,7 @@ void read_containers_header(NeStream stream, intlist* containersTable) {
                 neon_free(field);
 
                 if (!field_is_present) {
-                    neon_fail(122);
+                    neon_fail(32);
                     neon_free(containerName);
                     return;
                 }

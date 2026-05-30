@@ -1004,7 +1004,6 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
         default:
         {
-            printString("Unrecognized tree type\n");
             neon_fail(19);
             return NEO_VOID;
         }

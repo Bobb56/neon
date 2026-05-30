@@ -5,7 +5,6 @@
 #include "headers/objects.h"
 #include <string.h>
 
-
 bool isContextMark(NeSave nesave) {
     return neo_is_void(nesave.object) && nesave.var == -1;
 }
@@ -77,8 +76,7 @@ void newContext(ContextStack* var_loc) {
 
 
 
-void deleteContext(ContextStack* var_loc)
-{
+void deleteContext(ContextStack* var_loc) {
     NeSave nesave;
     while (!isContextMark(ContextStack_top(var_loc))) {
         nesave = ContextStack_pop(var_loc);

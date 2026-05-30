@@ -242,11 +242,23 @@ void gc_var_loc_mark(ContextStack* var_loc) {
     }
 }
 
+
+
+void gc_varsToSave_mark(ptrlist* varsToSave) {
+    for (ptrlist* ptr = varsToSave ; ptr != NULL && ptr->tete != NULL ; ptr = ptr->queue) {
+        NeSave* ns = (NeSave*)ptr->tete;
+        // on va switcher entre la valeur stockée dans le nesave et la valeur actuelle
+        gc_mark(ns->object);
+    }
+}
+
+
 // on parcourt tous les contextes de tous les processus pour marquer les variables qu'ils ont sauvegardés
+// ainsi que les variables locales aux processus
 void gc_processes_var_loc_mark(ProcessCycle* pc) {
     ProcessCycle* ptr = pc;
     do {
-        gc_var_loc_mark(&ptr->process->var_loc);
+        gc_varsToSave_mark(ptr->process->varsToSave);
         ptr = ptr->next;
     } while (ptr != pc);
 }

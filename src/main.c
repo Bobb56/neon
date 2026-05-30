@@ -35,8 +35,7 @@ Avancement et choses à faire :
 PLUS TARD
 --> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 --> Sauvegarder un environnement entier
---> Faire un fichier de test pour la sérialisation
---> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier
+--> Faire des messages d'erreur avec des paramètres, définis par neon_fail
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
 

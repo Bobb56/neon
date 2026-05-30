@@ -152,6 +152,7 @@ function main(args) do
             "queue",
             "queue2",
             "relaunch",
+            "serialization",
             "stack",
             "set",
             "variables_arguments"
