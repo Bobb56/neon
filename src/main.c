@@ -33,9 +33,8 @@ on ne le crée pas dans global_env->FONCTIONS)
 Avancement et choses à faire :
 -------------------------------
 PLUS TARD
---> Sérialiser fonctions built-in et promesses
---> Comparer les TreeBuffer pour comparer des fonctions ?
 --> Ajouter un header dans le fichier de sérialisation d'objets qui permet de rendre compatibles entre eux des runtimes (exemple : donner l'association nom de variable/indice dans ADRESSES, les champs de containers, etc)
+--> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 --> Sauvegarder un environnement entier
 --> Faire un fichier de test pour la sérialisation
 --> Faire une fonction saveVar(nom_fichier, variable) et loadVar(nom_fichier) qui stocke tout ça dans un fichier

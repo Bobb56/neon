@@ -943,12 +943,10 @@ int strlist_getsize(strlist* list) {
 
 void strlist_aff(strlist* list)
 {
-  if (list->len == 0)
-  {
+  if (list->len == 0) {
     printString("[]\n");
   }
-  else
-  {
+  else {
     printString("[");
     char* tmp;
     for ( int i = 0 ; i < list->len -1 ; i++)
@@ -988,7 +986,7 @@ void strlist_append(strlist* list, char *chaine)
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
   }
-    
+  
   list->tab[list->len]=chaine;
   list->len++;
 }

@@ -1,3 +1,4 @@
+#include "headers/constants.h"
 #define NEON_SOURCE_ID 4
 
 #include <stdlib.h>
@@ -359,26 +360,23 @@ void printError(int code)
         
         printString((char*)error_messages[code]);
 
+        setColor(DEFAULT);
+        printString(" -- ");
+
         // Affichage de la référence exacte de l'erreur
         setColor(GREEN);
-        printString(" (");
-        setColor(DEFAULT);
-
-        printString("C:");
         printInt(code);
         
         if (global_env->ERROR_NEON_SOURCE_ID != 0) {
-            printString("-F:");
+            printString("#");
             printInt(global_env->ERROR_NEON_SOURCE_ID);
         }
 
         if (global_env->ERROR_NEON_LINE_NUMBER != 0) {
-            printString("-L:");
+            printString("#");
             printInt(global_env->ERROR_NEON_LINE_NUMBER);
         }
 
-        setColor(GREEN);
-        printString(")");
     }
     setColor(DEFAULT);
     newLine();
