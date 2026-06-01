@@ -303,10 +303,9 @@ NeObj _mul(NeObj _op1, NeObj _op2)
     }
     
     int len_sousch = strlen(sousch);
-    char* multip = neon_malloc(sizeof(char*)*(times*len_sousch+1));
+    char* multip = neon_malloc(sizeof(char)*(times*len_sousch+1));
 
-    for (int i=0 ; i < times*len_sousch ; i++)
-    {
+    for (int i=0 ; i < times*len_sousch ; i++) {
       multip[i] = sousch[i%len_sousch];
     }
     
@@ -333,8 +332,7 @@ NeObj _mul(NeObj _op1, NeObj _op2)
     NeObj neres = neo_list_create(times*list->len);
     NeList* res = neo_to_list(neres);
     
-    for (int i=0 ; i < times*list->len ; i++)
-    {
+    for (int i=0 ; i < times*list->len ; i++) {
     	res->tab[i] = neo_copy(list->tab[i%list->len]);
     }
     

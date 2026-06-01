@@ -195,6 +195,30 @@ void container_destroy(Container* c) {
     neon_free(c);
 }
 
+
+
+NeObj callUnaryUserFunc(UserFunc* fun, NeObj arg) {
+    NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+    values[0] = neo_copy(arg);
+    NeObj ret_value = callUserFunc(fun, fun->args, values, 1, NEO_VOID, NULL);
+    neon_free(values);
+    return ret_value;
+}
+
+
+
+NeObj callBinaryUserFunc(UserFunc* fun, NeObj arg1, NeObj arg2) {
+    NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+    values[0] = neo_copy(arg1);
+    values[1] = neo_copy(arg2);
+    NeObj ret_value = callUserFunc(fun, fun->args, values, 2, NEO_VOID, NULL);
+    neon_free(values);
+    return ret_value;
+}
+
+
+
+
 void neo_container_aff(NeObj neo) {
     Container* c = neo_to_container(neo);
     // on regarde si l'affichage est surchargé
@@ -209,17 +233,8 @@ void neo_container_aff(NeObj neo) {
         NeObj neo_fun = global_env->ADRESSES->tab[index];
         UserFunc* fun = neo_fun.userfunc;
         
-        NeList args = (NeList) {
-            .tab = (NeObj[]) {neo},
-            .len = 1,
-            .capacity = 0
-        };
-        NeObj ret = callUserFunc(fun, &args, NEO_VOID);
-        
+        NeObj ret = callUnaryUserFunc(fun, neo);
         neobject_destroy(ret);
-        if (global_env->CODE_ERROR != 0) {
-            return ;
-        }
     }
     else {
         // on n'a pas trouvé de surcharge sur l'affichage
@@ -254,14 +269,9 @@ char* neo_container_str(NeObj neo) {
         NeObj neo_fun = global_env->ADRESSES->tab[index];
         UserFunc* fun = neo_fun.userfunc;
 
-        NeList args = (NeList) {
-            .tab = (NeObj[]) {neo},
-            .len = 1,
-            .capacity = 0
-        };
-        NeObj obj = callUserFunc(fun, &args, NEO_VOID);
+        NeObj obj = callUnaryUserFunc(fun, neo);
         
-        if (global_env->CODE_ERROR != 0) {
+        if_error {
             neobject_destroy(obj);
             return NULL;
         }
@@ -397,7 +407,7 @@ bool is_number(NeObj obj) {
 }
 
 
-///////////////// TYPE_FUNCTION //////////////////
+////////////////// TYPE_FUNCTION //////////////////
 
 NeObj neo_fun_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour)
 {
@@ -1674,15 +1684,8 @@ bool neo_equal(NeObj _op1, NeObj _op2)
             NeObj neo_fun = global_env->ADRESSES->tab[index];
             UserFunc* fun = neo_fun.userfunc;
 
-            NeList args = (NeList) {
-                .tab = (NeObj[]) {_op1, _op2},
-                .len = 2,
-                .capacity = 1
-            };
-            NeObj ret = callUserFunc(fun, &args, NEO_VOID);
-            if (global_env->CODE_ERROR != 0) {
-                return false;
-            }
+            NeObj ret = callBinaryUserFunc(fun, _op1, _op2);
+            return_on_error(false);
 
             bool bo = neoIsTrue(ret);
             neobject_destroy(ret);
@@ -1829,13 +1832,8 @@ int neo_compare(NeObj a, NeObj b)
             NeObj neo_fun = global_env->ADRESSES->tab[index];
             UserFunc* fun = neo_fun.userfunc;
 
-            NeList args = (NeList) {
-                .tab = (NeObj[]) {a, b},
-                .len = 2,
-                .capacity = 1
-            };
-            NeObj ret = callUserFunc(fun, &args, NEO_VOID);
-            if (global_env->CODE_ERROR != 0) {
+            NeObj ret = callBinaryUserFunc(fun, a, b);
+            if_error {
                 neobject_destroy(ret);
                 return 0;
             }
@@ -1975,13 +1973,8 @@ NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname) {
         NeObj neo_fun = global_env->ADRESSES->tab[index];
         UserFunc* fun = neo_fun.userfunc;
 
-        NeList args = (NeList) {
-            .tab = (NeObj[]) {op1, op2},
-            .len = 2,
-            .capacity = 1
-        };
-        NeObj ret = callUserFunc(fun, &args, NEO_VOID);
-        if (global_env->CODE_ERROR != 0) {
+        NeObj ret = callBinaryUserFunc(fun, op1, op2);
+        if_error {
             neobject_destroy(ret);
             return NEO_VOID;
         }
@@ -2002,13 +1995,8 @@ NeObj callOverloadedUnaryOperator(NeObj op1, char* opname) {
         NeObj neo_fun = global_env->ADRESSES->tab[index];
         UserFunc* fun = neo_fun.userfunc;
 
-        NeList args = (NeList) {
-            .tab = (NeObj[]) {op1},
-            .len = 1,
-            .capacity = 0
-        };
-        NeObj ret = callUserFunc(fun, &args, NEO_VOID);
-        if (global_env->CODE_ERROR != 0) {
+        NeObj ret = callUnaryUserFunc(fun, op1);
+        if_error {
             neobject_destroy(ret);
             return NEO_VOID;
         }

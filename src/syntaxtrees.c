@@ -566,7 +566,6 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             int index = ast_minOp(ast, tokens, offset);
 
             if (index < 0) {
-                toklist_aff(tokens);
                 neon_fail(30);
                 global_env->LINENUMBER = lines->tab[offset];
                 return TREE_VOID;

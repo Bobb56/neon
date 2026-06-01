@@ -49,6 +49,7 @@ NOUVEAUTéS après la mise à jour 4.1 :
 - Ajout des fonctions serialize et deserialize pour sauvegarder n'importe quel objet Neon dans un fichier
 - Suppression de la fonction initGraphics et remplacement par une fonction init qui prend des noms de modules natifs en arguments et les initialise
 - Restriction des règles des arguments optionnels dans les fonctions
+- Ajouter dans la doc: si on a un argument qui s'appelle __local_args__, il overwrite la valeur de la variable __local_args__
 */
 
 

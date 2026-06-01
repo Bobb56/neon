@@ -1,3 +1,4 @@
+#include "headers/processcycle.h"
 #define NEON_SOURCE_ID 2
 
 #include "headers/contexts.h"
@@ -89,8 +90,15 @@ void deleteContext(ContextStack* var_loc) {
 
 
 
-void local(Var var, ContextStack* var_loc)
+void local(Var var, Process* process)
 {
+    // Marquage de l'objet comme local au processus actuel, pour le sauvegarder lors des changements de contextes
+    // Il est impératif d'appeler save_later avant de sauvegarder la variable comme variable locale
+    // En effet la valeur captée par save_later est la variable qui sera exposée aux autres processus, ce doit donc être la valeur présente dans la variable avant toute modification de cette variable en tant que variable locale
+    // Si on ne le fait pas, save_later va capter la valeur vide sauvegardée par local, et le remplacement final des variables du processus par les objets de varsToSave va écraser la valeur extérieure de la variable par l'objet vide capté par save_later
+    // Cela va donc résulter en une fuite de l'objet original
+    save_later(process->varsToSave, var);
+
     // sauvegarde de l'object actuel
     NeSave ns = (NeSave) {.object = get_var_value(var), .var = var};
 
@@ -98,6 +106,12 @@ void local(Var var, ContextStack* var_loc)
     var_reset(get_absolute_address(var));
 
     //ajout de la sauvegarde au contexte actuel
-    ContextStack_append(var_loc, ns);
+    ContextStack_append(&process->var_loc, ns);
 }
 
+
+bool isLocal(Var var, ContextStack* context) {
+    int i = context->len-1;
+    while (!isContextMark(context->tab[i]) && context->tab[i].var != var) i--;
+    return !isContextMark(context->tab[i]);
+}

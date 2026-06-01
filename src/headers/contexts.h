@@ -4,6 +4,7 @@
 #include "dynarrays.h"
 #include "neobj.h"
 
+typedef struct Process Process;
 
 typedef struct NeSave
 {
@@ -28,7 +29,8 @@ void ContextStack_init(ContextStack* stack);
 void ContextStack_destroy(ContextStack* stack);
 void newContext(ContextStack* var_loc);
 void deleteContext(ContextStack* var_loc);
-void local(Var var, ContextStack* var_loc);
+void local(Var var, Process* process);
+bool isLocal(Var var, ContextStack* context);
 
 
 #endif

@@ -29,7 +29,7 @@ void exec(TreeBuffer* tb, TreeBufferIndex tree);
 bool isTrue(TreeBuffer* tb, TreeBufferIndex tree);
 void update__name__(char* name);
 NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree);
-NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args);
+NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_index, NeObj local_args, NeObj* self_address);
 void initRuntime(void);
 void exitRuntime(void);
 

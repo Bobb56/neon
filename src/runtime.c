@@ -1,3 +1,5 @@
+#include "headers/neobj.h"
+#include "headers/neonio.h"
 #define NEON_SOURCE_ID 17
 
 #include <stdbool.h>
@@ -31,9 +33,7 @@ void update__name__(char* name)
 
 bool isTrue(TreeBuffer* tb, TreeBufferIndex tree) {
     NeObj obj = eval_aux(tb, tree);
-
-    if (global_env->CODE_ERROR != 0)
-        return false;
+    return_on_error(false);
 
     bool b = neoIsTrue(obj);
     neobject_destroy(obj);
@@ -190,7 +190,7 @@ NeList* treeToList(TreeBuffer* tb, TreeBufferIndex tree_list) {
         if (!TREE_ISVOID(treelistGet(tb, tree_list)[index])) {
             l->tab[index] = eval_aux(tb, treelistGet(tb, tree_list)[index]);
             
-            if (global_env->CODE_ERROR != 0)
+            if_error
             {
                 // si y a eu un problème dans l'évaluation d'un argument, on doit libérer toute la liste créée jusqu'alors
                 nelist_destroy_until(l, index - 1);
@@ -213,153 +213,85 @@ void assignArg(Var var, NeObj obj) {
 
 
 
+// Cette fonction appelle une UserFunction sur les arguments [values] associés aux variables de même indice dans le tableau [variables]. [nb_arguments] correspond au premier indice libre dans les tableaux, et les tableaux doivent être de longueur [fun->nbArgs]
+// La fonction assigne l'objet [local_args] à une vraie variable s'il est différent de NEO_VOID, et met l'objet final de la méthode dans [self_final_value] SANS REMPLACER LA PRECEDENTE VALEUR
+// L'affectation à la vraie adresse de l'objet doit être faite manuellement après avoir appelé callUserFunc
+NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_index, NeObj local_args, NeObj* self_final_value) {
+    // Remplissage du tableau avec les valeurs par défaut des arguments optionnels
+    for (int i=0 ; variable_index < fun->nbArgs && i < fun->nbArgs ; i++) {
+        // Cette variable a un argument par défaut donc on regarde si l'argument a été donné
+        if (!neo_is_void(fun->opt_args->tab[i])) {
+            bool has_already_been_given = false;
+            for (int j=0 ; j < variable_index ; j++) {
+                if (variables[j] == fun->args[i]) {
+                    has_already_been_given = true;
+                    break;
+                }
+            }
 
-
-
-NeObj callUserFunc(UserFunc* fun, NeList* args, NeObj neo_local_args) {
-
-    // ouvre un nouveau contexte pour sauvegarder les variables locales de cet appel
-    newContext(&global_env->process_cycle->process->var_loc);
-
-    // on sauvegarde les "variables à sauvegarder" de ce processus avant d'en ajouter d'autres
-    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
-
-    if (fun->unlimited_arguments) {
-        int len = neo_list_len(neo_local_args);
-
-        Var var = get_var("__local_args__");
-
-        save_later(global_env->process_cycle->process->varsToSave, var);
-        local(var, &global_env->process_cycle->process->var_loc);
-        // on lui dit de  sauvegarder cette variable avant de switcher de processus
-        replace_var(var, neo_local_args);
-
-        if (len > 0) // du coup on enlève les éléments en trop de args
-            args->len = fun->nbArgs;
-    }
-
-    
-    for (int i = 0 ; i < fun->nbArgs ; i++) // affectation des arguments
-    {
-        NeObj temp = neo_copy(nelist_nth(args, i));
-        
-        save_later(global_env->process_cycle->process->varsToSave, fun->args[i]);
-        local(fun->args[i], &global_env->process_cycle->process->var_loc);
-        
-        replace_var(fun->args[i], temp);
-        
-        if (global_env->CODE_ERROR != 0) // erreur : libération des arguments affectés
-        {
-            
-            // libérer la sauvegarde des variables
-            //deleteContext(&global_env->process_cycle->process->var_loc);
-            
-            for (int j = 1 ; j < i ; j++)
-                free_var(fun->args[j]);
-
-            deleteContext(&global_env->process_cycle->process->var_loc);
-            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
-
-            return NEO_VOID;
+            if (!has_already_been_given) {
+                variables[variable_index] = fun->args[i];
+                values[variable_index] = neo_copy(fun->opt_args->tab[i]);
+                variable_index++;
+            }
         }
     }
 
-    // on stocke fun et args
-    fun->runningInstances += 1;
-    int int_ret = exec_aux(fun->tree_buffer, fun->code);
-    fun->runningInstances -= 1;
-
-    // on enlève les variables qu'on avait marquées comme "à sauvegarder"
-    // on enlève une à une toutes les variables qu'on avait rajoutées
-    deleteContext(&global_env->process_cycle->process->var_loc);
-    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
-
-
-    if (global_env->CODE_ERROR != 0) // erreur
+    // Pas assez d'arguments : même en ayant rempli avec les arguments optionnels il y en a moins que attendu
+    if (variable_index < fun->nbArgs) {
+        neon_fail(7);
         return NEO_VOID;
-    
-    if (int_ret == EXIT_RETURN) {
-        NeObj sov = global_env->RETURN_VALUE;
-        global_env->RETURN_VALUE = NEO_VOID; // pour dire que l'on l'a utilisé
-        return sov;
     }
-    else
-        return neo_none_create();
-}
 
 
+    // Affectation des arguments
 
-
-
-
-
-
-NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_args) {
-
-    // ouvre un nouveau contexte pour sauvegarder les variables locales de cet appel
+    // Ouverture du nouveau contexte
     newContext(&global_env->process_cycle->process->var_loc);
-
-
     // on sauvegarde les "variables à sauvegarder" de ce processus avant d'en ajouter d'autres
     ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
 
-    if (fun->unlimited_arguments) {
-        int len = neo_list_len(neo_local_args);
+    // Affectation des valeurs de values dans les variables de variables
+    for (int var_index = 0 ; var_index < fun->nbArgs ; var_index++) {
+        Var variable = variables[var_index];
+        Process* proc = global_env->process_cycle->process;
 
-        Var var = get_var("__local_args__");
-
-        save_later(global_env->process_cycle->process->varsToSave, var);
-        local(var, &global_env->process_cycle->process->var_loc);
-        // on lui dit de  sauvegarder cette variable avant de switcher de processus
-        
-        replace_var(var, neo_local_args);
-
-        if (len > 0) // du coup on enlève les éléments en trop de args
-            args->len = fun->nbArgs;
-    }
-    
-    
-
-    
-    for (int i = 0 ; i < fun->nbArgs ; i++) // affectation des arguments
-    {
-        NeObj temp = neo_copy(nelist_nth(args, i));
-        
-        save_later(global_env->process_cycle->process->varsToSave, fun->args[i]);
-        local(fun->args[i], &global_env->process_cycle->process->var_loc);
-        
-        replace_var(fun->args[i], temp);
-        
-        if (global_env->CODE_ERROR != 0) // erreur : libération des arguments affectés
-        {
-            
-            // libérer la sauvegarde des variables
-            //deleteContext(&global_env->process_cycle->process->var_loc);
-            
-            for (int j = 1 ; j < i ; j++)
-                free_var(fun->args[j]);
-
-            deleteContext(&global_env->process_cycle->process->var_loc);
-            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
-
+        if (!isLocal(variable, &proc->var_loc)) {
+            local(variable, proc);
+            replace_var(variable, values[var_index]);
+        }
+        else {
+            neon_fail(94);
             return NEO_VOID;
         }
     }
 
-    // on stocke fun et args
-    
+    // Affectation de __local_args__
+    if (fun->unlimited_arguments) {
+        Var var = get_var("__local_args__");
+        Process* proc = global_env->process_cycle->process;
+
+        if (!isLocal(var, &proc->var_loc)) {
+            local(var, global_env->process_cycle->process);
+            replace_var(var, neo_copy(local_args));
+        }
+    }
+
     fun->runningInstances += 1;
-    int int_ret = exec_aux(fun->tree_buffer, fun->code);
+    int ret_code = exec_aux(fun->tree_buffer, fun->code);
     fun->runningInstances -= 1;
 
-    if (global_env->CODE_ERROR != 0) {
-        deleteContext(&global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
+    if_error {
+        deleteContext(&global_env->process_cycle->process->var_loc);
         partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
         return NEO_VOID;
     }
 
-    // on récupère la valeur du premier argument avant de restaurer le contexte
-    NeObj object = neo_copy(get_var_value(fun->args[0]));
+
+    // Si la fonction est une méthode on va modifier en place l'objet
+    if (fun->isMethod)
+        *self_final_value = neo_copy(get_var_value(fun->args[0]));
+
 
     // et on démonte le contexte de la fonction
     deleteContext(&global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
@@ -367,10 +299,7 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
     // on enlève une à une toutes les variables qu'on avait rajoutées
     partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
 
-    neobject_destroy(*self);
-    *self = object;
-    
-    if (int_ret == EXIT_RETURN) {
+    if (ret_code == EXIT_RETURN) {
         NeObj sov = global_env->RETURN_VALUE;
         global_env->RETURN_VALUE = NEO_VOID; // pour dire que l'on l'a utilisé
         return sov;
@@ -378,7 +307,6 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
     else
         return neo_none_create();
 }
-
 
 
 
@@ -388,10 +316,7 @@ NeObj callUserMethod(UserFunc* fun, NeObj* self, NeList* args, NeObj neo_local_a
 NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
     // il est possible qu'entre temps un processus ait lancé une erreur
-    if (global_env->CODE_ERROR != 0)
-        return NEO_VOID;
-
-    // =================== EVALUATION =====================
+    // return_on_error(NEO_VOID);
 
     global_env->LINENUMBER = TREE_LINE(tb, tree);
 
@@ -413,9 +338,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     NeObj* op1 = get_address(tb, tree_un_op->expr); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
                     
-                    if (global_env->CODE_ERROR != 0) {
-                        return NEO_VOID;
-                    }
+                    return_on_error(NEO_VOID);
 
                     NeObj (*func) (NeObj*) = operators_functions[tree_un_op->op];
                     return func(op1);
@@ -424,9 +347,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     NeObj op1 = eval_aux(tb, tree_un_op->expr);
 
-                    if (global_env->CODE_ERROR != 0) {
-                        return NEO_VOID;
-                    }
+                    return_on_error(NEO_VOID);
 
                     NeObj (*func) (NeObj) = operators_functions[tree_un_op->op];
                     NeObj retour = func(op1);
@@ -461,13 +382,11 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     NeObj* op1 = get_address(tb, tree_bin_op->left);
 
-                    if (global_env->CODE_ERROR != 0)
-                        return NEO_VOID;
+                    return_on_error(NEO_VOID);
                     
                     NeObj op2 = eval_aux(tb, tree_bin_op->right);
 
-                    if (global_env->CODE_ERROR != 0)
-                        return NEO_VOID;
+                    return_on_error(NEO_VOID);
 
                     NeObj (*func)(NeObj*, NeObj) = operators_functions[tree_bin_op->op];
                     NeObj result = func(op1, op2);
@@ -478,13 +397,11 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {                    
                     NeObj op1 = eval_aux(tb, tree_bin_op->left);
                     
-                    if (global_env->CODE_ERROR != 0)
-                        return NEO_VOID;
+                    return_on_error(NEO_VOID);
                 
                     NeObj* op2 = get_address(tb, tree_bin_op->right);
 
-                    if (global_env->CODE_ERROR != 0)
-                        return NEO_VOID;
+                    return_on_error(NEO_VOID);
 
                     NeObj (*func)(NeObj, NeObj*) = operators_functions[tree_bin_op->op];
                     NeObj result = func(op1, op2);
@@ -495,13 +412,11 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     NeObj* op1 = get_address(tb, tree_bin_op->left);
 
-                    if (global_env->CODE_ERROR != 0)
-                        return NEO_VOID;
+                    return_on_error(NEO_VOID);
                     
                     NeObj* op2 = get_address(tb, tree_bin_op->right);
 
-                    if (global_env->CODE_ERROR != 0)
-                        return NEO_VOID;
+                    return_on_error(NEO_VOID);
 
                     NeObj (*func)(NeObj*, NeObj*) = operators_functions[tree_bin_op->op];
                     NeObj result = func(op1, op2);
@@ -511,7 +426,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     NeObj op1 = eval_aux(tb, tree_bin_op->left);
 
-                    if (global_env->CODE_ERROR != 0)
+                    if_error
                     {
                         neobject_destroy(op1);
                         return NEO_VOID;
@@ -519,7 +434,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     NeObj op2 = eval_aux(tb, tree_bin_op->right);
 
-                    if (global_env->CODE_ERROR != 0)
+                    if_error
                     {
                         neobject_destroy(op1);
                         neobject_destroy(op2);
@@ -559,9 +474,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             NeObj fixed_func = eval_aux(tree_buffer, treeFCall(tree_buffer, maintree)->function);
 
-            if (global_env->CODE_ERROR != 0) {
-                return NEO_VOID;
-            }
+            return_on_error(NEO_VOID);
 
             if (NEO_TYPE(fixed_func) != TYPE_USERFUNC) {
                 neon_fail(100);
@@ -573,7 +486,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             // on met isInitialized = false pour que le processus entre dans eval_aux de manière normale
             int id = create_new_process(tree_buffer, maintree, fixed_func, false);
 
-            if (global_env->CODE_ERROR != 0) {
+            if_error {
                 neobject_destroy(fixed_func);
                 return NEO_VOID;
             }
@@ -598,10 +511,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 tree_fun_call->function_obj = NEO_VOID;
             }
 
-            // ensuite, pour évaluer les arguments, on fait bien la boucle sur tree->sons[1]
-            
-            if (NEO_TYPE(function) == TYPE_BUILTINFUNC)
-            {
+            if (NEO_TYPE(function) == TYPE_BUILTINFUNC) {
                 Function* fun = neo_to_function(function);
                 NeList* args = treeToList(tb, tree_fun_call->args);
 
@@ -636,8 +546,8 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             else if (NEO_TYPE(function) == TYPE_USERFUNC)
             {
+                // TODO : Gérer les erreurs pas assez d'arguments, trop d'arguments, multiple affectation d'arguments...
                 UserFunc* fun = neo_to_userfunc(function);
-                fun->runningInstances += 1;
 
                 int tree_fun_call_nb_args = treelistLength(tb, tree_fun_call->args);
                 TreeBufferIndex* arg_tree = treelistGet(tb, tree_fun_call->args);
@@ -649,9 +559,9 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 }
 
                 // On va stocker les arguments dans des tableaux avant de les affecter afin de ne pas mélanger les contextes : évaluation dans le contexte extérieur, puis affectation dans le contexte intérieur
-                Var* variables = neon_malloc(sizeof(Var) * tree_fun_call_nb_args);
-                NeObj* values = neon_malloc(sizeof(NeObj) * tree_fun_call_nb_args);
-                
+                Var* variables = neon_malloc(sizeof(Var) * fun->nbArgs);
+                NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+                int variable_index = 0;
 
                 // Définition de __local_args__ dans le cas où la fonction peut prendre un nombre illimité d'arguments
                 NeObj local_args = NEO_VOID;
@@ -659,96 +569,58 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     local_args = neo_list_create(0);
                 }
 
-                // Affectation des arguments aux variables
+                // Association valeurs/variables
+
+                fun->runningInstances += 1;
                 for (int i = 0 ; i < tree_fun_call_nb_args ; i++) {
                     // Si il s'agit d'un argument nommé, on affecte directement la variable
                     if (TREE_TYPE(tb, arg_tree[i]) == TypeBinaryOp && treeBinOp(tb, arg_tree[i])->op == 37) {
-                        variables[i] = treeVar(tb, treeBinOp(tb, arg_tree[i])->left)->var;
-                        values[i] = eval_aux(tb, treeBinOp(tb, arg_tree[i])->right);
+                        variables[variable_index] = treeVar(tb, treeBinOp(tb, arg_tree[i])->left)->var;
+                        values[variable_index] = eval_aux(tb, treeBinOp(tb, arg_tree[i])->right);
+                        variable_index++;
                     }
                     // Il s'agit d'un argument normal non nommé (c'est à dire pas un argument ayant sa place dans __local_args__)
                     else if (i < fun->nbArgs - fun->nbOptArgs) {
-                        variables[i] = fun->args[i];
-                        values[i] = eval_aux(tb, arg_tree[i]);
+                        variables[variable_index] = fun->args[i];
+                        values[variable_index] = eval_aux(tb, arg_tree[i]);
+                        variable_index++;
                     }
                     // Il s'agit d'un argument qui doit aller dans __local_args__
                     else if (!fun->unlimited_arguments) {
                         neon_fail(6);
                         fun->runningInstances -= 1;
                         neobject_destroy(function);
+                        neon_free(variables);
+                        neon_free(values);
                         return NEO_VOID;
                     }
                     else {
                         neo_list_append(local_args, eval_aux(tb, arg_tree[i]));
                     }
                 }
+                fun->runningInstances -= 1;
 
+                NeObj self_final_value;
+                NeObj return_value = callUserFunc(fun, variables, values, variable_index, local_args, &self_final_value);
 
-                // Affectation des arguments
-
-                // Ouverture du nouveau contexte
-                newContext(&global_env->process_cycle->process->var_loc);
-                // on sauvegarde les "variables à sauvegarder" de ce processus avant d'en ajouter d'autres
-                ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
-
-                // Affectation des valeurs de values dans les variables de variables
-                for (int var_index = 0 ; var_index < tree_fun_call_nb_args ; var_index++) {
-                    Var variable = variables[var_index];
-                    local(variable, &global_env->process_cycle->process->var_loc);
-                    save_later(global_env->process_cycle->process->varsToSave, variable);
-                    
-                    replace_var(variable, values[var_index]);
-                }
+                neobject_destroy(local_args);
                 neon_free(variables);
                 neon_free(values);
 
-                // Affectation de __local_args__
-                if (fun->unlimited_arguments) {
-                    Var var = get_var("__local_args__");
-                    save_later(global_env->process_cycle->process->varsToSave, var);
-                    local(var, &global_env->process_cycle->process->var_loc);
-                    replace_var(var, local_args);
-                }
-
-                int ret_code = exec_aux(fun->tree_buffer, fun->code);
-
-                fun->runningInstances -= 1;
-                neobject_destroy(function);
-
                 if_error {
-                    deleteContext(&global_env->process_cycle->process->var_loc);
-                    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+                    neobject_destroy(function);
                     return NEO_VOID;
                 }
 
-
-                // Si la fonction est une méthode on va modifier en place l'objet
                 if (fun->isMethod) {
-                    NeObj self_final_value = neo_copy(get_var_value(fun->args[0]));
-
-                    deleteContext(&global_env->process_cycle->process->var_loc);
-                    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
-
                     NeObj* self_address = get_address(tb, arg_tree[0]);
                     neobject_destroy(*self_address);
                     *self_address = self_final_value;
                 }
-                else {
-                    // et on démonte le contexte de la fonction
-                    deleteContext(&global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
-                    // on enlève les variables qu'on avait marquées comme "à sauvegarder"
-                    // on enlève une à une toutes les variables qu'on avait rajoutées
-                    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
-                }
 
-                if (ret_code == EXIT_RETURN) {
-                    NeObj sov = global_env->RETURN_VALUE;
-                    global_env->RETURN_VALUE = NEO_VOID; // pour dire que l'on l'a utilisé
-                    return sov;
-                }
-                else
-                    return neo_none_create();
-                
+                neobject_destroy(function);
+
+                return return_value;
             }
 
             else if (NEO_TYPE(function) == TYPE_EMPTY)
@@ -772,13 +644,11 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             NeObj obj = eval_aux(tb, tree_list_index->object);
 
-            if (global_env->CODE_ERROR != 0)
-                return NEO_VOID;
+            return_on_error(NEO_VOID);
 
             NeObj index = eval_aux(tb, tree_list_index->index);
 
-            if (global_env->CODE_ERROR != 0)
-                return NEO_VOID;
+            return_on_error(NEO_VOID);
 
 
             // on vérifie que nos objets ont bien les types attendus
@@ -841,7 +711,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                 val->tab[i] = eval_aux(tb, treeAttrLit(tb, treelistGet(tb, tree_cont_lit->attributes)[i])->expr);
 
-                if (global_env->CODE_ERROR != 0)
+                if_error
                 {
                     nelist_destroy_until(val, i - 1);
                     return NEO_VOID;
@@ -858,9 +728,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             NeObj neo = eval_aux(tb, tree_attr->object);
 
-            if (global_env->CODE_ERROR != 0) {
-                return NEO_VOID;
-            }
+            return_on_error(NEO_VOID);
 
             if (NEO_TYPE(neo) != TYPE_CONTAINER)
             {
@@ -943,18 +811,14 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
         {
             NeObj* obj_ptr = get_address(tb, treeLstIndx(tb, tree)->object);
 
-            if (global_env->CODE_ERROR != 0) {
-                return NULL;
-            }
+            return_on_error(NULL);
 
             NeObj obj = *obj_ptr;
 
             NeObj index = eval_aux(tb, treeLstIndx(tb, tree)->index);
 
 
-            if (global_env->CODE_ERROR != 0) {
-                return NULL;
-            }
+            return_on_error(NULL);
 
 
             if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
@@ -1002,9 +866,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             struct Attribute* tree_attr = treeAttr(tb, tree);
             NeObj neo = eval_aux(tb, tree_attr->object);
 
-            if (global_env->CODE_ERROR != 0) {
-                return NULL;
-            }
+            return_on_error(NULL);
 
             if (NEO_TYPE(neo) != TYPE_CONTAINER)
             {
@@ -1065,16 +927,12 @@ int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {
         expr = eval_aux(tb, treeIEW(tb, blocks_array[bloc])->expression);
 
 
-        if (global_env->CODE_ERROR != 0) {
-            return 0;
-        }
+        return_on_error(0);
 
         bool cond = neoIsTrue(expr);
         neobject_destroy(expr);
 
-        if (global_env->CODE_ERROR != 0) {
-            return 0;
-        }
+        return_on_error(0);
 
         if (cond)
         {
@@ -1086,9 +944,7 @@ int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {
             deleteContext(&global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
             
-            if (global_env->CODE_ERROR != 0) {
-                return 0;
-            }
+            return_on_error(0);
 
             if (int_ret != 0) {
                 return int_ret;
@@ -1120,9 +976,7 @@ int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {
             cond = neoIsTrue(expr);
             neobject_destroy(expr);
 
-            if (global_env->CODE_ERROR != 0) {
-                return 0;
-            }
+            return_on_error(0);
 
 
             if (!elif && cond)
@@ -1135,9 +989,7 @@ int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {
                 deleteContext(&global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
 
-                if (global_env->CODE_ERROR != 0) {
-                    return 0;
-                }
+                return_on_error(0);
 
                 if (int_ret != 0) {
                     return int_ret;
@@ -1160,9 +1012,7 @@ int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {
 
                 deleteContext(&global_env->process_cycle->process->var_loc); // on vient d'exécuter le code, donc on a fini le if
 
-                if (global_env->CODE_ERROR != 0) {
-                    return 0;
-                }
+                return_on_error(0);
 
                 if (int_ret != 0) {
                     return int_ret;
@@ -1195,8 +1045,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
     if (FOR_NBARGS(tb, tree) == 4) {
         NeObj step = eval_aux(tb, FOR_ARG(tb, tree, 3));
 
-        if (global_env->CODE_ERROR != 0)
-            return 0;
+        return_on_error(0);
 
         if (NEO_TYPE(step) != TYPE_INTEGER) {
             neobject_destroy(step);
@@ -1210,8 +1059,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         // on évalue la valeur de départ de la boucle
         start = eval_aux(tb, FOR_ARG(tb, tree, 1));
 
-        if (global_env->CODE_ERROR != 0)
-            return 0;
+        return_on_error(0);
 
         tempMax = eval_aux(tb, FOR_ARG(tb, tree, 2));
     }
@@ -1222,8 +1070,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         // on évalue la valeur de départ de la boucle
         start = eval_aux(tb, FOR_ARG(tb, tree, 1));
 
-        if (global_env->CODE_ERROR != 0)
-            return 0;
+        return_on_error(0);
 
         tempMax = eval_aux(tb, FOR_ARG(tb, tree, 2));
     }
@@ -1233,8 +1080,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         incr = 1;
         start = neo_integer_create(0);
 
-        if (global_env->CODE_ERROR != 0)
-            return 0;
+        return_on_error(0);
 
         tempMax = eval_aux(tb, FOR_ARG(tb, tree, 1));
     }
@@ -1243,7 +1089,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         return 0;
     }
 
-    if (global_env->CODE_ERROR != 0) { // il y a eu une erreur lors de l'évaluation du tempMax
+    if_error { // il y a eu une erreur lors de l'évaluation du tempMax
         neobject_destroy(start);
         return 0;
     }
@@ -1274,8 +1120,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
     newContext(&global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
     ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
-    save_later(global_env->process_cycle->process->varsToSave, var);
-    local(var, &global_env->process_cycle->process->var_loc); // on localise l'indice de la boucle
+    local(var, global_env->process_cycle->process); // on localise l'indice de la boucle
 
 
     
@@ -1291,7 +1136,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
 
         int_ret = exec_aux(tb, treeFor(tb, tree)->block);
 
-        if (global_env->CODE_ERROR != 0)
+        if_error
         {
             deleteContext(&global_env->process_cycle->process->var_loc);
             partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
@@ -1345,8 +1190,7 @@ int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_lis
     newContext(&global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
     ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
-    save_later(global_env->process_cycle->process->varsToSave, var);
-    local(var, &global_env->process_cycle->process->var_loc); // on localise l'indice de la boucle
+    local(var, global_env->process_cycle->process); // on localise l'indice de la boucle
 
 
     // l'indice qui va parcourir la liste
@@ -1361,7 +1205,7 @@ int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_lis
 
         int_ret = exec_aux(tb, treeFor(tb, tree)->block);
 
-        if (global_env->CODE_ERROR != 0)
+        if_error
         {
             deleteContext(&global_env->process_cycle->process->var_loc);
             partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
@@ -1404,8 +1248,7 @@ int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_s
     newContext(&global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
     ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
-    save_later(global_env->process_cycle->process->varsToSave, var);
-    local(var, &global_env->process_cycle->process->var_loc); // on localise l'indice de la boucle
+    local(var, global_env->process_cycle->process); // on localise l'indice de la boucle
 
 
 
@@ -1421,7 +1264,7 @@ int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_s
 
         int_ret = exec_aux(tb, treeFor(tb, tree)->block);
 
-        if (global_env->CODE_ERROR != 0)
+        if_error
         {
             deleteContext(&global_env->process_cycle->process->var_loc);
             partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
@@ -1463,9 +1306,7 @@ int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_s
 int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
     MAY_INTERRUPT();
-
-    if (global_env->CODE_ERROR != 0)
-        return 0;
+    return_on_error(0);
 
     TreeBufferIndex treelist = treeSntxTree(tb, tree)->treelist;
     TreeBufferIndex* treelist_array = treelistGet(tb, treelist);
@@ -1487,7 +1328,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     return int_ret;
                 
 
-                if (global_env->CODE_ERROR != 0) // on peut catcher un exit()
+                if_error // on peut catcher un exit()
                 {
                     // on réinitialise la variable de code d'erreur pour les évaluations d'exceptions
                     int sov_code_error = global_env->CODE_ERROR;
@@ -1602,9 +1443,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     else {
                         global_env->RETURN_VALUE = eval_aux(tb, treelistGet(tb, tree_kw_param->params)[0]);
 
-                        if (global_env->CODE_ERROR != 0) {
-                            return EXIT_SUCCESS;
-                        }
+                        return_on_error(EXIT_SUCCESS);
                         
                         return EXIT_RETURN;
                     }
@@ -1658,8 +1497,11 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     for (int i = 0 ; i < param_length ; i++) // pour toutes les variables
                     {
                         // va traiter la variable comme étant locale
-                        save_later(global_env->process_cycle->process->varsToSave, treeVar(tb, treelistGet(tb, treeKWParam(tb, treelist_array[inst])->params)[i])->var);
-                        local(treeVar(tb, treelistGet(tb, tree_kw_param->params)[i])->var, &global_env->process_cycle->process->var_loc);
+                        Var var = treeVar(tb, treelistGet(tb, tree_kw_param->params)[i])->var;
+                        Process* proc = global_env->process_cycle->process;
+
+                        if (!isLocal(var, &proc->var_loc))
+                            local(var, proc);
                     }
                     
                 }
@@ -1675,8 +1517,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     while (!isTrue(tb, treelistGet(tb, tree_kw_param->params)[0]))
                     {
-                        if (global_env->CODE_ERROR != 0)
-                            return 0;
+                        return_on_error(0);
 
                         if (global_env->atomic_counter < 0) {
                             continue;
@@ -1688,8 +1529,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     }
 
-                    if (global_env->CODE_ERROR != 0)
-                        return 0;
+                    return_on_error(0);
                 }
 
                 break;
@@ -1728,9 +1568,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                 NeObj expr = eval_aux(tb, tree_while->expression);
 
-                if (global_env->CODE_ERROR != 0) {
-                    return 0;
-                }
+                return_on_error(0);
 
                 bool cond = neoIsTrue(expr);
                 neobject_destroy(expr);
@@ -1740,9 +1578,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     int_ret = exec_aux(tb, tree_while->code);
 
-                    if (global_env->CODE_ERROR != 0) {
-                        return 0;
-                    }
+                    return_on_error(0);
                     
                     if (int_ret != 0 && int_ret != CONTINUE)
                         break;
@@ -1751,9 +1587,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     expr = eval_aux(tb, tree_while->expression);
 
-                    if (global_env->CODE_ERROR != 0) {
-                        return 0;
-                    }
+                    return_on_error(0);
 
                     cond = neoIsTrue(expr);
                     neobject_destroy(expr);
@@ -1803,9 +1637,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                 NeObj iterable = eval_aux(tb, FOR_ARG(tb, treelist_array[inst], 1));
 
-                if (global_env->CODE_ERROR != 0) {
-                    return 0;
-                }
+                return_on_error(0);
                 
                 int int_ret = 0;
 

@@ -30,5 +30,6 @@ typedef struct NeObj
 
 
 typedef int Var;
+#define UNDEFINED_VARIABLE      (Var)-1
 
 #endif

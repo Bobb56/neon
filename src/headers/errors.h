@@ -10,7 +10,7 @@
 
 #define return_on_error(value)                  if (global_env->CODE_ERROR != 0) return value
 #define if_error                                if (global_env->CODE_ERROR != 0)
-#define neon_assert(condition, return_value)    if (!(condition)) {global_env->CODE_ERROR = 120 ; return return_value ;}
+#define neon_assert(condition, return_value)    if (!(condition)) {neon_fail(120) ; return return_value ;}
 
 #define neon_fail(code_error)                   neon_set_error(code_error, __LINE__, NEON_SOURCE_ID)
 #define neon_internal_error()                   neon_set_error(120, __LINE__, NEON_SOURCE_ID)
