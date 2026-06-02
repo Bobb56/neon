@@ -12,11 +12,12 @@
 
 /*
 CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
-> lowlevel.asm
+> L'implémentation des fonctions assembleur
 > set_stack_pointer
+> Taille du buffer des registres
+> ATOMIC_TIME
 
 Liste des choses qui ne marchent pas
-function f() do end
 _____________________
 
 Potentielles futures erreurs :

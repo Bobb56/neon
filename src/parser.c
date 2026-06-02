@@ -523,7 +523,7 @@ bool isFull(char* string)
         
         parse(&tokens, types, ast, &lines, 0);
 
-        if (global_env->CODE_ERROR == 0)
+        if (global_env->CODE_ERROR == 0 && tokens.len > 0)
             statements(&types, &tokens, ast, &lines, 0);
     }
     
@@ -1733,8 +1733,7 @@ int get_type(char* token, int type) {
 
 
 
-void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int offset)
-{
+void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int offset) {
     // statements est censé être récursif
 
     bool isPotentiallyConBlock = false, isPotentiallyStat = false, isPotentiallyTE = false;
@@ -1749,8 +1748,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
     char typeact=ast[0]->type;
     
     
-    while (true)
-    {
+    while (true) {
         typeact = ast[i]->type;
         
         // empaquetage bloc de fonction
@@ -1779,8 +1777,8 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
                 intlist types2 = {.tab = types->tab + i + 1, .len = ast[i]->fin - 1 - offset - i};
                 toklist tokens2 = {.tab = tokens->tab + i + 1, .len = ast[i]->fin - 1 - offset - i};
 
-                statements(&types2, &tokens2, ast + i + 1, lines, offset + i + 1);
-
+                if (tokens2.len > 0)
+                    statements(&types2, &tokens2, ast + i + 1, lines, offset + i + 1);
             }
             else if (typeact != TYPE_ENDOFLINE)
             {
@@ -1995,7 +1993,8 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             intlist types2 = (intlist) {.tab = types->tab + i + 1, .len = longueur};
             Ast** ast2 = ast + i + 1;
             
-            statements(&types2, &tokens2, ast2, lines, offset + i + 1);
+            if (tokens2.len > 0)
+                statements(&types2, &tokens2, ast2, lines, offset + i + 1);
 
             ////// ICI LE TRAITEMENT POST-STATEMENT
 
