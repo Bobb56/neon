@@ -314,14 +314,9 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
 // eval_aux suppose que les TreeBuffers donnés en arguments sont verrouillés (ou en tous cas ne peuvent
 // plus être relocalisés)
 NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
-
-    // il est possible qu'entre temps un processus ait lancé une erreur
-    // return_on_error(NEO_VOID);
-
     global_env->LINENUMBER = TREE_LINE(tb, tree);
 
     switch (TREE_TYPE(tb, tree)) {
-
 
         case TypeUnaryOp:
         {
@@ -1517,7 +1512,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     while (!isTrue(tb, treelistGet(tb, tree_kw_param->params)[0]))
                     {
-                        return_on_error(0);
+                        return_on_error(0); // Au cas où il y a une erreur dans le isTrue
 
                         if (global_env->atomic_counter < 0) {
                             continue;
@@ -1525,11 +1520,15 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                         else {
                             // schedule
                             neon_interp_yield();
+
+                            // Au cas où il y a une erreur dans le processus précédent
+                            return_on_error(0);
                         }
 
                     }
 
-                    return_on_error(0);
+                    return_on_error(0); // Au cas où il y a une erreur dans le isTrue
+
                 }
 
                 break;

@@ -197,6 +197,16 @@ void container_destroy(Container* c) {
 
 
 
+
+NeObj callNoArgsUserFunc(UserFunc* fun) {
+    NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+    NeObj ret_value = callUserFunc(fun, fun->args, values, 1, NEO_VOID, NULL);
+    neon_free(values);
+    return ret_value;
+}
+
+
+
 NeObj callUnaryUserFunc(UserFunc* fun, NeObj arg) {
     NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
     values[0] = neo_copy(arg);

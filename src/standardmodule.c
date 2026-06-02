@@ -273,7 +273,6 @@ NeObj _clear_(NeList* args)
 
 
 NeObj _help_(NeList* args) {
-    printf("Exécution de help\n");
     if (args->len == 0) { // affiche l'ensemble des fonctions disponibles
         setColor(GREEN);printString("Neon v");printString(VERSION);setColor(DEFAULT);printString(" for ");
         printString(PLATFORM);printString(", compiled on ");printString(__TIMESTAMP__);newLine();        

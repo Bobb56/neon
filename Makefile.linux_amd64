@@ -34,13 +34,13 @@ obj/%.o: src/%.S
 clean:
 	rm -f $(C_OBJECTS) $(ASM_OBJECTS) $(TARGET)
 
-test:
+tests:
 	cd tests/bugs && ./tests.sh $1 && cd -
 
-test-log:
+tests-log:
 	cd tests/bugs && ./tests.sh log $1 && cd -
 
-test-novalgrind:
+tests-novalgrind:
 	cd tests/bugs && ./testsnov.sh $1 && cd -
 
 

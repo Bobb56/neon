@@ -1,5 +1,41 @@
 # ceci est un module de tests écrit en Neon
 
+TEST_FILES = [
+    "ackermann",
+    "arbres",
+    "atomic",
+    "banque_parsing",
+    "chatverse",
+    "cmplx",
+    "dico",
+    "error_parallel",
+    "frac",
+    "gc",
+    "join",
+    "lambda",
+    "launcher",
+    "liste-n-ieme",
+    "local_parallel",
+    "mat",
+    "nw",
+    "parallel",
+    "peano",
+    "poly",
+    "premiers",
+    "prog",
+    "queue",
+    "queue2",
+    "relaunch",
+    "serialization",
+    "stack",
+    "set",
+    "variables_arguments"
+]
+
+
+
+
+
 function maxLength(list) do
     max = -1
     for (i, 0, len(list)) do
@@ -125,39 +161,7 @@ end
 
 
 function main(args) do
-    screen = Screen~create (
-        [
-            "ackermann",
-            "arbres",
-            "atomic",
-            "banque_parsing",
-            "chatverse",
-            "cmplx",
-            "dico",
-            "error_parallel",
-            "frac",
-            "gc",
-            "join",
-            "lambda",
-            "launcher",
-            "liste-n-ieme",
-            "local_parallel",
-            "mat",
-            "nw",
-            "parallel",
-            "peano",
-            "poly",
-            "premiers",
-            "prog",
-            "queue",
-            "queue2",
-            "relaunch",
-            "serialization",
-            "stack",
-            "set",
-            "variables_arguments"
-        ]
-    )
+    screen = Screen~create (TEST_FILES)
     screen.Screen~runTests(clearScr := args==[] or args[0] != 'log')
 end
 

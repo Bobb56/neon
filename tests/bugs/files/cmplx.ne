@@ -100,5 +100,3 @@ z3 = -z3
 
 assert(@"1 + i" / (1+i) == z3)
 assert(Cmplx(4) == 4) # surcharge de l'opérateur d'égalite
-
-help(Cmplx~repr)

@@ -378,7 +378,7 @@ void draw_obj(NeObj obj) {
             return;
         }
         NeList* args = nelist_create(0);
-        neobject_destroy(callUserFunc(fun, args, NEO_VOID));
+        neobject_destroy(callNoArgsUserFunc(fun));
         nelist_destroy(args);
     }
     else if (NEO_TYPE(obj) == TYPE_BUILTINFUNC) {
@@ -633,20 +633,20 @@ const Function graphicfunctions[NBGRAPHICFUNC] = {
 
 
 NeObj get_graphicfunction(int id) {
-    neon_assert(id >= 0 && id < NBBUILTINFUNC, NEO_VOID);
+    neon_assert(id >= 0 && id < NBGRAPHICFUNC, NEO_VOID);
     
     Function f = graphicfunctions[id];
     return neo_fun_create(id, GraphicModule, f.help, f.nbArgs, f.typeArgs, f.typeRetour);
 }
 
 const char* get_graphicfunction_name(int id) {
-    neon_assert(id >= 0 && id < NBBUILTINFUNC, NULL);
+    neon_assert(id >= 0 && id < NBGRAPHICFUNC, NULL);
 
     return graphicfunctions_names[id];
 }
 
 NeObj call_graphicfunction(int id, NeList* list) {
-    neon_assert(id >= 0 && id < NBBUILTINFUNC, NEO_VOID);
+    neon_assert(id >= 0 && id < NBGRAPHICFUNC, NEO_VOID);
 
     return graphicfunctions_pointers[id](list);
 }

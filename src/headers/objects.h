@@ -188,6 +188,7 @@ void recursive_unmark(NeObj neo);
 bool ismarked(NeObj neo);
 void update_if_promise(NeObj* promise);
 char* var_name(NeObj obj);
+NeObj callNoArgsUserFunc(UserFunc* fun);
 NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname);
 NeObj callOverloadedUnaryOperator(NeObj op1, char* opname);
 
