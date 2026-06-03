@@ -232,6 +232,8 @@ size_t type_size(TreeType type);
 #define TreeList_destroy(...)
 #define NeTree_destroy(...)
 
+char* printable_tree_type(TreeBuffer* tb, TreeBufferIndex tree);
+
 int TreeBuffer_init(TreeBuffer*);
 void TreeBuffer_iter(TreeBuffer* tb, void (*function)(TreeBuffer*, TreeBufferIndex, void* arg), void* arg);
 void TreeBuffer_destroy(TreeBuffer* tb);

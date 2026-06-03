@@ -7,9 +7,10 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+#include "headers/neon.h"
+#include "headers/objects.h"
 #include "headers/neonio.h"
 #include "extern/linenoise.h"
-#include "headers/neon.h"
 #include "headers/parser.h"
 #include "headers/strings.h"
 #include "headers/errors.h"
@@ -30,7 +31,7 @@
     NeStream NeStream_open(char* name, char* mode) {
         FILE* stream = fopen(name, mode);
         if (stream == NULL)
-            neon_fail(67);
+            neon_fail(67, neo_new_str_create(name));
         return stream;
     }
 
@@ -53,7 +54,7 @@
         FILE* fichier = fopen(filename, "rt");//lit le fichier
         if (fichier == NULL)
         {
-            neon_fail(67);
+            neon_fail(67, neo_new_str_create(filename));
             return NULL;
         }
         
@@ -104,7 +105,7 @@
         FILE* fichier = fopen(filename, "w+");
         if (fichier == NULL)
         {
-            neon_fail(67);
+            neon_fail(67, neo_new_str_create(filename));
             return;
         }
 
@@ -128,7 +129,7 @@
             if (err != 1)
             {
                 neon_free(var);
-                neon_fail(104);
+                neon_fail(104, NO_ARGS);
                 return NULL;
             }
             
@@ -143,7 +144,7 @@
             if (ptrtest==NULL)
             {
                 neon_free(newVar);
-                neon_fail(66);
+                neon_fail(66, NO_ARGS);
                 return NULL;
             }
             
@@ -155,7 +156,7 @@
             char* str = linenoise(text);
 
             if (str == NULL) {
-                neon_fail(104);
+                neon_fail(104, NO_ARGS);
                 return NULL;
             }
             else if (strlen(str) > 0) { // Ajout de la ligne à l'historique
@@ -183,7 +184,7 @@
             
             if (err < 0 || (unsigned)err != strlen(strNombre))
             {
-                neon_fail(66);
+                neon_fail(66, NO_ARGS);
                 neon_free(strNombre);
                 return 0;
             }
@@ -216,6 +217,8 @@
                 printf("\033[0;32m"); // vert
             else if (color == RED)
                 printf("\033[1;31m"); // met en rouge et gras
+            else if (color == PURPLE)
+                printf("\033[1;35m"); // met en violet et gras
             else if (color == DEFAULT)
                 printf("\033[0;00m");
         #endif
@@ -237,7 +240,7 @@
     NeStream NeStream_open(char* name, char* mode) {
         uint8_t stream = ti_Open(name, mode);
         if (stream == 0)
-            neon_fail(67);
+            neon_fail(67, neo_new_str_create(name));
         return stream;
     }
 
@@ -289,7 +292,7 @@
         uint8_t fichier = ti_Open(filename, "r"); //ouvre l'AppVar
         if (fichier == 0)
         {
-            neon_fail(67);
+            neon_fail(67, neo_new_str_create(filename));
             return NULL;
         }
         
@@ -344,7 +347,7 @@
         uint8_t fichier = ti_Open(filename, "w"); //ouvre l'AppVar
         if (fichier == 0)
         {
-            neon_fail(67);
+            neon_fail(67, neo_new_str_create(filename));
             return;
         }
         
@@ -360,7 +363,7 @@
         char* var = neon_malloc(501*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
         
         if (var == NULL) {
-            neon_fail(12);
+            neon_fail(12, NO_ARGS);
             return NULL;
         }
         
@@ -370,7 +373,7 @@
     
         if (!nio_getsn(var, 500))
         {
-            neon_fail(1);
+            neon_fail(1, NO_ARGS);
             return NULL;
         }
 
@@ -378,7 +381,7 @@
         char* newVar = neon_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
 
         if (newVar == NULL) {
-            neon_fail(12);
+            neon_fail(12, NO_ARGS);
             neon_free(var);
             return NULL;
         }
@@ -389,7 +392,7 @@
     
         if (ptrtest == NULL) {
             neon_free(newVar);
-            neon_fail(66);
+            neon_fail(66, NO_ARGS);
             return NULL;
         }
     
@@ -444,6 +447,8 @@
             nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_GREEN);
         else if (color == RED)
             nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_RED);
+        else if (color == PURPLE)
+            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_PURPLE);
         else if (color == DEFAULT)
             nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK);
     }
@@ -491,10 +496,10 @@ double str_to_double(char *string)//convertit une chaîne de caractère en nombr
 
 
 
-int unitCharToInt(char car, int base)
+int unitCharToInt(char* whole_number, char car, int base)
 {
     if (car != '0' && car != '1' && base == 2) // le binaire n'autorise que 0 ou 1
-        neon_fail(73);
+        neon_fail(73, neo_new_str_create(whole_number));
     
     if (isdigit(car))
         return car - '0';
@@ -503,7 +508,7 @@ int unitCharToInt(char car, int base)
     else if (car >= 'A' && car <= 'F')
         return car - 'A' + 10;
 
-    neon_fail(73);
+    neon_fail(73, neo_new_str_create(whole_number));
     return 0;
 }
 
@@ -580,9 +585,8 @@ intptr_t str_to_int(char* string) {
             int i = 2;
             while (string[i] != '\0') {
                 n *= 2;
-                n += unitCharToInt(string[i++], 2);
-                if (global_env->CODE_ERROR != 0)
-                    return 0;
+                n += unitCharToInt(string, string[i++], 2);
+                return_on_error(0);
             }
         }
         else if (string[0] == '0' && string[1] == 'x') {
@@ -590,9 +594,8 @@ intptr_t str_to_int(char* string) {
             int i = 2;
             while (string[i] != '\0') {
                 n *= 16;
-                n += unitCharToInt(string[i++], 16);
-                if (global_env->CODE_ERROR != 0)
-                    return 0;
+                n += unitCharToInt(string, string[i++], 16);
+                return_on_error(0);
             }
         }
     }
@@ -601,9 +604,8 @@ intptr_t str_to_int(char* string) {
         int i = 0;
         while (string[i] != '\0') {
             n *= 10;
-            n += unitCharToInt(string[i++], 10);
-            if (global_env->CODE_ERROR != 0)
-                return 0;
+            n += unitCharToInt(string, string[i++], 10);
+            return_on_error(0);
         }
     }
 

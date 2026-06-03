@@ -175,7 +175,7 @@ int get_field_index(Container* c, char* name) {
 
     if (index == list->len - 1 && strcmp(neo_to_string(list->tab[index]), name) != 0)
     {
-        neon_fail(82);
+        neon_fail(82, neo_new_str_create(global_env->CONTAINERS->tab[c->type]), neo_new_str_create(name));
         return -1;
     }
     return index;
@@ -288,7 +288,7 @@ char* neo_container_str(NeObj neo) {
         
         if (NEO_TYPE(obj) != TYPE_STRING) {
             neobject_destroy(obj);
-            neon_fail(118);
+            neon_fail(118, neo_copy(obj));
             return NULL;
         }
 
@@ -384,7 +384,7 @@ intptr_t randint(intptr_t min, intptr_t max) {
 
     if (min >= max)
     {
-        neon_fail(64);// la fonction randint prend en argument un entier positif
+        neon_fail(64, neo_integer_create(min), neo_integer_create(max));// la fonction randint prend en argument un entier positif
         return 0;
     }
 
@@ -451,7 +451,7 @@ NeObj functionCall(NeObj fun, NeList* args)
     Function* f = fun.function;
     if (f->nbArgs != -1 && f->nbArgs != args->len)
     {
-        neon_fail(36);// nombre d'arguments invalide pour appeler cette fonction
+        neon_fail(36, neo_new_str_create(get_function_name(f->id, f->module)), neo_integer_create(f->nbArgs), neo_integer_create(args->len)); // nombre d'arguments invalide pour appeler cette fonction
         return NEO_VOID;
     }
     return call_function(f->id, f->module, args);
@@ -636,6 +636,10 @@ NeObj neo_str_create(char* string) // attention, la chaine de caractères passé
     return neo;
 }
 
+NeObj neo_new_str_create(const char* string) {
+    return neo_str_create(strdup(string));
+}
+
 char* neo_to_string(NeObj neo)
 {
     return neo.string->string;
@@ -643,17 +647,17 @@ char* neo_to_string(NeObj neo)
 
 
 void neo_string_aff(NeObj neo) {
-    printString("\"");
+    printString("'");
     char* traite = traitementStringInverse(neo.string->string);
     printString(traite);
-    printString("\"");
+    printString("'");
     neon_free(traite);
 }
 
 char* neo_string_str(NeObj neo) {
     char* traite = traitementStringInverse(neo.string->string);
-    char* str1 = addStr("\"",traite);
-    char* ret = addStr(str1,"\"");
+    char* str1 = addStr("'",traite);
+    char* ret = addStr(str1,"'");
     neon_free(str1);neon_free(traite);
     return ret;
 }
@@ -905,6 +909,24 @@ NeList* nelist_create(int len)
 }
 
 
+NeList* nelist_literal_create(NeObj* elements) {
+    // First we compute the size of the literal list
+    int size = 0;
+    while (!neo_is_void(elements[size])) size++;
+
+    if (size > 0) {
+        NeList* list = nelist_create(size);
+        for (int i=0 ; i < size ; i++) {
+            list->tab[i] = elements[i];
+        }
+        return list;
+    }
+    else {
+        return NULL;
+    }
+}
+
+
 
 void nelist_append(NeList* list, NeObj ptr)//ajoute un élément à la fin de la liste
 {
@@ -933,10 +955,10 @@ NeObj nelist_nth(NeList* list, int index) {
 }
 
 
-void nelist_insert(NeList* list,NeObj neo, int index)//ajoute un élément à la place indiquée
+void nelist_insert(NeList* list, NeObj neo, int index)//ajoute un élément à la place indiquée
 {
     if (index > list->len) {
-        neon_fail(37); // out of range
+        neon_fail(37, neo_integer_create(list->len), neo_integer_create(index)); // out of range
         return ;
     }
   
@@ -965,7 +987,7 @@ void nelist_remove(NeList* list,int index)
 {
     if (index >= list->len)
     {
-        neon_fail(38);//out of range
+        neon_fail(39, neo_integer_create(index), neo_integer_create(list->len));//out of range
         return ;
     }
   
@@ -1000,7 +1022,7 @@ int nelist_index(NeList* liste, NeObj neo)
             return i;
         }
     }
-    neon_fail(39); // cet objet n'existe pas
+    neon_fail(88, neo_copy(neo), neo_str_create(neobject_short_repr(gc_extern_neo_list_convert(liste), SHORT_REPR_ERR_SIZE))); // cet objet n'existe pas
     
     return -1;
 }
@@ -1015,7 +1037,7 @@ int nelist_index2(NeList* l, NeObj neo)
         if (neo_equal(neo, l->tab[i]))
             return i;
     }
-    neon_fail(88);
+    neon_fail(88, neo_copy(neo), neo_str_create(neobject_short_repr(gc_extern_neo_list_convert(l), SHORT_REPR_ERR_SIZE))); // cet objet n'existe pas
     return -1;
 }
 
@@ -1621,6 +1643,40 @@ char* neobject_str(NeObj neo)
 
 
 
+char* neobject_short_repr(NeObj obj, int max_len) {
+    // Longueur maximale de la représentation d'un objet
+    char* full_repr = neobject_str(obj);
+
+    int length = strlen(full_repr);
+
+    if (length <= max_len) {
+        return full_repr;
+    }
+    else {
+        char* short_repr = neon_malloc(sizeof(char) * (max_len + 1));
+        
+        // Recopie des extrémités de l'objet
+        for (int i=0 ; i < max_len/2 - 1 ; i++) {
+            short_repr[i] = full_repr[i];
+            short_repr[max_len-i-1] = full_repr[length-i-1];
+        }
+
+        // Met des points au milieu
+        for (int i=max_len/2 - 1 ; i <= max_len/2 + 1 ; i++) {
+            short_repr[i] = '.';
+        }
+
+        short_repr[max_len] = '\0';
+
+        neon_free(full_repr);
+        return short_repr;
+    }
+}
+
+
+
+
+
 char* type(NeObj neo)
 {
     if (NEO_TYPE(neo) == TYPE_BOOL)
@@ -1873,7 +1929,7 @@ int neo_compare(NeObj a, NeObj b)
     else
     {
         //erreur
-        neon_fail(90);
+        neon_fail(90, neo_copy(a), neo_copy(b));
         return 0;
     }
 }
@@ -1976,7 +2032,7 @@ NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname) {
     char* container_name = global_env->CONTAINERS->tab[c->type];
     int index = function_module(container_name, opname);
     if (index == -1) {
-        neon_fail(107);
+        neon_fail(107, neo_new_str_create(opname), neo_new_str_create(container_name));
         return NEO_VOID;
     }
     else {
@@ -1998,7 +2054,7 @@ NeObj callOverloadedUnaryOperator(NeObj op1, char* opname) {
     char* container_name = global_env->CONTAINERS->tab[c->type];
     int index = function_module(container_name, opname);
     if (index == -1) {
-        neon_fail(107);
+        neon_fail(107, neo_new_str_create(opname), neo_new_str_create(container_name));
         return NEO_VOID;
     }
     else {

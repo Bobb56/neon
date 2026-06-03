@@ -34,10 +34,38 @@ on ne le crée pas dans global_env->FONCTIONS)
 
 Avancement et choses à faire :
 -------------------------------
+
+Fichiers traités pour la réécriture des erreurs :
+- runtime.c
+- operators.c
+- contexts.c
+- dynarrays.c
+- errors.c
+- gc.c
+- nativefunctions.c
+- neon.c
+- neonio.c
+- objects.c
+- parser.c
+- processcycle.c
+- serialization.c
+- sidememory.c
+- strings.c
+- trees.c
+
+Fichiers restants :
+- standardmodule.c
+- syntaxtrees.c
+
+
+
 PLUS TARD
+--> Réunir tous les "Unsupported types for..."
+--> Ajouter du violet dans les couleurs
+--> Définir une fonction d'affichage parcimonieux d'objet (ou ajouter de la parcimonie dans neobject_aff)
+--> Faire des messages d'erreur avec des paramètres, définis par neon_fail. Les objets sont affichés en gras en jaune
 --> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 --> Sauvegarder un environnement entier
---> Faire des messages d'erreur avec des paramètres, définis par neon_fail
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
 

@@ -1,3 +1,5 @@
+#include "headers/constants.h"
+#include "headers/objects.h"
 #define NEON_SOURCE_ID 25
 
 #include "headers/nativefunctions.h"
@@ -8,6 +10,20 @@
 #ifdef HAS_GRAPHIC_MODULE
 #include "headers/graphicmodule.h"
 #endif
+
+
+
+char* get_module_name(Module module) {
+    switch (module) {
+        case StandardModule:
+            return "standard";
+        case GraphicModule:
+            return "graphics";
+        default:
+            return "unknown";
+    }
+}
+
 
 void init_module(Module module, NeonEnv* env) {
     switch (module) {
@@ -20,7 +36,7 @@ void init_module(Module module, NeonEnv* env) {
             return;
 #endif
         default:
-            neon_fail(98);
+            neon_fail(98, neo_new_str_create(get_module_name(module)), neo_new_str_create(PLATFORM));
             return;
     }
 }
@@ -35,7 +51,7 @@ NeObj call_function(int id, Module module, NeList* args) {
             return call_graphicfunction(id, args);
 #endif
         default:
-            neon_fail(98);
+            neon_fail(98, neo_new_str_create(get_module_name(module)), neo_new_str_create(PLATFORM));
             return NEO_VOID;
     }
 }
@@ -50,7 +66,7 @@ const char* get_function_name(int id, Module module) {
             return get_graphicfunction_name(id);
 #endif
         default:
-            neon_fail(98);
+            neon_fail(98, neo_new_str_create(get_module_name(module)), neo_new_str_create(PLATFORM));
             return NULL;
     }
 }
@@ -65,7 +81,7 @@ NeObj get_function(int id, int module) {
             return get_graphicfunction(id);
 #endif
         default:
-            neon_fail(98);
+            neon_fail(98, neo_new_str_create(get_module_name(module)), neo_new_str_create(PLATFORM));
             return NEO_VOID;
     }
 }

@@ -1,5 +1,3 @@
-#include "headers/neobj.h"
-#include "headers/neonio.h"
 #define NEON_SOURCE_ID 17
 
 #include <stdbool.h>
@@ -57,7 +55,7 @@ bool neoIsTrue(NeObj expr)
     }
     else
     {
-        neon_fail(20);
+        neon_fail(20, neo_copy(expr));
     }
     return false;
 }
@@ -110,7 +108,7 @@ void interrupt(void) {
     bool key_state = kb_On;
     kb_ClearOnLatch();
     if (key_state) {
-        neon_fail(104);
+        neon_fail(104, NO_ARGS);
         return;
     }
     #endif
@@ -239,7 +237,7 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
 
     // Pas assez d'arguments : même en ayant rempli avec les arguments optionnels il y en a moins que attendu
     if (variable_index < fun->nbArgs) {
-        neon_fail(7);
+        neon_fail(7, neo_integer_create(fun->nbArgs), neo_integer_create(variable_index));
         return NEO_VOID;
     }
 
@@ -261,7 +259,7 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
             replace_var(variable, values[var_index]);
         }
         else {
-            neon_fail(94);
+            neon_fail(94, neo_new_str_create(get_name(variable)));
             return NEO_VOID;
         }
     }
@@ -366,10 +364,10 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 // opérateur normal qui prend des objets en arguments
 
                 if (tree_bin_op->op == 37) { // opérateur :=
-                    neon_fail(95);
+                    neon_fail(95, NO_ARGS);
                     return NEO_VOID;
                 } else if (tree_bin_op->op == 35) { // opérateur :
-                    neon_fail(92);
+                    neon_fail(92, NO_ARGS);
                     return NEO_VOID;
                 }
                                     
@@ -463,7 +461,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             TreeBufferIndex maintree = treeParCall(tb, tree)->expr;
                 
             if (TREE_TYPE(tree_buffer, maintree) != TypeFunctioncall) {
-                neon_fail(100);
+                neon_fail(41, NO_ARGS);
                 return NEO_VOID;
             }
 
@@ -472,7 +470,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             return_on_error(NEO_VOID);
 
             if (NEO_TYPE(fixed_func) != TYPE_USERFUNC) {
-                neon_fail(100);
+                neon_fail(100, neo_new_str_create(type(fixed_func)));
                 neobject_destroy(fixed_func);
                 return NEO_VOID;
             }
@@ -518,7 +516,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
         
                 if (!funcArgsCheck(fun, args))
                 {
-                    neon_fail(14);
+                    neon_fail(14, NO_ARGS);
                     nelist_destroy(args);
                     neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                     return NEO_VOID;
@@ -548,7 +546,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 TreeBufferIndex* arg_tree = treelistGet(tb, tree_fun_call->args);
 
                 if (tree_fun_call_nb_args > fun->nbArgs && ! fun->unlimited_arguments) {
-                    neon_fail(6);
+                    neon_fail(6, neo_integer_create(fun->nbArgs), neo_integer_create(tree_fun_call_nb_args));
                     neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                     return NEO_VOID;
                 }
@@ -582,7 +580,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     }
                     // Il s'agit d'un argument qui doit aller dans __local_args__
                     else if (!fun->unlimited_arguments) {
-                        neon_fail(6);
+                        neon_fail(42, neo_integer_create(fun->nbArgs - fun->nbOptArgs));
                         fun->runningInstances -= 1;
                         neobject_destroy(function);
                         neon_free(variables);
@@ -620,13 +618,13 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             else if (NEO_TYPE(function) == TYPE_EMPTY)
             {
-                neon_fail(8);
+                neon_fail(8, NO_ARGS);
                 neobject_destroy(function);
                 return NEO_VOID;
             }
             else
             {
-                neon_fail(9);
+                neon_fail(9, NO_ARGS);
                 neobject_destroy(function);
                 return NEO_VOID;
             }
@@ -649,32 +647,27 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             // on vérifie que nos objets ont bien les types attendus
             if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
             {
-                neon_fail(15);
+                neon_fail(15, neo_copy(obj));
                 return NEO_VOID;
             }
 
             if (NEO_TYPE(index) != TYPE_INTEGER)
             {
+                neon_fail(16, neo_copy(index));
                 neobject_destroy(index);
                 neobject_destroy(obj);
-                neon_fail(16);
                 return NEO_VOID;
             }
             
             // on récupère le véritable index
             uintptr_t index2 = neo_to_integer(index);
             neobject_destroy(index);
-            
-            // vérifications supplémentaires
-            if (NEO_TYPE(obj) == TYPE_EMPTY)
+
+            int object_length = (NEO_TYPE(obj) == TYPE_LIST) ? neo_list_len(obj) : strlen(neo_to_string(obj));
+
+            if (index2 < 0 || index2 >= object_length)
             {
-                neon_fail(17);
-                neobject_destroy(obj);
-                return NEO_VOID;
-            }
-            else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
-            {
-                neon_fail(18);
+                neon_fail(39, neo_integer_create(index2), neo_integer_create(object_length));
                 neobject_destroy(obj);
                 return NEO_VOID;
             }
@@ -728,8 +721,8 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             if (NEO_TYPE(neo) != TYPE_CONTAINER)
             {
                 // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
+                neon_fail(80, neo_new_str_create(type(neo)));
                 neobject_destroy(neo);
-                neon_fail(80);
                 return NEO_VOID;
             }
 
@@ -761,7 +754,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 // replace_var(treeVar(tb, tree)->var, const_value);
                 // return neo_copy(const_value);
                 // CONSTEST }
-                neon_fail(5);
+                neon_fail(5, neo_new_str_create(get_name(treeVar(tb, tree)->var)));
                 return NEO_VOID;
             }
 
@@ -775,12 +768,12 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
         default:
         {
-            neon_fail(19);
+            neon_fail(19, NO_ARGS);
             return NEO_VOID;
         }
 
     }
-    neon_fail(19);
+    neon_fail(19, NO_ARGS);
     return NEO_VOID;
 }
 
@@ -818,30 +811,26 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
 
             if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
             {
-                neon_fail(15);
+                neon_fail(15, neo_copy(obj));
                 return NULL;
             }
 
             
             if (NEO_TYPE(index) != TYPE_INTEGER)
             {
+                neon_fail(16, neo_copy(index));
                 neobject_destroy(index);
-                neon_fail(16);
                 return NULL;
             }
             
             uintptr_t index2 = neo_to_integer(index);
             neobject_destroy(index);
-            
 
-            if (NEO_TYPE(obj) == TYPE_EMPTY)
+            int object_length = (NEO_TYPE(obj) == TYPE_LIST) ? neo_list_len(obj) : strlen(neo_to_string(obj));
+
+            if (index2 < 0 || index2 >= object_length)
             {
-                neon_fail(17);
-                return NULL;
-            }
-            else if ((NEO_TYPE(obj) == TYPE_LIST && index2 >= neo_list_len(obj)) || index2 < 0 || (NEO_TYPE(obj) == TYPE_STRING && index2 >= strlen(neo_to_string(obj))))
-            {
-                neon_fail(18);
+                neon_fail(18, neo_integer_create(object_length));
                 return NULL;
             }
             
@@ -851,7 +840,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
                 return nelist_nth_addr(neo_to_list(obj), index2);
             }
             else {
-                neon_fail(105);
+                neon_fail(105, NO_ARGS);
                 return NULL;
             }
         }
@@ -866,8 +855,8 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             if (NEO_TYPE(neo) != TYPE_CONTAINER)
             {
                 // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
+                neon_fail(80, neo_new_str_create(type(neo)));
                 neobject_destroy(neo);
-                neon_fail(80);
                 return NULL;
             }
 
@@ -888,12 +877,12 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
 
         default:
         {
-            neon_fail(89);
+            neon_fail(89, neo_new_str_create(printable_tree_type(tb, tree)));
             return NULL;
         }
     }
 
-    neon_fail(89);
+    neon_fail(89, neo_new_str_create(printable_tree_type(tb, tree)));
     return NULL;
 }
 
@@ -1043,8 +1032,8 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         return_on_error(0);
 
         if (NEO_TYPE(step) != TYPE_INTEGER) {
+            neon_fail(108, NO_ARGS);
             neobject_destroy(step);
-            neon_fail(108);
             return 0;
         }
 
@@ -1080,7 +1069,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         tempMax = eval_aux(tb, FOR_ARG(tb, tree, 1));
     }
     else {
-        neon_fail(108);
+        neon_fail(108, NO_ARGS);
         return 0;
     }
 
@@ -1089,11 +1078,17 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         return 0;
     }
     
-    if (NEO_TYPE(start) != TYPE_INTEGER || NEO_TYPE(tempMax) != TYPE_INTEGER)
+    if (NEO_TYPE(start) != TYPE_INTEGER)
     {
-        neobject_destroy(start);
+        neon_fail(10, neo_copy(start));
         neobject_destroy(tempMax);
-        neon_fail(10);
+        neobject_destroy(start);
+        return 0;
+    }
+    else if (NEO_TYPE(tempMax) != TYPE_INTEGER) {
+        neon_fail(10, neo_copy(tempMax));
+        neobject_destroy(tempMax);
+        neobject_destroy(start);
         return 0;
     }
 
@@ -1104,7 +1099,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
 
     // on récupère le variant de boucle
     if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
-        neon_fail(111);
+        neon_fail(111, neo_new_str_create(printable_tree_type(tb, FOR_ARG(tb, tree, 0))));
         neobject_destroy(tempMax);
         return 0;
     }
@@ -1176,7 +1171,7 @@ int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_lis
 
     // on récupère le variant de boucle
     if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
-        neon_fail(111);
+        neon_fail(111, neo_new_str_create(printable_tree_type(tb, FOR_ARG(tb, tree, 0))));
         return 0;
     }
 
@@ -1234,7 +1229,7 @@ int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_s
 
     // on récupère le variant de boucle
     if (TREE_TYPE(tb, FOR_ARG(tb, tree, 0)) != TypeVariable) {
-        neon_fail(111);
+        neon_fail(111, neo_new_str_create(printable_tree_type(tb, FOR_ARG(tb, tree, 0))));
         return 0;
     }
 
@@ -1356,7 +1351,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                             if (NEO_TYPE(exception) != TYPE_EXCEPTION)
                             {
-                                neon_fail(78);
+                                neon_fail(78, neo_new_str_create(type(exception)));
                                 return int_ret;
                             }
                             else
@@ -1421,13 +1416,13 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     if (param_length > 1)
                     {
-                        neon_fail(21);
+                        neon_fail(21, neo_integer_create(param_length));
                         return 0;
                     }
                     
                     if (!neo_is_void(global_env->RETURN_VALUE)) // c'est pas correct, car on ne peut pas renvoyer une valeur alors que la précédente n'a pas été récupérée
                     {
-                        neon_fail(99);
+                        neon_fail(99, NO_ARGS);
                         return 0;
                     }
 
@@ -1480,12 +1475,12 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     if (param_length == 0) // il faut au moins un argument
                     {
-                        neon_fail(69);
+                        neon_fail(69, NO_ARGS);
                         return 0;
                     }
                     else if (global_env->process_cycle->process->var_loc.len == 0)
                     {
-                        neon_fail(70);
+                        neon_fail(70, NO_ARGS);
                         return 0;
                     }
 
@@ -1504,9 +1499,9 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 else if (tree_kw_param->code == AWAIT)
                 {
 
-                    if (param_length > 1)
+                    if (param_length != 1)
                     {
-                        neon_fail(101);
+                        neon_fail(101, neo_integer_create(param_length));
                         return 0;
                     }
 
@@ -1607,7 +1602,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 
                 if (TREE_TYPE(tb, FOR_ARG(tb, treelist_array[inst], 0)) != TypeVariable)
                 {
-                    neon_fail(22);
+                    neon_fail(22, neo_new_str_create(printable_tree_type(tb, FOR_ARG(tb, treelist_array[inst], 0))));
                     return 0;
                 }
 
@@ -1624,12 +1619,12 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 
                 if (TREE_TYPE(tb, FOR_ARG(tb, treelist_array[inst], 0)) != TypeVariable)
                 {
-                    neon_fail(22);
+                    neon_fail(22, neo_new_str_create(printable_tree_type(tb, FOR_ARG(tb, treelist_array[inst], 0))));
                     return 0;
                 }
 
                 if (FOR_NBARGS(tb, treelist_array[inst]) != 2) {
-                    neon_fail(109);
+                    neon_fail(109, NO_ARGS);
                     return 0;
                 }
 
@@ -1648,7 +1643,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 }
                 else {
                     neobject_destroy(iterable);
-                    neon_fail(109);
+                    neon_fail(109, NO_ARGS);
                     return 0;
                 }
 

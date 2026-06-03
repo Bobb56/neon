@@ -22,6 +22,8 @@ typedef struct NeonEnv {
     int ERROR_NEON_SOURCE_ID;
     // Correspond au numéro de ligne (dans le code source de Neon) auquel l'erreur a été déclenchée
     int ERROR_NEON_LINE_NUMBER;
+    // Les arguments de la chaîne constituant le message d'erreur
+    NeList* ERROR_MESSAGE_ARGUMENTS;
 
     // cette variable indique le nombre d'instructions exécuté sur chaque processus avant de passer au suivant
     // il s'agit d'une variable et non d'une constante car la fonction setAtomicTime doit pouvoir le modifier

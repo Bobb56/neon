@@ -4,6 +4,7 @@
 // cette bibliothèque est spécifique à ez80
 
 #include <string.h>
+#include <time.h>
 #include "headers/graphicmodule.h"
 #include "headers/constants.h"
 #include "headers/neon.h"
@@ -14,9 +15,10 @@
 #include "headers/errors.h"
 #include "headers/lowlevel.h"
 
+#ifdef TI_EZ80
 #include <graphx.h>
 #include <keypadc.h>
-#include <time.h>
+#endif
 
 #define FLOODFILL_STACK_SIZE        3328
 #define PALETTE_INDEX_RGB(r,g,b)    ((r/36) << 5 | (g/36) << 2 | (b/85))

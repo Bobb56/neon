@@ -1,3 +1,4 @@
+#include "headers/objects.h"
 #define NEON_SOURCE_ID 15
 
 #include <string.h>
@@ -573,7 +574,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
         free(str);
 
     if (string == NULL) {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return ;
     }
 
@@ -745,7 +746,8 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
             stepNumber=1;
         else if (isPotentiallyNumber && char1=='.' && (i+1>=len_string || isdigit(string[i+1])))
         {
-            neon_fail(2);// plusieurs virgules décimales
+            char* number = sub(string, debTok, i+2);
+            neon_fail(2, neo_str_create(number));// plusieurs virgules décimales
             return;
         }
         
@@ -769,7 +771,8 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
                 stepHexBin = 2;
             else
             {
-                neon_fail(73);
+                char* number = sub(string, debTok, i+1);
+                neon_fail(73, neo_str_create(number));
                 return ;
             }
         }
@@ -788,7 +791,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
         // vérifie si le caractère est reconnu
         if (!isPotentiallyHexBin && !isPotentiallyWord && !isPotentiallyString && !isPotentiallyNumber && !isPotentiallyOp && !isPotentiallyString2 && !isPotentiallyComm && !isPotentiallyLongComm && !nouvTok && char1 != ' ' && char1 != '\t')
         {
-            neon_fail(25); // caractère inconnu
+            neon_fail(25, neo_str_create(charToString(char1))); // caractère inconnu
             return;
         }
         
@@ -796,7 +799,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
         {
             if (!isalnum(char1) && !is_accepted_char(char1))
             {
-                neon_fail(25);
+                neon_fail(25, neo_str_create(charToString(char1)));
                 return;
             }
         }
@@ -811,7 +814,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
     // si une variable de condition de détection de token est encore à True, faute de syntaxe
     if (isPotentiallyHexBin || isPotentiallyWord || isPotentiallyString || isPotentiallyNumber || isPotentiallyOp  || isPotentiallyString2 || isPotentiallyComm || isPotentiallyLongComm)
     {
-        neon_fail(26); // chaine de caractère, liste ou autre non terminée
+        neon_fail(26, NO_ARGS); // chaine de caractère, liste ou autre non terminée
         
         return;
     }
@@ -1199,7 +1202,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         {
             if (!(strlist_token_inList(&OPERATEURS, tokenAdd->tab[k])))
             {
-                neon_fail(24); // opérateur inconnu
+                neon_fail(24, neo_str_create(tokdup(tokenAdd->tab[k]))); // opérateur inconnu
                 global_env->LINENUMBER = lines->tab[offset + k]; // pour indiquer la ligne du programme de l'erreur
                 return;
             }
@@ -1281,7 +1284,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         // vérification du nombre de parentheses
         if (nbAcc < 0 || nbCro < 0 || nbPar < 0) {
             global_env->LINENUMBER = lines->tab[offset + k];
-            neon_fail(68);
+            neon_fail(68, NO_ARGS);
             return;
         }
         
@@ -1306,7 +1309,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
     {
         //strlist_aff(tokenAdd);
         //ast_aff(ast, tokenAdd->len);
-        neon_fail(26);
+        neon_fail(26, NO_ARGS);
         global_env->LINENUMBER = lines->tab[offset + tokenAdd->len - 1];
         return;
     }
@@ -1329,7 +1332,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
         if (!intlist_inList(&types_debut, ast[0]->type) || (ast[0]->type == TYPE_OPERATOR && !(gramm & VARRIGHT) && !(gramm & RIGHT) && !(gramm & SPECIAL)))
         {
-            neon_fail(30);
+            neon_fail(30, NO_ARGS);
             global_env->LINENUMBER = lines->tab[offset];
             return ;
         }
@@ -1365,7 +1368,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
             if (!isAccepted(tokenAdd->tab[i_act], ast[i_act]->type, tokenAdd->tab[i_anc], ast[i_anc]->type))
             {
-                neon_fail(30);
+                neon_fail(30, NO_ARGS);
                 global_env->LINENUMBER = lines->tab[offset + i_act];
                 return;
             }
@@ -1383,7 +1386,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
             if ((plusieursTokens && (!intlist_inList(&types_fin, ast[i_act]->type) || (ast[i_act]->type == TYPE_OPERATOR && !(gramm & VARLEFT) && !(gramm & SPECIAL)))) || (!plusieursTokens && !intlist_inList(&types_fin, ast[0]->type)))
             {
-                neon_fail(30);
+                neon_fail(30, NO_ARGS);
                 global_env->LINENUMBER = lines->tab[offset + i_act];
                 return ;
             }
@@ -1543,7 +1546,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
 
     else if ((*isPotentiallyFonc) && (*foncStep)==2 && (strlist_token_inList(&keywords, tokenAdd->tab[k]) || strlist_token_inList(&blockwords, tokenAdd->tab[k])))
     {
-        neon_fail(28); // mot clé incompatible utilisé dans une expression
+        neon_fail(28, neo_str_create(tokdup(tokenAdd->tab[k]))); // mot clé incompatible utilisé dans une expression
         global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
@@ -1594,7 +1597,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
     
     else if ((*isPotentiallyInst) && (*instStep)==2 && (strlist_token_inList(&keywords, tokenAdd->tab[k]) || strlist_token_inList(&blockwords, tokenAdd->tab[k])))
     {
-        neon_fail(28); // mot clé incompatible utilisé dans une expression
+        neon_fail(28, neo_str_create(tokdup(tokenAdd->tab[k]))); // mot clé incompatible utilisé dans une expression
         global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
@@ -1609,7 +1612,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
         // appel récursif sur parse
 
         if (k - *lastDebTok - 2 == 0) {
-            neon_fail(30);
+            neon_fail(30, NO_ARGS);
             global_env->LINENUMBER = lines->tab[offset + k];
             return;
         }
@@ -1638,7 +1641,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
       
     else if ((*isPotentiallyListIndex) && ((*listIndexStep)==2 || (*listIndexStep)==3) && (strlist_token_inList(&keywords, tokenAdd->tab[k]) || strlist_token_inList(&blockwords, tokenAdd->tab[k])))
     {
-        neon_fail(28); // mot clé incompatible utilisé dans une expression
+        neon_fail(28, neo_str_create(tokdup(tokenAdd->tab[k]))); // mot clé incompatible utilisé dans une expression
         global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
@@ -1667,7 +1670,7 @@ void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool 
 
     else if ((*isPotentiallyList) && (strlist_token_inList(&keywords, tokenAdd->tab[k]) || strlist_token_inList(&blockwords, tokenAdd->tab[k])))
     {
-        neon_fail(28); // mot clé incompatible utilisé dans une expression
+        neon_fail(28, neo_str_create(tokdup(tokenAdd->tab[k]))); // mot clé incompatible utilisé dans une expression
         global_env->LINENUMBER = lines->tab[offset + k];
         return;
     }
@@ -1756,7 +1759,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
         if (ast[i]->type == TYPE_BLOCK && ! isPotentiallyStat && funcMethStep != 2)//un block non précédé d'un blockline
         {
             // Erreur de syntaxe : Bloc d'instructions tout seul
-            neon_fail(34);
+            neon_fail(34, NO_ARGS);
             global_env->LINENUMBER = lines->tab[offset + i];
             return;
         }
@@ -1782,7 +1785,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             }
             else if (typeact != TYPE_ENDOFLINE)
             {
-                neon_fail(11);
+                neon_fail(11, NO_ARGS);
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
@@ -1798,7 +1801,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             }
             else if (ast[i]->type != TYPE_ENDOFLINE)
             {
-                neon_fail(11);
+                neon_fail(11, NO_ARGS);
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
@@ -1814,7 +1817,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             }
             else
             {
-                neon_fail(11);
+                neon_fail(11, NO_ARGS);
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
@@ -1847,7 +1850,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
 
         
         /*else if (TEStep == 1 && typeact != TYPE_ENDOFLINE) {
-            neon_fail(30);
+            neon_fail(30, NO_ARGS);
             return;
         }*/
         
@@ -1877,7 +1880,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             if (typeact == TYPE_BLOCKIF || typeact == TYPE_BLOCKELSE || typeact == TYPE_BLOCKELIF)
                 conBlockStep = 2;
             else if (typeact != TYPE_ENDOFLINE) {
-                neon_fail(30);
+                neon_fail(30, NO_ARGS);
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
@@ -1887,7 +1890,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             if (typeact == TYPE_BLOCK)
                 conBlockStep = 1;
             else if (typeact != TYPE_ENDOFLINE) {
-                neon_fail(30);
+                neon_fail(30, NO_ARGS);
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
@@ -1913,7 +1916,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             isPotentiallyTE = false;
         }
         /*else if (ast[debStat]->type == TYPE_STATEMENTEXCEPT) {
-            neon_fail(30);
+            neon_fail(30, NO_ARGS);
             return;
         }*/
 
@@ -1922,7 +1925,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             TEStep = 1;
         }
         else if (TEStep == 2 && typeact != TYPE_ENDOFLINE) {
-            neon_fail(30);
+            neon_fail(30, NO_ARGS);
             global_env->LINENUMBER = lines->tab[offset + i];
             return;
         }
@@ -2021,7 +2024,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             isPotentiallyStat=false;
         }
         else if (isPotentiallyStat && typeact != TYPE_ENDOFLINE && typeact != TYPE_ACCOLADE) {
-            neon_fail(27);
+            neon_fail(27, NO_ARGS);
             global_env->LINENUMBER = lines->tab[offset + i];
             return;
         }
@@ -2037,7 +2040,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
         {
             if (ast[i]->fin - offset == tokens->len - 1)
             {
-                neon_fail(29); // Ligne de bloc d'instructions non suivi par un bloc d'instructions (ex: un if() tout seul)
+                neon_fail(29, NO_ARGS); // Ligne de bloc d'instructions non suivi par un bloc d'instructions (ex: un if() tout seul)
                 global_env->LINENUMBER = lines->tab[offset + i];
                 return;
             }
@@ -2053,7 +2056,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
     }
 
     if (isPotentiallyStat || funcMethStep != 0) {
-        neon_fail(29);
+        neon_fail(29, NO_ARGS);
         global_env->LINENUMBER = lines->tab[offset + i];
     }
     

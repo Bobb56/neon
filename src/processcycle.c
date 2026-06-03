@@ -92,7 +92,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
         p->stack = allocate_new_stack();
 
         if (p->stack == NULL) {
-            neon_fail(12);
+            neon_fail(12, NO_ARGS);
             ContextStack_destroy(&p->var_loc);
             neon_free(p->varsToSave);
             neon_free(p);
@@ -110,7 +110,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
         p->stack = allocate_new_stack();
 
         if (p->stack == NULL) {
-            neon_fail(12);
+            neon_fail(12, NO_ARGS);
             ContextStack_destroy(&p->var_loc);
             neon_free(p->varsToSave);
             neon_free(p);

@@ -121,7 +121,7 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
 
     if (tmp == NULL) {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return TREE_VOID;
     }
 
@@ -251,6 +251,63 @@ size_t type_size(TreeType type) {
 }
 
 
+char* printable_tree_type(TreeBuffer* tb, TreeBufferIndex tree) {
+    switch (TREE_TYPE(tb, tree)) {
+        case TypeBinaryOp:
+            return "binary operation";
+        case TypeUnaryOp:
+            return "unary operation";
+        case TypeConst:
+            return "constant";
+        case TypeFor:
+            return "for loop";
+        case TypeForeach:
+            return "foreach loop";
+        case TypeWhile:
+            return "while loop";
+        case TypeIf:
+            return "if statement";
+        case TypeElif:
+            return "elif statement";
+        case TypeElse:
+            return "else statement";
+        case TypeSyntaxtree:
+            return "instructions block";
+        case TypeAtomic:
+            return "atomic block";
+        case TypeConditionblock:
+            return "conditional block";
+        case TypeList:
+            return "literal list";
+        case TypeTryExcept:
+            return "try/except statement";
+        case TypeFunctiondef:
+            return "function definition statement";
+        case TypeVariable:
+            return "variable";
+        case TypeListindex:
+            return "list index";
+        case TypeFunctioncall:
+            return "function call";
+        case TypeAttribute:
+            return "container attribute";
+        case TypeKeyword:
+            return "keyword";
+        case TypeKWParam:
+            return "instruction";
+        case TypeContainerLit:
+            return "literal container";
+        case TypeAttributeLit:
+            return "literal container attribute definition";
+        case TypeExceptBlock:
+            return "except statemement";
+        case TypeParallelCall:
+            return "parallel call";
+        default:
+            return "unknown type";
+    }
+}
+
 
 
 
@@ -307,7 +364,7 @@ void TreeListTemp_append(struct TreeListTemp* tree_list, TreeBufferIndex tree) {
     }
 
     if (ptr == NULL) {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return;
     }
 

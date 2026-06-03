@@ -5,16 +5,21 @@
 
 #include "constants.h"
 #include "dynarrays.h"
+#include "neobj.h"
 
 #define NB_ERRORS 123
 
+#define NO_ARGS                                 NEO_VOID
+#define neon_fail(code_error, ...)              neon_set_error(code_error, __LINE__, NEON_SOURCE_ID, nelist_literal_create((NeObj[]){__VA_ARGS__, NEO_VOID}))
+#define neon_internal_error()                   neon_fail(120, NO_ARGS)
+#define SHORT_REPR_ERR_SIZE                     30
+
 #define return_on_error(value)                  if (global_env->CODE_ERROR != 0) return value
 #define if_error                                if (global_env->CODE_ERROR != 0)
-#define neon_assert(condition, return_value)    if (!(condition)) {neon_fail(120) ; return return_value ;}
+#define neon_assert(condition, return_value)    if (!(condition)) {neon_fail(120, NO_ARGS) ; return return_value ;}
 
-#define neon_fail(code_error)                   neon_set_error(code_error, __LINE__, NEON_SOURCE_ID)
-#define neon_internal_error()                   neon_set_error(120, __LINE__, NEON_SOURCE_ID)
-
+// Chaîne spéciale pour spécifier un argument dans un message d'erreur
+#define ARGUMENT_SPECIFIER                      "%%"
 
 #define neon_malloc     malloc
 #define neon_realloc    realloc
@@ -27,9 +32,10 @@ void neon_free(void* ptr);
 */
 
 void neon_reset_error(void);
-void neon_set_error(int code_error, int line, int source_id);
+void neon_set_error(int code_error, int line, int source_id, NeList* error_message_arguments);
 void neon_raise_user_exception(int exception_code, char* message);
 
+void printErrorString(char* format, NeList* error_message_arguments);
 void printError(int code);
 void printErrSource(char* file, int line);
 int get_exception_from_code_error(int code_error);

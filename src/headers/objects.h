@@ -117,7 +117,9 @@ int get_promise_id(NeObj promise);
 int neobject_getsize(NeObj);
 void general_neobject_destroy(NeObj neo, bool gc_extern);
 void neobject_aff(NeObj neo);
+char* neobject_short_repr(NeObj obj, int max_len);
 NeList* nelist_create(int len);
+NeList* nelist_literal_create(NeObj* elements);
 int nelist_getsize(NeList* list);
 void nelist_append(NeList* list, NeObj ptr);//ajoute un élément à la fin de la liste
 NeObj* nelist_nth_addr(NeList* list, int index);
@@ -136,6 +138,7 @@ bool is_number(NeObj obj);
 NeObj neo_bool_create(bool neon_boolean);
 bool neo_is_true(NeObj neo);
 void string_destroy(String* string);
+NeObj neo_new_str_create(const char* string);
 NeObj neo_str_create(char* string);
 NeObj neo_list_create(int len);
 void neo_list_append(NeObj neo, NeObj ptr);

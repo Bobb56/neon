@@ -84,30 +84,32 @@ bool strInfEq(char* str1, char* str2)
 
 char* traitementString(char* string)
 {
-	char* string1=replace(string, "\\a", "\a");
-	char* string2=replace(string1,"\\b", "\b");
-	char* string3=replace(string2,"\\f", "\f");
-	char* string4=replace(string3,"\\r", "\r");
-	char* string5=replace(string4,"\\v", "\v");
-	char* string6=replace(string5,"\\t", "\t");
-	char* string7=replace(string6,"\\n", "\n");
-	char* string8=replace(string7,"\\\\", "\\");
-	neon_free(string1);neon_free(string2);neon_free(string3);neon_free(string4);neon_free(string5);neon_free(string6);neon_free(string7);
-	return string8;
+	char* string1 = replace(string, "\\a", "\a");
+	char* string2 = replace(string1,"\\b", "\b");
+	char* string3 = replace(string2,"\\f", "\f");
+	char* string4 = replace(string3,"\\r", "\r");
+	char* string5 = replace(string4,"\\v", "\v");
+	char* string6 = replace(string5,"\\t", "\t");
+	char* string7 = replace(string6,"\\n", "\n");
+	char* string8 = replace(string7,"\\\\", "\\");
+    char* string9 = replace(string8, "\\'", "'");
+	neon_free(string1);neon_free(string2);neon_free(string3);neon_free(string4);neon_free(string5);neon_free(string6);neon_free(string7);neon_free(string8);
+	return string9;
 }
 
 
 char* traitementStringInverse(char* string)
 {
-    char* string8=replace(string,"\\", "\\\\");
-	char* string1=replace(string8, "\a", "\\a");
-	char* string2=replace(string1,"\b", "\\b");
-	char* string3=replace(string2,"\f", "\\f");
-	char* string4=replace(string3,"\r", "\\r");
-	char* string5=replace(string4,"\v", "\\v");
-	char* string6=replace(string5,"\t", "\\t");
-	char* string7=replace(string6,"\n", "\\n");
-	neon_free(string1);neon_free(string2);neon_free(string3);neon_free(string4);neon_free(string5);neon_free(string6);neon_free(string8);
+    char* string9 = replace(string,"\\", "\\\\");
+    char* string8 = replace(string9, "'", "\\'");
+	char* string1 = replace(string8, "\a", "\\a");
+	char* string2 = replace(string1,"\b", "\\b");
+	char* string3 = replace(string2,"\f", "\\f");
+	char* string4 = replace(string3,"\r", "\\r");
+	char* string5 = replace(string4,"\v", "\\v");
+	char* string6 = replace(string5,"\t", "\\t");
+	char* string7 = replace(string6,"\n", "\\n");
+	neon_free(string1);neon_free(string2);neon_free(string3);neon_free(string4);neon_free(string5);neon_free(string6);neon_free(string8);neon_free(string9);
 	return string7;
 }
 
@@ -350,19 +352,19 @@ int count(char* string, char* search)//compte le nombre d'occurrences d'une cha�
 
 
 
-char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
+char* sub(char* string, int debut,int fin)//permet d'extraire une sous-chaine
 {
     int longueur = fin-debut;
   
-    if (longueur < 0) {
-        neon_fail(67);
+    if (longueur < 0 || debut >= strlen(string)) {
+        neon_fail(13, neo_integer_create(longueur), neo_new_str_create(string), neo_integer_create(debut));
         return NULL;
     }
   
     char* newStr = neon_malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
 
     if (newStr == NULL) {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return NULL;
     }
 
@@ -370,7 +372,7 @@ char* sub(char* string,int debut,int fin)//permet d'extraire une sous-chaine
     for (int i=0 ; i < longueur ; i++) {
         // si on dépasse string, on quitte avec une erreur
         if (string[i+debut] == '\0') {
-            neon_fail(67);
+            neon_fail(13, neo_integer_create(longueur), neo_new_str_create(string), neo_integer_create(debut));
             return NULL;
         }
 
@@ -487,11 +489,7 @@ char* decToHex(intptr_t n) {
 
 char* subReplace(char* string, int len, int debut, int longueur, char* remplacement, int len_remplacement)//effectue un remplacement quand on lui indique l’endroit et la longueur
 {
-    if ((unsigned) (debut+longueur) > strlen(string))
-    {
-        neon_fail(67);
-        return 0;
-    }
+    neon_assert((unsigned) (debut+longueur) <= strlen(string), NULL);
     
     char* resultat = neon_malloc(sizeof(char) * (len - longueur + len_remplacement + 1));
 

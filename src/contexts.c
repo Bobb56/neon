@@ -19,7 +19,7 @@ void ContextStack_init(ContextStack* stack)
     stack->tab=neon_malloc((1<<stack->capacity)*sizeof(NeSave));
 
     if (stack->tab == NULL) {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return;
     }
   
@@ -37,7 +37,7 @@ void ContextStack_append(ContextStack* stack, NeSave nesave)
         stack->capacity++;
         tmp = neon_realloc(stack->tab, (1<<stack->capacity)*sizeof(NeSave));//réallocation de list.tab
         if (tmp == NULL) {
-            neon_fail(12);
+            neon_fail(12, NO_ARGS);
             return;
         }
         stack->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -61,11 +61,7 @@ void ContextStack_destroy(ContextStack* stack)
 
 NeSave ContextStack_pop(ContextStack* stack)
 {
-    if (stack->len == 0) {
-        neon_fail(38);
-        return (NeSave){0};
-    }
-  
+    neon_assert(stack->len > 0, (NeSave){0});
     return stack->tab[--stack->len];
 }
 

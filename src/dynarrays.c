@@ -1,15 +1,12 @@
 #define NEON_SOURCE_ID 3
 
-#include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
 #include "headers/errors.h"
-
-// fonctions de copies. Servent à "déplacer" un tableau de la pile vers le tas
-
+#include "headers/objects.h"
 
 void printToken(Token tok) {
   char sov = stringize(tok);
@@ -74,7 +71,7 @@ toklist toklist_create(int len)
   list.tab=neon_malloc((1<<list.capacity)*sizeof(Token));
 
   if (list.tab == NULL) {
-    neon_fail(12);
+    neon_fail(12, NO_ARGS);
     return list;
   }
   
@@ -128,7 +125,7 @@ void toklist_append(toklist* list, Token chaine)
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réallocation de list.tab
     if (tmp == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -166,7 +163,7 @@ void toklist_resize(toklist* list, int newLen)
     
     if (tmp == NULL)
     {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return ;
     }
     
@@ -180,15 +177,8 @@ void toklist_resize(toklist* list, int newLen)
 
 
 
-void toklist_remove(toklist* list, int index)
-{
-  
-  if (index >= list->len)
-  {
-    neon_fail(38);
-    return ;
-  }
-  
+void toklist_remove(toklist* list, int index) {
+  neon_assert(index < list->len, );
   
   for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];
@@ -203,7 +193,6 @@ void toklist_remove(toklist* list, int index)
   }
   
   list->len--;//décrémentation de la longueur
-  
 }
 
 
@@ -253,8 +242,7 @@ int toklist_index(toklist* list, char* chaine)
     }
     
   }
-  neon_fail(18);
-  return -1;
+  neon_assert(false, -1);
 }
 
 
@@ -267,19 +255,14 @@ int strlist_token_index(strlist* list, Token chaine)
       return i;
     }
   }
-  neon_fail(18);
-  return -1;
+  neon_assert(false, -1);
 }
 
 
 
 void toklist_insert(toklist* list, Token chaine, int index)//ajoute un élément à la place indiquée
 {
-  if (index > list->len)
-  {
-    neon_fail(38);
-    return ;
-  }
+  neon_assert(index <= list->len && index >= 0, );
   
   Token* tmp;
   if ((1<<list->capacity)==list->len)
@@ -288,7 +271,7 @@ void toklist_insert(toklist* list, Token chaine, int index)//ajoute un élément
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réallocation de list.tab
 
     if (tmp == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return;
     }
 
@@ -315,7 +298,7 @@ ptrlist* ptrlist_create(void)
     ptrlist* l = neon_malloc(sizeof(ptrlist));
 
     if (l == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return NULL;
     }
 
@@ -336,7 +319,7 @@ void ptrlist_append(ptrlist* q, void* t)
     {
         ptrlist* chainon = neon_malloc(sizeof(ptrlist));//on crée une copie du premier chaînon
         if (chainon == NULL) {
-          neon_fail(12);
+          neon_fail(12, NO_ARGS);
           return;
         }
         chainon->tete = q->tete;
@@ -508,14 +491,10 @@ void ptrlist_remove(ptrlist* list, void* l, bool error)
     }
     
     // l'élément n'a pas été trouvé
-    if (ptr->queue == NULL && ptr->tete != l && error)
-    {
-        neon_fail(65);
-        return ;
-    }
-    else if (ptr->queue == NULL && ptr->tete != l)
+    neon_assert(ptr->queue != NULL || ptr->tete == l || !error, );
+
+    if (ptr->queue == NULL && ptr->tete != l)
         return;
-    
     
     else if (ptr->queue == NULL && ptr2 == NULL)// on est le dernier élément de la liste
         list->tete = NULL;
@@ -601,7 +580,7 @@ intlist intlist_create(int len)// crée une liste d'entiers
   list.tab=neon_malloc((1<<list.capacity)*sizeof(int));//initialise le tableau de longueur len avec de zéros
 
   if (list.tab == NULL) {
-    neon_fail(12);
+    neon_fail(12, NO_ARGS);
     return list;
   }
   
@@ -650,7 +629,7 @@ void intlist_append(intlist* list,int nombre)//ajoute un élément à la fin de 
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int));//réallocation de list.tab
     if (tmp == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -674,13 +653,13 @@ void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la n
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int));//réalloue un pointeur de la nouvelle taille
 
     if (tmp == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return;
     }
     
     if (tmp == NULL)
     {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return;
     }
     
@@ -704,11 +683,7 @@ void intlist_resize(intlist* list, int newLen)//redimensionne la liste avec la n
 
 void intlist_remove(intlist* list,int index)//supprime un élément de la liste
 {
-  if (index >= list->len)
-  {
-    neon_fail(38);
-    return ;
-  }
+  neon_assert(index < list->len, );
   
   for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];
@@ -720,7 +695,7 @@ void intlist_remove(intlist* list,int index)//supprime un élément de la liste
     list->capacity--;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int));//réalloue un nouveau pointeur de la bonne taille
     if (tmp == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return;
     }
 
@@ -775,19 +750,14 @@ int intlist_index(intlist* list, int nombre)
     }
     
   }
-  neon_fail(18);
-  return 1;
+  neon_assert(false, 1);
 }
 
 
 
-void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à la place indiquée
+void intlist_insert(intlist* list, int nombre, int index) //ajoute un élément à la place indiquée
 {
-  if (index > list->len)
-  {
-    neon_fail(38);
-    return ;
-  }
+  neon_assert(index < list->len, );
   
   int *tmp;
   if ((1<<list->capacity)==list->len)
@@ -795,7 +765,7 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int));//réallocation de list.tab
     if (tmp == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -813,24 +783,15 @@ void intlist_insert(intlist* list,int nombre, int index)//ajoute un élément à
 
 int intlist_max(intlist* list)
 {
-  int max;
+  neon_assert(list->len > 0, 0);
   
-  if (list->len>0)
+  int max = list->tab[0];
+  for (int i=0 ; i<list->len;i++)
   {
-    max = list->tab[0];
-    for (int i=0 ; i<list->len;i++)
-    {
-      if (list->tab[i] > max)
-        max=list->tab[i];
-    }
-    return max;
+    if (list->tab[i] > max)
+      max=list->tab[i];
   }
-  else
-  {
-      neon_fail(38);
-      return EXIT_FAILURE;
-  }
-  return EXIT_FAILURE;
+  return max;
 }
 
 
@@ -848,7 +809,7 @@ intptrlist intptrlist_create(int len)// crée une liste d'entiers
   list.tab=neon_malloc((1<<list.capacity)*sizeof(int*));//initialise le tableau de longueur len avec de zéros
 
   if (list.tab == NULL) {
-    neon_fail(12);
+    neon_fail(12, NO_ARGS);
     return list;
   }
   
@@ -868,7 +829,7 @@ void intptrlist_append(intptrlist* list, void* ptr)//ajoute un élément à la f
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(int*));//réallocation de list.tab
     if (tmp == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -907,7 +868,7 @@ strlist* strlist_create(int len)
   strlist* list = neon_malloc(sizeof(strlist));
 
   if (list == NULL) {
-    neon_fail(12);
+    neon_fail(12, NO_ARGS);
     return NULL;
   }
   
@@ -919,7 +880,7 @@ strlist* strlist_create(int len)
   list->tab=neon_malloc((1<<list->capacity)*sizeof(char*));
 
   if (list->tab == NULL) {
-    neon_fail(12);
+    neon_fail(12, NO_ARGS);
     neon_free(list);
     return NULL;
   }
@@ -981,7 +942,7 @@ void strlist_append(strlist* list, char *chaine)
     list->capacity++;
     tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(char*));//réallocation de list.tab
     if (tmp == NULL) {
-      neon_fail(12);
+      neon_fail(12, NO_ARGS);
       return;
     }
     list->tab = tmp;//affectation du pointeur de tmp vers list.tab
@@ -1151,8 +1112,7 @@ int strlist_index(strlist* list, char* chaine)
     }
     
   }
-  neon_fail(18);
-  return -1;
+  neon_assert(false, -1);
 }
 
 

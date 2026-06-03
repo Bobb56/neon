@@ -35,7 +35,7 @@ NeonEnv* global_env = NULL;
     #include <signal.h>
 
     void handle_signal(int sig) {
-        neon_fail(104);
+        neon_fail(104, NO_ARGS);
     }
 #endif
 
@@ -143,6 +143,7 @@ NeonEnv* NeonEnv_init(void) {
     env->OBJECTS_LIST = NEO_VOID;
     env->NOMS = strlist_create(0);
     env->TREEBUFFERS = ptrlist_create();
+    env->ERROR_MESSAGE_ARGUMENTS = NULL;
     env->PROMISES = nelist_create(0);
     env->ADRESSES = nelist_create(0);
     env->ATTRIBUTES = nelist_create(0);
@@ -180,6 +181,9 @@ NeonEnv* NeonEnv_set(NeonEnv* new_env) {
 
 
 void NeonEnv_destroy(NeonEnv* env) {
+    
+    neon_reset_error();
+
     neon_free(env->process_cycle);
 
     strlist_destroy(env->EXCEPTIONS, true);
@@ -378,7 +382,7 @@ void terminal(void)
         exp = inputCode(SEQUENCE_ENTREE);
 
         if (exp == NULL && global_env->CODE_ERROR == 0) // pour afficher le keyboardInterrupt
-            neon_fail(104);
+            neon_fail(104, NO_ARGS);
         
         // quand l'utilisateur appuie sur CTRL-D, ça met CODE_ERROR à 1
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
@@ -505,7 +509,7 @@ void importFile(char* filename)
     return_on_error();
 
     if (program == NULL) {
-        neon_fail(67);
+        neon_fail(67, neo_new_str_create(filename));
         return ;
     }
 

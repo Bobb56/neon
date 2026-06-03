@@ -115,7 +115,7 @@ intptr_t read_number_value(NeStream stream) {
     // On récupère le nombre d'octets sur lequel est stocké l'entier
     uint8_t size;
     if (!NeStream_read(stream, &size, 1)) {
-        neon_fail(122);
+        neon_fail(122, NO_ARGS);
         return 0;
     }
 
@@ -126,7 +126,7 @@ intptr_t read_number_value(NeStream stream) {
     // Lecture des octets de l'entier dans le buffer
     uint8_t buffer[sizeof(intptr_t)] = {0};
     if (!NeStream_read(stream, buffer, size)) {
-        neon_fail(122);
+        neon_fail(122, NO_ARGS);
         return 0;
     }
     
@@ -157,7 +157,7 @@ char* read_string_value(NeStream stream) {
     
     if (!NeStream_read(stream, string, size)) {
         neon_free(string);
-        neon_fail(122);
+        neon_fail(122, NO_ARGS);
         return NULL;
     }
     return string;
@@ -216,7 +216,7 @@ void read_containers_header(NeStream stream, intlist* containersTable) {
             nelist_append(global_env->ATTRIBUTES, gc_extern_neo_list_convert(attributes));
         }
         else if (nb_fields != neo_list_len(global_env->ATTRIBUTES->tab[container_index])) {
-            neon_fail(32);
+            neon_fail(32, NO_ARGS);
             neon_free(containerName);
             return;
         }
@@ -229,7 +229,7 @@ void read_containers_header(NeStream stream, intlist* containersTable) {
                 neon_free(field);
 
                 if (!field_is_present) {
-                    neon_fail(32);
+                    neon_fail(32, NO_ARGS);
                     neon_free(containerName);
                     return;
                 }
@@ -809,7 +809,7 @@ Fonction inverse de serialize_partial_neobject
 NeObj read_partial_neobject(NeStream stream) {
     NeObj obj = NEO_VOID;
     if (!NeStream_read(stream, &obj.type, 1)) {
-        neon_fail(122);
+        neon_fail(122, NO_ARGS);
         return NEO_VOID;
     }
     obj.integer = read_number_value(stream);
@@ -825,7 +825,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
     for (int i = 0 ; i < tableSize ; i++) {
         PointerType ptrType;
         if (!NeStream_read(stream, &ptrType, 1)) {
-            neon_fail(122);
+            neon_fail(122, NO_ARGS);
             return;
         }
 
@@ -842,7 +842,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 string->string = neon_malloc(size);
                 if (!NeStream_read(stream, string->string, size)) {
                     string_destroy(string);
-                    neon_fail(122);
+                    neon_fail(122, NO_ARGS);
                     return;
                 }
 
@@ -860,7 +860,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 char* string = neon_malloc(size);
                 if (!NeStream_read(stream, string, size)) {
                     neon_free(string);
-                    neon_fail(122);
+                    neon_fail(122, NO_ARGS);
                     return;
                 }
 
@@ -921,7 +921,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 // Lecture de l'entry point
                 TreeBufferIndex entry_point;
                 if (!NeStream_read(stream, &entry_point, sizeof(TreeBufferIndex))) {
-                    neon_fail(122);
+                    neon_fail(122, NO_ARGS);
                     return;
                 }
 
@@ -931,7 +931,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 return_on_error();
 
                 if (!NeStream_read(stream, pointer, size)) {
-                    neon_fail(122);
+                    neon_fail(122, NO_ARGS);
                     neon_free(pointer);
                     return;
                 }
@@ -999,7 +999,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                     }
 
                     if (!NeStream_read(stream, doc, size)) {
-                        neon_fail(122);
+                        neon_fail(122, NO_ARGS);
                         neon_free(args);
                         neon_free(doc);
                         return;
@@ -1008,7 +1008,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
                 TreeBufferIndex code;
                 if (!NeStream_read(stream, &code, sizeof(TreeBufferIndex))) {
-                    neon_fail(122);
+                    neon_fail(122, NO_ARGS);
                     neon_free(args);
                     neon_free(doc);
                     return;
@@ -1072,7 +1072,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
             }
 
             default: {
-                neon_fail(122);
+                neon_fail(122, NO_ARGS);
                 return;
             }
         }
@@ -1217,7 +1217,7 @@ void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable, i
     else if (NEO_TYPE(*neo) == TYPE_PROMISE) { // Vérification que la promesse est valide
         int index = intptrlist_index(&global_env->PROMISES_CNT, neo->refc_ptr);
         if (index == -1) {
-            neon_fail(122);
+            neon_fail(122, NO_ARGS);
             return;
         }
         else {

@@ -34,6 +34,7 @@ struct ContainerType {
 #define NEON_PALETTE_GREEN              NEON_PALETTE_COLOR(0,5,0)
 #define NEON_PALETTE_RED                NEON_PALETTE_COLOR(7,0,0)
 #define NEON_PALETTE_BLUE               NEON_PALETTE_COLOR(0,0,3)
+#define NEON_PALETTE_PURPLE             NEON_PALETTE_COLOR(7,0,3)
 
 
 int neon_getKey(void);

@@ -15,11 +15,9 @@ Entre deux sessions d'utilisation de la mémoire temporaire, on peut écrire dan
 #include "headers/sidememory.h"
 #include "headers/dynarrays.h"
 #include "headers/errors.h"
-#include "headers/neonio.h"
 #include "headers/parser.h"
 #include "headers/neon.h"
 #include "headers/trees.h"
-#include <stdlib.h>
 #include <string.h>
 
 #ifdef TI_EZ80
@@ -78,7 +76,7 @@ void side_memory_end(void) {
 void* side_memory_alloc(int size) {
     void* alloc_area = pointer;
     if (pointer + size >= initial_base_pointer + buffer_size) {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return NULL;
     }
     pointer += size;
@@ -92,7 +90,7 @@ void* side_memory_hard_alloc(int size) {
 
     void* alloc_area = base_pointer;
     if (base_pointer + size >= initial_base_pointer + buffer_size) {
-        neon_fail(12);
+        neon_fail(12, NO_ARGS);
         return NULL;
     }
     base_pointer += size;

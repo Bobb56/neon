@@ -141,7 +141,7 @@ NeObj _len_(NeList* args)
     }
     else
     {
-        neon_fail(4); // cet objet n'a pas de longueur
+        neon_fail(4, neo_copy(ARG(0))); // cet objet n'a pas de longueur
         return NEO_VOID;
     }
   
@@ -160,7 +160,7 @@ NeObj _substring_(NeList* args)
 
 NeObj _exit_(NeList* args)
 {
-  neon_fail(1);
+  neon_fail(1, NO_ARGS);
   return NEO_VOID;
 }
 
@@ -232,7 +232,7 @@ NeObj _reverse_(NeList* args)
     }
     else
     {
-        neon_fail(62); // unsupported types for reverse
+        neon_fail(62, neo_copy(ARG(0))); // unsupported types for reverse
         return NEO_VOID;
     }
 }
@@ -566,7 +566,7 @@ NeObj _failwith_(NeList* args)
     setColor(DEFAULT);
     printErrSource(global_env->FILENAME, global_env->LINENUMBER);
 
-    neon_fail(1);
+    neon_fail(1, NO_ARGS);
     
     return NEO_VOID;
 }
@@ -591,7 +591,7 @@ NeObj _assert_(NeList* args)
     {
         if (!neo_is_true(ARG(i)))
         {
-            neon_fail(71);
+            neon_fail(71, NO_ARGS);
             return NEO_VOID;
         }
     }
@@ -660,7 +660,7 @@ NeObj _list_comp_(NeList* args)
     if (NEO_TYPE(ARG(1)) != TYPE_INTEGER || NEO_TYPE(ARG(2)) != TYPE_INTEGER || NEO_TYPE(ARG(3)) != TYPE_INTEGER) {
         if (sov_FILENAME != NULL)
             neon_free(sov_FILENAME);
-        neon_fail(112);
+        neon_fail(112, NO_ARGS);
         return NEO_VOID;
     }
     
@@ -782,7 +782,7 @@ NeObj _int_(NeList* args)
     else if (NEO_TYPE(ARG(0)) == TYPE_STRING && is_integer(neo_to_string(ARG(0))))
         return neo_integer_create(str_to_int(neo_to_string(ARG(0))));
     else {
-        neon_fail(113);
+        neon_fail(113, neo_copy(ARG(0)));
         return NEO_VOID;
     }
     
@@ -793,14 +793,14 @@ NeObj _index_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) == TYPE_STRING) {
         if (NEO_TYPE(ARG(1)) != TYPE_STRING) {
-            neon_fail(121);
+            neon_fail(121, neo_copy(ARG(1)), neo_copy(ARG(0)));
             return NEO_VOID;
         }
         char* string = neo_to_string(ARG(0));
         char* search = neo_to_string(ARG(1));
         int index = string_index(string, search);
         if (index == -1) {
-            neon_fail(88);
+            neon_fail(88, neo_copy(ARG(1)), neo_copy(ARG(0)));
             return NEO_VOID;
         }
         else {
@@ -816,7 +816,7 @@ NeObj _index_(NeList* args)
         return NEO_VOID;
     }
     else {
-        neon_fail(121);
+        neon_fail(121, neo_copy(ARG(1)), neo_copy(ARG(0)));
         return NEO_VOID;
     }
 }
@@ -856,7 +856,7 @@ NeObj _count_(NeList* args)
     }
     else
     {
-        neon_fail(14);
+        neon_fail(14, NO_ARGS);
         return NEO_VOID;
     }
 }
@@ -940,8 +940,8 @@ NeObj _sort_desc_(NeList* args)
 
 NeObj _sin_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(sin(neo_to_double(ARG(0))));
@@ -950,8 +950,8 @@ NeObj _sin_(NeList* args)
 
 NeObj _cos_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(cos(neo_to_double(ARG(0))));
@@ -960,8 +960,8 @@ NeObj _cos_(NeList* args)
 
 NeObj _tan_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(tan(neo_to_double(ARG(0))));
@@ -970,8 +970,8 @@ NeObj _tan_(NeList* args)
 
 NeObj _deg_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     double angle = neo_to_double(ARG(0));
@@ -981,8 +981,8 @@ NeObj _deg_(NeList* args)
 
 NeObj _rad_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     double angle = neo_to_double(ARG(0));
@@ -992,8 +992,8 @@ NeObj _rad_(NeList* args)
 
 NeObj _sqrt_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(sqrt(neo_to_double(ARG(0))));
@@ -1002,8 +1002,8 @@ NeObj _sqrt_(NeList* args)
 
 NeObj _ln_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(log(neo_to_double(ARG(0))));;
@@ -1012,8 +1012,8 @@ NeObj _ln_(NeList* args)
 
 NeObj _exp_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(exp(neo_to_double(ARG(0))));
@@ -1022,8 +1022,8 @@ NeObj _exp_(NeList* args)
 
 NeObj _log_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(log10(neo_to_double(ARG(0))));
@@ -1032,8 +1032,8 @@ NeObj _log_(NeList* args)
 
 NeObj _log2_(NeList* args)
 {
-    if (NEO_TYPE(ARG(0)) != TYPE_INTEGER && NEO_TYPE(ARG(0)) != TYPE_DOUBLE) {
-        neon_fail(114);
+    if (!is_number(ARG(0))) {
+        neon_fail(114, neo_new_str_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(log2(neo_to_double(ARG(0))));
@@ -1103,14 +1103,13 @@ NeObj _setFunctionDoc_(NeList* args) {
 
 
 NeObj _setAtomicTime_(NeList* args) {
-    global_env->ATOMIC_TIME = neo_to_integer(ARG(0));
-    global_env->atomic_counter = 0;
-
-    if (global_env->ATOMIC_TIME < 1)
-    {
-        neon_fail(102);
+    if (neo_to_integer(ARG(0)) < 1) {
+        neon_fail(102, neo_copy(ARG(0)));
         return NEO_VOID;
     }
+
+    global_env->ATOMIC_TIME = neo_to_integer(ARG(0));
+    global_env->atomic_counter = 0;
     return neo_none_create();
 }
 
@@ -1163,6 +1162,12 @@ NeObj _setColor_(NeList* args) {
     else if (strcmp(color, "red") == 0) {
         setColor(RED);
     }
+    else if (strcmp(color, "purple") == 0) {
+        setColor(PURPLE);
+    }
+    else {
+        neon_fail(63, neo_new_str_create(color));
+    }
     return neo_none_create();
 }
 
@@ -1175,7 +1180,7 @@ NeObj _init_(NeList* args) {
             init_module(GraphicModule, global_env);
         }
         else {
-            neon_fail(31);
+            neon_fail(31, neo_new_str_create(moduleName));
             return NEO_VOID;
         }
     }
@@ -1210,7 +1215,7 @@ NeObj _detectFiles_(NeList* args) {
 
     rep = opendir(".");
     if (rep == NULL) {
-        neon_fail(119);
+        neon_fail(119, NO_ARGS);
         return NEO_VOID;
     }
 
@@ -1226,7 +1231,7 @@ NeObj _detectFiles_(NeList* args) {
                 FILE* file = fopen(entree->d_name, "r");
 
                 if (file == NULL) {
-                    neon_fail(119);
+                    neon_fail(119, NO_ARGS);
                     neobject_destroy(files);
                     neon_free(buffer);
                     return NEO_VOID;
@@ -1241,7 +1246,7 @@ NeObj _detectFiles_(NeList* args) {
         } else {
             neobject_destroy(files);
             neon_free(buffer);
-            neon_fail(119);
+            neon_fail(119, NO_ARGS);
             return NEO_VOID;
         }
     }

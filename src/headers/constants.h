@@ -116,6 +116,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #define BLUE    1
 #define RED     2
 #define GREEN   3
+#define PURPLE  4
 
 #define PI 3.14159265358979323
 
