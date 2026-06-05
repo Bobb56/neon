@@ -11,6 +11,35 @@
 #endif
 
 /*
+Table des fichiers source :
+---------------------------
+1  | standardmodule.c
+2  | contexts.c
+3  | dynarrays.c
+4  | errors.c
+5  | ez80.S
+6  | gc.c
+7  | graphicmodule.c
+8  | linux_amd64.S
+9  | linux_riscv64.S
+10 | main.c
+11 | neon.c
+12 | neonio.c
+13 | objects.c
+14 | operators.c
+15 | parser.c
+16 | processcycle.c
+17 | runtime.c
+18 | serialization.c
+19 | sidememory.c
+20 | strings.c
+21 | syntaxtrees.c
+22 | trees.c
+23 | win_amd64.S
+24 | linenoise.c
+25 | nativefunctions.c
+---------------------------
+
 CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > L'implémentation des fonctions assembleur
 > set_stack_pointer
@@ -18,6 +47,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > ATOMIC_TIME
 
 Liste des choses qui ne marchent pas
+--> La ligne de l'erreur avec du code parallèle
 _____________________
 
 Potentielles futures erreurs :
@@ -33,37 +63,10 @@ on ne le crée pas dans global_env->FONCTIONS)
 
 
 Avancement et choses à faire :
+--> Faire une variable numéro de ligne pour chaque processus différent, et lors d'une erreur, afficher les lignes de tous les processus
 -------------------------------
 
-Fichiers traités pour la réécriture des erreurs :
-- runtime.c
-- operators.c
-- contexts.c
-- dynarrays.c
-- errors.c
-- gc.c
-- nativefunctions.c
-- neon.c
-- neonio.c
-- objects.c
-- parser.c
-- processcycle.c
-- serialization.c
-- sidememory.c
-- strings.c
-- trees.c
-
-Fichiers restants :
-- standardmodule.c
-- syntaxtrees.c
-
-
-
 PLUS TARD
---> Réunir tous les "Unsupported types for..."
---> Ajouter du violet dans les couleurs
---> Définir une fonction d'affichage parcimonieux d'objet (ou ajouter de la parcimonie dans neobject_aff)
---> Faire des messages d'erreur avec des paramètres, définis par neon_fail. Les objets sont affichés en gras en jaune
 --> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 --> Sauvegarder un environnement entier
 > Faire des vrais arguments (genre -i, etc)
@@ -79,6 +82,7 @@ NOUVEAUTéS après la mise à jour 4.1 :
 - Suppression de la fonction initGraphics et remplacement par une fonction init qui prend des noms de modules natifs en arguments et les initialise
 - Restriction des règles des arguments optionnels dans les fonctions
 - Ajouter dans la doc: si on a un argument qui s'appelle __local_args__, il overwrite la valeur de la variable __local_args__
+- Ajout de la fonction format
 */
 
 

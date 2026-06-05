@@ -1,10 +1,10 @@
-#include "headers/nativefunctions.h"
 #define NEON_SOURCE_ID 1
 
 #include <string.h>
 #include <time.h>
 #include <math.h>
 
+#include "headers/nativefunctions.h"
 #include "headers/constants.h"
 #include "headers/neonio.h"
 #include "headers/standardmodule.h"
@@ -83,7 +83,7 @@ NeObj _input_(NeList* args)
                 chaine = addStr2(chaine, neo_to_string(ARG(i)));
             }
             else {
-                char* tempstring = neobject_str(ARG(i));
+                char* tempstring = neobject_str(ARG(i), true);
                 chaine = addStr2(chaine,tempstring);
                 neon_free(tempstring);
             }
@@ -124,7 +124,7 @@ NeObj _str_(NeList* args)
 {
     if (NEO_TYPE(ARG(0)) == TYPE_STRING)
         return neo_copy(ARG(0));
-    return neo_str_create(neobject_str(ARG(0)));
+    return neo_str_create(neobject_str(ARG(0), true));
 }
 
 
@@ -1341,6 +1341,82 @@ NeObj _deserialize_(NeList* args) {
 }
 
 
+NeObj _format_(NeList* args) {
+    static const char* ARGUMENT_SPECIFIER = "<>";
+    
+    if (args->len < 1) {
+        neon_fail(14, NO_ARGS);
+        return NEO_VOID;
+    }
+    else if (NEO_TYPE(ARG(0)) != TYPE_STRING) {
+        neon_fail(49, neo_copy(ARG(0)));
+        return NEO_VOID;
+    }
+
+    char* format = neo_to_string(ARG(0));
+
+    int format_length = strlen(format);
+    int specifier_length = strlen(ARGUMENT_SPECIFIER);
+
+    // Précalcul de tous les arguments et calcul d'un majorant de la longueur totale de la nouvelle chaîne
+    int cumulated_length = format_length;
+    strlist* arguments = strlist_create(args->len - 1);
+    for (int i=1 ; i < args->len ; i++) {
+        if (NEO_TYPE(ARG(i)) == TYPE_STRING)
+            arguments->tab[i-1] = strdup(neo_to_string(ARG(i)));
+        else
+            arguments->tab[i-1] = neobject_str(ARG(i), true);
+
+        cumulated_length += strlen(arguments->tab[i-1]);
+    }
+
+    // Écriture des arguments et du reste de la chaîne de format directement dans la chaîne finale
+    char* final_string = neon_malloc(sizeof(char) * (cumulated_length + 1));
+    int final_string_index = 0;
+
+    int argument_index = 0;
+
+    for (int i = 0 ; i < format_length ; i++) {
+        // Identificateur d'argument
+        if (i < format_length - specifier_length + 1 && strncmp(format + i, ARGUMENT_SPECIFIER, specifier_length) == 0) {
+            // Check if we stilla have enough have arguments
+            if (argument_index == arguments->len) {
+                neon_fail(48, neo_integer_create(arguments->len), neo_integer_create(argument_index + 1));
+                strlist_destroy(arguments, true);
+                neon_free(final_string);
+                return neo_none_create();
+            }
+
+            // Recopie de l'argument n°argument_index dans la chaîne finale
+            for (int j=0 ; arguments->tab[argument_index][j] != '\0' ; j++)
+                final_string[final_string_index++] = arguments->tab[argument_index][j];
+
+            // On a consommé un argument
+            argument_index += 1;
+
+            // On passe le deuxième pourcentage
+            i += specifier_length - 1;
+        }
+        else {
+            final_string[final_string_index++] = format[i];
+        }
+    }
+    final_string[final_string_index] = '\0';
+
+    strlist_destroy(arguments, true);
+
+
+    if (argument_index < args->len - 1) {
+        neon_free(final_string);
+        neon_fail(47, neo_integer_create(argument_index), neo_integer_create(args->len-1));
+        return neo_none_create();
+    }
+
+
+    return neo_str_create(final_string);
+}
+
+
 
 NeObj (*builtinfunctions_pointers[NBBUILTINFUNC])(NeList*) = {
     _print_,
@@ -1403,7 +1479,8 @@ NeObj (*builtinfunctions_pointers[NBBUILTINFUNC])(NeList*) = {
     _bin_,
     _hex_,
     _serialize_,
-    _deserialize_
+    _deserialize_,
+    _format_
 };
 
 
@@ -1469,7 +1546,8 @@ const char* const builtinfunctions_names[] = {
     "bin",
     "hex",
     "serialize",
-    "deserialize"
+    "deserialize",
+    "format"
 };
 
 
@@ -1840,6 +1918,12 @@ static const Function builtinfunctions[] = {
         .nbArgs = 1,
         .typeArgs = (int[]){TYPE_STRING},
         .typeRetour = TYPE_UNSPECIFIED
+    },
+    {
+        .help = "Formats a string by filling in the `<>` markers by the given arguments.\nExample: format(\"<> + <> = <>\", 1, 2, 3) returns \"1 + 2 = 3\"",
+        .nbArgs = -1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_STRING
     }
 };
 

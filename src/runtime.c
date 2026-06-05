@@ -798,17 +798,14 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
         case TypeListindex:
         {
             NeObj* obj_ptr = get_address(tb, treeLstIndx(tb, tree)->object);
-
             return_on_error(NULL);
 
-            NeObj obj = *obj_ptr;
-
+            
             NeObj index = eval_aux(tb, treeLstIndx(tb, tree)->index);
-
-
             return_on_error(NULL);
-
-
+            
+            
+            NeObj obj = *obj_ptr;
             if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
             {
                 neon_fail(15, neo_copy(obj));

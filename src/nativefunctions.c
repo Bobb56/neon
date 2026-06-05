@@ -1,10 +1,10 @@
-#include "headers/constants.h"
-#include "headers/objects.h"
 #define NEON_SOURCE_ID 25
 
 #include "headers/nativefunctions.h"
 #include "headers/standardmodule.h"
 #include "headers/errors.h"
+#include "headers/constants.h"
+#include "headers/objects.h"
 #include <stdio.h>
 
 #ifdef HAS_GRAPHIC_MODULE

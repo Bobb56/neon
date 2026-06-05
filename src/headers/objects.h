@@ -78,7 +78,7 @@ typedef struct NeonEnv NeonEnv;
 
 
 #define NEO_TYPE(neo)                       (neo).type
-#define NEO_VOID                            ((NeObj) {.type = TYPE_EMPTY})
+#define NEO_VOID                            ((NeObj) {.type = 0, .integer = 0})
 #define NEO_SPECIAL(code)                   ((NeObj) {.type = TYPE_EMPTY, .integer = code})
 #define IS_NEO_SPECIAL_CODE(neo, code)      (neo.type == TYPE_EMPTY && neo.integer == code)
 
@@ -117,7 +117,7 @@ int get_promise_id(NeObj promise);
 int neobject_getsize(NeObj);
 void general_neobject_destroy(NeObj neo, bool gc_extern);
 void neobject_aff(NeObj neo);
-char* neobject_short_repr(NeObj obj, int max_len);
+char* neobject_short_repr(NeObj obj, int max_len, bool overloaded);
 NeList* nelist_create(int len);
 NeList* nelist_literal_create(NeObj* elements);
 int nelist_getsize(NeList* list);
@@ -159,8 +159,8 @@ void nelist_insert(NeList* list,NeObj neo, int index);
 void neo_list_insert(NeObj neo, NeObj ptr, int index);
 void neo_list_remove(NeObj neo, int index);
 NeList* neo_to_list(NeObj neo);
-char* neobject_str(NeObj);
-char* nelist_str(NeList*);
+char* neobject_str(NeObj obj, bool overloaded);
+char* nelist_str(NeList* list, bool overloaded);
 NeObj neo_list_convert(NeList* list);
 NeObj gc_extern_neo_list_convert(NeList* list);
 void function_destroy(Function* f);

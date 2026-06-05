@@ -278,7 +278,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                 int index = strlist_token_index(global_env->CONTAINERS, nomFonc);
 
-                if (global_env->CODE_ERROR == 18) // si le type n'existe pas déjà
+                if_error // si le type n'existe pas déjà
                 {
                     neon_reset_error();
 

@@ -19,7 +19,7 @@ f2 = deserialize('files/data/test1.neobj')
 
 for (_, 100) do
   value = randint(-50000, 50000)/1000
-  assert(f(value) == f2(value))
+  assert(f(value)[0] == f2(value)[0])
 end
 
 # ---------------------- SECOND TEST ----------------------

@@ -109,7 +109,7 @@ NeObj neo_empty_create(void) {
 }
 
 bool neo_is_void(NeObj neo) {
-    return NEO_TYPE(neo) == TYPE_EMPTY;
+    return neo.type == NEO_VOID.type && neo.integer == NEO_VOID.integer;
 }
 
 bool neo_exact_equal(NeObj a, NeObj b) {
@@ -266,14 +266,14 @@ void neo_container_aff(NeObj neo) {
 }
 
 
-char* neo_container_str(NeObj neo) {
+char* neo_container_str(NeObj neo, bool overloaded) {
     Container* c = neo_to_container(neo);
 
     // on regarde si str est surchargé
     char* container_name = global_env->CONTAINERS->tab[c->type];
     int index = function_module(container_name, "str");
     
-    if (index >= 0) { // on exécute la fonction surchargée
+    if (overloaded && index >= 0) { // on exécute la fonction surchargée
         unmark(neo); // sinon ça va faire caca, et de toute façon c'est l'utilisateur qui gère les boucles
 
         NeObj neo_fun = global_env->ADRESSES->tab[index];
@@ -308,7 +308,7 @@ char* neo_container_str(NeObj neo) {
             str1 = addStr2(str1, neo_to_string(list->tab[i]));
             str1 = addStr2(str1, ": ");
 
-            char* s = neobject_str(get_container_field(c, i));
+            char* s = neobject_str(get_container_field(c, i), overloaded);
 
             if (global_env->CODE_ERROR != 0) {
                 return NULL;
@@ -752,7 +752,7 @@ void nelist_aff(NeList* liste)
 
 
 
-char* nelist_str(NeList* list)
+char* nelist_str(NeList* list, bool overloaded)
 {
     if (list->len == 0)
     {
@@ -760,31 +760,31 @@ char* nelist_str(NeList* list)
     }
     else
     {
-        char* str1 = strdup("["), * str2, *temp;
+        char* str1 = strdup("["), *temp;
         for (int i=0 ; i < list->len - 1 ; i++)
         {
-            temp = neobject_str(nelist_nth(list, i));
-
-            if (global_env->CODE_ERROR != 0)
+            temp = neobject_str(nelist_nth(list, i), overloaded);
+            if_error {
+                neon_free(str1);
                 return NULL;
+            }
             
-            str2 = addStr(str1,temp);
-            neon_free(temp);neon_free(str1);
-            str1 = addStr(str2,", ");
-            neon_free(str2);
+            str1 = addStr2(str1,temp);
+            neon_free(temp);
+            str1 = addStr2(str1,", ");
         }
-        temp = neobject_str(nelist_nth(list, list->len-1));
+        temp = neobject_str(nelist_nth(list, list->len-1), overloaded);
 
-        if (global_env->CODE_ERROR != 0)
+        if_error {
+            neon_free(str1);
             return NULL;
+        }
         
-        str2 = addStr(str1,temp);
-        neon_free(str1);neon_free(temp);
-        str1 = addStr(str2, "]");
-        neon_free(str2);
-        return str1;
+        str1 = addStr2(str1,temp);
+        neon_free(temp);
+
+        return addStr2(str1, "]");
     }
-    return NULL;
 }
 
 
@@ -803,7 +803,7 @@ int nelist_getsize(NeList* list) {
 
 void general_nelist_destroy(NeList* list, bool gc_extern)
 {
-    for (int i=0;i<list->len;i++)
+    for (int i=0 ; i<list->len ; i++)
     {
         //if (list == global_env->ADRESSES)
         //    printf("Suppression de %s\n", global_env->NOMS->tab[i]);
@@ -914,16 +914,11 @@ NeList* nelist_literal_create(NeObj* elements) {
     int size = 0;
     while (!neo_is_void(elements[size])) size++;
 
-    if (size > 0) {
-        NeList* list = nelist_create(size);
-        for (int i=0 ; i < size ; i++) {
-            list->tab[i] = elements[i];
-        }
-        return list;
+    NeList* list = nelist_create(size);
+    for (int i=0 ; i < size ; i++) {
+        list->tab[i] = elements[i];
     }
-    else {
-        return NULL;
-    }
+    return list;
 }
 
 
@@ -1022,7 +1017,7 @@ int nelist_index(NeList* liste, NeObj neo)
             return i;
         }
     }
-    neon_fail(88, neo_copy(neo), neo_str_create(neobject_short_repr(gc_extern_neo_list_convert(liste), SHORT_REPR_ERR_SIZE))); // cet objet n'existe pas
+    neon_fail(88, neo_copy(neo), neo_str_create(neobject_short_repr(gc_extern_neo_list_convert(liste), SHORT_REPR_ERR_SIZE, false))); // cet objet n'existe pas
     
     return -1;
 }
@@ -1037,7 +1032,7 @@ int nelist_index2(NeList* l, NeObj neo)
         if (neo_equal(neo, l->tab[i]))
             return i;
     }
-    neon_fail(88, neo_copy(neo), neo_str_create(neobject_short_repr(gc_extern_neo_list_convert(l), SHORT_REPR_ERR_SIZE))); // cet objet n'existe pas
+    neon_fail(88, neo_copy(neo), neo_str_create(neobject_short_repr(gc_extern_neo_list_convert(l), SHORT_REPR_ERR_SIZE, false))); // cet objet n'existe pas
     return -1;
 }
 
@@ -1513,7 +1508,7 @@ void neobject_aff(NeObj neo)
             neo_promise_aff(neo);
         }
         else if (NEO_TYPE(neo) == TYPE_EMPTY) {
-            printString("<empty>");
+            printString("undefined");
         }
 
         unmark(neo);
@@ -1523,7 +1518,7 @@ void neobject_aff(NeObj neo)
 
 
 
-char* neobject_str(NeObj neo)
+char* neobject_str(NeObj neo, bool overloaded)
 {
     // on doit à tout prix éviter une boucle infinie due aux objets auto-référençant
     // pour ça avant d'afficher un objet on le marque, on le démarque après
@@ -1555,7 +1550,7 @@ char* neobject_str(NeObj neo)
         }
         else if (NEO_TYPE(neo) == TYPE_LIST)
         {
-            ret = nelist_str(neo.nelist);
+            ret = nelist_str(neo.nelist, overloaded);
         }
         else if (NEO_TYPE(neo) == TYPE_CONST)
         {
@@ -1614,7 +1609,7 @@ char* neobject_str(NeObj neo)
                     if (!neo_is_void(nelist_nth(fun->opt_args, i))) // expression non vide
                     {
                         ret = addStr2(ret, " := ");
-                        char* obj_str = neobject_str(nelist_nth(fun->opt_args, i));
+                        char* obj_str = neobject_str(nelist_nth(fun->opt_args, i), overloaded);
                         ret = addStr2(ret, obj_str);
                         neon_free(obj_str);
                     }
@@ -1628,10 +1623,13 @@ char* neobject_str(NeObj neo)
 
         else if (NEO_TYPE(neo) == TYPE_CONTAINER)
         {
-            ret = neo_container_str(neo);
+            ret = neo_container_str(neo, overloaded);
         }
         else if (NEO_TYPE(neo) == TYPE_PROMISE) {
             ret = neo_promise_str(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_EMPTY) {
+            ret = strdup("undefined");
         }
         unmark(neo);
 
@@ -1643,9 +1641,9 @@ char* neobject_str(NeObj neo)
 
 
 
-char* neobject_short_repr(NeObj obj, int max_len) {
+char* neobject_short_repr(NeObj obj, int max_len, bool overloaded) {
     // Longueur maximale de la représentation d'un objet
-    char* full_repr = neobject_str(obj);
+    char* full_repr = neobject_str(obj, overloaded);
 
     int length = strlen(full_repr);
 

@@ -88,7 +88,7 @@ void loadExceptions(NeonEnv* env) {
         "SyntaxError",
         "FileSystemError",
         "UnmeasurableObject",
-        "UndefinedVariable",
+        "UndefinedObject",
         "IncorrectFunctionCall",
         "MemoryError",
         "NonIndexableObject",
@@ -102,7 +102,7 @@ void loadExceptions(NeonEnv* env) {
         "KeyboardInterrupt",
         "NotImplemented",
         "ExitSignal",
-        "InternError",
+        "InternalError",
         "DeserializationError"
     };
 
@@ -387,7 +387,7 @@ void terminal(void)
         // quand l'utilisateur appuie sur CTRL-D, ça met CODE_ERROR à 1
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
         {
-            printError(global_env->CODE_ERROR);
+            printError();
             neon_reset_error();
             continue;
         }
@@ -402,9 +402,9 @@ void terminal(void)
         }
         
         
-        if (global_env->CODE_ERROR != 0)
+        if_error
         {
-            printError(global_env->CODE_ERROR);
+            printError();
             neon_free(exp);
             continue;
         }
@@ -413,7 +413,7 @@ void terminal(void)
 
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
         {
-            printError(global_env->CODE_ERROR);
+            printError();
             continue;
         }
 
@@ -427,7 +427,7 @@ void terminal(void)
 
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
-                printError(global_env->CODE_ERROR);
+                printError();
                 TreeBuffer_destroy(&tb);
                 continue;
             }
@@ -446,7 +446,7 @@ void terminal(void)
             exec(&tb, tb.entry_point);
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
-                printError(global_env->CODE_ERROR);
+                printError();
                 TreeBuffer_destroy(&tb);
                 continue;
             }
@@ -493,7 +493,7 @@ void execFile(char* filename) {
     return ;
 
 handle_error:
-    printError(global_env->CODE_ERROR);
+    printError();
     neon_pause("Press ENTER to leave Neon...");
     return;
 }

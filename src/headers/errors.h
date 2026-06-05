@@ -19,7 +19,7 @@
 #define neon_assert(condition, return_value)    if (!(condition)) {neon_fail(120, NO_ARGS) ; return return_value ;}
 
 // Chaîne spéciale pour spécifier un argument dans un message d'erreur
-#define ARGUMENT_SPECIFIER                      "%%"
+#define ERR_ARGUMENT_SPECIFIER                  "%%"
 
 #define neon_malloc     malloc
 #define neon_realloc    realloc
@@ -32,11 +32,12 @@ void neon_free(void* ptr);
 */
 
 void neon_reset_error(void);
+void get_error_info_and_reset(int* code, int* source_id, int* line_number, NeList** error_message_arguments);
 void neon_set_error(int code_error, int line, int source_id, NeList* error_message_arguments);
 void neon_raise_user_exception(int exception_code, char* message);
 
 void printErrorString(char* format, NeList* error_message_arguments);
-void printError(int code);
+void printError(void);
 void printErrSource(char* file, int line);
 int get_exception_from_code_error(int code_error);
 int allocatedMem(void);

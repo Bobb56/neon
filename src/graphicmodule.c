@@ -145,7 +145,7 @@ NeObj getTextWidth(NeList* args) {
     Container* c = neo_to_container(ARG(0));
 
     if (c->type != global_env->graphic_containers.Text) {
-        neon_fail(14);
+        neon_fail(14, NO_ARGS);
         return neo_none_create();
     }
 
@@ -155,7 +155,7 @@ NeObj getTextWidth(NeList* args) {
         NEO_TYPE(c->data->tab[3]) != TYPE_INTEGER ||
         NEO_TYPE(c->data->tab[4]) != TYPE_INTEGER ||
         NEO_TYPE(c->data->tab[5]) != TYPE_INTEGER) {
-            neon_fail(117);
+            neon_fail(117, neo_new_str_create("Text"), neo_new_str_create("Text"));
             return neo_none_create();
     }
     char* text = neo_to_string(c->data->tab[0]);
@@ -195,7 +195,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(2)) ||
                 NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(4)) != TYPE_BOOL) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Circle"), neo_new_str_create("Circle"));
                     return;
             }
             intptr_t x = neo_to_integer(ARG(0));
@@ -217,7 +217,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_BOOL) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Rect"), neo_new_str_create("Rect"));
                     return;
             }
             intptr_t x = neo_to_integer(ARG(0));
@@ -239,7 +239,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(2)) ||
                 !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Line"), neo_new_str_create("Line"));
                     return;
             }
             intptr_t x0 = neo_to_integer(ARG(0));
@@ -258,7 +258,7 @@ void draw_obj(NeObj obj) {
                 NEO_TYPE(ARG(3)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_INTEGER) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Text"), neo_new_str_create("Text"));
                     return;
             }
             char* text = neo_to_string(ARG(0));
@@ -284,7 +284,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(4)) ||
                 !is_number(ARG(5)) ||
                 NEO_TYPE(ARG(6)) != TYPE_INTEGER) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Triangle"), neo_new_str_create("Triangle"));
                     return;
             }
             intptr_t x0 = neo_to_integer(ARG(0));
@@ -301,7 +301,7 @@ void draw_obj(NeObj obj) {
         else if (c->type == global_env->graphic_containers.Polygon) { // draws a polygon
             if (NEO_TYPE(ARG(0)) != TYPE_LIST ||
                 NEO_TYPE(ARG(1)) != TYPE_INTEGER) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Polygon"), neo_new_str_create("Polygon"));
                     return;
             }
             NeList* points = neo_to_list(ARG(0));
@@ -311,7 +311,7 @@ void draw_obj(NeObj obj) {
 
             for (int i = 0 ; i < points->len ; i++) {
                 if (NEO_TYPE(points->tab[i]) != TYPE_CONTAINER) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Polygon"), neo_new_str_create("Polygon"));
                     return;
                 }
                 Container* point = neo_to_container(points->tab[i]);
@@ -319,7 +319,7 @@ void draw_obj(NeObj obj) {
                 if (point->type != global_env->graphic_containers.Point ||
                     !is_number(point->data->tab[0]) ||
                     !is_number(point->data->tab[1])) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Polygon"), neo_new_str_create("Polygon"));
                     return;
                 }
 
@@ -338,7 +338,7 @@ void draw_obj(NeObj obj) {
                 !is_number(ARG(3)) ||
                 NEO_TYPE(ARG(4)) != TYPE_INTEGER ||
                 NEO_TYPE(ARG(5)) != TYPE_BOOL) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("Ellipse"), neo_new_str_create("Ellipse"));
                     return;
             }
             intptr_t x = neo_to_integer(ARG(0));
@@ -358,7 +358,7 @@ void draw_obj(NeObj obj) {
             if (!is_number(ARG(0)) ||
                 !is_number(ARG(1)) ||
                 NEO_TYPE(ARG(2)) != TYPE_INTEGER) {
-                    neon_fail(117);
+                    neon_fail(117, neo_new_str_create("FloodFill"), neo_new_str_create("FloodFill"));
                     return;
             }
             intptr_t x = neo_to_integer(ARG(0));
@@ -376,7 +376,7 @@ void draw_obj(NeObj obj) {
         UserFunc* fun = neo_to_userfunc(obj);
 
         if (fun->nbArgs != 0) {
-            neon_fail(14);
+            neon_fail(14, NO_ARGS);
             return;
         }
         NeList* args = nelist_create(0);
@@ -387,7 +387,7 @@ void draw_obj(NeObj obj) {
         Function* fun = neo_to_function(obj);
 
         if (fun->nbArgs != 0) {
-            neon_fail(14);
+            neon_fail(14, NO_ARGS);
             return;
         }
 
@@ -740,7 +740,7 @@ void init_graphicmodule(NeonEnv* env) {
         if (!neo_is_void(env->ATTRIBUTES->tab[index]) && !nelist_equal(neo_to_list(env->ATTRIBUTES->tab[index]), fields)) {
             // si on met pas ce garde fou, on peut overrider le type de container en silence
             nelist_destroy(fields);
-            neon_fail(116);
+            neon_fail(116, neo_new_str_create(container_types[i].name));
             return;
         }
 
