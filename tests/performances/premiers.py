@@ -1,4 +1,4 @@
-max = 40000 # int(input ("Jusqu'ou voulez-vous que l'on detecte les nombres premiers ? "))
+max = 20000 # int(input ("Jusqu'ou voulez-vous que l'on detecte les nombres premiers ? "))
 
 est_premier = False
 premiers = []

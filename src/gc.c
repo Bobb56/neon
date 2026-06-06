@@ -244,11 +244,11 @@ void gc_var_loc_mark(ContextStack* var_loc) {
 
 
 
-void gc_varsToSave_mark(ptrlist* varsToSave) {
-    for (ptrlist* ptr = varsToSave ; ptr != NULL && ptr->tete != NULL ; ptr = ptr->queue) {
-        NeSave* ns = (NeSave*)ptr->tete;
+void gc_varsToSave_mark(CapturedVars* varsToSave) {
+    for (int i=0 ; i < varsToSave->vars.len ; i++) {
+        NeSave ns = varsToSave->vars.tab[i];
         // on va switcher entre la valeur stockée dans le nesave et la valeur actuelle
-        gc_mark(ns->object);
+        gc_mark(ns.object);
     }
 }
 
@@ -258,7 +258,7 @@ void gc_varsToSave_mark(ptrlist* varsToSave) {
 void gc_processes_var_loc_mark(ProcessCycle* pc) {
     ProcessCycle* ptr = pc;
     do {
-        gc_varsToSave_mark(ptr->process->varsToSave);
+        gc_varsToSave_mark(&ptr->process->varsToSave);
         ptr = ptr->next;
     } while (ptr != pc);
 }

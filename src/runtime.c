@@ -1,3 +1,4 @@
+#include "headers/contexts.h"
 #define NEON_SOURCE_ID 17
 
 #include <stdbool.h>
@@ -17,6 +18,7 @@
 #include "headers/lowlevel.h"
 #include "headers/processcycle.h"
 #include "headers/trees.h"
+#include "headers/neonio.h"
 
 
 void update__name__(char* name)
@@ -247,7 +249,7 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
     // Ouverture du nouveau contexte
     newContext(&global_env->process_cycle->process->var_loc);
     // on sauvegarde les "variables à sauvegarder" de ce processus avant d'en ajouter d'autres
-    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
+    CapturedVarsCheckPoint cp = CapturedVars_get_checkpoint(&global_env->process_cycle->process->varsToSave);
 
     // Affectation des valeurs de values dans les variables de variables
     for (int var_index = 0 ; var_index < fun->nbArgs ; var_index++) {
@@ -266,7 +268,7 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
 
     // Affectation de __local_args__
     if (fun->unlimited_arguments) {
-        Var var = get_var("__local_args__");
+        Var var = get_local_args();
         Process* proc = global_env->process_cycle->process;
 
         if (!isLocal(var, &proc->var_loc)) {
@@ -281,7 +283,7 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
 
     if_error {
         deleteContext(&global_env->process_cycle->process->var_loc);
-        partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+        partialRestore(&global_env->process_cycle->process->varsToSave, cp);
         return NEO_VOID;
     }
 
@@ -295,7 +297,7 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
     deleteContext(&global_env->process_cycle->process->var_loc); // réaffecte les anciennes valeurs des variables qui ont été mises en local
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(&global_env->process_cycle->process->varsToSave, cp);
 
     if (ret_code == EXIT_RETURN) {
         NeObj sov = global_env->RETURN_VALUE;
@@ -895,7 +897,7 @@ int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {
     NeObj expr;
 
     // on garde un pointeur vers le début de la liste quand on est arrivés
-    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete;
+    CapturedVarsCheckPoint cp = CapturedVars_get_checkpoint(&global_env->process_cycle->process->varsToSave);
 
     // on a comme variables locales : int_ret, bloc, inst : d'ailleurs inst doit être empilé partout
 
@@ -1007,7 +1009,7 @@ int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
 
-    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(&global_env->process_cycle->process->varsToSave, cp);
 
     return 0;
 }
@@ -1105,7 +1107,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
 
     // ouverture du nouveau contexte, sauvegarde du variant
     newContext(&global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
-    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
+    CapturedVarsCheckPoint cp = CapturedVars_get_checkpoint(&global_env->process_cycle->process->varsToSave); // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
     local(var, global_env->process_cycle->process); // on localise l'indice de la boucle
 
@@ -1126,7 +1128,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
         if_error
         {
             deleteContext(&global_env->process_cycle->process->var_loc);
-            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+            partialRestore(&global_env->process_cycle->process->varsToSave, cp);
             return 0;
         }
 
@@ -1151,7 +1153,7 @@ int execStatementFor(TreeBuffer* tb, TreeBufferIndex tree) {
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(&global_env->process_cycle->process->varsToSave, cp);
 
     if (int_ret != BREAK)
         return int_ret;
@@ -1175,7 +1177,7 @@ int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_lis
     Var var = treeVar(tb, FOR_ARG(tb, tree, 0))->var; // variable à incrémenter lors de la boucle
 
     newContext(&global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
-    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
+    CapturedVarsCheckPoint cp = CapturedVars_get_checkpoint(&global_env->process_cycle->process->varsToSave); // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
     local(var, global_env->process_cycle->process); // on localise l'indice de la boucle
 
@@ -1195,7 +1197,7 @@ int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_lis
         if_error
         {
             deleteContext(&global_env->process_cycle->process->var_loc);
-            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+            partialRestore(&global_env->process_cycle->process->varsToSave, cp);
             return 0;
         }
 
@@ -1209,7 +1211,7 @@ int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_lis
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(&global_env->process_cycle->process->varsToSave, cp);
 
     if (int_ret != BREAK)
         return int_ret;
@@ -1233,7 +1235,7 @@ int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_s
     Var var = treeVar(tb, FOR_ARG(tb, tree, 0))->var; // variable à incrémenter lors de la boucle
 
     newContext(&global_env->process_cycle->process->var_loc); // nouveau contexte pour rendre des variables locales à la boucle for
-    ptrlist* sov_vars_to_save = global_env->process_cycle->process->varsToSave->tete; // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
+    CapturedVarsCheckPoint cp = CapturedVars_get_checkpoint(&global_env->process_cycle->process->varsToSave); // pour restaurer l'ancienne liste des variables à sauvegarder, une fois qu'on aura fini
 
     local(var, global_env->process_cycle->process); // on localise l'indice de la boucle
 
@@ -1254,7 +1256,7 @@ int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_s
         if_error
         {
             deleteContext(&global_env->process_cycle->process->var_loc);
-            partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+            partialRestore(&global_env->process_cycle->process->varsToSave, cp);
             return 0;
         }
 
@@ -1278,7 +1280,7 @@ int execStatementForeachString(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_s
 
     // on enlève les variables qu'on avait marquées comme "à sauvegarder"
     // on enlève une à une toutes les variables qu'on avait rajoutées
-    partialRestore(global_env->process_cycle->process->varsToSave, sov_vars_to_save);
+    partialRestore(&global_env->process_cycle->process->varsToSave, cp);
 
     if (int_ret != BREAK)
         return int_ret;

@@ -52,6 +52,15 @@ Var get_var_from_addr(NeObj* obj) {
 }
 
 
+Var get_local_args(void) {
+    static Var var = -1;
+    if (var == -1) {
+        var = get_var("__local_args__");
+    }
+    return var;
+}
+
+
 // cette fonction récupère la variable nommée name, et la crée si elle n'existe pas
 Var get_var(char* name) {
     int index = strlist_index(global_env->NOMS,name);

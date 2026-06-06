@@ -114,18 +114,21 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
     neon_assert(!tb->locked, TREE_VOID);
 
     TreeBufferIndex pointer = tb->size;
-    while (tb->size + size > tb->block_size * tb->n_blocks) {
-        tb->n_blocks++;
+    
+    if (tb->size + size > tb->block_size * tb->n_blocks) {
+        while (tb->size + size > tb->block_size * tb->n_blocks) {
+            tb->n_blocks++;
+        }
+        void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
+
+        if (tmp == NULL) {
+            neon_fail(12, NO_ARGS);
+            return TREE_VOID;
+        }
+
+        tb->pointer = tmp;
     }
 
-    void* tmp = neon_realloc(tb->pointer, tb->n_blocks * tb->block_size);
-
-    if (tmp == NULL) {
-        neon_fail(12, NO_ARGS);
-        return TREE_VOID;
-    }
-
-    tb->pointer = tmp;
     tb->size += size;
     return pointer;
 }

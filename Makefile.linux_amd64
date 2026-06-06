@@ -4,8 +4,8 @@ TARGET = bin/neon
 # Compilateur et options
 CC = gcc
 ASM = gcc
-CFLAGS = -O3 -fno-fast-math -ftrapping-math -fsigned-zeros -frounding-math -g # -pg -fsanitize=address
-LDFLAGS = -lm -g # Flags de linkage
+CFLAGS = -O3 -fno-fast-math -ftrapping-math -fsigned-zeros -frounding-math -g  #-pg -fsanitize=address
+LDFLAGS = -lm -g #-pg -fsanitize=address # Flags de linkage
 ASMFLAGS = -g -m64
 
 # Fichiers src et objets

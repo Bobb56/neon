@@ -1215,6 +1215,7 @@ NeObj _detectFiles_(NeList* args) {
 
     rep = opendir(".");
     if (rep == NULL) {
+        neon_free(buffer);
         neon_fail(119, NO_ARGS);
         return NEO_VOID;
     }
@@ -1262,7 +1263,7 @@ NeObj _detectFiles_(NeList* args) {
     HANDLE handle = FindFirstFile(".\\*", &fichier);
 
     if (handle == INVALID_HANDLE_VALUE) {
-        neon_fail(119;
+        neon_fail(119, NO_ARGS);
         neobject_destroy(files);
         neon_free(buffer);
         return NEO_VOID;

@@ -46,7 +46,7 @@ NeonEnv* global_env = NULL;
     // Fonction de gestion du signal
     BOOL WINAPI ctrlHandler(DWORD signal) {
         if (signal == CTRL_C_EVENT) {
-            neon_fail(104);
+            neon_fail(104, NO_ARGS);
             return TRUE;  // Renvoyer TRUE pour indiquer que l'événement a été traité
         }
         return FALSE;
@@ -132,6 +132,9 @@ int NeonEnv_get_size(NeonEnv* env) {
 // initializes an empty environment
 NeonEnv* NeonEnv_init(void) {
     NeonEnv* env = neon_malloc(sizeof(NeonEnv));
+    if (env == NULL) {
+        return NULL;
+    }
 
     env->NAME = 0;
     env->CODE_ERROR = 0;
@@ -153,6 +156,10 @@ NeonEnv* NeonEnv_init(void) {
     env->PROCESS_FINISH = intlist_create(0);
     env->PROMISES_CNT = intptrlist_create(0);
     env->ATOMIC_TIME = PLATFORM_SPECIFIC_ATOMIC_TIME;
+
+    // if (!env->NOMS || !env->TREEBUFFERS || !env->PROMISES || !env->ADRESSES || !env->ATTRIBUTES || !env->EXCEPTIONS || !env->CONTAINERS || !env->process_cycle || !env->PROCESS_FINISH.tab || !env->PROMISES_CNT.tab) {
+    //     return NULL;
+    // }
 
 
     loadFunctions(env);
@@ -366,8 +373,7 @@ void storeAns(NeObj res) {
 
 
 
-void terminal(void)
-{
+void terminal(void) {
     char* exp;
     NeObj res ;
     TreeBuffer tb;
@@ -385,25 +391,21 @@ void terminal(void)
             neon_fail(104, NO_ARGS);
         
         // quand l'utilisateur appuie sur CTRL-D, ça met CODE_ERROR à 1
-        if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
-        {
+        if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
             printError();
-            neon_reset_error();
             continue;
         }
         else if (global_env->CODE_ERROR == 1)
             return;
 
 
-        if (strcmp(exp,"") == 0) // si l'utilisateur n'a rien ecrit
-        {
+        if (strcmp(exp,"") == 0) { // si l'utilisateur n'a rien ecrit
             neon_free(exp);
             continue;
         }
         
         
-        if_error
-        {
+        if_error {
             printError();
             neon_free(exp);
             continue;
@@ -411,16 +413,14 @@ void terminal(void)
 
         tb = createSyntaxTree(exp, true);
 
-        if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
-        {
+        if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
             printError();
             continue;
         }
 
         
         // s'il n'y a qu'une expression, alors, on affiche le résultat de l'expression
-        if (treelistLength(&tb, treeSntxTree(&tb, tb.entry_point)->treelist) == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0]))
-        {
+        if (treelistLength(&tb, treeSntxTree(&tb, tb.entry_point)->treelist) == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0])) {
             TreeBufferIndex exprtree = treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0];
 
             res = eval(&tb, exprtree);
@@ -478,9 +478,6 @@ void execFile(char* filename) {
     if_error {
         goto handle_error;
     }
-
-    //mem_stat printString("taille buffer : "); printInt(tb.block_size * tb.n_blocks);newLine();
-    //mem_stat printString("taille fonctions : "); printInt(global_env->FONCTIONS.block_size * global_env->FONCTIONS.n_blocks);newLine(); 
 
     tb_exec(&tb);
     

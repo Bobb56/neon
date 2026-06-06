@@ -153,7 +153,10 @@ char* read_string_value(NeStream stream) {
 
     // Lecture de la chaîne de caractères
     char* string = neon_malloc(size);
-    return_on_error(NULL);
+    if (string == NULL) {
+        neon_fail(12, NO_ARGS);
+        return NULL;
+    }
     
     if (!NeStream_read(stream, string, size)) {
         neon_free(string);

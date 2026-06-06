@@ -12,6 +12,15 @@ typedef struct ChainonPtr
 } ptrlist;
 
 
+typedef struct
+{
+  uint8_t* map;
+  uint8_t block_size;
+  uint8_t n_blocks;
+} bitmap;
+
+
+
 
 typedef struct
 {
@@ -114,7 +123,12 @@ int intlist_index(intlist* list, int nombre);
 void intlist_insert(intlist* list,int nombre, int index);
 int intlist_max(intlist* list);
 
-
+/*************************boolmap*************************/
+void bitmap_init(bitmap* bm);
+void bitmap_set(bitmap* bm, int index, bool value);
+bool bitmap_get(bitmap* bm, int index);
+void bitmap_destroy(bitmap* bm);
+void bitmap_print(bitmap* bm);
 
 /**************************strlist**********************/
 void strlist_destroy(strlist* list, bool bo);

@@ -11,7 +11,7 @@
 #include "headers/objects.h"
 #include "headers/trees.h"
 #include "headers/contexts.h"
-
+#include "headers/neonio.h"
 
 
 
@@ -22,15 +22,14 @@ NO_INLINE ProcessCycle* loadNextLivingProcess(ProcessCycle* pc) {
         pc = pc->next;
     }
     while (pc->process->state == Finished);
-
-    switchGlobalLocalVariables(pc->process->varsToSave);
+    switchGlobalLocalVariables(&pc->process->varsToSave);
     return pc;
 }
 
 
 
 NO_INLINE void unloadCurrentProcess(Process* p) {
-    switchGlobalLocalVariables(p->varsToSave);
+    switchGlobalLocalVariables(&p->varsToSave);
 }
 
 
@@ -69,8 +68,8 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
     Process* p = neon_malloc(sizeof(Process));
     // création de la nouvelle pile
     ContextStack_init(&p->var_loc);
+    CapturedVars_init(&p->varsToSave);
     p->id = id;
-    p->varsToSave = ptrlist_create();
     p->stack = NULL; // dans le cas où c'est le premier processus que l'on crée, p->stack va rester NULL, sinon on alloue une nouvelle pile
 
     // arguments de l'appel à la fonction
@@ -94,7 +93,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
         if (p->stack == NULL) {
             neon_fail(12, NO_ARGS);
             ContextStack_destroy(&p->var_loc);
-            neon_free(p->varsToSave);
+            CapturedVars_destroy(&p->varsToSave);
             neon_free(p);
             return NULL;
         }
@@ -112,7 +111,7 @@ Process* ProcessCycle_add(ProcessCycle* pc, TreeBuffer* tb, TreeBufferIndex tree
         if (p->stack == NULL) {
             neon_fail(12, NO_ARGS);
             ContextStack_destroy(&p->var_loc);
-            neon_free(p->varsToSave);
+            CapturedVars_destroy(&p->varsToSave);
             neon_free(p);
             return NULL;
         }
@@ -195,7 +194,7 @@ NO_INLINE void ProcessCycle_clean(ProcessCycle* cycle) {
 NO_INLINE void process_preRemove(Process* p) {
     //printf("End process %d\n", p->id);
     p->state = Finished;
-    switchGlobalLocalVariables(p->varsToSave);
+    switchGlobalLocalVariables(&p->varsToSave);
 }
 
 
@@ -216,9 +215,7 @@ NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
         neon_free(p->stack);
     }
 
-    // libération de la pile
-
-    ptrlist_destroy(p->varsToSave, true, true);
+    CapturedVars_destroy(&p->varsToSave);
 
     neon_free(p);
 
@@ -248,31 +245,25 @@ NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
 
 
 
-void save_later(ptrlist* variables_a_sauvegarder, Var var) {
-    // on regarde si cette variable faisait déjà partie de nos variables privatisées ou pas
-    bool bo = false;
-    for (ptrlist* ptr = variables_a_sauvegarder ; ptr != NULL && ptr->tete != NULL && !bo ; ptr = ptr->queue) {
-        NeSave* ns = (NeSave*)ptr->tete;
-        bo = bo || ns->var == var;
-    }
-
-    if (!bo) { // alors il faut ajouter cette variable à nos variables privatisées
-        NeSave* ns = neon_malloc(sizeof(NeSave));
-        ns->object = get_var_value(var);
-        ns->var = var;
-        ptrlist_append(variables_a_sauvegarder, (void*)ns);
+void save_later(CapturedVars* variables_a_sauvegarder, Var var) {
+    if (!bitmap_get(&variables_a_sauvegarder->is_captured, var)) {
+        bitmap_set(&variables_a_sauvegarder->is_captured, var, true);
+        ContextStack_append(
+            &variables_a_sauvegarder->vars,
+            (NeSave) {.var = var, .object = get_var_value(var)}
+        );
     }
 }
 
 
 
 
-void switchGlobalLocalVariables(ptrlist* varsToSave) {
+void switchGlobalLocalVariables(CapturedVars* varsToSave) {
     /*
     Cette fonction sauvegarde la valeur des variables locales au moment où on arrive et restaure la valeur locale des variables locales
     */
-    for (ptrlist* ptr = varsToSave ; ptr != NULL && ptr->tete != NULL ; ptr = ptr->queue) {
-        NeSave* ns = (NeSave*)ptr->tete;
+    for (int i=0 ; i < varsToSave->vars.len ; i++) {
+        NeSave* ns = &varsToSave->vars.tab[i];
         // on va switcher entre la valeur stockée dans le nesave et la valeur actuelle
         NeObj temp = ns->object;
         ns->object = get_var_value(ns->var);
@@ -285,12 +276,11 @@ void switchGlobalLocalVariables(ptrlist* varsToSave) {
 Quand un processus n'a plus besoin d'utiliser une version locale à lui-même de certaines variables,
 on restaure la valeur globale de ces variables, et on enlève les variables de la liste des variables à sauvegarder
 */
-void partialRestore(ptrlist* varsToSave, ptrlist* sov_vars_to_save) {
-    NeSave* save;
-    while (varsToSave->tete != sov_vars_to_save) {
-        save = ptrlist_pop(varsToSave);
-        set_var(save->var, save->object);
-        neon_free(save);
+void partialRestore(CapturedVars* varsToSave, CapturedVarsCheckPoint cp) {
+    while (varsToSave->vars.len != cp) {
+        NeSave save = ContextStack_pop(&varsToSave->vars);
+        set_var(save.var, save.object);
+        bitmap_set(&varsToSave->is_captured, save.var, false);
     }
 }
 

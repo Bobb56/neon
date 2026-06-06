@@ -47,6 +47,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > ATOMIC_TIME
 
 Liste des choses qui ne marchent pas
+--> Neon crashe sur calculatrice quand il y a une erreur
 --> La ligne de l'erreur avec du code parallèle
 _____________________
 
@@ -58,8 +59,7 @@ Peut être qu'il y a des endroits où on oublie de mettre à jour les promesses
 
 General Protection Fault => Problème d'alignement de la pile
 
-Dans runtime, quand on crée l'arbre (le functioncall associé à un lancement en parallèle,
-on ne le crée pas dans global_env->FONCTIONS)
+Si il y a un bug bizarre sur TI_EZ80, penser aux optimisations du compilateurs
 
 
 Avancement et choses à faire :
@@ -67,6 +67,8 @@ Avancement et choses à faire :
 -------------------------------
 
 PLUS TARD
+--> Ajouter un type de donnée bitmap à Neon
+--> Ajouter des tables de hachage à Neon
 --> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 --> Sauvegarder un environnement entier
 > Faire des vrais arguments (genre -i, etc)

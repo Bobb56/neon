@@ -1,3 +1,4 @@
+#include "headers/strings.h"
 #define NEON_SOURCE_ID 3
 
 #include <string.h>
@@ -61,6 +62,7 @@ toklist toklist_create(int len)
 {
   toklist list;
   
+  list.len=len;
   list.capacity = 0;
   list.source_string = NULL;
   list.free_source_string = true;
@@ -76,7 +78,6 @@ toklist toklist_create(int len)
   }
   
   memset(list.tab,0,len);
-  list.len=len;
   return list;
 }
 
@@ -564,6 +565,73 @@ bool ptrlist_isEmpty(ptrlist* l) {
 }
 
 
+/////////////////////// BOOLMAP //////////////////////
+
+// Structure de données permettant de représenter efficacement des tableaux de booléens
+// en utilisant un seul bit par booléen
+
+void bitmap_init(bitmap* bm) {
+  // On commence avec 64 booléens (2^3 * 8)
+  bm->block_size = 4;
+  bm->n_blocks = 1;
+
+  bm->map = neon_malloc(bm->block_size * bm->n_blocks);
+  if (bm->map == NULL) {
+    neon_fail(12, NO_ARGS);
+    return;
+  }
+
+  memset(bm->map, 0, bm->block_size * bm->n_blocks);
+}
+
+void bitmap_extend(bitmap* bm, int byte_index) {
+  if (byte_index >= bm->block_size * bm->n_blocks) {
+    uint8_t new_n_blocks = bm->n_blocks;
+    while (byte_index >= bm->block_size * new_n_blocks) {
+      new_n_blocks += 1;
+    }
+    bm->map = neon_realloc(bm->map, bm->block_size * new_n_blocks);
+    memset(bm->map + bm->block_size * bm->n_blocks, 0, (bm->block_size * new_n_blocks) - (bm->block_size * bm->n_blocks));
+    bm->n_blocks = new_n_blocks;
+  }
+}
+
+void bitmap_set(bitmap* bm, int index, bool value) {
+  uint8_t bit_offset = index % 8;
+  uint8_t byte_index = (index - bit_offset) / 8;
+  bitmap_extend(bm, byte_index);
+
+  uint8_t byte = bm->map[byte_index];
+  uint8_t left_part = (uint8_t)(byte << (bit_offset + 1)) >> (bit_offset + 1);
+  uint8_t right_part = (uint8_t)(byte >> (8 - bit_offset)) << (8 - bit_offset);
+  bm->map[byte_index] = left_part | (uint8_t)(value << (8 - bit_offset - 1)) | right_part;
+}
+
+
+bool bitmap_get(bitmap* bm, int index) {
+  uint8_t bit_offset = index % 8;
+  uint8_t byte_index = (index - bit_offset) / 8;
+  bitmap_extend(bm, byte_index);
+
+  uint8_t byte = bm->map[byte_index];
+  return (uint8_t)(byte << bit_offset) >> 7;
+}
+
+void bitmap_print(bitmap* bm) {
+  for (int i = 0 ; i < bm->block_size * bm->n_blocks ; i++) {
+    printInt(bm->map[i]);
+    if (i < bm->block_size * bm->n_blocks - 1)
+      printString(" ");
+  }
+  newLine();
+}
+
+void bitmap_destroy(bitmap* bm) {
+  neon_free(bm->map);
+}
+
+
+
 //////////////////// INTLIST ////////////////////
 
 
@@ -572,6 +640,7 @@ intlist intlist_create(int len)// crée une liste d'entiers
 {
   intlist list;//crée la structure
   
+  list.len=len;//initialise la bonne longueur
   list.capacity = 0;
   
   while ((1<<list.capacity) < len)
@@ -586,7 +655,6 @@ intlist intlist_create(int len)// crée une liste d'entiers
   
   memset(list.tab,0,len);
   
-  list.len=len;//initialise la bonne longueur
   return list;//retourne la structure
 }
 
@@ -801,6 +869,7 @@ intptrlist intptrlist_create(int len)// crée une liste d'entiers
 {
   intptrlist list;//crée la structure
   
+  list.len=len;//initialise la bonne longueur
   list.capacity = 0;
   
   while ((1<<list.capacity) < len)
@@ -815,7 +884,6 @@ intptrlist intptrlist_create(int len)// crée une liste d'entiers
   
   memset(list.tab,0,len);
   
-  list.len=len;//initialise la bonne longueur
   return list;//retourne la structure
 }
 
@@ -1101,21 +1169,13 @@ bool strlist_inList_sub(strlist* list, char* chaine, int debut, int fin)
 }
 
 
-int strlist_index(strlist* list, char* chaine)
-{
-
-  for (int i=0; i<list->len; i++)
-  {
+int strlist_index(strlist* list, char* chaine) {
+  for (int i = list->len - 1; i >= 0; i--) {
     if (strcmp(chaine,list->tab[i])==0)
-    {
       return i;
-    }
-    
   }
   neon_assert(false, -1);
 }
-
-
 
 
 /*

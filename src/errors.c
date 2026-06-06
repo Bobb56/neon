@@ -49,10 +49,10 @@ static const char* error_messages[NB_ERRORS] = {
     "A non optional argument cannot follow optional arguments or unlimited arguments token '...'.",
     "Lone block of instructions.",
     "Incorrect statement definition.",
-    "Incorrect number of arguments when calling built-in function %%. Expected %% arguments, got %%.",
-    "Invalid index provided for inserting in a list. The list's size is %% and the provided index was %%.",
+    "Incorrect number of arguments when calling built-in function %%.\nExpected %% arguments, got %%.",
+    "Invalid index provided for inserting in a list.\nThe list's size is %% and the provided index was %%.",
     "",
-    "List or string index out of range. Attempt to index element %% whereas the object size is %%.",
+    "List or string index out of range.\nAttempt to index element %% whereas the object size is %%.",
     "Cannot perform %% operation on %% and %%.",
     "Incorrect use of parallel. The syntax is: parallel myFunction(arg1, arg2, etc) .",
     "Too many unnamed arguments. This function expects at most %% unnamed arguments.",
@@ -352,6 +352,8 @@ void printErrorString(char* format, NeList* error_message_arguments) {
             neon_assert(argument_index < error_message_arguments->len,);
 
             char* short_repr = neobject_short_repr(error_message_arguments->tab[argument_index], SHORT_REPR_ERR_SIZE, false);
+            return_on_error();
+
             setColor(BLUE); printString(short_repr); setColor(RED);
             neon_free(short_repr);
 
@@ -368,7 +370,7 @@ void printErrorString(char* format, NeList* error_message_arguments) {
             setColor(RED);
         }
         else {
-            const char current_character[] = {format[i], 0};
+            const char current_character[2] = {format[i], 0};
             printString((char*)current_character);
         }
     }
@@ -383,9 +385,10 @@ void printErrorString(char* format, NeList* error_message_arguments) {
 
 
 void printError(void) {
-    int code, line_number, source_id; NeList* error_message_arguments;
+    int code, line_number, source_id;
+    NeList* error_message_arguments;
     get_error_info_and_reset(&code, &source_id, &line_number, &error_message_arguments);
-    
+
     if (code < 0) // CODE_ERROR négatif = exception lancée par l'utilisateur
     {
         setColor(PURPLE);
@@ -438,7 +441,6 @@ void printError(void) {
     }
     setColor(DEFAULT);
     newLine();
-
     nelist_destroy(error_message_arguments);
 }
 

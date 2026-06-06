@@ -1,9 +1,11 @@
-#include "headers/processcycle.h"
 #define NEON_SOURCE_ID 2
 
 #include "headers/contexts.h"
 #include "headers/errors.h"
 #include "headers/objects.h"
+#include "headers/dynarrays.h"
+#include "headers/processcycle.h"
+#include "headers/neonio.h"
 #include <string.h>
 
 bool isContextMark(NeSave nesave) {
@@ -57,8 +59,6 @@ void ContextStack_destroy(ContextStack* stack)
 
 
 
-
-
 NeSave ContextStack_pop(ContextStack* stack)
 {
     neon_assert(stack->len > 0, (NeSave){0});
@@ -85,6 +85,22 @@ void deleteContext(ContextStack* var_loc) {
 }
 
 
+void CapturedVars_init(CapturedVars* varsToSave) {
+    ContextStack_init(&varsToSave->vars);
+    bitmap_init(&varsToSave->is_captured);
+}
+
+void CapturedVars_destroy(CapturedVars* varsToSave) {
+    ContextStack_destroy(&varsToSave->vars);
+    bitmap_destroy(&varsToSave->is_captured);
+}
+
+
+CapturedVarsCheckPoint CapturedVars_get_checkpoint(CapturedVars* varsToSave) {
+    return varsToSave->vars.len;
+}
+
+
 
 void local(Var var, Process* process)
 {
@@ -93,7 +109,7 @@ void local(Var var, Process* process)
     // En effet la valeur captée par save_later est la variable qui sera exposée aux autres processus, ce doit donc être la valeur présente dans la variable avant toute modification de cette variable en tant que variable locale
     // Si on ne le fait pas, save_later va capter la valeur vide sauvegardée par local, et le remplacement final des variables du processus par les objets de varsToSave va écraser la valeur extérieure de la variable par l'objet vide capté par save_later
     // Cela va donc résulter en une fuite de l'objet original
-    save_later(process->varsToSave, var);
+    save_later(&process->varsToSave, var);
 
     // sauvegarde de l'object actuel
     NeSave ns = (NeSave) {.object = get_var_value(var), .var = var};

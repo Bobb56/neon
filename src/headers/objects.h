@@ -96,6 +96,7 @@ void replace_var(Var var, NeObj object);
 void set_var(Var var, NeObj object);
 NeObj* get_absolute_address(Var var);
 NeObj get_var_value(Var var);
+Var get_local_args(void);
 Var get_var(char* name);
 Var get_var_from_addr(NeObj* obj);
 char* get_name(Var var);

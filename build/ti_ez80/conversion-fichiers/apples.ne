@@ -1,5 +1,5 @@
 #NEON
-initGraphics()
+init("graphics")
 
 function lose() do
     text = Text(text: "You lose!", x:0, y:100, fgcolor: 192, bgcolor: 255, size:7)

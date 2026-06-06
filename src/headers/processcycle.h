@@ -29,8 +29,9 @@ typedef struct Process
     void* stack; // ceci est un pointeur sur l'adresse de début de la pile (le haut de la pile), qui servira à la libérer
     ContextStack var_loc; // les variables locales créés depuis le lancement du processus
     int id;
-    ptrlist* varsToSave;
+    CapturedVars varsToSave;
 } Process;
+
 
 typedef struct ProcessCycle
 {
@@ -49,9 +50,9 @@ bool ProcessCycle_isEmpty(ProcessCycle* pc);
 void ProcessCycle_clean(ProcessCycle* cycle);
 void process_preRemove(Process* p);
 
-void save_later(ptrlist* variables_a_sauvegarder, Var var);
-void switchGlobalLocalVariables(ptrlist* varsToSave);
-void partialRestore(ptrlist* varsToSave, ptrlist* sov_vars_to_save);
+void save_later(CapturedVars* variables_a_sauvegarder, Var var);
+void switchGlobalLocalVariables(CapturedVars* varsToSave);
+void partialRestore(CapturedVars* varsToSave, int sov_vars_to_save);
 int create_new_process(TreeBuffer* tb, TreeBufferIndex tree, NeObj fixed_function, bool isInitialized);
 
 #endif
