@@ -559,15 +559,28 @@ NeObj _randint_(NeList* args)
 
 NeObj _failwith_(NeList* args)
 {
-    setColor(RED);
-    printString(" An error occured: ");
-    printString(neo_to_string(ARG(0)));
-    newLine();
+    setColor(PURPLE);
+    printString(" A fatal error occured");
+    
     setColor(DEFAULT);
+    printString(" in ");
     printErrSource(global_env->FILENAME, global_env->LINENUMBER);
 
+    setColor(PURPLE);
+    printString(" # ");
+
+    setColor(RED);
+    printString(neo_to_string(ARG(0)));
+    newLine();
+
+    // Exiting immediately
+    setColor(PURPLE);
+    printString(" Exiting immediately");
+    newLine();
+
+    setColor(DEFAULT);
+
     neon_fail(1, NO_ARGS);
-    
     return NEO_VOID;
 }
 
@@ -765,9 +778,16 @@ NeObj _create_exception_(NeList* args)
 
 
 NeObj _raise_(NeList* args) {
+
+    NeList* args_list = nelist_create(args->len - 2);
+    for (int i=2 ; i < args->len ; i++) {
+        args_list->tab[i-2] = neo_copy(ARG(i));
+    }
+
     neon_raise_user_exception(
         get_exception_code(ARG(0)),
-        neo_to_string(ARG(1))
+        neo_to_string(ARG(1)),
+        args_list
     );
     return NEO_VOID;
 }
@@ -1341,8 +1361,6 @@ NeObj _deserialize_(NeList* args) {
 
 
 NeObj _format_(NeList* args) {
-    static const char* ARGUMENT_SPECIFIER = "<>";
-    
     if (args->len < 1) {
         neon_fail(14, NO_ARGS);
         return NEO_VOID;
@@ -1355,7 +1373,7 @@ NeObj _format_(NeList* args) {
     char* format = neo_to_string(ARG(0));
 
     int format_length = strlen(format);
-    int specifier_length = strlen(ARGUMENT_SPECIFIER);
+    int specifier_length = strlen(FORMAT_ARGUMENT_SPECIFIER);
 
     // Précalcul de tous les arguments et calcul d'un majorant de la longueur totale de la nouvelle chaîne
     int cumulated_length = format_length;
@@ -1377,7 +1395,7 @@ NeObj _format_(NeList* args) {
 
     for (int i = 0 ; i < format_length ; i++) {
         // Identificateur d'argument
-        if (i < format_length - specifier_length + 1 && strncmp(format + i, ARGUMENT_SPECIFIER, specifier_length) == 0) {
+        if (i < format_length - specifier_length + 1 && strncmp(format + i, FORMAT_ARGUMENT_SPECIFIER, specifier_length) == 0) {
             // Check if we stilla have enough have arguments
             if (argument_index == arguments->len) {
                 neon_fail(48, neo_integer_create(arguments->len), neo_integer_create(argument_index + 1));
@@ -1704,9 +1722,9 @@ static const Function builtinfunctions[] = {
         .typeRetour = TYPE_EXCEPTION
     },
     (Function) {
-        .help = "Exits the program with the given exception and displays the given message",
-        .nbArgs = 2,
-        .typeArgs = (int[]){TYPE_EXCEPTION, TYPE_STRING},
+        .help = "The function needs at least 2 paramteters :\n - The first parameter is an object of type Exception\n - The second parameter is a string. Every \"<>\" in that string will be replaced by the arguments after, similarly to the behavior of format()\nExample: raise(DivisionByZero, \"You tried to divide <> by <>\", 5, 0) will raise the exception DivisionByZero and display \"You tried to divide 5 by 0\"",
+        .nbArgs = -1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
         .typeRetour = TYPE_NONE
     },
     (Function) {

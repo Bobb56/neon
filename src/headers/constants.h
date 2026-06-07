@@ -10,9 +10,11 @@
 // pour débugger
 // #define DEBUG
 
-
+// Définition de chaînes utilisées par le terminal
 #define SEQUENCE_ENTREE    ">> "
 #define SEQUENCE_SUITE     ".. "
+// Chaîne spéciale pour spécifier un argument dans une chaîne formatée
+#define FORMAT_ARGUMENT_SPECIFIER                  "<>"
 
 /*
 Numérotation de versions :

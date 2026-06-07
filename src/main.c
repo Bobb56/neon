@@ -87,6 +87,7 @@ NOUVEAUTéS après la mise à jour 4.1 :
 - Ajouter dans la doc: si on a un argument qui s'appelle __local_args__, il overwrite la valeur de la variable __local_args__
 - Ajout de la fonction format
 - Ajout de la fonction hash pour hacher n'importe quel objet
+- Ajout de la possibilité de formater le message dans raise, et de spécifier des arguments supplémentaires
 */
 
 

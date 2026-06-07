@@ -15,126 +15,126 @@
 static const char* error_messages[NB_ERRORS] = {
     "",// ne doit pas être utilisé
     "",// ne doit pas être utilisé, correspond au code d'erreur d'exit
-    "Multiple decimal points in %%.",
-    "File %% doesn't exist.",
-    "Cannot compute lenghth of %%.",
-    "Variable %% is undefined.",
-    "Too many arguments when calling user-defined function.\nExpected %% at most, got %% (including automatic assignation of optional arguments).",
-    "Insufficient arguments when calling user-defined function.\nExpected at least %% (including automatic assignation of optional arguments), got %% (including automatic assignation of optional arguments).",
+    "Multiple decimal points in <>.",
+    "File <> doesn't exist.",
+    "Cannot compute lenghth of <>.",
+    "Variable <> is undefined.",
+    "Too many arguments when calling user-defined function.\nExpected <> at most, got <> (including automatic assignation of optional arguments).",
+    "Insufficient arguments when calling user-defined function.\nExpected at least <> (including automatic assignation of optional arguments), got <> (including automatic assignation of optional arguments).",
     "Call to an undefined function.",
     "Call to an invalid function.",
-    "%% cannot be used as a start or an end value of a for loop.\nThe for loop start or end value should be an integer.",
+    "<> cannot be used as a start or an end value of a for loop.\nThe for loop start or end value should be an integer.",
     "Incorrect function definition.",
     "Not enough available memory to continue.",
-    "Trying to extract a sub-string of length %% from %% starting at index %%.",
+    "Trying to extract a sub-string of length <> from <> starting at index <>.",
     "Invalid arguments provided in function call.\nType help(function) to see how to use function.",
-    "Trying to index %% whereas it is not indexable.",
-    "Cannot index a list or a string with %%. An index must be an integer.",
+    "Trying to index <> whereas it is not indexable.",
+    "Cannot index a list or a string with <>. An index must be an integer.",
     "Attempt to index an undefined list.",
     "The item was not found in the list.",
     "Undetermined error, likely a syntax issue.",
-    "Cannot evaluate %% as a condition.",
-    "return expects only one argument, %% were given.",
-    "'For' loop variant should be a variable, not a %%.",
-    "%% is an incorrect built-in function name.",
-    "Unknown operator %%.",
-    "Unknown character %%.",
+    "Cannot evaluate <> as a condition.",
+    "return expects only one argument, <> were given.",
+    "'For' loop variant should be a variable, not a <>.",
+    "<> is an incorrect built-in function name.",
+    "Unknown operator <>.",
+    "Unknown character <>.",
     "String, list, or other structure not terminated.",
     "Unclosed string at the end of line.",
-    "Use of keyword %% in an expression.",
+    "Use of keyword <> in an expression.",
     "Block instruction line not followed by an instruction block (e.g., a lone if() statement).",
     "Improper use of an operator; incompatible types used\nconsecutively or an unknown/incompatible type.",
-    "The module %% does not exist.",
+    "The module <> does not exist.",
     "Unable to deserialize container object because it is incompatible with an already existing container type.",
     "A non optional argument cannot follow optional arguments or unlimited arguments token '...'.",
     "Lone block of instructions.",
     "Incorrect statement definition.",
-    "Incorrect number of arguments when calling built-in function %%.\nExpected %% arguments, got %%.",
-    "Invalid index provided for inserting in a list.\nThe list's size is %% and the provided index was %%.",
+    "Incorrect number of arguments when calling built-in function <>.\nExpected <> arguments, got <>.",
+    "Invalid index provided for inserting in a list.\nThe list's size is <> and the provided index was <>.",
     "",
-    "List or string index out of range.\nAttempt to index element %% whereas the object size is %%.",
-    "Cannot perform %% operation on %% and %%.",
+    "List or string index out of range.\nAttempt to index element <> whereas the object size is <>.",
+    "Cannot perform <> operation on <> and <>.",
     "Incorrect use of parallel. The syntax is: parallel myFunction(arg1, arg2, etc) .",
-    "Too many unnamed arguments. This function expects at most %% unnamed arguments.",
-    "Cannot perform %% operation on undefined variable or object.",
-    "Attempt to dereference %%, which does not exist as a variable.",
+    "Too many unnamed arguments. This function expects at most <> unnamed arguments.",
+    "Cannot perform <> operation on undefined variable or object.",
+    "Attempt to dereference <>, which does not exist as a variable.",
     "Euclidean division by zero.",
-    "The first argument of format() must be a String, not %%.",
-    "Too many arguments in format().\nThe format string specifies %% arguments but %% were given.",
-    "Not enough arguments in format().\n%% arguments were given but at least %% were expected.",
+    "The first argument of format() must be a String, not <>.",
+    "Too many arguments in format().\nThe format string specifies <> arguments but <> were given.",
+    "Not enough arguments in format().\n<> arguments were given but at least <> were expected.",
     "",
     "",
-    "Unsupported types for equality tests: %% and %%",
+    "Unsupported types for equality tests: <> and <>",
     "",
     "",
     "",
     "",
     "Attempt to assign the value of an undefined variable to another variable.",
     "Improper use of the '->' operator.",
-    "%% operator cannot be applied to %%.",
-    "Referencing the variable %%, which is undefined.",
-    "Attempt to dereference %%. Only strings can be dereferenced.",
+    "<> operator cannot be applied to <>.",
+    "Referencing the variable <>, which is undefined.",
+    "Attempt to dereference <>. Only strings can be dereferenced.",
     "",
-    "Cannot reverse %%.",
-    "Unrecognized color \"%%\". Only \"blue\", \"green\", \"red\", \"purple\" and \"default\" are supported.",
-    "Invalid arguments to randint: %% and %%. The randint function must have two positive integers a and b as arguments, with a < b.",
+    "Cannot reverse <>.",
+    "Unrecognized color \"<>\". Only \"blue\", \"green\", \"red\", \"purple\" and \"default\" are supported.",
+    "Invalid arguments to randint: <> and <>. The randint function must have two positive integers a and b as arguments, with a < b.",
     "",
     "Undefined error.",
-    "Can not open file %%.",
+    "Can not open file <>.",
     "More closing parentheses, curved brackets or square brackets than opening ones.",
     "local must have at least one argument.",
     "local can only be used in a function or in a method.",
     "Assertion failed.",
     "The '.' operator is only for functions or methods and can only be applied on a variable.",
-    "%% is an incorrect hexadecimal or binary number.",
+    "<> is an incorrect hexadecimal or binary number.",
     "", // code 74 spécial pour les appels d'exceptions
     "",
     "except block not preceded by a try block.",
     "try block not followed by an except block.",
-    "except expects object of type Exception, not %%.",
-    "Attempt to use `in` with %%. `in` can only be calculated with a list.",
-    "'>>' is only for containers. Attempt to use '>>' with an object of type %%.",
+    "except expects object of type Exception, not <>.",
+    "Attempt to use `in` with <>. `in` can only be calculated with a list.",
+    "'>>' is only for containers. Attempt to use '>>' with an object of type <>.",
     "A container field is set but the container is not used.",
-    "The container type %% does not have a %% field.",
-    "The container type %% already exists but with different fields definition.",
+    "The container type <> does not have a <> field.",
+    "The container type <> already exists but with different fields definition.",
     "Containers must contain at least one field.",
-    "Unknown container type %%.",
-    "Two different fields cannot have the same name in a container. Field %% was defined multiple times.",
+    "Unknown container type <>.",
+    "Two different fields cannot have the same name in a container. Field <> was defined multiple times.",
     "Incorrect container definition.",
-    "%% not found in %%.",
-    "Cannot assign a value or execute a method on %% because it is a literal object.",
-    "That list cannot be sorted because %% and %% cannot be compared.",
+    "<> not found in <>.",
+    "Cannot assign a value or execute a method on <> because it is a literal object.",
+    "That list cannot be sorted because <> and <> cannot be compared.",
     "Cannot call a function while dereferencing a container field.",
     "':' outside container definition.",
     "Unknown argument name in user-defined function call.",
-    "Multiple assignation to %% in a user-defined function call.",
+    "Multiple assignation to <> in a user-defined function call.",
     "':=' outside function call or function definition.",
     "Bad arguments definition in function definition.",
     "Use of '...' outside function definition.",
-    "The module %% is unavailable on the platform %%.",
+    "The module <> is unavailable on the platform <>.",
     "Use of return outside function.",
-    "You cannot call a %% in parallel. Only user-defined functions can be called in parallel.",
-    "await takes exactly one argument, %% were given.",
-    "Atomic time cannot be %%. It must be a positive integer, greater or equal to 1.",
+    "You cannot call a <> in parallel. Only user-defined functions can be called in parallel.",
+    "await takes exactly one argument, <> were given.",
+    "Atomic time cannot be <>. It must be a positive integer, greater or equal to 1.",
     "Methods cannot be applied to volatile objects such as function or operator results.",
     "Program interrupted.", // code 104 spécial pour intercepter un CTRL-C
     "Cannot assign a value to a string index.",
     "Stack overflow encountered during runtime.",
-    "The %% operator has not yet been implemented for containers of type %%.",
+    "The <> operator has not yet been implemented for containers of type <>.",
     "For loop can only be defined with 2, 3 or 4 arguments as follows : \n for (var, end)\n for (var, start, end)\n for (var, start, end, step).",
     "foreach needs exactly 2 arguments : a variable and a list or a string.",
     "Methods must have at least one argument, and this argument cannot be optional.",
-    "for/foreach first argument must be a variable, not a %%.",
+    "for/foreach first argument must be a variable, not a <>.",
     "listComp range parameters must be integers.",
-    "%% cannot be converted to an integer.",
-    "This function can only receive integer numbers of real numbers as arguments, not %%.",
+    "<> cannot be converted to an integer.",
+    "This function can only receive integer numbers of real numbers as arguments, not <>.",
     "This functionality has not been implemented yet.",
-    "Cannot initialize graphics without overriding the container type %%. Please check that all the containers you use respect the specification of graphic containers.",
-    "The %% object cannot be drawn because it was not defined correctly.\nPlease see in the documentation how to define correctly a %% object",
-    "str cannot be overloaded with a function that does not return a string. The function returned %%.",
+    "Cannot initialize graphics without overriding the container type <>. Please check that all the containers you use respect the specification of graphic containers.",
+    "The <> object cannot be drawn because it was not defined correctly.\nPlease see in the documentation how to define correctly a <> object",
+    "str cannot be overloaded with a function that does not return a string. The function returned <>.",
     "File system error.",
     "Violation of Neon internal invariants.",
-    "Cannot search for the index of %% in %%. The index function can only search for the index of an object in a list or a string in another string.",
+    "Cannot search for the index of <> in <>. The index function can only search for the index of an object in a list or a string in another string.",
     "Unable to deserialize object because of corrupted data."
 };
 
@@ -327,9 +327,10 @@ void neon_set_error(int code_error, int line, int source_id, NeList* error_messa
     global_env->ERROR_MESSAGE_ARGUMENTS = error_message_arguments;
 }
 
-void neon_raise_user_exception(int exception_code, char* message) {
+void neon_raise_user_exception(int exception_code, char* format, NeList* args) {
     global_env->CODE_ERROR = -exception_code;
-    global_env->EXCEPTION = message;
+    global_env->EXCEPTION = format;
+    global_env->ERROR_MESSAGE_ARGUMENTS = args;
 }
 
 
@@ -343,14 +344,12 @@ void segfault(void) {
 void printErrorString(char* format, NeList* error_message_arguments) {
     setColor(RED);
     int format_length = strlen(format);
-    int specifier_length = strlen(ERR_ARGUMENT_SPECIFIER);
+    int specifier_length = strlen(FORMAT_ARGUMENT_SPECIFIER);
 
     int argument_index = 0;
     for (int i = 0 ; i < format_length ; i++) {
         // Identificateur d'argument
-        if (i < format_length - specifier_length + 1 && strncmp(format + i, ERR_ARGUMENT_SPECIFIER, specifier_length) == 0) {
-            neon_assert(argument_index < error_message_arguments->len,);
-
+        if (argument_index < error_message_arguments->len && i < format_length - specifier_length + 1 && strncmp(format + i, FORMAT_ARGUMENT_SPECIFIER, specifier_length) == 0) {
             char* short_repr = neobject_short_repr(error_message_arguments->tab[argument_index], SHORT_REPR_ERR_SIZE, false);
             return_on_error();
 
@@ -394,9 +393,15 @@ void printError(void) {
         setColor(PURPLE);
         printString(" ");
         printString((char*)global_env->EXCEPTIONS->tab[-code]);
-        printString(": ");
 
-        printString(global_env->EXCEPTION);
+        setColor(DEFAULT);
+        printString(" happened in ");
+        printErrSource(global_env->FILENAME, global_env->LINENUMBER);
+        
+        setColor(PURPLE);
+        printString(" # ");
+        
+        printErrorString(global_env->EXCEPTION, error_message_arguments);
     }
     else
     {
@@ -441,6 +446,7 @@ void printError(void) {
     }
     setColor(DEFAULT);
     newLine();
+
     nelist_destroy(error_message_arguments);
 }
 
