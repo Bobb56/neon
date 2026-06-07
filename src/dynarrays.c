@@ -1090,7 +1090,7 @@ void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il f
   
   if (index >= list->len)
   {
-    neon_fail(38;
+    neon_fail(;
     return ;
   }
   
@@ -1183,7 +1183,7 @@ void strlist_insert(strlist* list,char* chaine, int index)//ajoute un élément 
 {
   if (index > list->len)
   {
-    neon_fail(38;
+    neon_fail(;
     return ;
   }
   

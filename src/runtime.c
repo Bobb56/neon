@@ -1,4 +1,3 @@
-#include "headers/contexts.h"
 #define NEON_SOURCE_ID 17
 
 #include <stdbool.h>
@@ -18,6 +17,8 @@
 #include "headers/lowlevel.h"
 #include "headers/processcycle.h"
 #include "headers/trees.h"
+#include "headers/contexts.h"
+#include "headers/nativefunctions.h"
 #include "headers/neonio.h"
 
 
@@ -518,7 +519,8 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
         
                 if (!funcArgsCheck(fun, args))
                 {
-                    neon_fail(14, NO_ARGS);
+                    const char* fname = get_function_name(fun->id, fun->module);
+                    neon_fail(38, neo_new_const_create(fname), neo_new_const_create(fname));
                     nelist_destroy(args);
                     neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                     return NEO_VOID;

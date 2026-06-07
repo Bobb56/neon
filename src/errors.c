@@ -27,7 +27,7 @@ static const char* error_messages[NB_ERRORS] = {
     "Incorrect function definition.",
     "Not enough available memory to continue.",
     "Trying to extract a sub-string of length <> from <> starting at index <>.",
-    "Invalid arguments provided in function call.\nType help(function) to see how to use function.",
+    "Invalid arguments provided in function call.",
     "Trying to index <> whereas it is not indexable.",
     "Cannot index a list or a string with <>. An index must be an integer.",
     "Attempt to index an undefined list.",
@@ -51,7 +51,7 @@ static const char* error_messages[NB_ERRORS] = {
     "Incorrect statement definition.",
     "Incorrect number of arguments when calling built-in function <>.\nExpected <> arguments, got <>.",
     "Invalid index provided for inserting in a list.\nThe list's size is <> and the provided index was <>.",
-    "",
+    "Invalid arguments provided in call to <>.\nType help(<>) to see how to use that function.",
     "List or string index out of range.\nAttempt to index element <> whereas the object size is <>.",
     "Cannot perform <> operation on <> and <>.",
     "Incorrect use of parallel. The syntax is: parallel myFunction(arg1, arg2, etc) .",
@@ -179,7 +179,7 @@ static const int error_codes_exceptions[NB_ERRORS] = {
     0,
     4,
     8,
-    8,
+    4,
     8,
     9,
     0,
@@ -398,10 +398,12 @@ void printError(void) {
         printString(" happened in ");
         printErrSource(global_env->FILENAME, global_env->LINENUMBER);
         
-        setColor(PURPLE);
-        printString(" # ");
-        
-        printErrorString(global_env->EXCEPTION, error_message_arguments);
+        if (strlen(global_env->EXCEPTION) > 0) {
+            setColor(PURPLE);
+            printString(" # ");
+
+            printErrorString(global_env->EXCEPTION, error_message_arguments);
+        }
     }
     else
     {

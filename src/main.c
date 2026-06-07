@@ -88,6 +88,8 @@ NOUVEAUTéS après la mise à jour 4.1 :
 - Ajout de la fonction format
 - Ajout de la fonction hash pour hacher n'importe quel objet
 - Ajout de la possibilité de formater le message dans raise, et de spécifier des arguments supplémentaires
+- Modification des arguments de la fonction raise
+- Ajouter dans la doc les ajouts/modifications d'exceptions
 */
 
 

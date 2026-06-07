@@ -140,6 +140,7 @@ NeObj neo_bool_create(bool neon_boolean);
 bool neo_is_true(NeObj neo);
 void string_destroy(String* string);
 NeObj neo_new_str_create(const char* string);
+NeObj neo_new_const_create(const char* string);
 NeObj neo_str_create(char* string);
 NeObj neo_list_create(int len);
 void neo_list_append(NeObj neo, NeObj ptr);

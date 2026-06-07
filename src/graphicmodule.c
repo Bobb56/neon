@@ -145,7 +145,7 @@ NeObj getTextWidth(NeList* args) {
     Container* c = neo_to_container(ARG(0));
 
     if (c->type != global_env->graphic_containers.Text) {
-        neon_fail(14, NO_ARGS);
+        neon_fail(38, neo_new_const_create("getTextWidth"), neo_new_const_create("getTextWidth"));
         return neo_none_create();
     }
 
@@ -387,7 +387,8 @@ void draw_obj(NeObj obj) {
         Function* fun = neo_to_function(obj);
 
         if (fun->nbArgs != 0) {
-            neon_fail(14, NO_ARGS);
+            const char* fname = get_function_name(fun->id, fun->module);
+            neon_fail(38, neo_new_const_create(fname), neo_new_const_create(fname));
             return;
         }
 

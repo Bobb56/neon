@@ -778,6 +778,10 @@ NeObj _create_exception_(NeList* args)
 
 
 NeObj _raise_(NeList* args) {
+    if (NEO_TYPE(ARG(0)) != TYPE_EXCEPTION || NEO_TYPE(ARG(1)) != TYPE_STRING) {
+        neon_fail(38, neo_new_const_create("raise"), neo_new_const_create("raise"));
+        return NEO_VOID;
+    }
 
     NeList* args_list = nelist_create(args->len - 2);
     for (int i=2 ; i < args->len ; i++) {
@@ -876,7 +880,7 @@ NeObj _count_(NeList* args)
     }
     else
     {
-        neon_fail(14, NO_ARGS);
+        neon_fail(38, neo_new_const_create("count"), neo_new_const_create("count"));
         return NEO_VOID;
     }
 }
@@ -1362,7 +1366,7 @@ NeObj _deserialize_(NeList* args) {
 
 NeObj _format_(NeList* args) {
     if (args->len < 1) {
-        neon_fail(14, NO_ARGS);
+        neon_fail(38, neo_new_const_create("format"), neo_new_const_create("format"));
         return NEO_VOID;
     }
     else if (NEO_TYPE(ARG(0)) != TYPE_STRING) {

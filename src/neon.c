@@ -103,10 +103,11 @@ void loadExceptions(NeonEnv* env) {
         "NotImplemented",
         "ExitSignal",
         "InternalError",
-        "DeserializationError"
+        "DeserializationError",
+        "Error"
     };
 
-    for (int i = 0 ; i < 19 ; i++) {
+    for (int i = 0 ; i < 20 ; i++) {
         strlist_append(env->EXCEPTIONS, strdup(exceptions[i]));
     }
 }

@@ -707,6 +707,10 @@ NeObj neo_const_create(char* string) // attention, la chaine de caractères pass
     return neo;
 }
 
+NeObj neo_new_const_create(const char* string) {
+    return neo_const_create(strdup(string));
+}
+
 
 
 char* neo_to_const(NeObj neo)
