@@ -4,7 +4,7 @@
 #include "constants.h"
 #include "objects.h"
 
-#define NBBUILTINFUNC 62
+#define NBBUILTINFUNC 63
 
 
 #define ARG(n)      args->tab[n]

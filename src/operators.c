@@ -366,7 +366,9 @@ NeObj _mod(NeObj _op1, NeObj _op2)
         neon_fail(40, neo_new_str_create("%"), neo_copy(_op1), neo_copy(_op2));
         return NEO_VOID;
     }
-    return neo_integer_create(neo_to_integer(_op1) % neo_to_integer(_op2));
+    intptr_t a = neo_to_integer(_op1);
+    intptr_t b = neo_to_integer(_op2);
+    return neo_integer_create((a % b + b) % b);
   }
   else
   {

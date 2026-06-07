@@ -589,7 +589,7 @@ Renvoie un nom de variable nettoyé du préfixe
 On suppose que string commence bel et bien par prefix
 */
 char* remove_prefix(char* string, char* prefix) {
-    return strdup(string + strlen(prefix));
+    return strdup(string + strlen(prefix) + 1);
 }
 
 // renvoie le préfixe d'un nom de variable s'il existe, NULL sinon

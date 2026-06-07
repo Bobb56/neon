@@ -1256,7 +1256,106 @@ void update_if_promise(NeObj* promise) {
 }
 
 
+intptr_t mix(intptr_t a) {
+    return ((~(a >>3)) ^ (a << 5) ^ 834583528601659) * 98710409178618791;
+}
 
+intptr_t hash_combine(intptr_t a, intptr_t b) {
+    return (a ^ (~b) ^ 126592460022139 + 982513480613713) * 522678417827381;
+}
+
+intptr_t string_hash(char* string) {
+    intptr_t hash = 407558787683791;
+    while (*string) {
+        hash = hash_combine(*(string++), hash);
+    }
+    return hash;
+}
+
+
+intptr_t intlist_hash(int* list, int len) {
+    intptr_t hash = 527355878564833;
+    for (int i=0 ; i < len ; i++) {
+        hash = hash_combine(list[i], hash);
+    }
+    return hash;
+}
+
+
+intptr_t nelist_hash(NeList* list) {
+    intptr_t hash = 743931041025407;
+    for (int i=0 ; i < list->len ; i++) {
+        hash = hash_combine(hash, neo_hash(list->tab[i]));
+    }
+    return hash;
+}
+
+intptr_t neo_hash(NeObj neo) {
+    intptr_t final_hash = 0;
+
+    if (ismarked(neo))
+        return final_hash;
+
+    if (neo.type & HEAP_ALLOCATED) {
+        if (NEO_TYPE(neo) == TYPE_STRING || NEO_TYPE(neo) == TYPE_CONST) {
+            final_hash = hash_combine(string_hash(neo_to_string(neo)), NEO_TYPE(neo));
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_LIST) {
+            final_hash = nelist_hash(neo_to_list(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
+            Function* fun = neo_to_function(neo);
+            intptr_t types_hash = hash_combine(
+                hash_combine(fun->nbArgs, intlist_hash((int*)fun->typeArgs, fun->nbArgs)),
+                fun->typeRetour
+            );
+            intptr_t fun_id_hash = hash_combine(fun->id, fun->module);
+
+            intptr_t fun_hash = hash_combine(
+                hash_combine(
+                    fun_id_hash,
+                    string_hash((char*)fun->help)
+                ),
+                hash_combine(
+                    types_hash,
+                    649525520993879
+                )
+            );
+            
+            final_hash = fun_hash;
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_PARTIALFUNC || NEO_TYPE(neo) == TYPE_USERFUNC) {
+            UserFunc* fun = neo_to_userfunc(neo);
+            intptr_t opt_args_hash = (NEO_TYPE(neo) == TYPE_PARTIALFUNC) ? 3462287 : nelist_hash(fun->opt_args);
+            intptr_t doc_hash = (fun->doc == NULL) ? 520067123203699 : string_hash(fun->doc);
+
+            intptr_t h2 = hash_combine(fun->nbOptArgs, opt_args_hash);
+            intptr_t h1 = hash_combine(intlist_hash(fun->args, fun->nbArgs), fun->nbArgs);
+            intptr_t h3 = hash_combine(fun->code, (intptr_t)fun->tree_buffer);
+            intptr_t h4 = hash_combine(doc_hash, fun->isMethod);
+            final_hash = hash_combine(
+                hash_combine(h1, h2),
+                hash_combine(h3, h4)
+            );
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+            Container* c = neo_to_container(neo);
+            final_hash = hash_combine(c->type, nelist_hash(c->data));
+        }
+        else {
+            final_hash = hash_combine(neo.type, neo.integer);
+        }
+    }
+    else {
+        final_hash = hash_combine(neo.type, neo.integer);
+    }
+
+    unmark(neo);
+    return mix(final_hash);
+}
 
 
 
@@ -1884,6 +1983,8 @@ bool neo_equal(NeObj _op1, NeObj _op2)
 
     else if (NEO_TYPE(_op1) == TYPE_EMPTY)
         return NEO_TYPE(_op2) == TYPE_EMPTY;
+    else if (neo_is_void(_op1))
+        return neo_is_void(_op2);
 
     return false; // dans tous les autres cas
   

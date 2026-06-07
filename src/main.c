@@ -67,8 +67,9 @@ Avancement et choses à faire :
 -------------------------------
 
 PLUS TARD
+--> Comparaison de TreeBuffers (en le parcourant de manière consciente de l'arbre dans lequel on est et en parcourant intelligemment les arbres)
 --> Ajouter un type de donnée bitmap à Neon
---> Ajouter des tables de hachage à Neon
+--> Ajouter des tables de hachage à Neon (et une fonction hash par la même occasion)
 --> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 --> Sauvegarder un environnement entier
 > Faire des vrais arguments (genre -i, etc)
@@ -85,6 +86,7 @@ NOUVEAUTéS après la mise à jour 4.1 :
 - Restriction des règles des arguments optionnels dans les fonctions
 - Ajouter dans la doc: si on a un argument qui s'appelle __local_args__, il overwrite la valeur de la variable __local_args__
 - Ajout de la fonction format
+- Ajout de la fonction hash pour hacher n'importe quel objet
 */
 
 

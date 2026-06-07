@@ -151,6 +151,7 @@ char* neo_to_const(NeObj neo);
 NeObj neo_none_create(void);
 NeObj neo_copy(NeObj neo);
 NeObj neo_dup(NeObj neo);
+intptr_t neo_hash(NeObj neo);
 NeObj neo_deepcopy(NeObj neo);
 NeList* nelist_dup(NeList*);
 int neo_list_len(NeObj neo);

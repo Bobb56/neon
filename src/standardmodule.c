@@ -1121,8 +1121,7 @@ NeObj _copy_(NeList* args) {
 
 
 NeObj _load_namespace_(NeList* args) {
-    char* namespace = neo_to_string(ARG(0));
-    char* prefix = addStr(namespace, "~"); // le préfixe que l'on cherche
+    char* prefix = neo_to_string(ARG(0));
     for (int i=0 ; i < global_env->NOMS->len ; i++) {
         if (has_strict_prefix(global_env->NOMS->tab[i], prefix)) {
             char* without_prefix = remove_prefix(global_env->NOMS->tab[i], prefix);
@@ -1137,7 +1136,6 @@ NeObj _load_namespace_(NeList* args) {
             }
         }
     }
-    neon_free(prefix);
     return neo_none_create();
 }
 
@@ -1418,6 +1416,11 @@ NeObj _format_(NeList* args) {
 }
 
 
+NeObj _hash_(NeList* args) {
+    return neo_integer_create(neo_hash(ARG(0)));
+}
+
+
 
 NeObj (*builtinfunctions_pointers[NBBUILTINFUNC])(NeList*) = {
     _print_,
@@ -1481,7 +1484,8 @@ NeObj (*builtinfunctions_pointers[NBBUILTINFUNC])(NeList*) = {
     _hex_,
     _serialize_,
     _deserialize_,
-    _format_
+    _format_,
+    _hash_
 };
 
 
@@ -1548,7 +1552,8 @@ const char* const builtinfunctions_names[] = {
     "hex",
     "serialize",
     "deserialize",
-    "format"
+    "format",
+    "hash"
 };
 
 
@@ -1925,6 +1930,12 @@ static const Function builtinfunctions[] = {
         .nbArgs = -1,
         .typeArgs = (int[]){TYPE_UNSPECIFIED},
         .typeRetour = TYPE_STRING
+    },
+    {
+        .help = "Returns an integer indentifying any object.",
+        .nbArgs = 1,
+        .typeArgs = (int[]){TYPE_UNSPECIFIED},
+        .typeRetour = TYPE_INTEGER
     }
 };
 
