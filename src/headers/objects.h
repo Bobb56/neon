@@ -25,7 +25,11 @@ struct NeList
     NeObj* tab; // tableau de pointeurs de NeObjects
     int len;
     int capacity;
-    struct NeList* myCopy;
+    union { // Champ utilisé pour stocker la copie de l'objet dans lequel est la NeList
+        struct NeList* myCopy;
+        struct Container* container_myCopy;
+        struct UserFunc* userfunc_myCopy;
+    };
     NeObj next;
     NeObj prev;
 };
@@ -34,10 +38,7 @@ struct Container
 {
     int refc;
     int type;
-    NeList* data;
-    struct Container* myCopy;
-    NeObj next;
-    NeObj prev;
+    NeList data;
 };
 
 
@@ -65,11 +66,8 @@ struct UserFunc
     int nbOptArgs; // nombre d'arguments vraiment, vraiment optionnels (par définition, ceux qui sont après ...)
     TreeBuffer* tree_buffer;
     TreeBufferIndex code;
-    NeList* opt_args; // valeurs par défaut des arguments optionnels
+    NeList opt_args; // valeurs par défaut des arguments optionnels
     char* doc;
-    struct UserFunc* myCopy;
-    NeObj prev;
-    NeObj next;
 };
 
 
@@ -79,13 +77,15 @@ typedef struct NeonEnv NeonEnv;
 
 #define NEO_TYPE(neo)                       (neo).type
 #define NEO_VOID                            ((NeObj) {.type = 0, .integer = 0})
+#define NELIST_VOID                         ((NeList){0})
 #define NEO_SPECIAL(code)                   ((NeObj) {.type = TYPE_EMPTY, .integer = code})
 #define IS_NEO_SPECIAL_CODE(neo, code)      (neo.type == TYPE_EMPTY && neo.integer == code)
 
 #define neobject_destroy(neo)               general_neobject_destroy(neo, false)
 #define gc_extern_neobject_destroy(neo)     general_neobject_destroy(neo, true)
 #define nelist_destroy(list)                general_nelist_destroy(list, false)
-#define gc_extern_nelist_destroy(list)                general_nelist_destroy(list, true)
+#define nelist_deinit(list)                 general_nelist_deinit(list, false)
+#define gc_extern_nelist_destroy(list)      general_nelist_destroy(list, true)
 
 bool neo_is_void(NeObj neo);
 bool neo_exact_equal(NeObj a, NeObj b);
@@ -104,8 +104,8 @@ UserFunc* neo_to_userfunc(NeObj neo);
 Function* neo_to_function(NeObj neo);
 NeObj neo_empty_create(void);
 void var_reset(NeObj* neo);
-Container* container_create(int type, NeList* data);
-NeObj neo_container_create(int type, NeList* data);
+Container* container_create(int type, NeList data);
+NeObj neo_container_create(int type, NeList data);
 Container* neo_to_container(NeObj);
 NeObj gc_extern_neo_container_convert(Container* c);
 NeObj neo_container_convert(Container* c);
@@ -119,6 +119,7 @@ int neobject_getsize(NeObj);
 void general_neobject_destroy(NeObj neo, bool gc_extern);
 void neobject_aff(NeObj neo);
 char* neobject_short_repr(NeObj obj, int max_len, bool overloaded);
+void nelist_init(NeList* list, int len);
 NeList* nelist_create(int len);
 NeList* nelist_literal_create(NeObj* elements);
 int nelist_getsize(NeList* list);
@@ -128,7 +129,9 @@ NeObj nelist_nth(NeList* list, int index);
 NeList* nelist_reverse(NeList* list);
 void nelist_remove(NeList* list,int index);
 void nelist_aff(NeList* liste);
+void general_nelist_deinit(NeList*, bool);
 void general_nelist_destroy(NeList* list, bool gc_extern);
+void nelist_deinit_until(NeList *list, int index_max);
 void nelist_destroy_until(NeList *list, int index_max);
 NeObj neo_integer_create(intptr_t number);
 NeObj neo_double_create(double number);
@@ -174,11 +177,12 @@ NeObj functionCall(NeObj fun, NeList* args);
 char* type(NeObj neo);
 bool neo_isMethod(NeObj obj);
 NeObj neo_partialfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, bool isMethod);
-UserFunc* userfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, bool isMethod);
+UserFunc* userfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList opt_args, bool isMethod);
+bool nelist_is_void(NeList* list);
 NeObj neo_userfunc_convert(UserFunc* fun);
 NeObj gc_extern_neo_userfunc_convert(UserFunc* fun);
 NeObj neo_userfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, bool isMethod);
-NeObj neo_userfunc_define(NeObj obj, NeList* opt_args);
+NeObj neo_userfunc_define(NeObj obj, NeList opt_args);
 NeObj neo_exception_create(int index);
 int get_exception_code(NeObj exception);
 bool neo_equal(NeObj _op1, NeObj _op2);

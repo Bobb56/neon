@@ -33,7 +33,7 @@ bool gc_excluded(NeObj neo) {
 NeObj get_next(const NeObj obj) {
     if (NEO_TYPE(obj) == TYPE_CONTAINER) {
         Container* c = neo_to_container(obj);
-        return c->next;
+        return c->data.next;
     }
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         NeList* l = neo_to_list(obj);
@@ -41,7 +41,7 @@ NeObj get_next(const NeObj obj) {
     }
     else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
         UserFunc* f = neo_to_userfunc(obj);
-        return f->next;
+        return f->opt_args.next;
     }
     else {
         return NEO_VOID;
@@ -52,7 +52,7 @@ NeObj get_next(const NeObj obj) {
 NeObj get_prev(const NeObj obj) {
     if (NEO_TYPE(obj) == TYPE_CONTAINER) {
         Container* c = neo_to_container(obj);
-        return c->prev;
+        return c->data.prev;
     }
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         NeList* l = neo_to_list(obj);
@@ -60,7 +60,7 @@ NeObj get_prev(const NeObj obj) {
     }
     else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
         UserFunc* f = neo_to_userfunc(obj);
-        return f->prev;
+        return f->opt_args.prev;
     }
     else {
         return NEO_VOID;
@@ -73,7 +73,7 @@ NeObj get_prev(const NeObj obj) {
 void set_next(NeObj obj, NeObj next) {
     if (NEO_TYPE(obj) == TYPE_CONTAINER) {
         Container* c = neo_to_container(obj);
-        c->next = next;
+        c->data.next = next;
     }
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         NeList* l = neo_to_list(obj);
@@ -81,14 +81,14 @@ void set_next(NeObj obj, NeObj next) {
     }
     else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
         UserFunc* f = neo_to_userfunc(obj);
-        f->next = next;
+        f->opt_args.next = next;
     }
 }
 
 void set_prev(NeObj obj, NeObj prev) {
     if (NEO_TYPE(obj) == TYPE_CONTAINER) {
         Container* c = neo_to_container(obj);
-        c->prev = prev;
+        c->data.prev = prev;
     }
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         NeList* l = neo_to_list(obj);
@@ -96,7 +96,7 @@ void set_prev(NeObj obj, NeObj prev) {
     }
     else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
         UserFunc* f = neo_to_userfunc(obj);
-        f->prev = prev;
+        f->opt_args.prev = prev;
     }
 }
 
@@ -110,16 +110,16 @@ void gc_add_deep_object(const NeObj next) {
 
 // on supprime l'objet de la liste chaînée
 void gc_remove_container(Container* c) {
-    if (neo_is_void(c->prev)) { // c'est le premier élément de la chaîne
-        global_env->OBJECTS_LIST = c->next;
+    if (neo_is_void(c->data.prev)) { // c'est le premier élément de la chaîne
+        global_env->OBJECTS_LIST = c->data.next;
         if (!neo_is_void(global_env->OBJECTS_LIST))
             set_prev(global_env->OBJECTS_LIST, NEO_VOID);
     }
     else {
-        set_next(c->prev, c->next);
+        set_next(c->data.prev, c->data.next);
 
-        if (!neo_is_void(c->next))
-            set_prev(c->next, c->prev);
+        if (!neo_is_void(c->data.next))
+            set_prev(c->data.next, c->data.prev);
     }
 }
 
@@ -139,16 +139,16 @@ void gc_remove_nelist(NeList* l) {
 
 
 void gc_remove_userfunc(UserFunc* f) {
-    if (neo_is_void(f->prev)) { // c'est le premier élément de la chaîne
-        global_env->OBJECTS_LIST = f->next;
+    if (neo_is_void(f->opt_args.prev)) { // c'est le premier élément de la chaîne
+        global_env->OBJECTS_LIST = f->opt_args.next;
         if (!neo_is_void(global_env->OBJECTS_LIST))
             set_prev(global_env->OBJECTS_LIST, NEO_VOID);
     }
     else {
-        set_next(f->prev, f->next);
+        set_next(f->opt_args.prev, f->opt_args.next);
 
-        if (!neo_is_void(f->next))
-            set_prev(f->next, f->prev);
+        if (!neo_is_void(f->opt_args.next))
+            set_prev(f->opt_args.next, f->opt_args.prev);
     }
 }
 
@@ -188,11 +188,11 @@ void neobject_partial_destroy(NeObj neo)
     }
     else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
         Container* c = neo_to_container(neo);
-        nelist_partial_destroy(c->data);
+        nelist_partial_destroy(&c->data);
     }
     else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
         UserFunc* f = neo_to_userfunc(neo);
-        nelist_partial_destroy(f->opt_args);
+        nelist_partial_destroy(&f->opt_args);
     }
     // on ne peut pas finir la suppression totale de l'objet car on a besoin de démarquer à la fin tous les objets
 }
@@ -219,7 +219,7 @@ void gc_mark(NeObj obj) {
     if (NEO_TYPE(obj) == TYPE_CONTAINER) {
         mark(obj);
         Container* c = neo_to_container(obj);
-        gc_nelist_mark(c->data);
+        gc_nelist_mark(&c->data);
     }
     else if (NEO_TYPE(obj) == TYPE_LIST) {
         mark(obj);
@@ -228,7 +228,7 @@ void gc_mark(NeObj obj) {
     else if (NEO_TYPE(obj) == TYPE_USERFUNC) {
         mark(obj);
         UserFunc* f = neo_to_userfunc(obj);
-        gc_nelist_mark(f->opt_args);
+        gc_nelist_mark(&f->opt_args);
     }
 }
 
@@ -352,14 +352,12 @@ void gc_mark_and_sweep(void) {
 
             if (NEO_TYPE(ptr) == TYPE_CONTAINER) {
                 Container* c = neo_to_container(ptr);
-                neon_free(c->data->tab);
-                neon_free(c->data);
+                neon_free(c->data.tab);
                 neon_free(c);
             }
             else if (NEO_TYPE(ptr) == TYPE_USERFUNC) {
                 UserFunc* f = neo_to_userfunc(ptr);
-                neon_free(f->opt_args->tab);
-                neon_free(f->opt_args);
+                neon_free(f->opt_args.tab);
                 if (f->doc != NULL)
                     neon_free(f->doc);
                 neon_free(f->args);
@@ -401,14 +399,12 @@ void gc_final_sweep(void) {
 
         if (NEO_TYPE(ptr) == TYPE_CONTAINER) {
             Container* c = neo_to_container(ptr);
-            neon_free(c->data->tab);
-            neon_free(c->data);
+            neon_free(c->data.tab);
             neon_free(c);
         }
         else if (NEO_TYPE(ptr) == TYPE_USERFUNC) {
             UserFunc* f = neo_to_userfunc(ptr);
-            neon_free(f->opt_args->tab);
-            neon_free(f->opt_args);
+            neon_free(f->opt_args.tab);
             if (f->doc != NULL)
                 neon_free(f->doc);
             neon_free(f->args);

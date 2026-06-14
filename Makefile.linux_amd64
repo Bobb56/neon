@@ -34,7 +34,7 @@ obj/%.o: src/%.S
 clean:
 	rm -f $(C_OBJECTS) $(ASM_OBJECTS) $(TARGET)
 
-tests:
+test:
 	cd tests/bugs && ./tests.sh $1 && cd -
 
 tests-log:

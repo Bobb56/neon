@@ -347,10 +347,8 @@ void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable, 
             if (!intlist_inList(containers, obj.container->type))
                 intlist_append(containers, obj.container->type);
 
-            // Ajout du pointeur de la nelist
-            intlist_append(typesTable, ContainerNeListPtr);
-            intptrlist_append(ptrTable, obj.container->data);
-            update_ptr_table_list(obj.container->data, ptrTable, typesTable, containers, vars, expt);
+            // Mise à jour récursive des pointeurs dans les champs du container
+            update_ptr_table_list(&obj.container->data, ptrTable, typesTable, containers, vars, expt);
         }
         else if (NEO_TYPE(obj) == TYPE_USERFUNC || NEO_TYPE(obj) == TYPE_PARTIALFUNC) {
             // Mise à jour de la liste des variables utilisées
@@ -377,13 +375,10 @@ void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable, 
             TreeBuffer_iter(tb, NeTree_update_ptr_table, args);
 
             // Ajout des arguments optionnels
-            // Si on est sur une partialfunc, opt_args est à NULL
-            NeList* opt_args = obj.userfunc->opt_args;
-            if (opt_args != NULL && intptrlist_index(ptrTable, opt_args) == -1) {
-                intlist_append(typesTable, UserFuncOptArgsPtr);
-                intptrlist_append(ptrTable, opt_args);
-                update_ptr_table_list(opt_args, ptrTable, typesTable, containers, vars, expt);
-            }
+            // Si on est sur une partialfunc, opt_args est à NELIST_VOID
+            // Mise à jour récursive des pointeurs dans les champs du container
+            if (!nelist_is_void(&obj.userfunc->opt_args))
+                update_ptr_table_list(&obj.userfunc->opt_args, ptrTable, typesTable, containers, vars, expt);
         }
     }
     else if (NEO_TYPE(obj) == TYPE_EXCEPTION) {
@@ -647,6 +642,24 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
 
 
 
+void serialize_nelist(NeStream stream, NeList* list, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* exceptions) {
+    if (nelist_is_void(list)) {
+        write_number_value(stream, -1);
+    }
+    else {
+        // Écriture du champ len de la NeList
+        write_number_value(stream, list->len);
+
+        // Écriture de chaque NeObject
+        for (int j = 0 ; j < list->len ; j++) {
+            serialize_partial_neobject_opt(stream, list->tab[j], ptrTable, exceptions);
+        }
+    }
+}
+
+
+
+
 /*
 Format :
 Number : Taille de la table
@@ -684,13 +697,7 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
             }
 
             case NeListPtr: {
-                // Écriture du champ len de la NeList
-                write_number_value(stream, ptr.nelist->len);
-
-                // Écriture de chaque NeObject
-                for (int j = 0 ; j < ptr.nelist->len ; j++) {
-                    serialize_partial_neobject_opt(stream, ptr.nelist->tab[j], ptrTable, exceptions);
-                }
+                serialize_nelist(stream, ptr.nelist, ptrTable, typesTable, containers, vars, exceptions);
                 break;
             }
 
@@ -700,9 +707,8 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
                 neon_assert(ctnr_index >= 0,);
                 write_number_value(stream, ctnr_index);
 
-                // Écriture de l'indice de la NeList
-                intptr_t list_index = intptrlist_index(ptrTable, ptr.container->data);
-                write_number_value(stream, list_index);
+                // Écriture de la NeList
+                serialize_nelist(stream, &ptr.container->data, ptrTable, typesTable, containers, vars, exceptions);
                 break;
             }
 
@@ -727,8 +733,9 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
                 
                 NeStream_write(stream, &ptr.userfunc->code, sizeof(TreeBufferIndex));
                 write_number_value(stream, intptrlist_index(ptrTable, ptr.userfunc->tree_buffer));
-                // Dans le cas où on sérialise une PartialFunc, on écrit un -1
-                write_number_value(stream, intptrlist_index(ptrTable, ptr.userfunc->opt_args));
+
+                // Écriture de la NeList
+                serialize_nelist(stream, &ptr.userfunc->opt_args, ptrTable, typesTable, containers, vars, exceptions);
                 break;
             }
 
@@ -820,6 +827,31 @@ NeObj read_partial_neobject(NeStream stream) {
 }
 
 
+
+void deserialize_nelist(NeStream stream, NeList* list) {
+    int length = read_number_value(stream);
+    return_on_error();
+
+    if (length == -1) {
+        *list = NELIST_VOID;
+    }
+    else {
+        nelist_init(list, length);
+        list->refc = 0; // Lors de sa création la liste n'est accessible depuis nulle part. Plus tard on la relie à d'autres objets, et là on augmente le compteur de références
+        
+        int j=0;
+        for (; j < length ; j++) {
+            list->tab[j] = read_partial_neobject(stream);
+            if_error {
+                neon_free(list->tab);
+                return;
+            }
+        }
+    }
+}
+
+
+
 // On désérialise tous les objets de la table des pointeurs, mais en gardant les références aux autres objets comme des indices dans la table des pointeurs
 void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* expt) {
     int tableSize = read_number_value(stream);
@@ -873,20 +905,12 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
             }
 
             case NeListPtr: {
-                int length = read_number_value(stream);
-                return_on_error();
+                NeList* list = neon_malloc(sizeof(NeList));
+                deserialize_nelist(stream, list);
 
-                NeList* list = nelist_create(length);
-                list->refc = 0; // Lors de sa création la liste n'est accessible depuis nulle part. Plus tard on la relie à d'autres objets, et là on augmente le compteur de références
-                
-                int j=0;
-                for (; j < length ; j++) {
-                    list->tab[j] = read_partial_neobject(stream);
-                    if_error {
-                        neon_free(list->tab);
-                        neon_free(list);
-                        return;
-                    }
+                if_error {
+                    neon_free(list);
+                    return;
                 }
 
                 intptrlist_append(ptrTable, list);
@@ -897,9 +921,12 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
             case ContainerPtr: {
                 int type = containers->tab[read_number_value(stream)];
                 return_on_error();
-                intptr_t index = read_number_value(stream);
+
+                NeList data;
+                deserialize_nelist(stream, &data);
                 return_on_error();
-                Container* c = container_create(type, (void*)index);
+
+                Container* c = container_create(type, data);
                 c->refc = 0; // Lors de sa création le container n'est accessible depuis nulle part. Plus tard on la relie à d'autres objets, et là on augmente le compteur de références
 
                 intptrlist_append(ptrTable, c);
@@ -1025,7 +1052,8 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 }
 
                 // Dans le cas où on est sur une partial func, on lit un -1
-                intptr_t opt_args = read_number_value(stream);
+                NeList opt_args;
+                deserialize_nelist(stream, &opt_args);
                 if_error {
                     neon_free(doc);
                     neon_free(args);
@@ -1041,13 +1069,10 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
                 fun->isMethod = isMethod;
                 fun->runningInstances = 0;
-                fun->myCopy = NULL;
-                fun->next = NEO_VOID;
-                fun->prev = NEO_VOID;
                 fun->args = args;
                 fun->nbArgs = nbArgs;
                 fun->nbOptArgs = nbOptArgs;
-                fun->opt_args = (void*)opt_args;
+                fun->opt_args = opt_args;
                 fun->code = code;
                 fun->doc = doc;
                 fun->unlimited_arguments = unlimited_arguments;
@@ -1186,8 +1211,7 @@ void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable, i
         }
         else if (NEO_TYPE(*neo) == TYPE_CONTAINER && !ismarked(*neo)) {
             mark(*neo);
-            neo->container->data = (NeList*)ptrTable->tab[(intptr_t)neo->container->data];
-            solve_pointers_list(neo->container->data, ptrTable, typesTable, containers, vars, expt);
+            solve_pointers_list(&neo->container->data, ptrTable, typesTable, containers, vars, expt);
             // Ajout de l'objet au Garbage Collector
             neo_container_convert(neo->container);
         }
@@ -1195,12 +1219,9 @@ void solve_pointers_aux(NeObj* neo, intptrlist* ptrTable, intlist* typesTable, i
             mark(*neo);
 
             // Si on est sur une partial func, opt_args est à -1
-            if ((intptr_t)neo->userfunc->opt_args != -1) {
-                neo->userfunc->opt_args = (NeList*)ptrTable->tab[(intptr_t)neo->userfunc->opt_args];
-                solve_pointers_list(neo->userfunc->opt_args, ptrTable, typesTable, containers, vars, expt);
+            if (!nelist_is_void(&neo->userfunc->opt_args)) {
+                solve_pointers_list(&neo->userfunc->opt_args, ptrTable, typesTable, containers, vars, expt);
             }
-            else
-                neo->userfunc->opt_args = NULL;
 
             neo->userfunc->tree_buffer = (TreeBuffer*)ptrTable->tab[(intptr_t)neo->userfunc->tree_buffer];
 

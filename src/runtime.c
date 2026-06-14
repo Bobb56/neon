@@ -182,9 +182,9 @@ NO_OPT void launch_process(void) {
 
 
 // transforme une liste d'arbres en une liste de NeObj en les évaluant tous
-NeList* treeToList(TreeBuffer* tb, TreeBufferIndex tree_list) {
+void treeToList(NeList* l, TreeBuffer* tb, TreeBufferIndex tree_list) {
     int tree_list_length = treelistLength(tb, tree_list);
-    NeList* l = nelist_create(tree_list_length);
+    nelist_init(l, tree_list_length);
 
     for (int index = 0 ; index < tree_list_length ; index++)
     {
@@ -195,15 +195,13 @@ NeList* treeToList(TreeBuffer* tb, TreeBufferIndex tree_list) {
             {
                 // si y a eu un problème dans l'évaluation d'un argument, on doit libérer toute la liste créée jusqu'alors
                 nelist_destroy_until(l, index - 1);
-                return NULL;
+                return;
             }
         }
         else {
             l->tab[index] = NEO_VOID;
         }
     }
-
-    return l;
 }
 
 // Cette fonction assigne 
@@ -221,7 +219,7 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
     // Remplissage du tableau avec les valeurs par défaut des arguments optionnels
     for (int i=0 ; variable_index < fun->nbArgs && i < fun->nbArgs ; i++) {
         // Cette variable a un argument par défaut donc on regarde si l'argument a été donné
-        if (!neo_is_void(fun->opt_args->tab[i])) {
+        if (!neo_is_void(fun->opt_args.tab[i])) {
             bool has_already_been_given = false;
             for (int j=0 ; j < variable_index ; j++) {
                 if (variables[j] == fun->args[i]) {
@@ -232,7 +230,7 @@ NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_in
 
             if (!has_already_been_given) {
                 variables[variable_index] = fun->args[i];
-                values[variable_index] = neo_copy(fun->opt_args->tab[i]);
+                values[variable_index] = neo_copy(fun->opt_args.tab[i]);
                 variable_index++;
             }
         }
@@ -451,7 +449,8 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
         case TypeList:
         {
             // donc les enfants de tree sont les éléments de la liste
-            NeList* l = treeToList(tb, treeSntxTree(tb, tree)->treelist);
+            NeList* l = neon_malloc(sizeof(NeList));
+            treeToList(l, tb, treeSntxTree(tb, tree)->treelist);
             return_on_error(NEO_VOID);
 
             return neo_list_convert(l);
@@ -509,7 +508,8 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             if (NEO_TYPE(function) == TYPE_BUILTINFUNC) {
                 Function* fun = neo_to_function(function);
-                NeList* args = treeToList(tb, tree_fun_call->args);
+                NeList args;
+                treeToList(&args, tb, tree_fun_call->args);
 
                 if_error {
                     neobject_destroy(function);
@@ -517,18 +517,18 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 }
                 
         
-                if (!funcArgsCheck(fun, args))
+                if (!funcArgsCheck(fun, &args))
                 {
                     const char* fname = get_function_name(fun->id, fun->module);
                     neon_fail(38, neo_new_const_create(fname), neo_new_const_create(fname));
-                    nelist_destroy(args);
+                    nelist_deinit(&args);
                     neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                     return NEO_VOID;
                 }
                 
-                NeObj retour = functionCall(function, args);
+                NeObj retour = functionCall(function, &args);
 
-                nelist_destroy(args);
+                nelist_deinit(&args);
                 neobject_destroy(function); // on supprime la fonction que l'on vient de créer
                 
                 if_error {
@@ -696,16 +696,17 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
         {
             struct ContainerLit* tree_cont_lit = treeContLit(tb, tree);
             int nb_attributes = treelistLength(tb, tree_cont_lit->attributes);
-            NeList* val = nelist_create(nb_attributes);
+            NeList val;
+            nelist_init(&val, nb_attributes);
 
             for (int i = 0 ; i < nb_attributes ; i++)
             {
 
-                val->tab[i] = eval_aux(tb, treeAttrLit(tb, treelistGet(tb, tree_cont_lit->attributes)[i])->expr);
+                val.tab[i] = eval_aux(tb, treeAttrLit(tb, treelistGet(tb, tree_cont_lit->attributes)[i])->expr);
 
                 if_error
                 {
-                    nelist_destroy_until(val, i - 1);
+                    nelist_deinit_until(&val, i - 1);
                     return NEO_VOID;
                 }
             }
@@ -1665,7 +1666,8 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 struct FunctionDef* maintree = treeFDef(tb, treelist_array[inst]);
 
                 // il faut d'abord évaluer les arguments optionnels
-                NeList* opt_args = treeToList(tb, maintree->args);
+                NeList opt_args;
+                treeToList(&opt_args, tb, maintree->args);
 
                 // on crée la nouvelle fonction avec ces arguments optionnels
                 NeObj function = neo_userfunc_define(maintree->object, opt_args);

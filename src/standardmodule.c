@@ -368,10 +368,10 @@ NeObj _help_(NeList* args) {
                         char* nom = get_name(fun->args[i]);
                         printString(nom);
 
-                        if (!neo_is_void(nelist_nth(fun->opt_args, i))) // expression non vide
+                        if (!neo_is_void(nelist_nth(&fun->opt_args, i))) // expression non vide
                         {
                             printString(" := ");
-                            neobject_aff(nelist_nth(fun->opt_args, i));
+                            neobject_aff(nelist_nth(&fun->opt_args, i));
                         }
                     }
 
@@ -1298,7 +1298,7 @@ NeObj _detectFiles_(NeList* args) {
             FILE* file = fopen(fichier.cFileName, "r");
 
             if (file == NULL) {
-                neon_fail(119;
+                neon_fail(119, NO_ARGS);
                 neobject_destroy(files);
                 neon_free(buffer);
                 return NEO_VOID;
