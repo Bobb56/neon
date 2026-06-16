@@ -17,44 +17,18 @@
 #include <string.h>
 
 
-/*
-TODO
-- Il faut écrire la structure des types de Containers utilisés en en-tête du fichier, ainsi que les noms de variables utilisés et les types d'exceptions utilisés
-
-Procédé lors de la lecture de l'en-tête :
-Containers :
-------------
-Fabrication d'une liste d'association type de container du fichier -> type de container de l'environnement
-En créant les types de containers nécessaires si inexistants
-
-
-Variables :
-------------
-Fabrication d'une liste d'association variable du fichier -> variable de l'environnement
-En créant les nouvelles variables avec les bons noms si besoin
-
-Exceptions :
-------------
-Fabrication d'une liste d'association code exception du fichier -> code exception de l'environnement
-En créant les nouvelles exceptions si besoin
-
-TODO : Il faut que dans les fonctions d'écriture finale des objets, au même niveau que celui où on remplace les pointeurs internes des objets par des indices de la table des pointeurs, on remplace les indices de variables, les exceptions et les types de containers par leurs indices dans la table des containers, variables, exceptions
-
-
-*/
-
 
 /*
 Procédé de la sérialisation :
 -----------------------------
 - Parcours complet de tout l'objet, construction d'une table d'association numéro/pointeur
-- Sérialisation de chaque pointeur de la table
+- Sérialisation de chaque pointeur de la table en remplaçant tous ses champs internes par des références aux éléments de la table des pointeurs, de la table des exceptions, de la table des variables et de la table des containers
 
 
 Procédé de la désérialisation :
 -------------------------------
-- Désérialisation itérative de tous les pointeurs et reconstruction de la table des pointeurs
-- Parcours de tout l'objet pour restaurer les pointeurs dedans
+- Désérialisation itérative de tous les pointeurs et reconstruction de la table des pointeurs. A ce stade, les champs internes des pointeurs contiennent encore les références aux élements des différentes tables
+- Parcours de tous les objets de la table pour restaurer les référencs aux objets correspondant
 */
 
 
@@ -517,6 +491,9 @@ void serialize_partial_neobject(NeStream stream, NeObj neo, intptrlist* ptrTable
 // Cette fonction écrit exactement tb->size octets, donc aucune compression des indices de la table
 void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptrTable, intlist* containers, intlist* vars, intlist* expt) {
     void* buffer = neon_malloc(100); // Plus grand que n'importe quelle structure d'arbre (taille max atteinte avec FunctionDef sur Linux x86 = 40 octets)
+    if (buffer == NULL) {
+        neon_fail(12, NO_ARGS);
+    }
 
     TreeBufferIndex index = 0;
     while (index < tb->size) {
@@ -619,7 +596,7 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
             case TypeContainerLit: {
                 struct ContainerLit* tree = treeContLit(tb, index);
                 size_t data_size = align8(sizeof(struct ContainerLit));
-                
+
                 memcpy(buffer, tree, data_size);
                 struct ContainerLit* copy = buffer;
 
@@ -888,18 +865,16 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
         switch (ptrType & IGNORE_GC_PROPERTY) {
             case StringPtr: {
                 String* string = neon_malloc(sizeof(String));
+                if (string == NULL) {
+                    neon_fail(12, NO_ARGS);
+                    return;
+                }
                 string->refc = 0; // Lors de sa création la chaîne n'est accessible depuis nulle part. Plus tard on la relie à d'autres objets, et là on augmente le compteur de références
                 
-                // Lecture de la taille de la chaîne de caractères
-                int size = read_number_value(stream);
-                return_on_error();
-                neon_assert(size >= 0,);
+                string->string = read_string_value(stream);
 
-                // Lecture de la chaîne de caractères
-                string->string = neon_malloc((size_t)size);
-                if (!NeStream_read(stream, string->string, (size_t)size)) {
-                    string_destroy(string);
-                    neon_fail(122, NO_ARGS);
+                if_error {
+                    neon_free(string);
                     return;
                 }
 
@@ -920,6 +895,12 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
             case NeListPtr: {
                 NeList* list = neon_malloc(sizeof(NeList));
+
+                if (list == NULL) {
+                    neon_fail(12, NO_ARGS);
+                    return;
+                }
+
                 deserialize_nelist(stream, list);
 
                 if_error {
@@ -975,7 +956,10 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 
                 // Lecture des données (size octets)
                 void* pointer = neon_malloc((size_t)n_blocks * (size_t)block_size);
-                return_on_error();
+                if (pointer == NULL) {
+                    neon_fail(12, NO_ARGS);
+                    return;
+                }
 
                 if (!NeStream_read(stream, pointer, (size_t)size)) {
                     neon_fail(122, NO_ARGS);
@@ -986,7 +970,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 
                 TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
 
-                if_error {
+                if (tb == NULL) {
                     neon_free(pointer);
                     return;
                 }
@@ -1041,7 +1025,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
                 if (size != -1) {
                     doc = neon_malloc(sizeof(char) * (size_t)size);
-                    if_error {
+                    if (doc == NULL) {
                         neon_free(args);
                         return;
                     }
@@ -1079,7 +1063,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 }
 
                 UserFunc* fun = neon_malloc(sizeof(UserFunc));
-                if_error {
+                if (doc == NULL) {
                     neon_free(doc);
                     neon_free(args);
                     return;

@@ -185,7 +185,7 @@ NeObj _remove_(NeList* args)
     intptr_t index = neo_to_integer(ARG(1));
     if (index < 0) {
         neon_fail(50, NO_ARGS);
-        return neo_none_create();
+        return NEO_VOID;
     }
 
     neo_list_remove(ARG(0), (size_t)index);
@@ -201,7 +201,7 @@ NeObj _insert_(NeList* args)
     intptr_t index = neo_to_integer(ARG(2));
     if (index < 0) {
         neon_fail(50, NO_ARGS);
-        return neo_none_create();
+        return NEO_VOID;
     }
     neo_list_insert(ARG(0), neo_copy(ARG(1)), (size_t)index);
     return neo_none_create();
@@ -1350,7 +1350,7 @@ NeObj _detectFiles_(NeList* args) {
     #else
     UNUSED_PARAMETER(args);
     neon_fail(115, NO_ARGS);
-    return neo_none_create();
+    return NEO_VOID;
     #endif
 }
 
@@ -1378,19 +1378,51 @@ NeObj _hex_(NeList* args) {
     return neo_str_create(decToHex(neo_to_integer(ARG(0))));
 }
 
-NeObj _serialize_(NeList* args) {
-    NeStream stream = NeStream_open(neo_to_string(ARG(0)), "w+");
+NeObj _saveObj_(NeList* args) {
+    #ifdef TI_EZ80
+    char* file_name = neo_to_string(ARG(0));
+    #else
+    char* file_name = addStr(neo_to_string(ARG(0)), ".neobj");
+    if (file_name == NULL) {
+        neon_fail(12, NO_ARGS);
+        return NEO_VOID;
+    }
+    #endif
+
+    NeStream stream = NeStream_open(file_name, "w+");
     return_on_error(NEO_VOID);
+
     neobject_serialize(stream, ARG(1));
+
+    #ifndef TI_EZ80
+    neon_free(file_name);
+    #endif
+
     NeStream_close(stream);
     return neo_none_create();
 }
 
 
-NeObj _deserialize_(NeList* args) {
-    NeStream stream = NeStream_open(neo_to_string(ARG(0)), "r");
+NeObj _loadObj_(NeList* args) {
+    #ifdef TI_EZ80
+    char* file_name = neo_to_string(ARG(0));
+    #else
+    char* file_name = addStr(neo_to_string(ARG(0)), ".neobj");
+    if (file_name == NULL) {
+        neon_fail(12, NO_ARGS);
+        return NEO_VOID;
+    }
+    #endif
+
+    NeStream stream = NeStream_open(file_name, "r");
     return_on_error(NEO_VOID);
+
     NeObj neo = neobject_deserialize(stream);
+
+    #ifndef TI_EZ80
+    neon_free(file_name);
+    #endif
+    
     NeStream_close(stream);
     return_on_error(NEO_VOID);
     return neo;
@@ -1438,7 +1470,7 @@ NeObj _format_(NeList* args) {
                 neon_fail(48, neo_integer_create((intptr_t)arguments->len), neo_integer_create((intptr_t)argument_index + 1));
                 strlist_destroy(arguments, true);
                 neon_free(final_string);
-                return neo_none_create();
+                return NEO_VOID;
             }
 
             // Recopie de l'argument n°argument_index dans la chaîne finale
@@ -1463,7 +1495,7 @@ NeObj _format_(NeList* args) {
     if (argument_index < args->len - 1) {
         neon_free(final_string);
         neon_fail(47, neo_integer_create((intptr_t)argument_index), neo_integer_create((intptr_t)args->len-1));
-        return neo_none_create();
+        return NEO_VOID;
     }
 
 
@@ -1537,8 +1569,8 @@ NeObj (*builtinfunctions_pointers[NBBUILTINFUNC])(NeList*) = {
     _safeExec_,
     _bin_,
     _hex_,
-    _serialize_,
-    _deserialize_,
+    _saveObj_,
+    _loadObj_,
     _format_,
     _hash_
 };
@@ -1605,8 +1637,8 @@ const char* const builtinfunctions_names[] = {
     "safeExec",
     "bin",
     "hex",
-    "serialize",
-    "deserialize",
+    "saveObj",
+    "loadObj",
     "format",
     "hash"
 };
@@ -1969,13 +2001,13 @@ static const Function builtinfunctions[] = {
         .typeRetour = TYPE_STRING
     },
     {
-        .help = "Writes a Neon object into a file",
+        .help = "Saves any Neon object into a data file. The file will automatically be saved with the '.neobj' extension.",
         .nbArgs = 2,
         .typeArgs = (int[]){TYPE_STRING, TYPE_UNSPECIFIED},
         .typeRetour = TYPE_NONE
     },
     {
-        .help = "Reads a Neon object from a file created by the serialize function",
+        .help = "Loads a Neon object from a .neobj file created by the saveObj function. The '.neobj' extension is automatically appended to the file name given in argument.",
         .nbArgs = 1,
         .typeArgs = (int[]){TYPE_STRING},
         .typeRetour = TYPE_UNSPECIFIED

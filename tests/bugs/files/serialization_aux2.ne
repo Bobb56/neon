@@ -15,7 +15,7 @@ end
 # On rajoute f dans sa propre clôture
 obj[0] = f
 
-f2 = deserialize('files/data/test1.neobj')
+f2 = loadObj('files/data/test1')
 
 for (_, 100) do
   value = randint(-50000, 50000)/1000
@@ -27,7 +27,7 @@ end
 # Définition préalable d'une variable utilisée par compo
 g = 5
 
-object = deserialize('files/data/test2.neobj')
+object = loadObj('files/data/test2')
 
 function mult(alpha) do
     function aux(x, alpha := alpha) do
@@ -62,7 +62,7 @@ end
 p = Pointer(val: 3, exception: 12)
 
 try
-  p = deserialize('files/data/test3.neobj')
+  p = loadObj('files/data/test3')
   assert(False)
 except (DeserializationError) do
   pass

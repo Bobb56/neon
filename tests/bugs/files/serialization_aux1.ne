@@ -16,7 +16,7 @@ end
 # On rajoute f dans sa propre clôture
 obj[0] = f
 
-serialize('files/data/test1.neobj', f)
+saveObj('files/data/test1', f)
 
 
 # ---------------------- SECOND TEST ----------------------
@@ -39,9 +39,9 @@ end
 
 object = [compo, compo(x2, plus1)]
 
-serialize('files/data/test2.neobj', object)
+saveObj('files/data/test2', object)
 
 # ---------------------- TROISIEME TEST ----------------------
 
 p = Pointer(value: 5, exception: DivisionByZero)
-serialize('files/data/test3.neobj', p)
+saveObj('files/data/test3', p)

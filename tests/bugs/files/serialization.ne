@@ -19,7 +19,7 @@ end
 
 promise = parallel f(1000)
 
-serialize('files/data/promise.neobj', promise)
-promise2 = deserialize('files/data/promise.neobj')
+saveObj('files/data/promise', promise)
+promise2 = loadObj('files/data/promise')
 
 assert(type(promise2) == 'Promise')
