@@ -39,7 +39,7 @@
 
 NeObj _print_(NeList* args)
 {
-    for (int i=0 ; i< args->len ; i++)
+    for (size_t i=0 ; i< args->len ; i++)
     {
         if (NEO_TYPE(ARG(i)) == TYPE_STRING)
             printString(neo_to_string(ARG(i)));
@@ -59,7 +59,7 @@ NeObj _input_(NeList* args)
 
     #ifndef LINUX
 
-        for (int i=0 ; i< args->len ; i++)
+        for (size_t i=0 ; i< args->len ; i++)
         {
             if (NEO_TYPE(ARG(i)) == TYPE_STRING)
                 printString(neo_to_string(ARG(i)));
@@ -77,7 +77,7 @@ NeObj _input_(NeList* args)
         // à cause de linenoise, il faut mettre tout le texte dans une seule chaine de caractères
         char* chaine = strdup("");
 
-        for (int i=0 ; i< args->len ; i++)
+        for (size_t i=0 ; i < args->len ; i++)
         {
             if (NEO_TYPE(ARG(i)) == TYPE_STRING) {
                 chaine = addStr2(chaine, neo_to_string(ARG(i)));
@@ -133,11 +133,11 @@ NeObj _len_(NeList* args)
   NeObj retour;
     if (NEO_TYPE(ARG(0)) == TYPE_LIST)
     {
-        retour = neo_integer_create(neo_list_len(ARG(0)));
+        retour = neo_integer_create((intptr_t)neo_list_len(ARG(0)));
     }
     else if (NEO_TYPE(ARG(0)) == TYPE_STRING)
     {
-      retour = neo_integer_create(strlen(neo_to_string(ARG(0))));
+      retour = neo_integer_create((intptr_t)strlen(neo_to_string(ARG(0))));
     }
     else
     {
@@ -160,8 +160,10 @@ NeObj _substring_(NeList* args)
 
 NeObj _exit_(NeList* args)
 {
-  neon_fail(1, NO_ARGS);
-  return NEO_VOID;
+    UNUSED_PARAMETER(args);
+
+    neon_fail(1, NO_ARGS);
+    return NEO_VOID;
 }
 
 
@@ -180,7 +182,13 @@ NeObj _append_(NeList* args)
 
 NeObj _remove_(NeList* args)
 {
-    neo_list_remove(ARG(0), neo_to_integer(ARG(1)));
+    intptr_t index = neo_to_integer(ARG(1));
+    if (index < 0) {
+        neon_fail(50, NO_ARGS);
+        return neo_none_create();
+    }
+
+    neo_list_remove(ARG(0), (size_t)index);
     return neo_none_create();
 }
 
@@ -190,7 +198,12 @@ NeObj _remove_(NeList* args)
 
 NeObj _insert_(NeList* args)
 {
-    neo_list_insert(ARG(0), neo_copy(ARG(1)), neo_to_integer(ARG(2)));
+    intptr_t index = neo_to_integer(ARG(2));
+    if (index < 0) {
+        neon_fail(50, NO_ARGS);
+        return neo_none_create();
+    }
+    neo_list_insert(ARG(0), neo_copy(ARG(1)), (size_t)index);
     return neo_none_create();
 }
 
@@ -211,11 +224,11 @@ NeObj _reverse_(NeList* args)
     if (NEO_TYPE(ARG(0)) == TYPE_STRING)
     {
         char* chaine = neo_to_string(ARG(0));
-        int len = strlen(chaine);
+        size_t len = strlen(chaine);
         
         char* retour = neon_malloc((len+1)*sizeof(char));
         
-        for (int i=0 ; i<len ; i++)
+        for (size_t i=0 ; i<len ; i++)
         {
             retour[i] = chaine[len-i-1];
         }
@@ -267,6 +280,8 @@ NeObj _eval_(NeList* args)
 
 NeObj _clear_(NeList* args)
 {
+    UNUSED_PARAMETER(args);
+
     clearConsole();
     return neo_none_create();
 }
@@ -293,7 +308,7 @@ NeObj _help_(NeList* args) {
         bool bo = false;
         printString("List of all existing variables :");
         newLine();
-        for (int i = 0 ; i < global_env->NOMS->len ; i++) {
+        for (size_t i = 0 ; i < global_env->NOMS->len ; i++) {
             if (NEO_TYPE(global_env->ADRESSES->tab[i]) != TYPE_EMPTY) {
                 bo=true;
                 printString(global_env->NOMS->tab[i]);printString(": ");setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(DEFAULT);
@@ -312,7 +327,7 @@ NeObj _help_(NeList* args) {
         // affiche les modules trouvés
         printString("List of all existing modules :");
         newLine();
-        for (int i=0 ; i < modules->len ; i++) {
+        for (size_t i=0 ; i < modules->len ; i++) {
             printString(modules->tab[i]);
             newLine();
         }
@@ -329,7 +344,7 @@ NeObj _help_(NeList* args) {
     // aide à propos d'objets en général
     else if (args->len >= 1) {
 
-        for (int i = 0 ; i < args->len ; i++) { // boucle pour afficher l'aide de chaque objet
+        for (size_t i = 0 ; i < args->len ; i++) { // boucle pour afficher l'aide de chaque objet
 
             if (NEO_TYPE(ARG(i)) == TYPE_USERFUNC)
             {
@@ -356,9 +371,9 @@ NeObj _help_(NeList* args) {
 
                 bool bo = false;
 
-                for (int i = 0 ; i < fun->nbArgs ; i++)
+                for (size_t i = 0 ; i < fun->nbArgs ; i++)
                 {
-                    if (fun->unlimited_arguments && i == fun->nbArgs - fun->nbOptArgs && !bo) {
+                    if (fun->unlimited_arguments && i == (size_t)(fun->nbArgs - fun->nbOptArgs) && !bo) {
                         printString("...");
                         i --;
                         bo = true;
@@ -375,7 +390,7 @@ NeObj _help_(NeList* args) {
                         }
                     }
 
-                    if (i < fun->nbArgs - 1)
+                    if (i < (size_t)(fun->nbArgs - 1))
                         printString(", ");
                 }
                 printString(")");
@@ -503,7 +518,7 @@ NeObj _help_(NeList* args) {
             // aide à propos d'un module
             else if (NEO_TYPE(ARG(i)) == TYPE_STRING && is_module(neo_to_string(ARG(0)))) {
                 printString("Module ");printString(neo_to_string(ARG(0)));printString(" :");newLine();
-                for (int i=0 ; i < global_env->NOMS->len ; i++) {
+                for (size_t i=0 ; i < global_env->NOMS->len ; i++) {
                     if (has_strict_prefix(global_env->NOMS->tab[i], neo_to_string(ARG(0))) && NEO_TYPE(global_env->ADRESSES->tab[i]) != TYPE_EMPTY) {
                         printString(global_env->NOMS->tab[i]);printString(": ");
                         setColor(GREEN);printString(type(global_env->ADRESSES->tab[i]));setColor(DEFAULT);newLine();
@@ -520,7 +535,7 @@ NeObj _help_(NeList* args) {
                 printString("The required fields are : ");
 
                 NeList* fields = neo_to_list(global_env->ATTRIBUTES->tab[index]);
-                for (int j = 0 ; j < fields->len - 1 ; j++) {
+                for (size_t j = 0 ; j < fields->len - 1 ; j++) {
                     printString(neo_to_string(fields->tab[j]));
                     printString(", ");
                 }
@@ -588,6 +603,8 @@ NeObj _failwith_(NeList* args)
 
 NeObj _time_(NeList* args)
 {
+    UNUSED_PARAMETER(args);
+
     #ifndef TI_EZ80
         time_t temps = time(NULL);
         double res = (double)temps;
@@ -600,7 +617,7 @@ NeObj _time_(NeList* args)
 
 NeObj _assert_(NeList* args)
 {
-    for (int i = 0 ; i < args->len ; i++)
+    for (size_t i = 0 ; i < args->len ; i++)
     {
         if (!neo_is_true(ARG(i)))
         {
@@ -615,7 +632,7 @@ NeObj _assert_(NeList* args)
 
 NeObj _output_(NeList* args)
 {
-    for (int i=0 ; i< args->len ; i++)
+    for (size_t i=0 ; i< args->len ; i++)
     {
         if (NEO_TYPE(ARG(i)) == TYPE_STRING)
             printString(neo_to_string(ARG(i)));
@@ -784,7 +801,7 @@ NeObj _raise_(NeList* args) {
     }
 
     NeList* args_list = nelist_create(args->len - 2);
-    for (int i=2 ; i < args->len ; i++) {
+    for (size_t i=2 ; i < args->len ; i++) {
         args_list->tab[i-2] = neo_copy(ARG(i));
     }
 
@@ -864,7 +881,7 @@ NeObj _count_(NeList* args)
     {
         int count = 0;
         NeList* l = neo_to_list(ARG(0));
-        for (int i = 0; i < l->len ; i++)
+        for (size_t i = 0; i < l->len ; i++)
         {
             if (neo_equal(ARG(1), l->tab[i]))
                 count++;
@@ -890,7 +907,7 @@ NeObj _list_(NeList* args)
 {
     char* s = neo_to_string(ARG(0));
     NeList* l = nelist_create(strlen(s));
-    for (int i=0 ; i < l->len ; i++)
+    for (size_t i=0 ; i < l->len ; i++)
         l->tab[i] = neo_str_create(charToString(s[i]));
     
     return neo_list_convert(l);
@@ -1146,7 +1163,7 @@ NeObj _copy_(NeList* args) {
 
 NeObj _load_namespace_(NeList* args) {
     char* prefix = neo_to_string(ARG(0));
-    for (int i=0 ; i < global_env->NOMS->len ; i++) {
+    for (size_t i=0 ; i < global_env->NOMS->len ; i++) {
         if (has_strict_prefix(global_env->NOMS->tab[i], prefix)) {
             char* without_prefix = remove_prefix(global_env->NOMS->tab[i], prefix);
 
@@ -1164,6 +1181,8 @@ NeObj _load_namespace_(NeList* args) {
 }
 
 NeObj _gc_(NeList* args) {
+    UNUSED_PARAMETER(args);
+
     gc_mark_and_sweep();
     return neo_none_create();
 }
@@ -1195,7 +1214,7 @@ NeObj _setColor_(NeList* args) {
 
 
 NeObj _init_(NeList* args) {
-    for (int i=0 ; i < args->len ; i++) {
+    for (size_t i=0 ; i < args->len ; i++) {
         char* moduleName = neo_to_string(ARG(i));
 
         if (strcmp(moduleName, "graphics") == 0) {
@@ -1213,10 +1232,10 @@ NeObj _init_(NeList* args) {
 
 // détecte les fichiers commençant par une certaine chaîne de caractères
 NeObj _detectFiles_(NeList* args) {
+    #if defined(TI_EZ80)
+
     NeObj files = neo_list_create(0);
     char* prefix = neo_to_string(ARG(0));
-
-    #if defined(TI_EZ80)
 
     void* vat_ptr = NULL;
     char* var_name;
@@ -1225,7 +1244,12 @@ NeObj _detectFiles_(NeList* args) {
         neo_list_append(files, neo_str_create(strdup(var_name)));
     }
 
+    return files;
+
     #elif defined(LINUX)
+
+    NeObj files = neo_list_create(0);
+    char* prefix = neo_to_string(ARG(0));
 
     // this code mostly comes from ChatGPT
     int prefix_len = strlen(prefix);
@@ -1277,7 +1301,13 @@ NeObj _detectFiles_(NeList* args) {
     closedir(rep);
     neon_free(buffer);
 
+    return files;
+
     #elif defined(WINDOWS)
+
+    NeObj files = neo_list_create(0);
+    char* prefix = neo_to_string(ARG(0));
+    
     int prefix_len = strlen(prefix);
     char* buffer = neon_malloc(prefix_len);
 
@@ -1313,12 +1343,14 @@ NeObj _detectFiles_(NeList* args) {
     } while (FindNextFile(handle, &fichier));
 
     FindClose(handle);
-
     neon_free(buffer);
 
-    #endif
-
     return files;
+
+    #else
+    neon_fail(115, NO_ARGS);
+    return neo_none_create();
+    #endif
 }
 
 
@@ -1376,13 +1408,13 @@ NeObj _format_(NeList* args) {
 
     char* format = neo_to_string(ARG(0));
 
-    int format_length = strlen(format);
-    int specifier_length = strlen(FORMAT_ARGUMENT_SPECIFIER);
+    size_t format_length = strlen(format);
+    size_t specifier_length = strlen(FORMAT_ARGUMENT_SPECIFIER);
 
     // Précalcul de tous les arguments et calcul d'un majorant de la longueur totale de la nouvelle chaîne
-    int cumulated_length = format_length;
+    size_t cumulated_length = format_length;
     strlist* arguments = strlist_create(args->len - 1);
-    for (int i=1 ; i < args->len ; i++) {
+    for (size_t i=1 ; i < args->len ; i++) {
         if (NEO_TYPE(ARG(i)) == TYPE_STRING)
             arguments->tab[i-1] = strdup(neo_to_string(ARG(i)));
         else
@@ -1393,16 +1425,16 @@ NeObj _format_(NeList* args) {
 
     // Écriture des arguments et du reste de la chaîne de format directement dans la chaîne finale
     char* final_string = neon_malloc(sizeof(char) * (cumulated_length + 1));
-    int final_string_index = 0;
+    size_t final_string_index = 0;
 
-    int argument_index = 0;
+    size_t argument_index = 0;
 
-    for (int i = 0 ; i < format_length ; i++) {
+    for (size_t i = 0 ; i < format_length ; i++) {
         // Identificateur d'argument
         if (i < format_length - specifier_length + 1 && strncmp(format + i, FORMAT_ARGUMENT_SPECIFIER, specifier_length) == 0) {
             // Check if we stilla have enough have arguments
             if (argument_index == arguments->len) {
-                neon_fail(48, neo_integer_create(arguments->len), neo_integer_create(argument_index + 1));
+                neon_fail(48, neo_integer_create((intptr_t)arguments->len), neo_integer_create((intptr_t)argument_index + 1));
                 strlist_destroy(arguments, true);
                 neon_free(final_string);
                 return neo_none_create();
@@ -1429,7 +1461,7 @@ NeObj _format_(NeList* args) {
 
     if (argument_index < args->len - 1) {
         neon_free(final_string);
-        neon_fail(47, neo_integer_create(argument_index), neo_integer_create(args->len-1));
+        neon_fail(47, neo_integer_create((intptr_t)argument_index), neo_integer_create((intptr_t)args->len-1));
         return neo_none_create();
     }
 

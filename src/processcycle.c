@@ -43,7 +43,7 @@ void* allocate_new_stack(void) {
 void set_stack_pointer(uint8_t* registers, void* stack) {
     if (stack != NULL) {
         #ifndef TI_EZ80
-        ((uintptr_t*)registers)[0] = -16 & ((uintptr_t)stack + STACK_SIZE); // sommet de la pile aligné à 16 octets
+        ((uintptr_t*)registers)[0] = (uintptr_t)-16 & ((uintptr_t)stack + STACK_SIZE); // sommet de la pile aligné à 16 octets
         #else
         ((uintptr_t*)registers)[0] = ((uintptr_t)stack + STACK_SIZE); // sommet de la pile non aligné
         #endif
@@ -246,8 +246,8 @@ NO_INLINE ProcessCycle* ProcessCycle_remove(ProcessCycle* pc) {
 
 
 void save_later(CapturedVars* variables_a_sauvegarder, Var var) {
-    if (!bitmap_get(&variables_a_sauvegarder->is_captured, var)) {
-        bitmap_set(&variables_a_sauvegarder->is_captured, var, true);
+    if (!bitmap_get(&variables_a_sauvegarder->is_captured, (size_t)var)) {
+        bitmap_set(&variables_a_sauvegarder->is_captured, (size_t)var, true);
         ContextStack_append(
             &variables_a_sauvegarder->vars,
             (NeSave) {.var = var, .object = get_var_value(var)}
@@ -280,7 +280,7 @@ void partialRestore(CapturedVars* varsToSave, CapturedVarsCheckPoint cp) {
     while (varsToSave->vars.len != cp) {
         NeSave save = ContextStack_pop(&varsToSave->vars);
         set_var(save.var, save.object);
-        bitmap_set(&varsToSave->is_captured, save.var, false);
+        bitmap_set(&varsToSave->is_captured, (size_t)save.var, false);
     }
 }
 
@@ -295,7 +295,7 @@ Si on doit supprimer l'arbre, il doit obligatoirement avoir la forme des arbres 
 */
 int create_new_process(TreeBuffer* tb, TreeBufferIndex tree, NeObj fixed_func, bool isInitialized) {
     // calcul de l'identifiant du processus que l'on ajoute
-    int id = 0;
+    size_t id = 0;
 
     // on doit garder les processus n'ayant pas fini et les processus ayant fini mais n'ayant pas toutes été récupérées
     for (; id < global_env->PROMISES->len && (global_env->PROCESS_FINISH.tab[id] == false || *global_env->PROMISES_CNT.tab[id] > 0) ; id++);

@@ -38,7 +38,8 @@ void printError(void);
 void printErrSource(char* file, int line);
 int get_exception_from_code_error(int code_error);
 int allocatedMem(void);
-void bp(char* s);
+void bp(int i);
+void b(int i);
 void segfault(void);
 
 #endif

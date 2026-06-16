@@ -8,7 +8,7 @@
 #include "dynarrays.h"
 #include "trees.h"
 
-#define ADD_STACK_SIZE(n)   volatile char dummy[n] = {0}
+#define ADD_STACK_SIZE(n)   volatile char dummy[n] = {0} ; (void)dummy
 
 #define MAY_INTERRUPT()     if (global_env->atomic_counter == 0) {                      \
                                 global_env->atomic_counter = global_env->ATOMIC_TIME;   \

@@ -1,3 +1,4 @@
+#include <stddef.h>
 #define NEON_SOURCE_ID 20
 
 #include <string.h>
@@ -7,7 +8,6 @@
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
 #include "headers/strings.h"
-#include "extern/linenoise.h"
 #include "headers/objects.h"
 #include "headers/neon.h"
 #include "headers/parser.h"
@@ -17,12 +17,14 @@
 #include <stdio.h>
 #endif
 
+#ifdef LINUX
+#include "extern/linenoise.h"
+#endif
+
 void cleanStdin(void)// vide le buffer
 {
-#ifdef WINDOWS
     int c = 0;
     while ((c = getchar()) != '\n' && c != EOF);
-#endif
 }
 
 
@@ -267,7 +269,7 @@ char* inputCode(char* text)
         setColor(DEFAULT);
         char* str = input("");
     #else
-        char* str = input(SEQUENCE_ENTREE); // dans le cas Linux, input se charge lui-même de mettre le bleu
+        char* str = input(text); // dans le cas Linux, input se charge lui-même de mettre le bleu
     #endif
     
     
@@ -356,12 +358,12 @@ char* sub(char* string, int debut,int fin)//permet d'extraire une sous-chaine
 {
     int longueur = fin-debut;
   
-    if (longueur < 0 || debut >= strlen(string)) {
+    if (longueur < 0 || debut >= (int)strlen(string)) {
         neon_fail(13, neo_integer_create(longueur), neo_new_str_create(string), neo_integer_create(debut));
         return NULL;
     }
   
-    char* newStr = neon_malloc(longueur * sizeof(char)+1);//allocation d'un pointeur
+    char* newStr = neon_malloc((size_t)longueur * sizeof(char)+1);//allocation d'un pointeur
 
     if (newStr == NULL) {
         neon_fail(12, NO_ARGS);
@@ -391,7 +393,7 @@ char* sandwich(char* string, char car)
 {
 
     /* fonction qui ajoute le caractère car avant et après la chaine de caractères string*/
-    int len = strlen(string);
+    size_t len = strlen(string);
     char* newStr = neon_malloc(len + 3);
 
     if (newStr == NULL)
@@ -400,7 +402,7 @@ char* sandwich(char* string, char car)
     newStr[0]=car;
     newStr[len+1]=car;
     newStr[len+2]='\0';
-    for (int i = 0 ; i < len ; i++)
+    for (size_t i = 0 ; i < len ; i++)
         newStr[i+1] = string[i];
     
 
@@ -487,19 +489,19 @@ char* decToHex(intptr_t n) {
 
 
 
-char* subReplace(char* string, int len, int debut, int longueur, char* remplacement, int len_remplacement)//effectue un remplacement quand on lui indique l’endroit et la longueur
+char* subReplace(char* string, size_t len, size_t debut, size_t longueur, char* remplacement, size_t len_remplacement)//effectue un remplacement quand on lui indique l’endroit et la longueur
 {
     neon_assert((unsigned) (debut+longueur) <= strlen(string), NULL);
     
     char* resultat = neon_malloc(sizeof(char) * (len - longueur + len_remplacement + 1));
 
-    for (int i = 0 ; i < debut ; i++) // partie inchangée
+    for (size_t i = 0 ; i < debut ; i++) // partie inchangée
         resultat[i] = string[i];
 
-    for (int i = 0 ; i < len_remplacement ; i++)
+    for (size_t i = 0 ; i < len_remplacement ; i++)
         resultat[i + debut] = remplacement[i];
 
-    for (int i = debut + longueur ; i < len ; i++) // on indexe sur string, il faut donc transformer pour resultat
+    for (size_t i = debut + longueur ; i < len ; i++) // on indexe sur string, il faut donc transformer pour resultat
         resultat[i - longueur + len_remplacement] = string[i];
     
     resultat[len - longueur + len_remplacement] = '\0';
@@ -511,9 +513,9 @@ char* subReplace(char* string, int len, int debut, int longueur, char* remplacem
 
 char* replace(char* string, char* aRemplacer, char* remplacement) //remplace toutes les occurrences d’une chaine par une autre
 {
-    int len_remplacement = strlen(remplacement);
-    int len = strlen(string);
-    int len_aremplacer = strlen(aRemplacer);
+    size_t len_remplacement = strlen(remplacement);
+    size_t len = strlen(string);
+    size_t len_aremplacer = strlen(aRemplacer);
 
     if (len_aremplacer == 0 || len == 0)
     {
@@ -521,12 +523,12 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
     }
 
     intlist l = intlist_create(0);
-    for (int i = 0 ; i < len - len_aremplacer + 1; i++)
+    for (size_t i = 0 ; i < len - len_aremplacer + 1; i++)
     {
         char temp = string[i+len_aremplacer];
         string[i+len_aremplacer] = '\0';
         
-        if (strcmp(aRemplacer, string + i) == 0 && (l.len == 0 || l.tab[l.len-1] + len_aremplacer <= i)) {
+        if (strcmp(aRemplacer, string + i) == 0 && (l.len == 0 || (size_t)l.tab[l.len-1] + len_aremplacer <= i)) {
             intlist_append(&l, i);
         }
 
@@ -536,23 +538,23 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
 
     // création de la nouvelle chaine de caractères
 
-    int new_len = len + l.len * (len_remplacement - len_aremplacer);
+    size_t new_len = len + l.len * (len_remplacement - len_aremplacer);
     char* res = neon_malloc(sizeof(char)*(new_len+1));
     res[new_len] = '\0';
 
-    int i_string = 0, i_res = 0;
+    size_t i_string = 0, i_res = 0;
     while (i_string < len && i_res < new_len)
     {
-        if (l.len != 0 && l.tab[0] == i_string) // ici, il faut écrire remplacement
+        if (l.len != 0 && (size_t)l.tab[0] == i_string) // ici, il faut écrire remplacement
         {
-            for (int i = 0 ; i < len_remplacement ; i++)
+            for (size_t i = 0 ; i < len_remplacement ; i++)
                 res[i+i_res] = remplacement[i];
             
             i_string += len_aremplacer;
             i_res += len_remplacement;
 
 
-            while (l.len != 0 && l.tab[0] < i_string) // au cas où les occurrences sont entremêlées
+            while (l.len != 0 && (size_t)l.tab[0] < i_string) // au cas où les occurrences sont entremêlées
                 intlist_remove(&l, 0);
             
         }
@@ -613,7 +615,7 @@ Renvoie tous les noms de modules existants
 strlist* get_all_modules(void) {
     strlist* modules = strlist_create(0);
     // on récupère tous les noms de modules
-    for (int i=0 ; i < global_env->NOMS->len ; i++) {
+    for (size_t i=0 ; i < global_env->NOMS->len ; i++) {
         char* prefix = get_prefix(global_env->NOMS->tab[i]);
         if (prefix != NULL && NEO_TYPE(global_env->ADRESSES->tab[i]) != TYPE_EMPTY && !strlist_inList(modules, prefix)) {
             strlist_append(modules, prefix);
@@ -628,7 +630,7 @@ strlist* get_all_modules(void) {
 Cette fonction vérifie si un module existe
 */
 bool is_module(char* module) {
-    for (int i=0 ; i < global_env->NOMS->len ; i++) {
+    for (size_t i=0 ; i < global_env->NOMS->len ; i++) {
         if (has_strict_prefix(global_env->NOMS->tab[i], module)) {
             return true;
         }

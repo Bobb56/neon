@@ -103,6 +103,8 @@ void* side_memory_hard_alloc(int size) {
 
 
 void move_treebuffer_to_side_memory(TreeBuffer* tb) {
+    UNUSED_PARAMETER(tb);
+
     //ptrlist_append(pending_treebuffers, tb);
 }
 
@@ -161,12 +163,12 @@ Ast* copy_ast_chain(Ast* root) {
     }
 }
 
-Ast** copy_ast_to_side_memory(Ast** ast, int length) {
+Ast** copy_ast_to_side_memory(Ast** ast, size_t length) {
     void* pointer_save = pointer; // On sauvegarde le pointeur avant de faire des modifs au cas où ça échoue
     Ast** new_ast = side_memory_alloc(sizeof(Ast*) * length);
     return_on_error(NULL);
 
-    for (int i=0 ; i < length ; i++) {
+    for (size_t i=0 ; i < length ; i++) {
         new_ast[i] = copy_ast_chain(ast[i]);
         if_error {
             pointer = pointer_save; // On restaure le pointeur à l'état d'arrivée
@@ -187,7 +189,7 @@ Ast** ast_create(intlist* typeTok) {
     Ast** ast = side_memory_alloc(sizeof(Ast*) * typeTok->len);
     return_on_error(NULL);
 
-    for (int i = 0 ; i < typeTok->len ; i++) {
+    for (size_t i = 0 ; i < typeTok->len ; i++) {
         ast[i] = side_memory_alloc(sizeof(Ast));
 
         if_error {
@@ -217,7 +219,7 @@ void ast_push(Ast* ast) {
 }
 
 
-void ast_push_check(Ast** ast, int fin, int type) {
+void ast_push_check(Ast** ast, size_t fin, int type) {
     //if (ast[0]->fin != fin || ast[0]->type != type)
     //{
         ast_push(ast[0]);

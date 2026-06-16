@@ -1,3 +1,4 @@
+#include <stddef.h>
 #define NEON_SOURCE_ID 21
 
 #include <string.h>
@@ -39,7 +40,7 @@ Ajouter les nouveaux traitements pour les indices de liste et les appels de fonc
 
 
 // création d'un TreeBuffer qui sera automatiquement libéré à la suppression de l'environnement
-TreeBuffer* TreeBuffer_persistent_syntaxtree(Ast** ast, toklist* tokens, intlist* lines, int offset) {
+TreeBuffer* TreeBuffer_persistent_syntaxtree(Ast** ast, toklist* tokens, intlist* lines, size_t offset) {
     TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
     ptrlist_append(global_env->TREEBUFFERS, tb);
     TreeBuffer_init(tb);
@@ -50,7 +51,7 @@ TreeBuffer* TreeBuffer_persistent_syntaxtree(Ast** ast, toklist* tokens, intlist
 }
 
 
-TreeBuffer* TreeBuffer_persistent_expr(Ast** ast, toklist* tokens, intlist* lines, int offset) {
+TreeBuffer* TreeBuffer_persistent_expr(Ast** ast, toklist* tokens, intlist* lines, size_t offset) {
     TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
     ptrlist_append(global_env->TREEBUFFERS, tb);
     TreeBuffer_init(tb);
@@ -64,16 +65,16 @@ TreeBuffer* TreeBuffer_persistent_expr(Ast** ast, toklist* tokens, intlist* line
 
 
 
-void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast, toklist* tokens, intlist* lines, int offset) {
-    int nbVirgules = ast_typeCountAst(ast, tokens->len, TYPE_VIRGULE, offset);
+void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast, toklist* tokens, intlist* lines, size_t offset) {
+    size_t nbVirgules = ast_typeCountAst(ast, tokens->len, TYPE_VIRGULE, offset);
     
     if (nbVirgules > 0) {
-        int index = 0;
+        size_t index = 0;
         toklist sous_tokens;
         
-        for (int j=0 ; j <= nbVirgules ; j++)// boucle qui parcourt toutes les virgules
+        for (size_t j=0 ; j <= nbVirgules ; j++)// boucle qui parcourt toutes les virgules
         {
-            int debut = index;
+            size_t debut = index;
             // avance index jusqu'à la prochaine virgule ou la fin de l'ast
             while (index < tokens->len && ast[index]->type != TYPE_VIRGULE)
                 index = ast[index]->fin + 1 - offset;
@@ -112,7 +113,7 @@ void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast
 
 
 
-TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset)
+TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, size_t offset)
 {
     int count = ast_typeCountAst(ast, tokens->len, TYPE_ENDOFLINE, offset);
     int real_length = ast_length(ast, tokens->len, offset);
@@ -129,7 +130,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
     {
         if (real_length > 1) { // on enlève tous les retours à la ligne
 
-            int i = 0;
+            size_t i = 0;
             while (ast[i]->type == TYPE_ENDOFLINE) i++;
 
             toklist tokens2 = (toklist) {.tab = tokens->tab + i, .len = ast[i]->fin - offset - i + 1};
@@ -182,13 +183,13 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
             // ou alors on a un seul argument et il faut l'ajouter en tant que fils, ou alors on a deux arguments et il faut juste changer les caractéristiques de l'arbre à virgule
             ast_pop(ast[0]); // découvre quel est le nom de la fonction
-            int lenNomFonc = ast[0]->fin + 1 - offset;
+            size_t lenNomFonc = ast[0]->fin + 1 - offset;
 
 
             // on va créer l'arbre pour les arguments
             // on fabrique un nouvel ast et un nouveau tokens contenant uniquement les arguments
             Ast** argsAst;
-            int argsAst_offset;
+            size_t argsAst_offset;
             toklist argsTok;
 
             if (tokens->len - 1 == ast[0]->fin + 2 - offset) { // si l'indice de la parenthèse fermante est égal à l'indice de la parenthèse ouvrante + 1
@@ -218,7 +219,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                 
                 // argsTok contient maintenant la liste des tokens des 'arguments' de l'objet
                 
-                int i = 0; // indice de tok
+                size_t i = 0; // indice de tok
 
                 while (i < argsTok.len - 2)
                 {
@@ -246,7 +247,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     i+=2; // on saute le ':'. On a le droit car la condition de la boucle while le permet
 
                     // calcule l'arbre du truc à droite du ':'
-                    int k = i;
+                    size_t k = i;
                     while (k < argsTok.len && argsAst[k]->type != TYPE_VIRGULE) // saute à l'argument suivant
                         k = argsAst[k]->fin - offset - argsAst_offset + 1; // l'offset de argsAst est lenNomFonc + 1
 
@@ -333,7 +334,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     struct TreeListTemp attributes = temptreelist; // on extirpe le tableau de tree
                     TreeListTemp_init(&temptreelist); // on reset le tableau de tree
 
-                    for (int i = 0 ; i < noms->len ; i++) // on fixe un champ 'officiel', et on cherche où est le champ correspondant dans tree
+                    for (size_t i = 0 ; i < noms->len ; i++) // on fixe un champ 'officiel', et on cherche où est le champ correspondant dans tree
                     {
                         // on vérifie si tree->sons[i]->label1 est dans noms
                         _Bool bo = false;
@@ -432,7 +433,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             // on fabrique un nouveau tokens et un nouveau AST pour l'expression entre crochets
             ast_pop(ast[0]);
 
-            int lenNomInd = ast[0]->fin + 1 - offset;
+            size_t lenNomInd = ast[0]->fin + 1 - offset;
 
             if (tokens->len - 1 == ast[0]->fin + 2 - offset) { // pas d'arguments
                 neon_fail(30, NO_ARGS);;
@@ -574,7 +575,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             if (tokeq(tokens->tab[index], ":")) // erreur : l'opérateur : n'est pas un opérateur normal
             {
                 neon_fail(92, NO_ARGS);
-                global_env->LINENUMBER = lines->tab[offset + index];
+                global_env->LINENUMBER = lines->tab[offset + (size_t)index];
                 return TREE_VOID;
             }
             
@@ -588,13 +589,13 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                 // si c'est un opérateur '.', on va changer la structure de l'arbre, donc c'est une opération différente
                 if (operator_index == 30) // si c'est un point
                 {
-                    toklist tokensGauche = (toklist) {.tab = tokens->tab, .len = index};
+                    toklist tokensGauche = (toklist) {.tab = tokens->tab, .len = (size_t)index};
                     Ast** astGauche = ast;
                     
-                    toklist tokensDroite = (toklist){.tab = tokens->tab+index+1, .len = tokens->len-index-1};
+                    toklist tokensDroite = (toklist){.tab = tokens->tab+index+1, .len = tokens->len-(size_t)index-1};
                     Ast** astDroite = ast + index + 1;
 
-                    TreeBufferIndex tree = createExpressionTreeAux(tb, astDroite, &tokensDroite, lines, offset + index + 1);
+                    TreeBufferIndex tree = createExpressionTreeAux(tb, astDroite, &tokensDroite, lines, offset + (size_t)index + 1);
 
                     return_on_error(TREE_VOID);
 
@@ -655,7 +656,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                         // on met entre parenthèses (container>>field)
                         ast_push(ast[0]);
-                        ast[0]->fin = index + 1 + offset;
+                        ast[0]->fin = (size_t)index + 1 + offset;
                         ast[0]->type = TYPE_EXPRESSION;
 
 
@@ -665,14 +666,14 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                         while (ast[index+1]->type != TYPE_VARIABLE) {
                             intlist_append(&stack_sov_typ, ast[index+1]->type);
-                            intlist_append(&stack_sov_fin, ast[index+1]->fin);
+                            intlist_append(&stack_sov_fin, (int)ast[index+1]->fin);
                             int r = ast_pop(ast[index+1]);
 
                             if (r == -1) { // cet ast n'arrivera jamais à un type variable
                                 neon_free(stack_sov_fin.tab);
                                 neon_free(stack_sov_typ.tab);
                                 neon_fail(87, NO_ARGS);
-                                global_env->LINENUMBER = lines->tab[offset + index + 1];
+                                global_env->LINENUMBER = lines->tab[offset + (size_t)index + 1];
                                 return TREE_VOID;
                             }
                         }
@@ -680,7 +681,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                         // on remet tout ça mais directement sur le container>>field (par dessus l'expression)
                         while (stack_sov_typ.len > 0) {
                             ast_push(ast[0]);
-                            ast[0]->fin = stack_sov_fin.tab[stack_sov_fin.len - 1];
+                            ast[0]->fin = (unsigned)stack_sov_fin.tab[stack_sov_fin.len - 1];
                             ast[0]->type = stack_sov_typ.tab[stack_sov_typ.len - 1];
                             intlist_remove(&stack_sov_fin, stack_sov_fin.len - 1);
                             intlist_remove(&stack_sov_typ, stack_sov_typ.len - 1);
@@ -695,7 +696,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                         return tree;
                     }
                     else {
-                        toklist tokensGauche = (toklist){.tab = tokens->tab, .len = index};
+                        toklist tokensGauche = (toklist){.tab = tokens->tab, .len = (size_t)index};
                         
                         
                         // création de l'arbre de l'objet dont on prend l'attribut
@@ -713,14 +714,14 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                     // il va falloir séparer en deux l'expression, et recalculer l'arbre des expressions sous jacentes
                     
-                    toklist tokensGauche = (toklist){.tab = tokens->tab, .len = index};
+                    toklist tokensGauche = (toklist){.tab = tokens->tab, .len = (size_t)index};
                     
-                    toklist tokensDroite = (toklist){.tab = tokens->tab+index+1, .len = tokens->len-index-1};
+                    toklist tokensDroite = (toklist){.tab = tokens->tab+index+1, .len = tokens->len-(size_t)index-1};
                     
                     TreeBufferIndex left = createExpressionTreeAux(tb, ast, &tokensGauche, lines, offset);
                     return_on_error(TREE_VOID);
 
-                    TreeBufferIndex right = createExpressionTreeAux(tb, ast + index + 1, &tokensDroite, lines, offset + index + 1);
+                    TreeBufferIndex right = createExpressionTreeAux(tb, ast + index + 1, &tokensDroite, lines, offset + (size_t)index + 1);
                     
                     if_error {
                         NeTree_destroy(tb, left);
@@ -1038,7 +1039,7 @@ void affExpr(TreeBuffer* tb, TreeBufferIndex tree)
 /*
 On suppose que le bloc qu'on reçoit n'a pas été poppé de sa condition de bloc
 */
-TreeBufferIndex createStatementIEWTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset, TreeType type)
+TreeBufferIndex createStatementIEWTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, size_t offset, TreeType type)
 {
     ast_pop(ast[0]); // on pop le bloc global
 
@@ -1069,7 +1070,7 @@ TreeBufferIndex createStatementIEWTree(TreeBuffer* tb, Ast** ast, toklist* token
 
 
 
-TreeBufferIndex createStatementForTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset, TreeType type)
+TreeBufferIndex createStatementForTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, size_t offset, TreeType type)
 {
     ast_pop(ast[0]); // on pop le bloc global
 
@@ -1105,7 +1106,7 @@ TreeBufferIndex createStatementForTree(TreeBuffer* tb, Ast** ast, toklist* token
 
 
 
-TreeBufferIndex createStatementElseTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset)
+TreeBufferIndex createStatementElseTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, size_t offset)
 {
     ast_pop(ast[0]);
     toklist bloc = (toklist) {.tab = tokens->tab + 2, .len = tokens->len - 3};
@@ -1123,11 +1124,11 @@ TreeBufferIndex createStatementElseTree(TreeBuffer* tb, Ast** ast, toklist* toke
 
 
 
-TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset)
+TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, size_t offset)
 {
     ast_pop(ast[0]);
 
-    int i = 0, index2 = 0;
+    size_t i = 0, index2 = 0;
 
     TreeBufferIndex tree = NeTree_create(tb, TypeConditionblock, lines->tab[offset]);
     struct TreeListTemp temptreelist; TreeListTemp_init(&temptreelist);
@@ -1182,8 +1183,8 @@ TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tok
 
 
 
-TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset, _Bool isMethod) {
-    int i = 0;
+TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, size_t offset, _Bool isMethod) {
+    size_t i = 0;
     while (!tokeq(tokens->tab[i], "{")) i++;
     // ici, i a la valeur de l'index de la première accolade
 
@@ -1199,10 +1200,10 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
     toklist argsTok = (toklist) {.tab = tokens->tab + 3, .len = i - 4};
 
     Ast** argsAst = ast + 3;
-    int args_offset = offset + 3;
+    size_t args_offset = offset + 3;
 
     // majorant du nombre d'arguments
-    int size_liste = toklist_count(&argsTok, ",") + 1;
+    size_t size_liste = toklist_count(&argsTok, ",") + 1;
     Var* liste = neon_malloc(sizeof(Var)*size_liste); // tableau qui va contenir toutes les variables à affecter
     int liste_index = 0;
 
@@ -1240,7 +1241,7 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
                             nbOptArgs++; // Il s'agit d'un argument vraiment optionnel
 
                         // dans ce cas, on évalue l'expression et on l'ajoute à la liste opt_args
-                        int j = i;
+                        size_t j = i;
                         while (j < argsTok.len && !tokeq(argsTok.tab[j], ","))
                             j = argsAst[j]->fin - args_offset + 1; // va à la fin de l'expression
 
@@ -1330,14 +1331,14 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
 
 
 
-TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, int offset) {
+TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, size_t offset) {
     /*printString("-----createSyntaxTreeAux------\n");
     toklist_aff(tokens);
     neon_pause("----\n");*/
     bool expression = false;
-    int exprStart = 0;
+    size_t exprStart = 0;
 
-    int index = 0, index2 = 0;
+    size_t index = 0, index2 = 0;
 
     TreeBufferIndex tree = NeTree_create(tb, TypeSyntaxtree, lines->tab[offset]);
     struct TreeListTemp temptreelist; TreeListTemp_init(&temptreelist);
@@ -1368,14 +1369,14 @@ TreeBufferIndex createSyntaxTreeAux(TreeBuffer* tb, Ast** ast, toklist* tokens, 
             TreeListTemp_init(&except_blocks);
 
             //except
-            int i = ast[index]->fin - offset + 1;
+            size_t i = ast[index]->fin - offset + 1;
             // on se déplace jusqu'au premier except
             while (i < index2 && ast[i]->type != TYPE_STATEMENTEXCEPT)
                 i = ast[i]->fin - offset + 1;
 
             while (i < index2) {
 
-                int fin = ast[i]->fin - offset;
+                size_t fin = ast[i]->fin - offset;
                 ast_pop(ast[i]); // on est sur le blockline
 
                 toklist blocToks = (toklist) {.tab = tokens->tab + ast[i]->fin - offset + 2, .len = fin - (ast[i]->fin - offset + 2)};

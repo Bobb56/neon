@@ -1,20 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
+// Fichier inclus dans tous les fichiers sources de Neon
 
-
-#define VERSION "4.1"
-
-// si la version actuelle n'est pas stable mais est en distribution
-//#define EXPERIMENTAL
-
-// pour débugger
-// #define DEBUG
-
-// Définition de chaînes utilisées par le terminal
-#define SEQUENCE_ENTREE    ">> "
-#define SEQUENCE_SUITE     ".. "
-// Chaîne spéciale pour spécifier un argument dans une chaîne formatée
-#define FORMAT_ARGUMENT_SPECIFIER                  "<>"
 
 /*
 Numérotation de versions :
@@ -25,32 +12,55 @@ Modification du look de l'interpréteur en mode console : +0.1
 Ajout d'un type de données NeObject : +0.0.1
 */
 
-#define INVITATION "https://discord.gg/wkBdK35w2a"
+
+#define VERSION "4.1"
+
+// si la version actuelle n'est pas stable mais est en distribution
+#define EXPERIMENTAL
+
+// pour débugger
+#ifdef EXPERIMENTAL
+    #define DEBUG
+#endif
+
+
+//#define MANUAL_PLATFORM_SPECIFICATION
 
 
 // constantes qui pilotent le code spécifique à l'OS/architecture
 // ça fonctionne sur GCC et aussi sur Clang normalement
-#if defined(__linux__)
-    #define LINUX
-    #if defined(__x86_64__)
-        #define LINUX_AMD64
-    #elif defined(__riscv) && __riscv_xlen == 64
-        #define LINUX_RISCV64
-        #ifdef __riscv_f
-            #define RISCV_FLOATING_POINT_EXTENSION
+#ifdef MANUAL_PLATFORM_SPECIFICATION
+    #define MINIMAL_LIBC
+    #define MINIMAL_LIBC_RISCV64
+#else
+    #if defined(__linux__)
+        #define LINUX
+        #if defined(__x86_64__)
+            #define LINUX_AMD64
+        #elif defined(__riscv) && __riscv_xlen == 64
+            #define LINUX_RISCV64
+            #ifdef __riscv_f
+                #define RISCV_FLOATING_POINT_EXTENSION
+            #endif
+        #endif
+    #elif defined(_WIN64)
+            #define WINDOWS
+            #if defined(__x86_64__)
+                #define WINDOWS_AMD64
+            #elif defined(__arm64__)
+                #define WINDOWS_ARM64
+            #endif
+    #elif defined(_EZ80) && defined(__TICE__)
+        #define TI_EZ80
+    #else
+        #define MINIMAL_LIBC                            // This platform must be compatible with the Linux ASM call conventions
+        #if defined(__x86_64__)
+            #define MINIMAL_LIBC_AMD64
+        #elif defined(__riscv) && __riscv_xlen == 64
+            #define MINIMAL_LIBC_RISCV64
         #endif
     #endif
-#elif defined(_WIN64)
-        #define WINDOWS
-        #if defined(__x86_64__)
-            #define WINDOWS_AMD64
-        #elif defined(__arm64__)
-            #define WINDOWS_ARM64
-        #endif
-#else
-    #define TI_EZ80
 #endif
-
 
 
 // Modules accessibles en fonction de la plateforme
@@ -72,6 +82,12 @@ Ajout d'un type de données NeObject : +0.0.1
 #ifdef TI_EZ80
     #define PLATFORM "TI_EZ80"
 #endif
+#ifdef MINIMAL_LIBC_AMD64
+    #define PLATFORM "MINIMAL_LIBC_AMD64"
+#endif
+#ifdef MINIMAL_LIBC_RISCV64
+    #define PLATFORM "MINIMAL_LIBC_RISCV64"
+#endif
 
 
 #if defined(LINUX) || defined(TI_EZ80)
@@ -79,6 +95,8 @@ Ajout d'un type de données NeObject : +0.0.1
     #define COLOR
 #endif
 
+
+#define UNUSED_PARAMETER(parameter)                 (void)(parameter)
 
 
 // définition de certaines directives spécifiques au compilateur
@@ -111,7 +129,23 @@ Ajout d'un type de données NeObject : +0.0.1
     #define REG_BUFFER_SIZE 232
 #elif defined(TI_EZ80)
     #define REG_BUFFER_SIZE 8
+#else
+    #define REG_BUFFER_SIZE 256
 #endif
+
+
+
+#define INVITATION "https://discord.gg/wkBdK35w2a"
+
+
+// Définition de chaînes utilisées par le terminal
+#define SEQUENCE_ENTREE    ">> "
+#define SEQUENCE_SUITE     ".. "
+// Chaîne spéciale pour spécifier un argument dans une chaîne formatée
+#define FORMAT_ARGUMENT_SPECIFIER                  "<>"
+
+
+
 
 /*constantes de couleur*/
 #define DEFAULT 0

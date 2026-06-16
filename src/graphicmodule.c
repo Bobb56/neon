@@ -1,4 +1,3 @@
-#include "headers/nativefunctions.h"
 #define NEON_SOURCE_ID 7
 
 // cette bibliothèque est spécifique à ez80

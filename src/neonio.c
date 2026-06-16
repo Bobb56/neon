@@ -10,20 +10,23 @@
 #include "headers/neon.h"
 #include "headers/objects.h"
 #include "headers/neonio.h"
-#include "extern/linenoise.h"
 #include "headers/parser.h"
 #include "headers/strings.h"
 #include "headers/errors.h"
 
 #if defined(LINUX) || defined(WINDOWS)
-#include <stdio.h>
+    #include <stdio.h>
 #elif defined(TI_EZ80)
-#include <ti/vars.h>
-#include <fileioc.h>
-#include "extern/nio_ce/headers/nspireio.h"
-#include "headers/graphicmodule.h"
+    #include <ti/vars.h>
+    #include <fileioc.h>
+    #include "extern/nio_ce/headers/nspireio.h"
+    #include "headers/graphicmodule.h"
 #endif
 
+
+#ifdef LINUX
+#include "extern/linenoise.h"
+#endif
 
 
 #ifndef TI_EZ80
@@ -39,12 +42,12 @@
         fclose(stream);
     }
 
-    void NeStream_write(NeStream stream, void* data, int size) {
+    void NeStream_write(NeStream stream, void* data, size_t size) {
         fwrite(data, 1, size, stream);
     }
 
-    bool NeStream_read(NeStream stream, void* data, int size) {
-        int count = fread(data, 1, size, stream);
+    bool NeStream_read(NeStream stream, void* data, size_t size) {
+        size_t count = fread(data, 1, size, stream);
         return count == size;
     }
 
@@ -65,7 +68,7 @@
     
         
         // calcul de la longueur du programme
-        int longueur = 0;
+        size_t longueur = 0;
         while (fgetc(fichier)!=EOF)
         {
             longueur++;
@@ -115,40 +118,35 @@
     }
 
     #ifndef LINUX
-        char* input(char *text)
-        {
-            char* var=neon_malloc(4001*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
-            memset(var,(char)0,4001*sizeof(char));//initialise le pointeur à '\0' partout
-            //on effectue l'entrée
+        char* input(char *text) {
             printf("%s",text);
+            fflush(stdout);
             
-            int err = scanf("%4000[^\n]",var);
-            
-            cleanStdin();
-            
-            if (err != 1)
-            {
-                neon_free(var);
-                neon_fail(104, NO_ARGS);
-                return NULL;
+            uint8_t capacity = 9;
+            char* buffer = neon_malloc(1 << capacity);
+            size_t buffer_index = 0;
+
+            while (true) {
+                int c = getchar();
+
+                if (c == EOF) {
+                    neon_free(buffer);
+                    neon_fail(1, NO_ARGS);
+                    return "\0";
+                }
+                else if (c == '\n') {
+                    break;
+                }
+
+                if (buffer_index >= (1 << capacity)) {
+                    capacity++;
+                    buffer = neon_realloc(buffer, 1 << capacity);
+                }
+                buffer[buffer_index++] = c;
             }
-            
-            //crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
-            char* newVar = neon_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
-            
-            void * ptrtest=strcpy(newVar,var);//copie de var dans newVar
-            
-            neon_free(var);
-            var=NULL;
-                
-            if (ptrtest==NULL)
-            {
-                neon_free(newVar);
-                neon_fail(66, NO_ARGS);
-                return NULL;
-            }
-            
-            return newVar;
+
+            buffer[buffer_index] = 0;
+            return buffer;
         }
     #else
         char* input(char* text)
@@ -555,8 +553,8 @@ bool is_integer(char* string) {
 
 
 // cette fonction compte le nombre de chiffres d'un entier
-int nbdigits(intptr_t n) {
-    int count = 0;
+size_t nbdigits(intptr_t n) {
+    size_t count = 0;
     while (n > 0) {
         n -= n%10;
         n /= 10;
@@ -628,7 +626,7 @@ char* int_to_str(intptr_t number)//nombre en chaine de caractère
         if (neg)
             number = -number;
         
-        int lenstr = nbdigits(number) + 1;
+        size_t lenstr = nbdigits(number) + 1;
 
         if (neg)
             lenstr++;

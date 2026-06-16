@@ -168,7 +168,7 @@ void gc_free_objects_list(void) {
 Détruit les objets simples et les listes/containers encore accessibles qui sont dans la liste à une profondeur 1
 */
 void nelist_partial_destroy(NeList* list) {
-    for (int i=0 ; i < list->len ; i++) {
+    for (size_t i=0 ; i < list->len ; i++) {
         // si l'objet est soit une feuille, soit une liste ou un container encore accessible depuis adresses
         // les objets ne vérifiant pas cette condition sont les objets qui sont à supprimer dans global_env->OBJECTS_LIST
         if ((NEO_TYPE(list->tab[i]) != TYPE_CONTAINER && NEO_TYPE(list->tab[i]) != TYPE_LIST && NEO_TYPE(list->tab[i]) != TYPE_USERFUNC) || ismarked(list->tab[i])) {
@@ -204,7 +204,7 @@ void neobject_partial_destroy(NeObj neo)
 
 // marque profondément toutes les listes et containers contenues dans la nelist
 void gc_nelist_mark(NeList* list) {
-    for (int i=0 ; i < list->len ; i++) {
+    for (size_t i=0 ; i < list->len ; i++) {
         gc_mark(list->tab[i]);
     }
 }

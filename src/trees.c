@@ -110,7 +110,7 @@ int TreeBuffer_init(TreeBuffer* tb) {
 }
 
 
-TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size) {
+TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, size_t size) {
     neon_assert(!tb->locked, TREE_VOID);
 
     TreeBufferIndex pointer = tb->size;
@@ -152,6 +152,8 @@ void TreeBuffer_iter(TreeBuffer* tb, void (*function)(TreeBuffer*, TreeBufferInd
 
 
 void NeTree_destroy_iter(TreeBuffer *tb, TreeBufferIndex tree, void* args) {
+    UNUSED_PARAMETER(args);
+
     if (TREE_ISVOID(tree))
         return;
 
@@ -412,6 +414,8 @@ TreeBufferIndex TreeList_alloc(TreeBuffer* tb, uint16_t length) {
 }
 
 void TreeListTemp_destroy(TreeBuffer* tb, struct TreeListTemp* temp_list) {
+    UNUSED_PARAMETER(tb);
+
     neon_free(temp_list->trees);
 }
 

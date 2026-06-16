@@ -11,7 +11,6 @@
 #include "headers/nativefunctions.h"
 #include "headers/dynarrays.h"
 #include "headers/gc.h"
-#include "extern/linenoise.h"
 #include "headers/errors.h"
 #include "headers/runtime.h"
 #include "headers/strings.h"
@@ -20,10 +19,15 @@
 #include "headers/processcycle.h"
 #include "headers/trees.h"
 #include "headers/sidememory.h"
+#include "headers/errors.h"
 
 #ifdef TI_EZ80
 #include "headers/graphicmodule.h"
 #include <graphx.h>
+#endif
+
+#ifdef LINUX
+#include "extern/linenoise.h"
 #endif
 
 
@@ -35,7 +39,9 @@ NeonEnv* global_env = NULL;
     #include <signal.h>
 
     void handle_signal(int sig) {
-        neon_fail(104, NO_ARGS);
+        if (sig == SIGINT || sig == SIGTERM) {
+            neon_fail(104, NO_ARGS);
+        }
     }
 #endif
 
@@ -114,8 +120,8 @@ void loadExceptions(NeonEnv* env) {
 
 
 
-int NeonEnv_get_size(NeonEnv* env) {
-    int size = 0;
+size_t NeonEnv_get_size(NeonEnv* env) {
+    size_t size = 0;
     size += sizeof(NeonEnv);
     size += strlist_getsize(env->NOMS);
     size += nelist_getsize(env->PROMISES);
@@ -387,6 +393,8 @@ void terminal(void) {
         global_env->FILENAME = NULL;
 
         exp = inputCode(SEQUENCE_ENTREE);
+
+        b(0);
 
         if (exp == NULL && global_env->CODE_ERROR == 0) // pour afficher le keyboardInterrupt
             neon_fail(104, NO_ARGS);

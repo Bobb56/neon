@@ -2,7 +2,7 @@
 
 #include "headers/constants.h"
 
-#ifdef LINUX_AMD64
+#if defined(LINUX_AMD64) || defined(MINIMAL_LIBC_AMD64)
 
 .extern launch_process
 

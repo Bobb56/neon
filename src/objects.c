@@ -1,3 +1,4 @@
+#include <stddef.h>
 #define NEON_SOURCE_ID 13
 
 // bibliothèque générale de structures des données Neon
@@ -30,11 +31,11 @@ void variable_append(NeonEnv* env, char* name, NeObj value) {
 }
 
 NeObj* get_absolute_address(Var rel_var_addr) {
-    return nelist_nth_addr(global_env->ADRESSES, rel_var_addr);
+    return nelist_nth_addr(global_env->ADRESSES, (size_t)rel_var_addr);
 }
 
 NeObj get_var_value(Var rel_var_addr) {
-    return nelist_nth(global_env->ADRESSES, rel_var_addr);
+    return nelist_nth(global_env->ADRESSES, (size_t)rel_var_addr);
 }
 
 
@@ -48,7 +49,7 @@ char* var_name(NeObj obj) {
 }
 
 Var get_var_from_addr(NeObj* obj) {
-    return ((intptr_t)obj - (intptr_t)global_env->ADRESSES->tab) / sizeof(NeObj);
+    return ((uintptr_t)obj - (uintptr_t)global_env->ADRESSES->tab) / sizeof(NeObj);
 }
 
 
@@ -176,7 +177,7 @@ Container* neo_to_container(NeObj neo) {
 int get_field_index(Container* c, char* name) {
     NeList* list = neo_to_list(global_env->ATTRIBUTES->tab[c->type]);
             
-    int index = 0;
+    size_t index = 0;
     for (; index < list->len && strcmp(neo_to_string(list->tab[index]), name) != 0 ; index++);
 
     if (index == list->len - 1 && strcmp(neo_to_string(list->tab[index]), name) != 0)
@@ -188,11 +189,11 @@ int get_field_index(Container* c, char* name) {
 }
 
 
-NeObj* get_container_field_addr(Container* c, int index) {
+NeObj* get_container_field_addr(Container* c, size_t index) {
     return nelist_nth_addr(&c->data, index);
 }
 
-NeObj get_container_field(Container* c, int index) {
+NeObj get_container_field(Container* c, size_t index) {
     return nelist_nth(&c->data, index);
 }
 
@@ -259,7 +260,7 @@ void neo_container_aff(NeObj neo) {
 
         printString(global_env->CONTAINERS->tab[c->type]);
         printString("(");
-        for (int i=0 ; i < c->data.len ; i++)
+        for (size_t i=0 ; i < c->data.len ; i++)
         {
             printString(neo_to_string(list->tab[i]));
             printString(": ");
@@ -309,7 +310,7 @@ char* neo_container_str(NeObj neo, bool overloaded) {
 
         char* str1 = strdup(global_env->CONTAINERS->tab[c->type]);
         str1 = addStr2(str1, "(");
-        for (int i=0 ; i < c->data.len ; i++)
+        for (size_t i=0 ; i < c->data.len ; i++)
         {
             str1 = addStr2(str1, neo_to_string(list->tab[i]));
             str1 = addStr2(str1, ": ");
@@ -455,9 +456,9 @@ Function* function_create(int id, Module module, const char* help, int nbArgs, c
 NeObj functionCall(NeObj fun, NeList* args)
 {
     Function* f = fun.function;
-    if (f->nbArgs != -1 && f->nbArgs != args->len)
+    if (f->nbArgs != -1 && (size_t)f->nbArgs != args->len)
     {
-        neon_fail(36, neo_new_str_create(get_function_name(f->id, f->module)), neo_integer_create(f->nbArgs), neo_integer_create(args->len)); // nombre d'arguments invalide pour appeler cette fonction
+        neon_fail(36, neo_new_str_create(get_function_name(f->id, f->module)), neo_integer_create(f->nbArgs), neo_integer_create((intptr_t)args->len)); // nombre d'arguments invalide pour appeler cette fonction
         return NEO_VOID;
     }
     return call_function(f->id, f->module, args);
@@ -472,7 +473,7 @@ bool funcArgsCheck(Function* fun, NeList* args)
 
     if (fun->nbArgs == -1)
     {
-        for (int i=0 ; i < args->len ; i++)
+        for (size_t i=0 ; i < args->len ; i++)
         {
             if (fun->typeArgs[0] != TYPE_UNSPECIFIED && NEO_TYPE(args->tab[i]) != fun->typeArgs[i])
             {
@@ -482,10 +483,10 @@ bool funcArgsCheck(Function* fun, NeList* args)
     }
     else
     {
-        if (fun->nbArgs != args->len)
+        if ((size_t)fun->nbArgs != args->len)
             return false;
         
-        for (int i=0 ; i < args->len ; i++)
+        for (size_t i=0 ; i < args->len ; i++)
         {
             if (fun->typeArgs[i] != TYPE_UNSPECIFIED && NEO_TYPE(args->tab[i]) != fun->typeArgs[i])
             {
@@ -728,13 +729,13 @@ NeObj neo_none_create(void) // attention, la chaine de caractères passée en ar
 ///////////////////// TYPE_LIST /////////////////
 
 bool nelist_is_void(NeList* list) {
-    return memcmp(list, &NELIST_VOID, sizeof(NeList)) == 0;
+    return list->tab == NELIST_VOID.tab && list->len == NELIST_VOID.len;
 }
 
 bool nelist_equal(NeList* l1, NeList* l2)
 {
     bool bo = l1->len == l2->len;
-    for (int i=0 ; bo && i < l1->len ; i++)
+    for (size_t i=0 ; bo && i < l1->len ; i++)
         bo = bo && neo_equal(nelist_nth(l1, i), nelist_nth(l2, i));
     
     return bo;
@@ -750,7 +751,7 @@ void nelist_aff(NeList* liste)
     else
     {
         printString("[");
-        for (int i=0 ; i < liste->len-1 ; i++)
+        for (size_t i=0 ; i < liste->len-1 ; i++)
         {
             neobject_aff(nelist_nth(liste, i));
             printString(", ");
@@ -771,7 +772,7 @@ char* nelist_str(NeList* list, bool overloaded)
     else
     {
         char* str1 = strdup("["), *temp;
-        for (int i=0 ; i < list->len - 1 ; i++)
+        for (size_t i=0 ; i < list->len - 1 ; i++)
         {
             temp = neobject_str(nelist_nth(list, i), overloaded);
             if_error {
@@ -798,9 +799,9 @@ char* nelist_str(NeList* list, bool overloaded)
 }
 
 
-int nelist_getsize(NeList* list) {
-    int size = sizeof(NeList);
-    for (int i=0 ; i < list->len ; i++)
+size_t nelist_getsize(NeList* list) {
+    size_t size = sizeof(NeList);
+    for (size_t i=0 ; i < list->len ; i++)
         size += neobject_getsize(list->tab[i]);
 
     // Ajout de la taille supplémentaire à cause de capacity
@@ -812,7 +813,7 @@ int nelist_getsize(NeList* list) {
 
 
 void general_nelist_deinit(NeList* list, bool gc_extern) {
-    for (int i=0 ; i<list->len ; i++)
+    for (size_t i=0 ; i<list->len ; i++)
     {
         //if (list == global_env->ADRESSES)
         //    printf("Suppression de %s\n", global_env->NOMS->tab[i]);
@@ -828,8 +829,8 @@ void general_nelist_destroy(NeList* list, bool gc_extern)
 }
 
 
-void nelist_deinit_until(NeList *list, int index_max) {
-    for (int i=0 ; i <= index_max ; i++)
+void nelist_deinit_until(NeList *list, size_t index_max) {
+    for (size_t i=0 ; i <= index_max ; i++)
     {
         neobject_destroy(list->tab[i]);
     }
@@ -837,7 +838,7 @@ void nelist_deinit_until(NeList *list, int index_max) {
 }
 
 
-void nelist_destroy_until(NeList *list, int index_max) {
+void nelist_destroy_until(NeList *list, size_t index_max) {
     nelist_deinit_until(list, index_max);
     neon_free(list);
 }
@@ -845,7 +846,7 @@ void nelist_destroy_until(NeList *list, int index_max) {
 
 NeList* nelist_reverse(NeList* list) {
     NeList* reversed = nelist_create(list->len);
-    for (int i = 0 ; i < list->len ; i++) {
+    for (size_t i = 0 ; i < list->len ; i++) {
         reversed->tab[i] = neo_copy(list->tab[list->len - i - 1]);
     }
     return reversed;
@@ -859,7 +860,7 @@ bool nelist_inList2(NeList* list, NeObj neo)
 {
     bool bo = false;
     
-    for (int i = 0 ; i < list->len ; i++)
+    for (size_t i = 0 ; i < list->len ; i++)
     {
         if (neo_equal(list->tab[i], neo))
         {
@@ -877,7 +878,7 @@ bool nelist_inList(NeList* list, NeObj neo)
 {
     bool bo = false;
     
-    for (int i = 0 ; i < list->len ; i++)
+    for (size_t i = 0 ; i < list->len ; i++)
     {
         if (neo_exact_equal(list->tab[i], neo))
         {
@@ -900,7 +901,7 @@ NeList* nelist_dup(NeList* l)
     //copie de deux listes, partie récursive de la fonction
     
     NeList* liste = nelist_create(l->len); //nouvelle liste
-    for (int i=0 ; i < l->len ; i++)
+    for (size_t i=0 ; i < l->len ; i++)
     {
         liste->tab[i] = neo_dup(l->tab[i]); // on ajoute à la liste liste une copie de l'élément i de la liste neo
     }
@@ -909,7 +910,7 @@ NeList* nelist_dup(NeList* l)
 
 
 
-void nelist_init(NeList* list, int len) {
+void nelist_init(NeList* list, size_t len) {
     list->myCopy = NULL;
     list->refc = 1;
     list->len = len; // initialise la bonne longueur
@@ -917,14 +918,14 @@ void nelist_init(NeList* list, int len) {
     list->next = NEO_VOID;
     list->prev = NEO_VOID;
     
-    while ((1 << list->capacity) < list->len)
+    while (((size_t)1 << list->capacity) < list->len)
         list->capacity++;
   
     list->tab = neon_malloc((1 << list->capacity) * sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
 }
 
 
-NeList* nelist_create(int len)
+NeList* nelist_create(size_t len)
 {
     NeList* list = neon_malloc(sizeof(NeList));//crée la structure
     nelist_init(list, len);
@@ -934,11 +935,11 @@ NeList* nelist_create(int len)
 
 NeList* nelist_literal_create(NeObj* elements) {
     // First we compute the size of the literal list
-    int size = 0;
+    size_t size = 0;
     while (!neo_is_void(elements[size])) size++;
 
     NeList* list = nelist_create(size);
-    for (int i=0 ; i < size ; i++) {
+    for (size_t i=0 ; i < size ; i++) {
         list->tab[i] = elements[i];
     }
     return list;
@@ -950,7 +951,7 @@ void nelist_append(NeList* list, NeObj ptr)//ajoute un élément à la fin de la
 {
     NeObj* tmp;
 
-    if (1 << list->capacity == list->len)
+    if ((size_t)1 << list->capacity == list->len)
     {
         list->capacity++;
         tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj));//réallocation de list.tab
@@ -962,33 +963,33 @@ void nelist_append(NeList* list, NeObj ptr)//ajoute un élément à la fin de la
 }
 
 
-NeObj* nelist_nth_addr(NeList* list, int index) {
+NeObj* nelist_nth_addr(NeList* list, size_t index) {
     update_if_promise(&list->tab[index]);
     return &list->tab[index];
 }
 
-NeObj nelist_nth(NeList* list, int index) {
+NeObj nelist_nth(NeList* list, size_t index) {
     update_if_promise(&list->tab[index]);
     return list->tab[index];
 }
 
 
-void nelist_insert(NeList* list, NeObj neo, int index)//ajoute un élément à la place indiquée
+void nelist_insert(NeList* list, NeObj neo, size_t index)//ajoute un élément à la place indiquée
 {
     if (index > list->len) {
-        neon_fail(37, neo_integer_create(list->len), neo_integer_create(index)); // out of range
+        neon_fail(37, neo_integer_create((intptr_t)list->len), neo_integer_create((intptr_t)index)); // out of range
         return ;
     }
   
     NeObj* tmp;
   
-    if (1 << list->capacity == list->len) {
+    if ((size_t)1 << list->capacity == list->len) {
         list->capacity++;
         tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj)); // réallocation de list.tab
         list->tab = tmp; // affectation du pointeur de tmp vers list.tab
     }
   
-    for (int i = list->len ; i > index; i--)//décale tous les éléments à partir de celui à supprimer
+    for (size_t i = list->len ; i > index; i--)//décale tous les éléments à partir de celui à supprimer
         list->tab[i]=list->tab[i-1];
     
     
@@ -1001,22 +1002,22 @@ void nelist_insert(NeList* list, NeObj neo, int index)//ajoute un élément à l
 
 
 
-void nelist_remove(NeList* list,int index)
+void nelist_remove(NeList* list, size_t index)
 {
     if (index >= list->len)
     {
-        neon_fail(39, neo_integer_create(index), neo_integer_create(list->len));//out of range
+        neon_fail(39, neo_integer_create((intptr_t)index), neo_integer_create((intptr_t)list->len));//out of range
         return ;
     }
   
     neobject_destroy(list->tab[index]);
   
-    for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
+    for (size_t i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
         list->tab[i]=list->tab[i+1];
     
     NeObj* tmp;
   
-    if (1 << (list->capacity - 1) == list->len-1)
+    if ((size_t)1 << (list->capacity - 1) == list->len-1)
     {
         list->capacity--;
         tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj));//réalloue un nouveau pointeur de la bonne taille
@@ -1033,7 +1034,7 @@ void nelist_remove(NeList* list,int index)
 int nelist_index(NeList* liste, NeObj neo)
 {
     
-    for (int i=0 ; i < liste->len ; i++)
+    for (size_t i=0 ; i < liste->len ; i++)
     {
         if (neo_exact_equal(liste->tab[i], neo))
         {
@@ -1050,7 +1051,7 @@ int nelist_index(NeList* liste, NeObj neo)
 
 int nelist_index2(NeList* l, NeObj neo)
 {
-    for (int i = 0; i < l->len ; i++)
+    for (size_t i = 0; i < l->len ; i++)
     {
         if (neo_equal(neo, l->tab[i]))
             return i;
@@ -1089,7 +1090,7 @@ NeObj gc_extern_neo_list_convert(NeList* list) {
 
 
 
-NeObj neo_list_create(int len)
+NeObj neo_list_create(size_t len)
 {
     return neo_list_convert(nelist_create(len));
 }
@@ -1117,7 +1118,7 @@ void neo_list_append(NeObj neo, NeObj ptr)
 
 
 
-void neo_list_remove(NeObj neo, int index)
+void neo_list_remove(NeObj neo, size_t index)
 {
     nelist_remove(neo.nelist, index);
     return;
@@ -1125,7 +1126,7 @@ void neo_list_remove(NeObj neo, int index)
 
 
 
-void neo_list_insert(NeObj neo, NeObj ptr,int index)
+void neo_list_insert(NeObj neo, NeObj ptr, size_t index)
 {
     nelist_insert(neo.nelist, ptr, index);
     return;
@@ -1133,13 +1134,13 @@ void neo_list_insert(NeObj neo, NeObj ptr,int index)
 
 
 
-NeObj neo_list_nth(NeObj neo, int index)
+NeObj neo_list_nth(NeObj neo, size_t index)
 {
     return nelist_nth(neo.nelist, index);
 }
 
 
-int neo_list_len(NeObj neo)
+size_t neo_list_len(NeObj neo)
 {
     return neo.nelist->len;
 }
@@ -1275,7 +1276,7 @@ intptr_t mix(intptr_t a) {
 }
 
 intptr_t hash_combine(intptr_t a, intptr_t b) {
-    return (a ^ (~b) ^ 126592460022139 + 982513480613713) * 522678417827381;
+    return (((a ^ (~b)) ^ 126592460022139) + 982513480613713) * 522678417827381;
 }
 
 intptr_t string_hash(char* string) {
@@ -1298,7 +1299,7 @@ intptr_t intlist_hash(int* list, int len) {
 
 intptr_t nelist_hash(NeList* list) {
     intptr_t hash = 743931041025407;
-    for (int i=0 ; i < list->len ; i++) {
+    for (size_t i=0 ; i < list->len ; i++) {
         hash = hash_combine(hash, neo_hash(list->tab[i]));
     }
     return hash;
@@ -1396,7 +1397,7 @@ NeObj neo_dup(NeObj neo) {
         
         mark_as_already_copied(neo, copied_list); // inscrit le nouveau pointeur de la copie directement dans l'objet
 
-        for (int i = 0 ; i < original_list->len ; i++)
+        for (size_t i = 0 ; i < original_list->len ; i++)
             copied_list->tab[i] = neo_dup(nelist_nth(original_list, i));
 
         return neo_list_convert(copied_list); // et c'est le moment où on l'ajoute au GC
@@ -1411,7 +1412,7 @@ NeObj neo_dup(NeObj neo) {
         
         mark_as_already_copied(neo, copied_cntr); // inscrit le nouveau pointeur de la copie directement dans l'objet
 
-        for (int i = 0 ; i < original_cntr->data.len ; i++)
+        for (size_t i = 0 ; i < original_cntr->data.len ; i++)
             copied_cntr->data.tab[i] = neo_dup(nelist_nth(&original_cntr->data, i));
 
         return neo_container_convert(copied_cntr); // et c'est le moment où on l'ajoute au GC
@@ -1435,7 +1436,7 @@ NeObj neo_dup(NeObj neo) {
 
         mark_as_already_copied(neo, copied_func);
 
-        for (int i = 0 ; i < original_func->opt_args.len ; i++)
+        for (size_t i = 0 ; i < original_func->opt_args.len ; i++)
             copied_func->opt_args.tab[i] = neo_dup(nelist_nth(&original_func->opt_args, i));
 
         return neo_userfunc_convert(copied_func); // et c'est le moment où on l'ajoute au GC
@@ -1448,7 +1449,7 @@ NeObj neo_dup(NeObj neo) {
 }
 
 
-int neobject_getsize(NeObj neo) {
+size_t neobject_getsize(NeObj neo) {
 
     if (neo.type & HEAP_ALLOCATED) {
         if (NEO_TYPE(neo) == TYPE_STRING || NEO_TYPE(neo) == TYPE_CONST) {
@@ -1460,7 +1461,8 @@ int neobject_getsize(NeObj neo) {
         }
 
         else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
-            return sizeof(NeObj) + sizeof(Function) + sizeof(int) * neo.function->nbArgs + strlen(neo.function->help) + 1;
+            size_t nbArgs = (neo.function->nbArgs == -1) ? 0 : (size_t)neo.function->nbArgs;
+            return sizeof(NeObj) + sizeof(Function) + sizeof(int) * nbArgs + strlen(neo.function->help) + 1;
         }
 
         else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
@@ -1603,9 +1605,9 @@ void neobject_aff(NeObj neo)
 
             bool bo = false;
 
-            for (int i = 0 ; i < fun->nbArgs ; i++)
+            for (size_t i = 0 ; i < fun->nbArgs ; i++)
             {
-                if (fun->unlimited_arguments && i == fun->nbArgs - fun->nbOptArgs && !bo) {
+                if (fun->unlimited_arguments && i == (size_t)(fun->nbArgs - fun->nbOptArgs) && !bo) {
                     printString("...");
                     i --;
                     bo = true;
@@ -1622,7 +1624,7 @@ void neobject_aff(NeObj neo)
                     }
                 }
 
-                if (i < fun->nbArgs - 1)
+                if (i < (size_t)(fun->nbArgs - 1))
                     printString(", ");
             }
             printString(")");
@@ -1721,9 +1723,9 @@ char* neobject_str(NeObj neo, bool overloaded)
 
             bool bo = false;
 
-            for (int i = 0 ; i < fun->nbArgs ; i++)
+            for (size_t i = 0 ; i < fun->nbArgs ; i++)
             {
-                if (fun->unlimited_arguments && i == fun->nbArgs - fun->nbOptArgs && !bo) {
+                if (fun->unlimited_arguments && i == (size_t)(fun->nbArgs - fun->nbOptArgs) && !bo) {
                     ret = addStr2(ret, "...");
                     i --;
                     bo = true;
@@ -1742,7 +1744,7 @@ char* neobject_str(NeObj neo, bool overloaded)
                     }
                 }
 
-                if (i < fun->nbArgs - 1)
+                if (i < (size_t)(fun->nbArgs - 1))
                     ret = addStr2(ret, ", ");
             }
             ret = addStr2(ret, ")");
@@ -1768,11 +1770,11 @@ char* neobject_str(NeObj neo, bool overloaded)
 
 
 
-char* neobject_short_repr(NeObj obj, int max_len, bool overloaded) {
+char* neobject_short_repr(NeObj obj, size_t max_len, bool overloaded) {
     // Longueur maximale de la représentation d'un objet
     char* full_repr = neobject_str(obj, overloaded);
 
-    int length = strlen(full_repr);
+    size_t length = strlen(full_repr);
 
     if (length <= max_len) {
         return full_repr;
@@ -1781,13 +1783,13 @@ char* neobject_short_repr(NeObj obj, int max_len, bool overloaded) {
         char* short_repr = neon_malloc(sizeof(char) * (max_len + 1));
         
         // Recopie des extrémités de l'objet
-        for (int i=0 ; i < max_len/2 - 1 ; i++) {
+        for (size_t i=0 ; i < max_len/2 - 1 ; i++) {
             short_repr[i] = full_repr[i];
             short_repr[max_len-i-1] = full_repr[length-i-1];
         }
 
         // Met des points au milieu
-        for (int i=max_len/2 - 1 ; i <= max_len/2 + 1 ; i++) {
+        for (size_t i=max_len/2 - 1 ; i <= max_len/2 + 1 ; i++) {
             short_repr[i] = '.';
         }
 
@@ -2143,7 +2145,7 @@ void recursive_unmark(NeObj neo) {
             return;
 
         // démarque tous les fils
-        for (int i=0 ; i < list.len ; i++) {
+        for (size_t i=0 ; i < list.len ; i++) {
             recursive_unmark(list.tab[i]);
         }
     }

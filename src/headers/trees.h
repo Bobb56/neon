@@ -39,9 +39,9 @@ struct TreeListTemp {
 
 typedef struct TreeBuffer {
     TreeBufferIndex entry_point;
-    int size;
-    int n_blocks;
-    int block_size;
+    size_t size;
+    size_t n_blocks;
+    size_t block_size;
     void* pointer;
     bool locked;
     bool side_memory;
@@ -238,7 +238,7 @@ int TreeBuffer_init(TreeBuffer*);
 void TreeBuffer_iter(TreeBuffer* tb, void (*function)(TreeBuffer*, TreeBufferIndex, void* arg), void* arg);
 void TreeBuffer_destroy(TreeBuffer* tb);
 void TreeBuffer_delete_all(ptrlist* tree_buffers);
-TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, int size);
+TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, size_t size);
 
 TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line);
 void TreeListTemp_init(struct TreeListTemp* tree_list);

@@ -2,7 +2,7 @@
 
 #include "headers/constants.h"
 
-#ifdef LINUX_RISCV64
+#if defined(LINUX_RISCV64) || defined(MINIMAL_LIBC_RISCV64)
 
 .extern launch_process
 

@@ -183,10 +183,10 @@ NO_OPT void launch_process(void) {
 
 // transforme une liste d'arbres en une liste de NeObj en les évaluant tous
 void treeToList(NeList* l, TreeBuffer* tb, TreeBufferIndex tree_list) {
-    int tree_list_length = treelistLength(tb, tree_list);
+    size_t tree_list_length = treelistLength(tb, tree_list);
     nelist_init(l, tree_list_length);
 
-    for (int index = 0 ; index < tree_list_length ; index++)
+    for (size_t index = 0 ; index < tree_list_length ; index++)
     {
         if (!TREE_ISVOID(treelistGet(tb, tree_list)[index])) {
             l->tab[index] = eval_aux(tb, treelistGet(tb, tree_list)[index]);
@@ -202,12 +202,6 @@ void treeToList(NeList* l, TreeBuffer* tb, TreeBufferIndex tree_list) {
             l->tab[index] = NEO_VOID;
         }
     }
-}
-
-// Cette fonction assigne 
-//
-void assignArg(Var var, NeObj obj) {
-
 }
 
 
@@ -664,7 +658,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             }
             
             // on récupère le véritable index
-            uintptr_t index2 = neo_to_integer(index);
+            intptr_t index2 = neo_to_integer(index);
             neobject_destroy(index);
 
             int object_length = (NEO_TYPE(obj) == TYPE_LIST) ? neo_list_len(obj) : strlen(neo_to_string(obj));
@@ -680,7 +674,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             NeObj retour = NEO_VOID;
 
             if (NEO_TYPE(obj) == TYPE_LIST) {
-                retour = neo_copy(neo_list_nth(obj,index2));
+                retour = neo_copy(neo_list_nth(obj,(size_t)index2));
             }
             else {
                 retour = neo_str_create(charToString(neo_to_string(obj)[index2]));
@@ -695,11 +689,11 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
         case TypeContainerLit:
         {
             struct ContainerLit* tree_cont_lit = treeContLit(tb, tree);
-            int nb_attributes = treelistLength(tb, tree_cont_lit->attributes);
+            size_t nb_attributes = treelistLength(tb, tree_cont_lit->attributes);
             NeList val;
             nelist_init(&val, nb_attributes);
 
-            for (int i = 0 ; i < nb_attributes ; i++)
+            for (size_t i = 0 ; i < nb_attributes ; i++)
             {
 
                 val.tab[i] = eval_aux(tb, treeAttrLit(tb, treelistGet(tb, tree_cont_lit->attributes)[i])->expr);
@@ -742,7 +736,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 tree_attr->last_cont_type = c->type;
             }
 
-            NeObj ret = neo_copy(get_container_field(c, tree_attr->index));
+            NeObj ret = neo_copy(get_container_field(c, (size_t)tree_attr->index));
             neobject_destroy(neo);
             return ret;
         }
@@ -825,7 +819,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
                 return NULL;
             }
             
-            uintptr_t index2 = neo_to_integer(index);
+            intptr_t index2 = neo_to_integer(index);
             neobject_destroy(index);
 
             int object_length = (NEO_TYPE(obj) == TYPE_LIST) ? neo_list_len(obj) : strlen(neo_to_string(obj));
@@ -839,7 +833,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             
             if (NEO_TYPE(obj) == TYPE_LIST)
             {
-                return nelist_nth_addr(neo_to_list(obj), index2);
+                return nelist_nth_addr(neo_to_list(obj), (size_t)index2);
             }
             else {
                 neon_fail(105, NO_ARGS);
@@ -872,7 +866,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
                 tree_attr->last_cont_type = c->type;
             }
 
-            NeObj* ret = get_container_field_addr(c, tree_attr->index);
+            NeObj* ret = get_container_field_addr(c, (size_t)tree_attr->index);
             neobject_destroy(neo);
             return ret;
         }
@@ -1186,7 +1180,7 @@ int execStatementForeachList(TreeBuffer* tb, TreeBufferIndex tree, NeObj neo_lis
 
 
     // l'indice qui va parcourir la liste
-    intptr_t ext_index = 0;
+    size_t ext_index = 0;
 
     intptr_t int_ret = 0;
     
@@ -1449,7 +1443,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                         NeObj nom = eval_aux(tb, treelistGet(tb, tree_kw_param->params)[ext_index]);
                         return_on_error(0);
 
-                        char* nomAct = strdup(neo_to_string(nelist_nth(global_env->ADRESSES, global_env->NAME))); // pour restaurer le nom de fichier actuel
+                        char* nomAct = strdup(neo_to_string(nelist_nth(global_env->ADRESSES, (size_t)global_env->NAME))); // pour restaurer le nom de fichier actuel
                         update__name__(strdup(neo_to_string(nom)));
 
                         #ifndef TI_EZ80
@@ -1711,9 +1705,9 @@ void initRuntime(void) {
 NO_OPT void exitRuntime(void) {
 
     // pour avoir la même taille de pile utilisée que la fonction launch_process
-    #if defined(LINUX_AMD64)
+    #if defined(LINUX_AMD64) || defined(MINIMAL_LIBC_AMD64)
     ADD_STACK_SIZE(16);
-    #elif defined(LINUX_RISCV64)
+    #elif defined(LINUX_RISCV64) || defined(MINIMAL_LIBC_RISCV64)
     ADD_STACK_SIZE(16);
     #elif defined(WINDOWS_AMD64)
     ADD_STACK_SIZE(32);

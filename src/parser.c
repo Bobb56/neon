@@ -1,4 +1,6 @@
 #include "headers/objects.h"
+#include <stddef.h>
+#include <stdint.h>
 #define NEON_SOURCE_ID 15
 
 #include <string.h>
@@ -309,8 +311,8 @@ bool is_operateurs1(char* string, int debut, int current_index) {
 
 
 
-bool toklist_ast_inList(toklist* list, Ast** ast, char* elt, int type, int offset) {
-    int i = 0;
+bool toklist_ast_inList(toklist* list, Ast** ast, char* elt, int type, size_t offset) {
+    size_t i = 0;
     while (i < list->len) {
         if (ast[i]->type == type && tokeq(list->tab[i], elt))
             return true;
@@ -321,8 +323,8 @@ bool toklist_ast_inList(toklist* list, Ast** ast, char* elt, int type, int offse
 }
 
 
-bool ast_typeInAst(Ast** ast, int len, int type, int offset) {
-    int i = 0;
+bool ast_typeInAst(Ast** ast, size_t len, int type, size_t offset) {
+    size_t i = 0;
     while (i < len) {
         if (ast[i]->type == type)
             return true;
@@ -334,9 +336,9 @@ bool ast_typeInAst(Ast** ast, int len, int type, int offset) {
 
 
 
-int ast_typeCountAst(Ast** ast, int len, int type, int offset) {
-    int i = 0;
-    int c = 0;
+size_t ast_typeCountAst(Ast** ast, size_t len, int type, size_t offset) {
+    size_t i = 0;
+    size_t c = 0;
     while (i < len) {
         if (ast[i]->type == type)
             c++;
@@ -348,12 +350,11 @@ int ast_typeCountAst(Ast** ast, int len, int type, int offset) {
 
 
 
-int ast_minOp(Ast** ast, toklist* tokens, int offset) {
+int ast_minOp(Ast** ast, toklist* tokens, size_t offset) {
     int max = -1;
     int priomax = -1;
-    int i = 0;
+    size_t i = 0;
     while (i < tokens->len) {
-
         if (ast[i]->type == TYPE_OPERATOR) {
             int nprio = PRIORITE.tab[strlist_token_index(&OPERATEURS, tokens->tab[i])];
 
@@ -369,9 +370,9 @@ int ast_minOp(Ast** ast, toklist* tokens, int offset) {
 }
 
 
-int ast_length(Ast** ast, int token_length, int offset) {
-    int l = 0;
-    int i = 0;
+size_t ast_length(Ast** ast, size_t token_length, size_t offset) {
+    size_t l = 0;
+    size_t i = 0;
     while (i < token_length) {
         l++;
         i = ast[i]->fin + 1 - offset;
@@ -379,14 +380,14 @@ int ast_length(Ast** ast, int token_length, int offset) {
     return l;
 }
 
-int ast_index(Ast** ast, int index, int offset) {
+size_t ast_index(Ast** ast, size_t index, size_t offset) {
     return ast_length(ast, index, offset);
 }
 
 
-int ast_prec(Ast** ast, int index, int offset) {
-    int i = 0;
-    int i2 = 0;
+size_t ast_prec(Ast** ast, size_t index, size_t offset) {
+    size_t i = 0;
+    size_t i2 = 0;
     while (i < index) {
         i2 = i;
         i = ast[i]->fin - offset + 1;
@@ -699,29 +700,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
     bool isPotentiallyComm=false;
     bool isPotentiallyLongComm=false;
     
-    
-    
-    
-    
-    
-    
-    
     int debTok=0; // contient la place de debut de detection du token etudie
-    int debTok2=0; // contient la place de debut de detection du token compose etudie
-    int debTok3=0;
-    
-    int debExpr=0; // va contenir la place de debut de l’expression dans le dernier algorithme
-    bool isPotentiallyExpr=false; // pour la derniere boucle dans l’empaquetage d’expressions
-    
-    
-    
-    
-    // pour la dernière boucle aussi, empaquetage des blocs conditionnels if/elif/else et for, while (statement)
-    int debStat=0;
-    bool isPotentiallyStat=false;
-    
-    
-    
     
     char char2=0; // va contenir le caractere precedent
     char char1=0; // va contenir le caractère actuel
@@ -779,7 +758,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
 
         
         //fins tokens simples
-        finTokensSimples(string, &isPotentiallyNumber, &isPotentiallyString, &isPotentiallyWord, &isPotentiallyOp, &isPotentiallyLongComm, &isPotentiallyString2, &isPotentiallyComm, &isPotentiallyHexBin, &char2, &char1, &nouvTok, tokens, types, lines, &debTok, i, &stepNumber, &stepHexBin, len_string, &nombrePoints);
+        finTokensSimples(string, &isPotentiallyNumber, &isPotentiallyString, &isPotentiallyWord, &isPotentiallyOp, &isPotentiallyLongComm, &isPotentiallyString2, &isPotentiallyComm, &isPotentiallyHexBin, &char2, &char1, &nouvTok, tokens, types, lines, &debTok, i, &stepNumber, &stepHexBin, &nombrePoints);
 
         return_on_error();
 
@@ -827,7 +806,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
 
 
 
-void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotentiallyString, bool* isPotentiallyWord, bool* isPotentiallyOp, bool* isPotentiallyLongComm, bool* isPotentiallyString2, bool* isPotentiallyComm, bool* isPotentiallyHexBin, char * char2, char* char1, bool* nouvTok, toklist* tokenAdd, intlist* typeTok, intlist* lines, int* debTok, int i, int* stepNumber, int* stepHexBin, int len_string, int* nombrePoints)
+void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotentiallyString, bool* isPotentiallyWord, bool* isPotentiallyOp, bool* isPotentiallyLongComm, bool* isPotentiallyString2, bool* isPotentiallyComm, bool* isPotentiallyHexBin, char * char2, char* char1, bool* nouvTok, toklist* tokenAdd, intlist* typeTok, intlist* lines, int* debTok, int i, int* stepNumber, int* stepHexBin, int* nombrePoints)
 {
     /*
     fonction interne à cut permettant de mettre fin à la détection des tokens simples
@@ -858,7 +837,7 @@ void finTokensSimples(char* string, bool* isPotentiallyNumber, bool* isPotential
         return_on_error();
     }
     
-    if ((((*char1)=='.' && (*stepNumber)==2) || (!isdigit(*char1) && (*char1) != '.')) && (*isPotentiallyNumber) && !(*stepNumber==1) || (*isPotentiallyNumber && *char1=='.' && !isdigit(string[i+1]))) // fin de nombre
+    if (((*char1 == '.' && *stepNumber == 2) || (((!isdigit(*char1) && *char1 != '.')) && *isPotentiallyNumber && !(*stepNumber==1))) || (*isPotentiallyNumber && *char1=='.' && !isdigit(string[i+1]))) // fin de nombre
     {
         Token nb = toksub(string, (*debTok), i);
         toklist_append(tokenAdd, nb);
@@ -1097,7 +1076,7 @@ void debutTokensSimples(int i, int* debTok, char* char1, bool* isPotentiallyStri
 
 bool isAcceptedWO(int type, int typeanc) {
     // cette fonction dit si oui ou non il peut y avoir type derrière typeanc, sans prendre en compte les opérateurs (Without Operators)
-    for (int i = 0 ; i < syntax.tab[FLATTEN(type)].len ; i++) { // on remet le type dans l'intervalle [0, 127] en enlevant le IMMEDIATE
+    for (size_t i = 0 ; i < syntax.tab[FLATTEN(type)].len ; i++) { // on remet le type dans l'intervalle [0, 127] en enlevant le IMMEDIATE
         if (syntax.tab[FLATTEN(type)].tab[i] == typeanc)
             return true;
     }
@@ -1157,10 +1136,11 @@ bool isAccepted(Token token, uint8_t type, Token tokenAnc, int typeanc) {
 
 
 
-void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int offset) {
+void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, size_t offset) {
     // cette fonction a pour rôle de créer les éléments de syntaxe tels que des blocs, des blockline, des fonctions, des listes, etc
 
-    int debTok = 0, debTok2 = 0, debTok3 = 0, lastDebTok = 0, gramm = 0;
+    size_t debTok2 = 0, lastDebTok = 0;
+    int gramm = 0;
 
     // le rôle de lastDebTok est de retenir la dernière fois qu'on a fini une fonction ou un listindex afin de ne parser récursivement que le nouveau contenu
 
@@ -1181,10 +1161,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
     int nbCro = 0; // pour les crochets
     
     int foncParDeb = 0; // va contenir le nombre de parenthèses déjà traversées au moment où on arrive à la fonction
-    int listeParDeb = 0; // va contenir le nombre de parenthèses déjà traversées au moment où on arrive à la liste
     int indexParDeb = 0; // va contenir le nombre de parenthèses déjà traversées au moment où on arrive à l'index de liste
-    
-    
     
     
     //etapes de detection par exemple variable, puis parenthese "(" puis parenthese ")"
@@ -1195,7 +1172,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
     // ce tableau contient à chaque élément l'élément se syntaxe le plus extérieur qui commence ici, et son type
 
 
-    for (int k=0 ; k < tokenAdd->len ; k++) // boucle pour chaque nouveau token ajoute. chaque tour de cette boucle est comme un tour de boucle normal sur tokens. cela permet d’eviter une boucle supplementaire                
+    for (size_t k=0 ; k < tokenAdd->len ; k++) // boucle pour chaque nouveau token ajoute. chaque tour de cette boucle est comme un tour de boucle normal sur tokens. cela permet d’eviter une boucle supplementaire                
     {
         // savoir si on a un operateur ou un mot cle ou un booleen
         if (typeTok.tab[k] == TYPE_OPERATOR) // si il a déjà été détecté comme opérateur, on vérifie si c'est bien un opérateur valide
@@ -1290,18 +1267,18 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
         
         // annuler ou poursuivre les fonctions, les instructions, les index de listes....
         
-        annulerOuPoursuivre(&isPotentiallyPar, &isPotentiallyFonc, &foncStep, &isPotentiallyInst, &instStep, &isPotentiallyListIndex, &listIndexStep, tokenAdd, &typeTok, k, &foncParDeb, &indexParDeb, &listeParDeb, &nbCro);
+        annulerOuPoursuivre(&isPotentiallyFonc, &foncStep, &isPotentiallyInst, &instStep, &isPotentiallyListIndex, &listIndexStep, tokenAdd, &typeTok, k);
         
         // fins de fonctions, d'instructions, d'index de listes...
         
-        finsTypesComposes(&debTok2, &debTok3, &lastDebTok, k, &nouvTokComp, &isPotentiallyPar, &isPotentiallyFonc, &foncStep, tokenAdd, typeTok, &nbPar, &isPotentiallyInst, &instStep, &listIndexStep, &isPotentiallyList, &isPotentiallyListIndex, &nbCro, &isPotentiallyBlock, &nbAcc, &foncParDeb, &indexParDeb, &listeParDeb, ast, offset, lines);
+        finsTypesComposes(&debTok2, &lastDebTok, k, &nouvTokComp, &isPotentiallyPar, &isPotentiallyFonc, &foncStep, tokenAdd, typeTok, &nbPar, &isPotentiallyInst, &instStep, &listIndexStep, &isPotentiallyList, &isPotentiallyListIndex, &nbCro, &isPotentiallyBlock, &nbAcc, &foncParDeb, &indexParDeb, ast, offset, lines);
 
         // fin des fins et debut des debuts (hi hi hi)
 
         return_on_error();
 
         
-        debutTokensComposes(k, &typeTok, tokenAdd, &debTok2, &debTok3, &lastDebTok, &nouvTokComp, &isPotentiallyList, &isPotentiallyPar, &isPotentiallyFonc, &isPotentiallyListIndex, &isPotentiallyBlock, &isPotentiallyInst, &listIndexStep, &foncStep, &instStep, &foncParDeb, &indexParDeb, &listeParDeb, &nbPar, &nbCro);
+        debutTokensComposes(k, &typeTok, tokenAdd, &debTok2, &lastDebTok, &nouvTokComp, &isPotentiallyList, &isPotentiallyPar, &isPotentiallyFonc, &isPotentiallyListIndex, &isPotentiallyBlock, &isPotentiallyInst, &listIndexStep, &foncStep, &instStep, &foncParDeb, &indexParDeb, &nbPar, &nbCro);
         
     }
 
@@ -1339,7 +1316,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
 
         // ces deux variables sont des indices indiquant quel est le dernier token fabriqué et l'avant-dernier token fabriqué
-        int i_act = ast[0]->fin + 1 - offset;
+        size_t i_act = ast[0]->fin + 1 - offset;
         int i_anc = 0;
 
 
@@ -1396,7 +1373,7 @@ void parse(toklist* tokenAdd, intlist typeTok, Ast** ast, intlist* lines, int of
 
 
 
-void annulerOuPoursuivre(bool* isPotentiallyPar, bool* isPotentiallyFonc, int* foncStep, bool* isPotentiallyInst, int* instStep, bool* isPotentiallyListIndex, int* listIndexStep, toklist* tokenAdd, intlist* typeTok, int k, int *foncParDeb, int *listeParDeb, int *indexParDeb, int *nbCro)
+void annulerOuPoursuivre(bool* isPotentiallyFonc, int* foncStep, bool* isPotentiallyInst, int* instStep, bool* isPotentiallyListIndex, int* listIndexStep, toklist* tokenAdd, intlist* typeTok, int k)
 {
 
     // quand on arrête un isPotentiallyTruc, c'est qu'on accepte un nouveau token
@@ -1443,7 +1420,7 @@ void annulerOuPoursuivre(bool* isPotentiallyPar, bool* isPotentiallyFonc, int* f
 
 
 
-void debutTokensComposes(int k, intlist* typeTok, toklist* tokenAdd, int* debTok2, int* debTok3, int* lastDebTok, bool* nouvTokComp, bool* isPotentiallyList, bool* isPotentiallyPar, bool* isPotentiallyFonc, bool* isPotentiallyListIndex, bool* isPotentiallyBlock, bool* isPotentiallyInst, int* listIndexStep, int *foncStep, int *instStep, int *foncParDeb, int *listeParDeb, int *indexParDeb, int* nbPar, int* nbCro)
+void debutTokensComposes(size_t k, intlist* typeTok, toklist* tokenAdd, size_t* debTok2, size_t* lastDebTok, bool* nouvTokComp, bool* isPotentiallyList, bool* isPotentiallyPar, bool* isPotentiallyFonc, bool* isPotentiallyListIndex, bool* isPotentiallyBlock, bool* isPotentiallyInst, int* listIndexStep, int *foncStep, int *instStep, int *foncParDeb, int *indexParDeb, int* nbPar, int* nbCro)
 {
     
     if (tokenAdd->tab[k].debut[0] =='[' && !(*isPotentiallyList) && !(*isPotentiallyFonc) && !(*isPotentiallyListIndex) && !(*isPotentiallyBlock) && !(*isPotentiallyInst) && !(*isPotentiallyPar)) // debut de liste
@@ -1514,7 +1491,7 @@ void debutTokensComposes(int k, intlist* typeTok, toklist* tokenAdd, int* debTok
 
 
 
-void finsTypesComposes(int *debTok2, int *debTok3, int* lastDebTok, int k, bool *nouvTokComp, bool* isPotentiallyPar, bool *isPotentiallyFonc, int *foncStep, toklist* tokenAdd, intlist typeTok, int *nbPar, bool *isPotentiallyInst, int *instStep, int *listIndexStep, bool *isPotentiallyList, bool *isPotentiallyListIndex, int *nbCro, bool *isPotentiallyBlock, int *nbAcc, int *foncParDeb, int *listeParDeb, int *indexParDeb, Ast** ast, int offset, intlist* lines)
+void finsTypesComposes(size_t *debTok2, size_t* lastDebTok, size_t k, bool *nouvTokComp, bool* isPotentiallyPar, bool *isPotentiallyFonc, int *foncStep, toklist* tokenAdd, intlist typeTok, int *nbPar, bool *isPotentiallyInst, int *instStep, int *listIndexStep, bool *isPotentiallyList, bool *isPotentiallyListIndex, int *nbCro, bool *isPotentiallyBlock, int *nbAcc, int *foncParDeb, int *indexParDeb, Ast** ast, size_t offset, intlist* lines)
 {
     if (*isPotentiallyFonc && *foncStep==2 && tokenAdd->tab[k].debut[0] == ')' && (*nbPar - *foncParDeb)==0) // fin fonction
     {
@@ -1736,7 +1713,7 @@ int get_type(char* token, int type) {
 
 
 
-void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int offset) {
+void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, size_t offset) {
     // statements est censé être récursif
 
     bool isPotentiallyConBlock = false, isPotentiallyStat = false, isPotentiallyTE = false;
@@ -1747,8 +1724,8 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
     int debFunc = 0;
     int debTE = 0;
     int TEStep = 0;
-    int i=0;
-    char typeact=ast[0]->type;
+    size_t i=0;
+    uint8_t typeact = ast[0]->type;
     
     
     while (true) {
@@ -1825,7 +1802,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
 
 
         
-        int nextindex = ast[i]->fin - offset + 1;
+        size_t nextindex = ast[i]->fin - offset + 1;
         
         // modifie le blockline pour savoir quel bloc c'est particulièrement
         if (ast[i]->type==TYPE_BLOCKLINE || (ast[i]->type == TYPE_KEYWORD && !strlist_token_inList(&lkeywords, tokens->tab[i]))) {
@@ -1866,7 +1843,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             (nextindex < tokens->len && ((conBlockStep == 1 && typeact != TYPE_BLOCKIF && typeact != TYPE_BLOCKELSE && typeact != TYPE_BLOCKELIF)|| (conBlockStep == 2 && typeact == TYPE_BLOCK)) && ast[nextindex]->type != TYPE_ENDOFLINE && ast[nextindex]->type != TYPE_BLOCKIF && ast[nextindex]->type != TYPE_BLOCKELSE && ast[nextindex]->type != TYPE_BLOCKELIF && ast[nextindex]->type != TYPE_BLOCK))
             ) {
             // fin conblock si le type d'après ne correspond pas ou qu'on est à la fin
-            int fin;
+            size_t fin;
             if (typeact == TYPE_BLOCK)
                 fin = ast[i]->fin;
             else
@@ -1907,7 +1884,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
             (nextindex < tokens->len && ((TEStep == 1 && typeact != TYPE_BLOCKEXCEPT)|| (TEStep == 2 && typeact == TYPE_BLOCK)) && ast[nextindex]->type != TYPE_BLOCKEXCEPT && ast[nextindex]->type != TYPE_ENDOFLINE))
             ) {
             // on réunit les deux
-            int fin;
+            size_t fin;
             if (typeact == TYPE_BLOCK)
                 fin = ast[i]->fin;
             else
@@ -1989,7 +1966,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, int 
 
             // appel récursif de statements
 
-            int longueur = ast[i]->fin - offset - i - 1;
+            size_t longueur = ast[i]->fin - offset - i - 1;
 
 
             toklist tokens2 = (toklist) {.tab = tokens->tab + i + 1, .len = longueur};

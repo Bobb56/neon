@@ -1,3 +1,4 @@
+#include <stddef.h>
 #define NEON_SOURCE_ID 18
 
 #include "headers/serialization.h"
@@ -76,7 +77,7 @@ PointerType getPointerType(NeObj neo) {
             return UserFuncPtr;
         default:
             neon_internal_error();
-            return -1;
+            return (PointerType)-1;
     }
 }
 
@@ -142,27 +143,29 @@ intptr_t read_number_value(NeStream stream) {
 
 
 void write_string_value(NeStream stream, char* string) {
-    int size = strlen(string) + 1;
-    write_number_value(stream, size);
+    size_t size = strlen(string);
+    write_number_value(stream, (intptr_t)size);
     NeStream_write(stream, string, size);
 }
 
 char* read_string_value(NeStream stream) {
     int size = read_number_value(stream);
     return_on_error(NULL);
+    neon_assert(size >= 0, NULL);
 
     // Lecture de la chaîne de caractères
-    char* string = neon_malloc(size);
+    char* string = neon_malloc((size_t)(size + 1));
     if (string == NULL) {
         neon_fail(12, NO_ARGS);
         return NULL;
     }
     
-    if (!NeStream_read(stream, string, size)) {
+    if (!NeStream_read(stream, string, (size_t)size)) {
         neon_free(string);
         neon_fail(122, NO_ARGS);
         return NULL;
     }
+    string[size] = '\0';
     return string;
 }
 
@@ -170,10 +173,10 @@ char* read_string_value(NeStream stream) {
 // Écrit le header contenant les informations sur les types de containers de containersTable
 void write_containers_header(NeStream stream, intlist* containersTable) {
     // Écriture de la taille de la table
-    write_number_value(stream, containersTable->len);
+    write_number_value(stream, (intptr_t)containersTable->len);
 
     // Écriture de chaque élément de la table
-    for (int i=0 ; i < containersTable->len ; i++) {
+    for (size_t i=0 ; i < containersTable->len ; i++) {
         int container_type = containersTable->tab[i];
         NeList* attributes = neo_to_list(global_env->ATTRIBUTES->tab[container_type]);
 
@@ -181,10 +184,10 @@ void write_containers_header(NeStream stream, intlist* containersTable) {
         write_string_value(stream, global_env->CONTAINERS->tab[container_type]);
 
         // Écriture du nombre de champs du container
-        write_number_value(stream, attributes->len);
+        write_number_value(stream, (intptr_t)attributes->len);
 
         // Écriture de chaque nom de champ du container
-        for (int j=0 ; j < attributes->len ; j++) {
+        for (size_t j=0 ; j < attributes->len ; j++) {
             write_string_value(stream, neo_to_string(attributes->tab[j]));
         }
     }
@@ -197,6 +200,7 @@ void read_containers_header(NeStream stream, intlist* containersTable) {
     for (int i=0 ; i < tableSize ; i++) {
         char* containerName = read_string_value(stream);
         int nb_fields = read_number_value(stream);
+        neon_assert(nb_fields >= 0,);
 
         // On regarde si ce type de container existe déjà
         int container_index = strlist_index(global_env->CONTAINERS, containerName);
@@ -210,7 +214,7 @@ void read_containers_header(NeStream stream, intlist* containersTable) {
             strlist_append(global_env->CONTAINERS, containerName);
 
             // Création de la liste d'attributs
-            NeList* attributes = nelist_create(nb_fields);
+            NeList* attributes = nelist_create((size_t)nb_fields);
             for (int j=0 ; j < nb_fields ; j++) {
                 attributes->tab[j] = neo_str_create(read_string_value(stream));
             }
@@ -218,14 +222,14 @@ void read_containers_header(NeStream stream, intlist* containersTable) {
             // Ajout de la liste d'attributs aux attributs de ce container
             nelist_append(global_env->ATTRIBUTES, gc_extern_neo_list_convert(attributes));
         }
-        else if (nb_fields != neo_list_len(global_env->ATTRIBUTES->tab[container_index])) {
+        else if ((size_t)nb_fields != neo_list_len(global_env->ATTRIBUTES->tab[container_index])) {
             neon_fail(32, NO_ARGS);
             neon_free(containerName);
             return;
         }
         else {
             // Vérification de la correspondance exacte des champs
-            for (int j=0 ; j < nb_fields ; j++) {
+            for (size_t j=0 ; j < (size_t)nb_fields ; j++) {
                 char* field = read_string_value(stream);
 
                 bool field_is_present = strcmp(neo_to_string(neo_list_nth(global_env->ATTRIBUTES->tab[container_index], j)), field) == 0;
@@ -253,9 +257,9 @@ void read_containers_header(NeStream stream, intlist* containersTable) {
 
 void write_exceptions_header(NeStream stream, intlist* exceptionsTable) {
     // Écriture de la taille de la table
-    write_number_value(stream, exceptionsTable->len);
+    write_number_value(stream, (intptr_t)exceptionsTable->len);
     
-    for (int i=0 ; i < exceptionsTable->len ; i++) {
+    for (size_t i=0 ; i < exceptionsTable->len ; i++) {
         int exceptionCode = exceptionsTable->tab[i];
 
         // Écriture du nom de l'exception
@@ -292,9 +296,9 @@ void read_exceptions_header(NeStream stream, intlist* exceptionsTable) {
 
 void write_variables_header(NeStream stream, intlist* varsTable) {
     // Écriture de la taille de la table
-    write_number_value(stream, varsTable->len);
+    write_number_value(stream, (intptr_t)varsTable->len);
 
-    for (int i=0 ; i < varsTable->len ; i++) {
+    for (size_t i=0 ; i < varsTable->len ; i++) {
         Var var = varsTable->tab[i];
         // Écriture du nom de la variable
         write_string_value(stream, global_env->NOMS->tab[var]);
@@ -390,7 +394,7 @@ void update_ptr_table_obj(NeObj obj, intptrlist* ptrTable, intlist* typesTable, 
 }
 
 void update_ptr_table_list(NeList* list, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* expt) {
-    for (int i=0 ; i < list->len ; i++) {
+    for (size_t i=0 ; i < list->len ; i++) {
         update_ptr_table_obj(list->tab[i], ptrTable, typesTable, containers, vars, expt);
     }
 }
@@ -518,7 +522,7 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
         switch (BYTE(tb, index)) {
             case TypeTreeList: {
                 // Calcul de la taille totale du bloc de la TreeList
-                int treelist_size = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(TreeBufferIndex) * treelistLength(tb, index);
+                size_t treelist_size = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(TreeBufferIndex) * treelistLength(tb, index);
                 // Écriture de la TreeList telle quelle
                 NeStream_write(stream, tb->pointer + index, treelist_size);
                 index += treelist_size;
@@ -628,7 +632,7 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
 
 
             default: {
-                int tree_size = type_size(TREE_TYPE(tb, index));
+                size_t tree_size = type_size(TREE_TYPE(tb, index));
                 NeStream_write(stream, tb->pointer + index, tree_size);
                 index += tree_size;
                 break;
@@ -642,16 +646,16 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
 
 
 
-void serialize_nelist(NeStream stream, NeList* list, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* exceptions) {
+void serialize_nelist(NeStream stream, NeList* list, intptrlist* ptrTable, intlist* exceptions) {
     if (nelist_is_void(list)) {
         write_number_value(stream, -1);
     }
     else {
         // Écriture du champ len de la NeList
-        write_number_value(stream, list->len);
+        write_number_value(stream, (intptr_t)list->len);
 
         // Écriture de chaque NeObject
-        for (int j = 0 ; j < list->len ; j++) {
+        for (size_t j = 0 ; j < list->len ; j++) {
             serialize_partial_neobject_opt(stream, list->tab[j], ptrTable, exceptions);
         }
     }
@@ -672,10 +676,10 @@ Number : Taille de la table
 // Écriture de la table des pointeurs en remplaçant les pointeurs internes par les indices dans la ptrTable
 void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* exceptions) {
     // Écriture de la taille de la table
-    write_number_value(stream, ptrTable->len);
+    write_number_value(stream, (intptr_t)ptrTable->len);
 
     // Écriture de chaque pointeur de la table
-    for (int i=0 ; i < ptrTable->len ; i++) {
+    for (size_t i=0 ; i < ptrTable->len ; i++) {
         PointerType ptrType = typesTable->tab[i];
         PointerUnion ptr = (PointerUnion){.pointer = ptrTable->tab[i]};
         // Écriture du type des données
@@ -697,7 +701,7 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
             }
 
             case NeListPtr: {
-                serialize_nelist(stream, ptr.nelist, ptrTable, typesTable, containers, vars, exceptions);
+                serialize_nelist(stream, ptr.nelist, ptrTable, exceptions);
                 break;
             }
 
@@ -708,7 +712,7 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
                 write_number_value(stream, ctnr_index);
 
                 // Écriture de la NeList
-                serialize_nelist(stream, &ptr.container->data, ptrTable, typesTable, containers, vars, exceptions);
+                serialize_nelist(stream, &ptr.container->data, ptrTable, exceptions);
                 break;
             }
 
@@ -735,19 +739,19 @@ void serialize_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* type
                 write_number_value(stream, intptrlist_index(ptrTable, ptr.userfunc->tree_buffer));
 
                 // Écriture de la NeList
-                serialize_nelist(stream, &ptr.userfunc->opt_args, ptrTable, typesTable, containers, vars, exceptions);
+                serialize_nelist(stream, &ptr.userfunc->opt_args, ptrTable, exceptions);
                 break;
             }
 
             case TreeBufferPtr: {
                 // Écriture du nombre de blocs
-                write_number_value(stream, ptr.treebuffer->n_blocks);
+                write_number_value(stream, (intptr_t)ptr.treebuffer->n_blocks);
                 
                 // Écriture de la taille de chaque bloc
-                write_number_value(stream, ptr.treebuffer->block_size);
+                write_number_value(stream, (intptr_t)ptr.treebuffer->block_size);
 
                 // Écriture de la taille du TreeBuffer
-                write_number_value(stream, ptr.treebuffer->size);
+                write_number_value(stream, (intptr_t)ptr.treebuffer->size);
 
                 // Écriture de l'entry point
                 NeStream_write(stream, &ptr.treebuffer->entry_point, sizeof(TreeBufferIndex));
@@ -836,11 +840,11 @@ void deserialize_nelist(NeStream stream, NeList* list) {
         *list = NELIST_VOID;
     }
     else {
-        nelist_init(list, length);
+        nelist_init(list, (size_t)length);
         list->refc = 0; // Lors de sa création la liste n'est accessible depuis nulle part. Plus tard on la relie à d'autres objets, et là on augmente le compteur de références
         
-        int j=0;
-        for (; j < length ; j++) {
+        size_t j=0;
+        for (; j < (size_t)length ; j++) {
             list->tab[j] = read_partial_neobject(stream);
             if_error {
                 neon_free(list->tab);
@@ -853,7 +857,7 @@ void deserialize_nelist(NeStream stream, NeList* list) {
 
 
 // On désérialise tous les objets de la table des pointeurs, mais en gardant les références aux autres objets comme des indices dans la table des pointeurs
-void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* expt) {
+void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars) {
     int tableSize = read_number_value(stream);
     return_on_error();
 
@@ -872,10 +876,11 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 // Lecture de la taille de la chaîne de caractères
                 int size = read_number_value(stream);
                 return_on_error();
+                neon_assert(size >= 0,);
 
                 // Lecture de la chaîne de caractères
-                string->string = neon_malloc(size);
-                if (!NeStream_read(stream, string->string, size)) {
+                string->string = neon_malloc((size_t)size);
+                if (!NeStream_read(stream, string->string, (size_t)size)) {
                     string_destroy(string);
                     neon_fail(122, NO_ARGS);
                     return;
@@ -888,16 +893,8 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
             case CharStarPtr: {
                 // Lecture de la taille de la chaîne de caractères
-                int size = read_number_value(stream);
+                char* string = read_string_value(stream);
                 return_on_error();
-
-                // Lecture de la chaîne de caractères
-                char* string = neon_malloc(size);
-                if (!NeStream_read(stream, string, size)) {
-                    neon_free(string);
-                    neon_fail(122, NO_ARGS);
-                    return;
-                }
 
                 intptrlist_append(ptrTable, string);
                 intlist_append(typesTable, CharStarPtr);
@@ -938,14 +935,17 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 // Lecture du nombre de blocs
                 int n_blocks = read_number_value(stream);
                 return_on_error();
+                neon_assert(n_blocks >= 0,);
 
                 // Lecture de la taille de chaque bloc
                 int block_size = read_number_value(stream);
                 return_on_error();
+                neon_assert(block_size >= 0,);
 
                 // Lecture de la taille du TreeBuffer
                 int size = read_number_value(stream);
                 return_on_error();
+                neon_assert(size >= 0,);
 
 
                 // Lecture de l'entry point
@@ -957,10 +957,10 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
                 
                 // Lecture des données (size octets)
-                void* pointer = neon_malloc(n_blocks * block_size);
+                void* pointer = neon_malloc((size_t)n_blocks * (size_t)block_size);
                 return_on_error();
 
-                if (!NeStream_read(stream, pointer, size)) {
+                if (!NeStream_read(stream, pointer, (size_t)size)) {
                     neon_fail(122, NO_ARGS);
                     neon_free(pointer);
                     return;
@@ -974,9 +974,9 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                     return;
                 }
 
-                tb->n_blocks = n_blocks;
-                tb->block_size = block_size;
-                tb->size = size;
+                tb->n_blocks = (size_t)n_blocks;
+                tb->block_size = (size_t)block_size;
+                tb->size = (size_t)size;
                 tb->side_memory = false;
                 tb->locked = false; // On se sert du champ locked pour savoir si on a résolu les pointeurs internes du TreeBuffer
                 tb->pointer = pointer;
@@ -993,6 +993,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
                 int nbArgs = read_number_value(stream);
                 return_on_error();
+                neon_assert(nbArgs >= 0,);
 
                 int nbOptArgs = read_number_value(stream);
                 return_on_error();
@@ -1001,10 +1002,10 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 return_on_error();
 
                 // Lecture des arguments
-                Var* args = neon_malloc(sizeof(Var) * nbArgs);
+                Var* args = neon_malloc(sizeof(Var) * (size_t)nbArgs);
                 return_on_error();
 
-                for (int i=0 ; i < nbArgs ; i++) {
+                for (size_t i=0 ; i < (size_t)nbArgs ; i++) {
                     args[i] = vars->tab[read_number_value(stream)];
                     if_error {
                         neon_free(args);
@@ -1022,13 +1023,13 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
                 char* doc = NULL;
 
                 if (size != -1) {
-                    doc = neon_malloc(sizeof(char) * size);
+                    doc = neon_malloc(sizeof(char) * (size_t)size);
                     if_error {
                         neon_free(args);
                         return;
                     }
 
-                    if (!NeStream_read(stream, doc, size)) {
+                    if (!NeStream_read(stream, doc, (size_t)size)) {
                         neon_fail(122, NO_ARGS);
                         neon_free(args);
                         neon_free(doc);
@@ -1090,8 +1091,9 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 
                 int module = read_number_value(stream);
                 return_on_error();
+                neon_assert(module >= 0,);
 
-                NeObj fun = get_function(id, module);
+                NeObj fun = get_function(id, (size_t)module);
                 *(fun.refc_ptr) = 0;
 
                 intptrlist_append(ptrTable, neo_to_function(fun));
@@ -1108,7 +1110,7 @@ void read_all_pointers(NeStream stream, intptrlist* ptrTable, intlist* typesTabl
 }
 
 void solve_pointers_list(NeList* list, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* expt) {
-    for (int i=0 ; i < list->len ; i++) {
+    for (size_t i=0 ; i < list->len ; i++) {
         solve_pointers_aux(&list->tab[i], ptrTable, typesTable, containers, vars, expt);
     }
 }
@@ -1302,7 +1304,7 @@ void free_pointer(PointerUnion ptr, PointerType ptrType) {
 
 // Libère tous les objets de la table des pointeurs
 void free_all_pointers(intptrlist* ptrTable, intlist* typesTable) {
-    for (int i=0 ; i < ptrTable->len ; i++) {
+    for (size_t i=0 ; i < ptrTable->len ; i++) {
         free_pointer((PointerUnion)(void*)ptrTable->tab[i], typesTable->tab[i]);
     }
 }
@@ -1331,7 +1333,7 @@ NeObj neobject_deserialize(NeStream stream) {
     read_exceptions_header(stream, &exceptionsTable);
 
     // Lecture de tous les pointeurs (les sommets du graphe)
-    read_all_pointers(stream, &ptrTable, &typesTable, &containersTable, &varsTable, &exceptionsTable);
+    read_all_pointers(stream, &ptrTable, &typesTable, &containersTable, &varsTable);
     if_error goto handle_error;
     
     NeObj obj = read_partial_neobject(stream);

@@ -62,8 +62,8 @@ static const char* error_messages[NB_ERRORS] = {
     "The first argument of format() must be a String, not <>.",
     "Too many arguments in format().\nThe format string specifies <> arguments but <> were given.",
     "Not enough arguments in format().\n<> arguments were given but at least <> were expected.",
-    "",
-    "",
+    "Cannot multiply an object of type <> with a negative integer",
+    "The index must be a positive integer.",
     "Unsupported types for equality tests: <> and <>",
     "",
     "",
@@ -335,19 +335,13 @@ void neon_raise_user_exception(int exception_code, char* format, NeList* args) {
 
 
 
-void segfault(void) {
-    volatile int* p = (int*)8;
-    volatile int a = *p;
-}
-
-
 void printErrorString(char* format, NeList* error_message_arguments) {
     setColor(RED);
-    int format_length = strlen(format);
-    int specifier_length = strlen(FORMAT_ARGUMENT_SPECIFIER);
+    size_t format_length = strlen(format);
+    size_t specifier_length = strlen(FORMAT_ARGUMENT_SPECIFIER);
 
-    int argument_index = 0;
-    for (int i = 0 ; i < format_length ; i++) {
+    size_t argument_index = 0;
+    for (size_t i = 0 ; i < format_length ; i++) {
         // Identificateur d'argument
         if (argument_index < error_message_arguments->len && i < format_length - specifier_length + 1 && strncmp(format + i, FORMAT_ARGUMENT_SPECIFIER, specifier_length) == 0) {
             char* short_repr = neobject_short_repr(error_message_arguments->tab[argument_index], SHORT_REPR_ERR_SIZE, false);
@@ -472,11 +466,24 @@ int getFileIndex(char* program, int line) {
 
 
 
-void bp(char* s) {
+#ifdef DEBUG
+void segfault(void) {
+    volatile int* p = (int*)8;
+    volatile int a = *p;
+}
+
+void bp(int i) {
+    b(i);
     volatile int a = 0;
     while (a == 0) {a *= a;}
 }
 
+void b(int i) {
+    printInt(i);
+    newLine();
+    flush();
+}
+#endif
 
 
 void printErrSource(char* file, int line) {

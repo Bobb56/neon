@@ -1,3 +1,5 @@
+#include "headers/constants.h"
+#include <stddef.h>
 #define NEON_SOURCE_ID 14
 
 #include <string.h>
@@ -108,10 +110,10 @@ NeObj _add(NeObj _op1, NeObj _op2) {
       {
           // fusion de deux listes
           NeList* list = nelist_create(neo_list_len(_op1) + neo_list_len(_op2));
-          for (int i = 0 ; i < neo_list_len(_op1) ; i++)
+          for (size_t i = 0 ; i < neo_list_len(_op1) ; i++)
               list->tab[i] = neo_copy(neo_list_nth(_op1, i));
 
-          for (int i = neo_list_len(_op1) ; i < list->len ; i++)
+          for (size_t i = neo_list_len(_op1) ; i < list->len ; i++)
               list->tab[i] = neo_copy(neo_list_nth(_op2, i - neo_list_len(_op1)));
 
           return neo_list_convert(list);
@@ -171,7 +173,7 @@ NeObj _sub(NeObj _op1, NeObj _op2)
   else if (NEO_TYPE(_op1)==TYPE_STRING && NEO_TYPE(_op2)==TYPE_INTEGER)
   {
     // on enlève le nombre de caractères à la fin de la chaîne
-    char* retour = sub(neo_to_string(_op1), 0, strlen(neo_to_string(_op1)) - neo_to_integer(_op2));
+    char* retour = sub(neo_to_string(_op1), 0, (intptr_t)strlen(neo_to_string(_op1)) - neo_to_integer(_op2));
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     
@@ -289,27 +291,32 @@ NeObj _mul(NeObj _op1, NeObj _op2)
   else if ((NEO_TYPE(_op1)==TYPE_INTEGER && NEO_TYPE(_op2)==TYPE_STRING) || (NEO_TYPE(_op1)==TYPE_STRING && NEO_TYPE(_op2)==TYPE_INTEGER))
   {
     char* sousch;
-    int times=0;
+    intptr_t times=0;
 
     if (NEO_TYPE(_op1)==TYPE_STRING)
     {
-      sousch=neo_to_string(_op1);
-      times=neo_to_integer(_op2);
+      sousch = neo_to_string(_op1);
+      times = neo_to_integer(_op2);
     }
     else
     {
-      sousch=neo_to_string(_op2);
-      times=neo_to_integer(_op1);
+      sousch = neo_to_string(_op2);
+      times = neo_to_integer(_op1);
+    }
+
+    if (times < 0) {
+      neon_fail(49, neo_new_str_create("String"));
+      return neo_none_create();
     }
     
-    int len_sousch = strlen(sousch);
-    char* multip = neon_malloc(sizeof(char)*(times*len_sousch+1));
+    size_t len_sousch = strlen(sousch);
+    char* multip = neon_malloc(sizeof(char) * ((size_t)times * len_sousch + 1));
 
-    for (int i=0 ; i < times*len_sousch ; i++) {
+    for (size_t i=0 ; i < (size_t)times * len_sousch ; i++) {
       multip[i] = sousch[i%len_sousch];
     }
     
-    multip[times*len_sousch] = '\0';
+    multip[(size_t)times*len_sousch] = '\0';
 
     return neo_str_create(multip);
   }
@@ -327,12 +334,17 @@ NeObj _mul(NeObj _op1, NeObj _op2)
         times = neo_to_integer(_op1);
         list = neo_to_list(_op2);
     }
+
+    if (times < 0) {
+      neon_fail(49, neo_new_str_create("List"));
+      return neo_none_create();
+    }
     
     // on va faire list * times
-    NeObj neres = neo_list_create(times*list->len);
+    NeObj neres = neo_list_create((size_t)times * list->len);
     NeList* res = neo_to_list(neres);
     
-    for (int i=0 ; i < times*list->len ; i++) {
+    for (size_t i=0 ; i < (size_t)times*list->len ; i++) {
     	res->tab[i] = neo_copy(list->tab[i%list->len]);
     }
     
@@ -820,6 +832,8 @@ NeObj _incr(NeObj* op1)
 }
 
 void _incr2(NeObj* op1, int incr) {
+    UNUSED_PARAMETER(incr);
+
     NeObj new;
     if (NEO_TYPE((*op1)) == TYPE_INTEGER) {
         new = neo_integer_create(neo_to_integer(*op1) + 1);

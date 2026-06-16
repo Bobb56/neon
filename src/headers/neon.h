@@ -130,7 +130,7 @@ extern NeonEnv* global_env;
 void NeonEnv_destroy(NeonEnv* env);
 NeonEnv* NeonEnv_init(void);
 NeonEnv* NeonEnv_set(NeonEnv* new_env);
-int NeonEnv_get_size(NeonEnv* env);
+size_t NeonEnv_get_size(NeonEnv* env);
 void setNeonEnv(NeonEnv* env);
 void printRes(NeObj res);
 void execFile(char* filename);

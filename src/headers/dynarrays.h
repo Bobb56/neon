@@ -1,6 +1,7 @@
 #ifndef DYNARRAYS_H
 #define DYNARRAYS_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "constants.h"
@@ -25,7 +26,7 @@ typedef struct
 typedef struct
 {
   int* tab;
-  unsigned len;
+  size_t len;
   uint8_t capacity;
     
 } intlist;
@@ -34,15 +35,15 @@ typedef struct
 typedef struct
 {
     int**tab;
-    int len;
-    int capacity;
+    size_t len;
+    uint8_t capacity;
 } intptrlist;
 
 typedef struct
 {
   char** tab;
-  int len;
-  int capacity;
+  size_t len;
+  uint8_t capacity;
   
 } strlist;
 
@@ -66,8 +67,8 @@ typedef struct toklist {
   Token* tab;
   char* source_string;
   bool free_source_string;
-  int len;
-  int capacity;
+  size_t len;
+  uint8_t capacity;
 } toklist;
 
 
@@ -80,11 +81,11 @@ void printToken(Token tok);
 char stringize(Token tok);
 void unstringize(Token tok, char sov);
 char* tokdup(Token tok);
-toklist toklist_create(int len);
+toklist toklist_create(size_t len);
 void toklist_aff(toklist* list);
 void toklist_append(toklist* list, Token chaine);
 void toklist_destroy(toklist* list);
-int toklist_count(toklist* list, char* chaine);
+size_t toklist_count(toklist* list, char* chaine);
 bool strlist_token_inList(strlist* list, Token chaine);
 int strlist_token_index(strlist* list, Token chaine);
 
@@ -105,35 +106,35 @@ void* ptrlist_pop(ptrlist* list);
 
 
 /*********************intptrlist**********************/
-intptrlist intptrlist_create(int len);
+intptrlist intptrlist_create(size_t len);
 void intptrlist_append(intptrlist* list, void* ptr);
 int intptrlist_index(intptrlist* list, void* ptr);
 void intptrlist_destroy(intptrlist* list);
 
 /**************************intlist**********************/
-intlist intlist_create(int len);
-int intlist_getsize(intlist list);
+intlist intlist_create(size_t len);
+size_t intlist_getsize(intlist list);
 //void intlist_aff(intlist* list);
 void intlist_append(intlist* list,int nombre);
 //void intlist_resize(intlist* list, int newLen);
-void intlist_remove(intlist* list,int index);
+void intlist_remove(intlist* list, size_t index);
 int intlist_count(intlist* list, int nb);
 bool intlist_inList(intlist* list, int nombre);
 int intlist_index(intlist* list, int nombre);
-void intlist_insert(intlist* list,int nombre, int index);
+void intlist_insert(intlist* list,int nombre, size_t index);
 int intlist_max(intlist* list);
 
 /*************************boolmap*************************/
 void bitmap_init(bitmap* bm);
-void bitmap_set(bitmap* bm, int index, bool value);
-bool bitmap_get(bitmap* bm, int index);
+void bitmap_set(bitmap* bm, size_t index, bool value);
+bool bitmap_get(bitmap* bm, size_t index);
 void bitmap_destroy(bitmap* bm);
 void bitmap_print(bitmap* bm);
 
 /**************************strlist**********************/
 void strlist_destroy(strlist* list, bool bo);
-strlist* strlist_create(int len);
-int strlist_getsize(strlist* list);
+strlist* strlist_create(size_t len);
+size_t strlist_getsize(strlist* list);
 void strlist_aff(strlist* list);
 void strlist_append(strlist* list, char* chaine);
 //void strlist_resize(strlist* list, int newLen, bool freeElement);

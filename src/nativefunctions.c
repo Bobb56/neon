@@ -5,7 +5,6 @@
 #include "headers/errors.h"
 #include "headers/constants.h"
 #include "headers/objects.h"
-#include <stdio.h>
 
 #ifdef HAS_GRAPHIC_MODULE
 #include "headers/graphicmodule.h"
@@ -72,7 +71,7 @@ const char* get_function_name(int id, Module module) {
 }
 
 
-NeObj get_function(int id, int module) {
+NeObj get_function(int id, Module module) {
     switch (module) {
         case StandardModule:
             return get_standardfunction(id);

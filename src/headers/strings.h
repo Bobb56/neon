@@ -14,7 +14,7 @@ char* replace(char*, char*, char*);//a liberer après
 void cleanStdin(void);
 char* addStr(char* str1, char* str2);//a liberer après
 int count(char* string, char* search);
-char* subReplace(char* string, int len, int debut, int longueur, char* remplacement, int len_remplacement);
+char* subReplace(char* string, size_t len, size_t debut, size_t longueur, char* remplacement, size_t len_remplacement);
 int sindex (char* string, char car);
 int string_index(char* string, char* search);
 char* traitementString(char* string);//a liberer apres
