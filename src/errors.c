@@ -334,6 +334,12 @@ void neon_raise_user_exception(int exception_code, char* format, NeList* args) {
 }
 
 
+size_t align(uint8_t bytes, size_t size) {
+    return size + bytes - (size%bytes);
+}
+
+
+
 
 void printErrorString(char* format, NeList* error_message_arguments) {
     setColor(RED);

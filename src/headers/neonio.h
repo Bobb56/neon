@@ -1,10 +1,6 @@
 #ifndef NEONIO_H
 #define NEONIO_H
 
-#ifndef TI_EZ80
-#include <stdio.h>
-#endif
-
 #include <stdint.h>
 #include <stdbool.h>
 

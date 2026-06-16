@@ -59,8 +59,7 @@ bool tokeq(Token token, char* string) {
 }
 
 
-toklist toklist_create(size_t len)
-{
+toklist toklist_create(size_t len) {
   toklist list;
   
   list.len=len;
@@ -592,7 +591,7 @@ void bitmap_extend(bitmap* bm, int byte_index) {
       new_n_blocks += 1;
     }
     bm->map = neon_realloc(bm->map, bm->block_size * new_n_blocks);
-    memset(bm->map + bm->block_size * bm->n_blocks, 0, (bm->block_size * new_n_blocks) - (bm->block_size * bm->n_blocks));
+    memset(bm->map + bm->block_size * bm->n_blocks, 0, (size_t)((bm->block_size * new_n_blocks) - (bm->block_size * bm->n_blocks)));
     bm->n_blocks = new_n_blocks;
   }
 }

@@ -1682,7 +1682,7 @@ TreeBuffer createSyntaxTree(char* program, bool free_after)
         side_memory_end();
         return (TreeBuffer){0};
     }
-
+    
     TreeBuffer tb;
     TreeBuffer_init(&tb);
     tb.entry_point = createSyntaxTreeAux(&tb, ast, &tokens, &lines, 0);

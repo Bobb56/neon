@@ -109,9 +109,13 @@ int TreeBuffer_init(TreeBuffer* tb) {
     return 0;
 }
 
-
+// Cette fonction doit toujours renvoyer des pointeurs alignés
+// On suppose que le début du buffer est déjà bien aligné, on se charge seulement à l'allocation
+// de conserver l'alignement
+// On maintient ici un alignement à 8 octets
 TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, size_t size) {
     neon_assert(!tb->locked, TREE_VOID);
+    size = align8(size);
 
     TreeBufferIndex pointer = tb->size;
     
@@ -140,11 +144,11 @@ void TreeBuffer_iter(TreeBuffer* tb, void (*function)(TreeBuffer*, TreeBufferInd
     TreeBufferIndex index = 0;
     while (index < tb->size) {
         if (BYTE(tb, index) == TypeTreeList) {
-            index += sizeof(uint8_t) + sizeof(uint16_t) + sizeof(TreeBufferIndex) * treelistLength(tb, index);
+            index += align8(4 + sizeof(TreeBufferIndex) * treelistLength(tb, index));
         }
         else {
             function(tb, index, arg);
-            index += type_size(TREE_TYPE(tb, index));
+            index += align8(type_size(TREE_TYPE(tb, index)));
         }
     }
 }
@@ -404,7 +408,7 @@ Elle libère le TreeListTemp
 
 TreeBufferIndex TreeList_alloc(TreeBuffer* tb, uint16_t length) {
     // Allocation de l'espace pour le type du bloc (TypeTreeList), la taille du tableau, et les données
-    TreeBufferIndex list = TreeBuffer_alloc(tb, sizeof(uint8_t) + sizeof(uint16_t) + length * sizeof(TreeBufferIndex));
+    TreeBufferIndex list = TreeBuffer_alloc(tb, 4 + length * sizeof(TreeBufferIndex));
     return_on_error(TREE_VOID);
 
     // On écrit le type du bloc comme étant une TreeList

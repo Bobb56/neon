@@ -18,9 +18,11 @@
 #define if_error                                if (global_env->CODE_ERROR != 0)
 #define neon_assert(condition, return_value)    if (!(condition)) {neon_fail(120, NO_ARGS) ; return return_value ;}
 
-#define neon_malloc     malloc
-#define neon_realloc    realloc
-#define neon_free       free
+#define neon_malloc                             malloc
+#define neon_realloc                            realloc
+#define neon_free                               free
+
+#define align8(size)                            align(8, size)
 
 /*
 void* neon_malloc(size_t size);
@@ -32,6 +34,8 @@ void neon_reset_error(void);
 void get_error_info_and_reset(int* code, int* source_id, int* line_number, NeList** error_message_arguments);
 void neon_set_error(int code_error, int line, int source_id, NeList* error_message_arguments);
 void neon_raise_user_exception(int exception_code, char* format, NeList* args);
+
+size_t align(uint8_t bytes, size_t size);
 
 void printErrorString(char* format, NeList* error_message_arguments);
 void printError(void);

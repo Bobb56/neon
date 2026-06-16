@@ -8,7 +8,7 @@
 #include "dynarrays.h"
 
 bool isString(char* string, char* test, int size);
-char* inputCode(char*);
+char* inputCode();
 char* sub(char* string,int debut,int fin);//a liberer après
 char* replace(char*, char*, char*);//a liberer après
 void cleanStdin(void);

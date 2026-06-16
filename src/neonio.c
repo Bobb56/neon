@@ -14,7 +14,7 @@
 #include "headers/strings.h"
 #include "headers/errors.h"
 
-#if defined(LINUX) || defined(WINDOWS)
+#if defined(LINUX) || defined(WINDOWS) || defined(MINIMAL_LIBC_RISCV64)
     #include <stdio.h>
 #elif defined(TI_EZ80)
     #include <ti/vars.h>
@@ -119,7 +119,14 @@
 
     #ifndef LINUX
         char* input(char *text) {
-            printf("%s",text);
+            if (strcmp(SEQUENCE_ENTREE, text) == 0) {
+                setColor(BLUE);
+                printString(SEQUENCE_ENTREE);
+                setColor(DEFAULT);
+            }
+            else {
+                printString(text);
+            }
             fflush(stdout);
             
             uint8_t capacity = 9;
@@ -138,7 +145,7 @@
                     break;
                 }
 
-                if (buffer_index >= (1 << capacity)) {
+                if (buffer_index >= ((size_t)1 << capacity)) {
                     capacity++;
                     buffer = neon_realloc(buffer, 1 << capacity);
                 }
@@ -196,7 +203,7 @@
     
     
     void flush(void) {
-        fflush(stdin);
+        fflush(stdout);
     }
     
     
@@ -219,6 +226,8 @@
                 printf("\033[1;35m"); // met en violet et gras
             else if (color == DEFAULT)
                 printf("\033[0;00m");
+        #else
+        UNUSED_PARAMETER(color);
         #endif
     }
     

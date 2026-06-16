@@ -392,9 +392,7 @@ void terminal(void) {
             neon_free(global_env->FILENAME);
         global_env->FILENAME = NULL;
 
-        exp = inputCode(SEQUENCE_ENTREE);
-
-        b(0);
+        exp = inputCode();
 
         if (exp == NULL && global_env->CODE_ERROR == 0) // pour afficher le keyboardInterrupt
             neon_fail(104, NO_ARGS);
@@ -429,7 +427,8 @@ void terminal(void) {
 
         
         // s'il n'y a qu'une expression, alors, on affiche le résultat de l'expression
-        if (treelistLength(&tb, treeSntxTree(&tb, tb.entry_point)->treelist) == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0])) {
+        if (treelistLength(&tb, treeSntxTree(&tb, tb.entry_point)->treelist) == 1 && NeTree_isexpr(&tb, treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0]))
+        {
             TreeBufferIndex exprtree = treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0];
 
             res = eval(&tb, exprtree);

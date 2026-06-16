@@ -467,7 +467,6 @@ void ast_aff(Ast** ast, int len) // affiche une liste d'entiers
 
 bool isFull(char* string)
 {
-
     if (strlen(string) == 0)
         return true;
 
@@ -528,7 +527,7 @@ bool isFull(char* string)
         if (global_env->CODE_ERROR == 0 && tokens.len > 0)
             statements(&types, &tokens, ast, &lines, 0);
     }
-    
+
     side_memory_end();
 
     global_env->LINENUMBER = -1;

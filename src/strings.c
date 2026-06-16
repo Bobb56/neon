@@ -259,27 +259,16 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non complét�
 
 
 
-
-
-char* inputCode(char* text)
+char* inputCode()
 {
-    #ifndef LINUX
-        setColor(BLUE);
-        printString(text);
-        setColor(DEFAULT);
-        char* str = input("");
-    #else
-        char* str = input(text); // dans le cas Linux, input se charge lui-même de mettre le bleu
-    #endif
-    
-    
+    char* str = input(SEQUENCE_ENTREE);
+
     if (global_env->CODE_ERROR != 0 || str == NULL)
         return NULL;
     
-    while (!isFull(str))
-    {
-        if (global_env->CODE_ERROR != 0)
-        {
+    while (!isFull(str)) {
+
+        if (global_env->CODE_ERROR != 0) {
             neon_free(str);
             return NULL;
         }

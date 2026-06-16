@@ -17,7 +17,6 @@ struct ContainersAssoc {
     int Line;
     int Text;
     int Point;
-    
 };
 
 struct ContainerType {

@@ -1,3 +1,4 @@
+#include "headers/neonio.h"
 #define NEON_SOURCE_ID 19
 
 /*
@@ -65,15 +66,20 @@ void side_memory_start(void) {
 
 // Fin d'une session d'utilisation de la side memory
 void side_memory_end(void) {
-    //printString("Size of side memory : "); printInt((long int)pointer - (long int)initial_base_pointer); newLine();
-    //neon_pause("");
     open = false;
     move_all_treebuffers();
     pointer = base_pointer;
 }
 
 
-void* side_memory_alloc(int size) {
+// Cette fonction doit toujours renvoyer des pointeurs alignés
+// On suppose que le début du buffer est déjà bien aligné, on se charge seulement à l'allocation
+// de conserver l'alignement
+// On maintient ici un alignement à 8 octets
+void* side_memory_alloc(size_t size) {
+    // Extension de la taille de la zone à allouer pour qu'elle soit alignée à 8 octets
+    size = align8(size);
+
     void* alloc_area = pointer;
     if (pointer + size >= initial_base_pointer + buffer_size) {
         neon_fail(12, NO_ARGS);
@@ -85,7 +91,7 @@ void* side_memory_alloc(int size) {
 
 // Alloue définitivement de la mémoire dans la side memory
 // Part du principe que la side memory ne contient aucune donnée temporaire
-void* side_memory_hard_alloc(int size) {
+void* side_memory_hard_alloc(size_t size) {
     neon_assert(!open, NULL);
 
     void* alloc_area = base_pointer;
@@ -186,11 +192,13 @@ Ast** copy_ast_to_side_memory(Ast** ast, size_t length) {
 
 Ast** ast_create(intlist* typeTok) {
     void* pointer_save = pointer;
+    
     Ast** ast = side_memory_alloc(sizeof(Ast*) * typeTok->len);
     return_on_error(NULL);
 
     for (size_t i = 0 ; i < typeTok->len ; i++) {
         ast[i] = side_memory_alloc(sizeof(Ast));
+        return_on_error(NULL);
 
         if_error {
             pointer = pointer_save;
@@ -264,14 +272,14 @@ char* side_memory_sandwich(char* string, char car)
 {
 
     /* fonction qui ajoute le caractère car avant et après la chaine de caractères string*/
-    int len = strlen(string);
+    size_t len = strlen(string);
     char* newStr = side_memory_alloc(len + 3);
     return_on_error(NULL);
   
     newStr[0]=car;
     newStr[len+1]=car;
     newStr[len+2]='\0';
-    for (int i = 0 ; i < len ; i++)
+    for (size_t i = 0 ; i < len ; i++)
         newStr[i+1] = string[i];
     
 

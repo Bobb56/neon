@@ -517,12 +517,13 @@ void serialize_partial_neobject(NeStream stream, NeObj neo, intptrlist* ptrTable
 // Cette fonction écrit exactement tb->size octets, donc aucune compression des indices de la table
 void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptrTable, intlist* containers, intlist* vars, intlist* expt) {
     void* buffer = neon_malloc(100); // Plus grand que n'importe quelle structure d'arbre (taille max atteinte avec FunctionDef sur Linux x86 = 40 octets)
+
     TreeBufferIndex index = 0;
     while (index < tb->size) {
         switch (BYTE(tb, index)) {
             case TypeTreeList: {
                 // Calcul de la taille totale du bloc de la TreeList
-                size_t treelist_size = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(TreeBufferIndex) * treelistLength(tb, index);
+                size_t treelist_size = align8(4 + sizeof(TreeBufferIndex) * treelistLength(tb, index));
                 // Écriture de la TreeList telle quelle
                 NeStream_write(stream, tb->pointer + index, treelist_size);
                 index += treelist_size;
@@ -531,88 +532,102 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
 
             case TypeConst: {
                 struct ConstObj* tree = treeConst(tb, index);
-                memcpy(buffer, tree, sizeof(struct ConstObj));
+                size_t data_size = align8(sizeof(struct ConstObj));
+
+                memcpy(buffer, tree, data_size);
                 struct ConstObj* copy = buffer;
                 
                 copy->obj = process_neobj_for_serialization(copy->obj, ptrTable, expt);
 
-                NeStream_write(stream, copy, sizeof(struct ConstObj));
-                index += sizeof(struct ConstObj);
+                NeStream_write(stream, copy, data_size);
+                index += data_size;
                 break;
             }
 
             case TypeVariable: {
                 struct Variable* tree = treeVar(tb, index);
-                memcpy(buffer, tree, sizeof(struct Variable));
+                size_t data_size = align8(sizeof(struct Variable));
+
+                memcpy(buffer, tree, data_size);
                 struct Variable* copy = buffer;
                 
                 copy->var = intlist_index(vars, copy->var);
 
-                NeStream_write(stream, copy, sizeof(struct Variable));
-                index += sizeof(struct Variable);
+                NeStream_write(stream, copy, data_size);
+                index += data_size;
                 break;
             }
 
             case TypeFunctiondef: {
                 struct FunctionDef* tree = treeFDef(tb, index);
-                memcpy(buffer, tree, sizeof(struct FunctionDef));
+                size_t data_size = align8(sizeof(struct FunctionDef));
+
+                memcpy(buffer, tree, data_size);
                 struct FunctionDef* copy = buffer;
 
                 copy->name = (char*)(intptr_t)intptrlist_index(ptrTable, copy->name);
                 copy->object = process_neobj_for_serialization(copy->object, ptrTable, expt);
 
-                NeStream_write(stream, copy, sizeof(struct FunctionDef));
-                index += sizeof(struct FunctionDef);
+                NeStream_write(stream, copy, data_size);
+                index += data_size;
                 break;
             }
 
             case TypeFunctioncall: {
                 struct FunctionCall* tree = treeFCall(tb, index);
-                memcpy(buffer, tree, sizeof(struct FunctionCall));
+                size_t data_size = align8(sizeof(struct FunctionCall));
+
+                memcpy(buffer, tree, data_size);
                 struct FunctionCall* copy = buffer;
 
                 copy->function_obj = process_neobj_for_serialization(copy->function_obj, ptrTable, expt);
 
-                NeStream_write(stream, copy, sizeof(struct FunctionCall));
-                index += sizeof(struct FunctionCall);
+                NeStream_write(stream, copy, data_size);
+                index += data_size;
                 break;
             }
 
             case TypeAttribute: {
                 struct Attribute* tree = treeAttr(tb, index);
-                memcpy(buffer, tree, sizeof(struct Attribute));
+                size_t data_size = align8(sizeof(struct Attribute));
+
+                memcpy(buffer, tree, data_size);
                 struct Attribute* copy = buffer;
 
                 copy->name = (char*)(intptr_t)intptrlist_index(ptrTable, copy->name);
                 copy->index = -1; // On invalide l'indice de l'attribut et le type de container
 
-                NeStream_write(stream, copy, sizeof(struct Attribute));
-                index += sizeof(struct Attribute);
+                NeStream_write(stream, copy, data_size);
+                index += data_size;
                 break;
             }
 
             case TypeAttributeLit: {
                 struct AttributeLit* tree = treeAttrLit(tb, index);
-                memcpy(buffer, tree, sizeof(struct AttributeLit));
+                size_t data_size = align8(sizeof(struct AttributeLit));
+
+                memcpy(buffer, tree, data_size);
                 struct AttributeLit* copy = buffer;
 
                 copy->name = (char*)(intptr_t)intptrlist_index(ptrTable, copy->name);
 
-                NeStream_write(stream, copy, sizeof(struct AttributeLit));
-                index += sizeof(struct AttributeLit);
+                NeStream_write(stream, copy, data_size);
+                index += data_size;
                 break;
             }
 
             case TypeContainerLit: {
                 struct ContainerLit* tree = treeContLit(tb, index);
-                memcpy(buffer, tree, sizeof(struct ContainerLit));
+                size_t data_size = align8(sizeof(struct ContainerLit));
+                
+                memcpy(buffer, tree, data_size);
                 struct ContainerLit* copy = buffer;
 
                 // On rescale le type de container avec celui qui est écrit dans la table
                 copy->container_type = intlist_index(containers, copy->container_type);
 
-                NeStream_write(stream, copy, sizeof(struct ContainerLit));
-                index += sizeof(struct ContainerLit);
+                NeStream_write(stream, copy, data_size);
+                index += data_size;
                 break;
             }
 
@@ -620,19 +635,21 @@ void serialize_treebuffer_block(NeStream stream, TreeBuffer* tb, intptrlist* ptr
 
             case TypeParallelCall: {
                 struct ParallelCall* tree = treeParCall(tb, index);
-                memcpy(buffer, tree, sizeof(struct ParallelCall));
+                size_t data_size = align8(sizeof(struct ParallelCall));
+
+                memcpy(buffer, tree, data_size);
                 struct ParallelCall* copy = buffer;
 
                 copy->expr_buffer = (TreeBuffer*)(intptr_t)intptrlist_index(ptrTable, copy->expr_buffer);
 
-                NeStream_write(stream, copy, sizeof(struct ParallelCall));
-                index += sizeof(struct ParallelCall);
+                NeStream_write(stream, copy, data_size);
+                index += data_size;
                 break;
             }
 
 
             default: {
-                size_t tree_size = type_size(TREE_TYPE(tb, index));
+                size_t tree_size = align8(type_size(TREE_TYPE(tb, index)));
                 NeStream_write(stream, tb->pointer + index, tree_size);
                 index += tree_size;
                 break;
@@ -1122,14 +1139,14 @@ void solve_pointers_treebuffer(TreeBuffer* tb, intptrlist* ptrTable, intlist* ty
         switch (BYTE(tb, index)) {
 
             case TypeTreeList: {
-                index += sizeof(uint8_t) + sizeof(uint16_t) + sizeof(TreeBufferIndex) * treelistLength(tb, index);
+                index += align8(4 + sizeof(TreeBufferIndex) * treelistLength(tb, index));
                 break;
             }
 
             case TypeVariable: {
                 struct Variable* tree = treeVar(tb, index);
                 tree->var = vars->tab[tree->var];
-                index += sizeof(struct Variable);
+                index += align8(sizeof(struct Variable));
                 break;
             }
 
@@ -1137,7 +1154,7 @@ void solve_pointers_treebuffer(TreeBuffer* tb, intptrlist* ptrTable, intlist* ty
             case TypeConst: {
                 struct ConstObj* tree = treeConst(tb, index);
                 solve_pointers_aux(&tree->obj, ptrTable, typesTable, containers, vars, expt);
-                index += sizeof(struct ConstObj);
+                index += align8(sizeof(struct ConstObj));
                 break;
             }
 
@@ -1145,46 +1162,47 @@ void solve_pointers_treebuffer(TreeBuffer* tb, intptrlist* ptrTable, intlist* ty
                 struct FunctionDef* tree = treeFDef(tb, index);
                 tree->name = (char*)ptrTable->tab[(intptr_t)tree->name];
                 solve_pointers_aux(&tree->object, ptrTable, typesTable, containers, vars, expt);
-                index += sizeof(struct FunctionDef);
+                index += align8(sizeof(struct FunctionDef));
                 break;
             }
 
             case TypeFunctioncall: {
                 struct FunctionCall* tree = treeFCall(tb, index);
                 solve_pointers_aux(&tree->function_obj, ptrTable, typesTable, containers, vars, expt);
-                index += sizeof(struct FunctionCall);
+                index += align8(sizeof(struct FunctionCall));
                 break;
             }
 
             case TypeAttribute: {
                 struct Attribute* tree = treeAttr(tb, index);
                 tree->name = (char*)ptrTable->tab[(intptr_t)tree->name];
-                index += sizeof(struct Attribute);
+                index += align8(sizeof(struct Attribute));
                 break;
             }
 
             case TypeContainerLit: {
                 struct ContainerLit* tree = treeContLit(tb, index);
                 tree->container_type = containers->tab[tree->container_type];
+                index += align8(sizeof(struct ContainerLit));
                 break;
             }
 
             case TypeAttributeLit: {
                 struct AttributeLit* tree = treeAttrLit(tb, index);
                 tree->name = (char*)ptrTable->tab[(intptr_t)tree->name];
-                index += sizeof(struct AttributeLit);
+                index += align8(sizeof(struct AttributeLit));
                 break;
             }
 
             case TypeParallelCall: {
                 struct ParallelCall* tree = treeParCall(tb, index);
                 tree->expr_buffer = (TreeBuffer*)ptrTable->tab[(intptr_t)tree->expr_buffer];
-                index += sizeof(struct ParallelCall);
+                index += align8(sizeof(struct ParallelCall));
                 break;
             }
 
             default: {
-                index += type_size(TREE_TYPE(tb, index));
+                index += align8(type_size(TREE_TYPE(tb, index)));
                 break;
             }
         }

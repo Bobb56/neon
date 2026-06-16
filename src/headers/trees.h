@@ -77,8 +77,8 @@ typedef struct TreeBuffer {
 #define treeContLit(tb, tbi)            ((struct ContainerLit*)(((tb)->pointer) + tbi))
 #define treeAttrLit(tb, tbi)            ((struct AttributeLit*)(((tb)->pointer) + tbi))
 #define treeParCall(tb, tbi)            ((struct ParallelCall*)(((tb)->pointer) + tbi))
-#define treelistGet(tb, tl)             ((TreeBufferIndex*)(((tb)->pointer) + tl + sizeof(uint8_t) + sizeof(uint16_t)))
-#define treelistLength(tb, tl)          (*(uint16_t*)(((tb)->pointer) + tl + sizeof(uint8_t)))
+#define treelistGet(tb, tl)             ((TreeBufferIndex*)(((tb)->pointer) + tl + 4))
+#define treelistLength(tb, tl)          (*(uint16_t*)(((tb)->pointer) + tl + 2))
 
 
 #define FOR_NBARGS(tb,tbi)        (treelistLength(tb, treeFor(tb, tbi)->params))

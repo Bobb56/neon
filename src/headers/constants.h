@@ -90,7 +90,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #endif
 
 
-#if defined(LINUX) || defined(TI_EZ80)
+#if defined(LINUX) || defined(TI_EZ80) || defined(MINIMAL_LIBC)
     // a définir uniquement si la console standard du système d'exploitation visé supporte les couleurs
     #define COLOR
 #endif

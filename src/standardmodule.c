@@ -1348,6 +1348,7 @@ NeObj _detectFiles_(NeList* args) {
     return files;
 
     #else
+    UNUSED_PARAMETER(args);
     neon_fail(115, NO_ARGS);
     return neo_none_create();
     #endif
