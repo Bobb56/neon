@@ -47,8 +47,8 @@ files = [
 ]
 
 other_files = [
-    "extern/linenoise.c",
-    "extern/linenoise.h"
+    "extern/deadline.c",
+    "extern/deadline.h"
 ]
 
 function print_number(n) do
@@ -81,4 +81,4 @@ end
 
 
 
-print("Le projet Neon compte", print_number(nbLines(files)), "lignes de code sans linenoise.c, mais", print_number(nbLines(files + other_files)), "lignes en tout.")
+print("Le projet Neon compte <> lignes de code sans deadline, mais <> lignes en tout.".format(print_number(nbLines(files)), print_number(nbLines(files + other_files))))

@@ -47,7 +47,6 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > ATOMIC_TIME
 
 Liste des choses qui ne marchent pas
---> Neon crashe sur calculatrice quand il y a une erreur
 --> La ligne de l'erreur avec du code parallèle
 _____________________
 
@@ -67,11 +66,12 @@ Avancement et choses à faire :
 -------------------------------
 
 PLUS TARD
+--> Faire en sorte que le sérialisation des TreeBuffers soit multiplateforme
 --> Comparaison de TreeBuffers (en le parcourant de manière consciente de l'arbre dans lequel on est et en parcourant intelligemment les arbres)
 --> Ajouter un type de donnée bitmap à Neon
---> Ajouter des tables de hachage à Neon (et une fonction hash par la même occasion)
---> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
+--> Ajouter des tables de hachage à Neon
 --> Sauvegarder un environnement entier
+--> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
 

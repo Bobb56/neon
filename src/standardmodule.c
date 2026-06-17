@@ -1965,7 +1965,7 @@ static const Function builtinfunctions[] = {
         .typeRetour = TYPE_NONE
     },
     (Function) {
-        .help = "Changes the writing text color in console if available.\nColors: red, green, blue and white",
+        .help = "Changes the writing text color in console if available.\nColors: 'red', 'green', 'blue', 'purple' and 'default'",
         .nbArgs = 1,
         .typeArgs = (int[]){TYPE_STRING},
         .typeRetour = TYPE_NONE
