@@ -355,14 +355,24 @@ char *readline(const char *prompt)
                 update_current_line_in_history(buffer, pos);
 
                 // We don't add the line if it is empty or the same as the previous
-                size_t history_length = global_env->history->len;
+                size_t history_length = global_env->history->len - 1;
+                bool remove_last_line = false;
+
+                // We check if it's the same as the previous
                 if (history_length >= 2) {
                     char* last_line = global_env->history->tab[history_length-1];
                     char* last_last_line = global_env->history->tab[history_length-2];
-                    if (strcmp(last_last_line, last_line) == 0 || strlen(last_line) == 0) {
-                        strlist_remove(global_env->history, history_length - 1, true);
+                    if (strcmp(last_last_line, last_line) == 0) {
+                        remove_last_line = true;
                     }
                 }
+                // We check if it's empty
+                if (strlen(global_env->history->tab[history_length - 1]) == 0) {
+                    remove_last_line = true;
+                }
+                // And remove it if needed
+                if (remove_last_line)
+                    strlist_remove(global_env->history, history_length - 1, true);
 
                 goto readline_exit;
             }

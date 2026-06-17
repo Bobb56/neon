@@ -261,11 +261,23 @@ save_stack_and_registers:
 /*
 Quand un processus tourne, la valeur des registres stockés à l'intérieur est la valeur à restaurer à la fin du processus
 Quand un processus ne tourne pas, la valeur des registres stockés à l'intérieur est la valeur des registres sauvegardés de ce processus
-Quand on passe d'un processus à l'autre :
-registres actuels -> stockés dans l'ancien processus
-registres du nouveau processus -> mis dans les vrais registres
-registres à restaurer après l'ancien processus -> stockés dans le nouveau processus
+Quand on passe d'un processus à l'autre, on effectue les transferts suivants :
+registres du processus sortant -> stockés dans la structure du processus sortant
+registres sanvegardés dans la structure du nouveau processus -> mis dans les vrais registres
+registres à restaurer après l'ancien processus -> stockés dans la structure du nouveau processus
 
+Ces transferts permettent de toujours garantir l'intégrité des processus, ainsi que le bon fonctionnement
+de concert avec reset_stack_and_registers et save_stack_and_registers
+
+Remarque :
+----------
+Ici, on effectue des transferts sur tous les registres sauvegardés, que ce soit les pointeurs
+de cadre de pile, le pointeur de pile, ou des registres sauvegardés classiques.
+On pourrait tout à fait effectuer ces transferts uniquement avec le pointeur de pile,
+et empiler au préalable tous les registres dessus, et les dépiler après avoir restauré le registre
+de pile. Cela résulterait en du code plus simple, plus propre, moins propice aux erreurs.
+Néanmoins la version actuelle fonctionne et l'optimisation n'est que légère d'un point de vue code, très légère
+ voire inexistante d'un point de vue mémoire, et également relativement légère niveau temps.
 */
 # switch_registers(process, prev_process)
 # process      -> a0
@@ -300,7 +312,6 @@ switch_registers:
     #endif
 
     # si le processus est un processus non encore initialisé, on saute à launch_process
-    # on charge l'état du processus dans rax
     lb      t0, REG_BUFFER_SIZE(a0)
     bnez    t0, switch_registers_skip # la valeur Uninitialized correspond à zéro
 

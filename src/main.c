@@ -66,11 +66,17 @@ Avancement et choses à faire :
 -------------------------------
 
 PLUS TARD
+--> Prendre en compte les caractères plus larges que la normale dans deadline.c (les tabulations)
 --> Faire en sorte que le sérialisation des TreeBuffers soit multiplateforme
 --> Comparaison de TreeBuffers (en le parcourant de manière consciente de l'arbre dans lequel on est et en parcourant intelligemment les arbres)
+--> Surcharge de call et index
 --> Ajouter un type de donnée bitmap à Neon
+--> Ajouter des opérateurs bit-à-bit
+--> Ajouter un objet graphique Sprite qui est un tableau de nombres à deux dimensions. Chaque nombre n'est pas forcément un pixel mais est un rectangle, et les dimensions de chaque unité sont également précisées dans l'objet
 --> Ajouter des tables de hachage à Neon
 --> Sauvegarder un environnement entier
+--> Implémentation de sauvegarde de pile en retour précipité d'eval et compagnie, et de restauration d'état à partir de la valeur de la pile
+--> Lors de la restauration d'une pile, réexécuter les contextes dont le code a changé
 --> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 > Faire des vrais arguments (genre -i, etc)
 > Permettre à un processus d'arrêter ou de pauser un processus via une promesse
