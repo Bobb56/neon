@@ -17,18 +17,11 @@
 #include <stdio.h>
 #endif
 
-#ifdef LINUX
-#include "extern/linenoise.h"
-#endif
-
 void cleanStdin(void)// vide le buffer
 {
     int c = 0;
     while ((c = getchar()) != '\n' && c != EOF);
 }
-
-
-
 
 
 

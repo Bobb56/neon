@@ -138,7 +138,7 @@ size_t strlist_getsize(strlist* list);
 void strlist_aff(strlist* list);
 void strlist_append(strlist* list, char* chaine);
 //void strlist_resize(strlist* list, int newLen, bool freeElement);
-//void strlist_remove(strlist* list,int index, bool freeElement);
+void strlist_remove(strlist* list, size_t index, bool freeElement);
 int strlist_count(strlist* list, char* chaine);
 bool strlist_inList(strlist* list, char* chaine);
 bool strlist_inList_sub(strlist* list, char* chaine, int debut, int fin);

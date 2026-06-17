@@ -26,10 +26,6 @@
 #include <graphx.h>
 #endif
 
-#ifdef LINUX
-#include "extern/linenoise.h"
-#endif
-
 
 // Variables d'environnement de Neon
 NeonEnv* global_env = NULL;
@@ -164,6 +160,10 @@ NeonEnv* NeonEnv_init(void) {
     env->PROMISES_CNT = intptrlist_create(0);
     env->ATOMIC_TIME = PLATFORM_SPECIFIC_ATOMIC_TIME;
 
+    #if !defined(TI_EZ80) && !defined(WINDOWS)
+    env->history = strlist_create(0);
+    #endif
+
     // if (!env->NOMS || !env->TREEBUFFERS || !env->PROMISES || !env->ADRESSES || !env->ATTRIBUTES || !env->EXCEPTIONS || !env->CONTAINERS || !env->process_cycle || !env->PROCESS_FINISH.tab || !env->PROMISES_CNT.tab) {
     //     return NULL;
     // }
@@ -222,6 +222,10 @@ void NeonEnv_destroy(NeonEnv* env) {
 
     if (env->FILENAME != NULL)
         neon_free(env->FILENAME);
+
+    #if !defined(TI_EZ80) && !defined(WINDOWS)
+    strlist_destroy(env->history, true);
+    #endif
     
     #ifdef TI_EZ80
     nio_free(&global_env->console);
@@ -238,8 +242,7 @@ int neonInit(void)
     srand(time(NULL));
     
 
-    #ifdef LINUX
-        linenoiseSetMultiLine(1); // spécial pour linenoise
+    #if defined(LINUX) || defined(MINIMAL_LIBC_RISCV64)
         signal(SIGINT, handle_signal);
         signal(SIGTERM, handle_signal);
     #endif
@@ -343,11 +346,10 @@ void startMessage(void)
     newLine();
 
     #ifdef EXPERIMENTAL
-        newLine();
         setColor(RED);
         printString("/!\\ THIS IS AN EXPERIMENTAL VERSION. IT MAY NOT WORK. /!\\");
-        newLine();newLine();
         setColor(DEFAULT);
+        newLine();newLine();
     #endif
 
     return;

@@ -122,6 +122,11 @@ typedef struct NeonEnv {
     struct ContainersAssoc graphic_containers;
     #endif
 
+    #if !defined(TI_EZ80) && !defined(WINDOWS)
+    // Liste des lignes de commandes entrées précédemment
+    strlist* history;
+    #endif
+
 } NeonEnv;
 
 extern NeonEnv* global_env;

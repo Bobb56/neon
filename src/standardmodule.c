@@ -74,7 +74,7 @@ NeObj _input_(NeList* args)
         char *entree = input("");
 
     #else
-        // à cause de linenoise, il faut mettre tout le texte dans une seule chaine de caractères
+        // à cause du système d'édition de ligne de commande, il faut mettre tout le texte dans une seule chaine de caractères
         char* chaine = strdup("");
 
         for (size_t i=0 ; i < args->len ; i++)

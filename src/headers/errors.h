@@ -5,6 +5,7 @@
 
 #include "constants.h"
 #include "dynarrays.h"
+#include "objects.h"
 #include "neobj.h"
 
 #define NB_ERRORS 123

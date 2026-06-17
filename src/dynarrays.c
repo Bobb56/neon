@@ -1082,41 +1082,22 @@ void strlist_resize(strlist* list, int newLen, bool freeElement)
   list->len=newLen;
   
 }
+*/
 
-
-
-void strlist_remove(strlist* list,int index, bool freeElement)//indiquer si il faut libérer l'élément avant de le supprimer
+//indiquer si il faut libérer l'élément avant de le supprimer
+void strlist_remove(strlist* list, size_t index, bool freeElement)
 {
-  
-  if (index >= list->len)
-  {
-    neon_fail(;
-    return ;
-  }
+  neon_assert(index < list->len,);
   
   if (freeElement)
       neon_free(list->tab[index]);
   
-  for (int i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
+  for (size_t i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];
-    
-  char **tmp;
-  
-  if (1 << (list->capacity - 1) == list->len-1)
-  {
-    list->capacity--;
-    tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(char*));//réalloue un nouveau pointeur de la bonne taille
-    if (tmp == NULL) {
-      neon_fail(12;
-      return;
-    }
-    list->tab = tmp;
-  }
   
   list->len--;//décrémentation de la longueur
-  
 }
-*/
+
 
 
 

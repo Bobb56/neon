@@ -6,7 +6,7 @@ Modifié par Raphaël Le Puillandre pour Neon afin de rendre compatible la bibli
 
 -> CTRL-D : 1217 et 1024
 
-linenoise.c -- guerrilla line editing library against the idea that a
+ * linenoise.c -- guerrilla line editing library against the idea that a
  * line editing lib needs to be 20,000 lines of C code.
  *
  * You can find the latest source code at:

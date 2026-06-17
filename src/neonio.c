@@ -15,235 +15,21 @@
 #include "headers/errors.h"
 
 #if defined(LINUX) || defined(WINDOWS) || defined(MINIMAL_LIBC_RISCV64)
-    #include <stdio.h>
+#include <stdio.h>
 #elif defined(TI_EZ80)
-    #include <ti/vars.h>
-    #include <fileioc.h>
-    #include "extern/nio_ce/headers/nspireio.h"
-    #include "headers/graphicmodule.h"
+#include <ti/vars.h>
+#include <fileioc.h>
+#include "extern/nio_ce/headers/nspireio.h"
+#include "headers/graphicmodule.h"
 #endif
 
 
-#ifdef LINUX
-#include "extern/linenoise.h"
+#if !defined(WINDOWS) && !defined(TI_EZ80)
+#include "extern/deadline.h"
 #endif
 
 
-#ifndef TI_EZ80
-
-    NeStream NeStream_open(char* name, char* mode) {
-        FILE* stream = fopen(name, mode);
-        if (stream == NULL)
-            neon_fail(67, neo_new_str_create(name));
-        return stream;
-    }
-
-    void NeStream_close(NeStream stream) {
-        fclose(stream);
-    }
-
-    void NeStream_write(NeStream stream, void* data, size_t size) {
-        fwrite(data, 1, size, stream);
-    }
-
-    bool NeStream_read(NeStream stream, void* data, size_t size) {
-        size_t count = fread(data, 1, size, stream);
-        return count == size;
-    }
-
-
-    char* openFile(char* filename)
-    {
-        FILE* fichier = fopen(filename, "rt");//lit le fichier
-        if (fichier == NULL)
-        {
-            neon_fail(67, neo_new_str_create(filename));
-            return NULL;
-        }
-        
-        //on regarde la position actuelle de la tête de fichier
-    
-        fpos_t pos;
-        fgetpos(fichier, &pos);
-    
-        
-        // calcul de la longueur du programme
-        size_t longueur = 0;
-        while (fgetc(fichier)!=EOF)
-        {
-            longueur++;
-        }
-        
-        fsetpos(fichier, &pos);//remet la tête de fichier au début
-        char* program=neon_malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
-    
-
-        // copie du fichier
-        int car;
-        for (int index = 0 ; (car=fgetc(fichier)) != EOF ; index++)
-        {
-            program[index] = (char)car;
-        }
-        program[longueur] = '\0';
-        
-        fclose(fichier);
-
-        return program;
-    }
-
-
-    // cette fonction teste l'existence d'un launcher
-    bool launcher(char* filename) {
-        FILE* fichier = fopen(filename, "rt");//lit le fichier
-        if (fichier == NULL) {
-            return false;
-        }
-        fclose(fichier);
-        return true;
-    }
-
-
-    void writeFile(char* filename, char* content)
-    {
-        FILE* fichier = fopen(filename, "w+");
-        if (fichier == NULL)
-        {
-            neon_fail(67, neo_new_str_create(filename));
-            return;
-        }
-
-        fprintf(fichier, "%s", content);
-        fclose(fichier);
-        return ;
-    }
-
-    #ifndef LINUX
-        char* input(char *text) {
-            if (strcmp(SEQUENCE_ENTREE, text) == 0) {
-                setColor(BLUE);
-                printString(SEQUENCE_ENTREE);
-                setColor(DEFAULT);
-            }
-            else {
-                printString(text);
-            }
-            fflush(stdout);
-            
-            uint8_t capacity = 9;
-            char* buffer = neon_malloc(1 << capacity);
-            size_t buffer_index = 0;
-
-            while (true) {
-                int c = getchar();
-
-                if (c == EOF) {
-                    neon_free(buffer);
-                    neon_fail(1, NO_ARGS);
-                    return "\0";
-                }
-                else if (c == '\n') {
-                    break;
-                }
-
-                if (buffer_index >= ((size_t)1 << capacity)) {
-                    capacity++;
-                    buffer = neon_realloc(buffer, 1 << capacity);
-                }
-                buffer[buffer_index++] = c;
-            }
-
-            buffer[buffer_index] = 0;
-            return buffer;
-        }
-    #else
-        char* input(char* text)
-        {
-            char* str = linenoise(text);
-
-            if (str == NULL) {
-                neon_fail(104, NO_ARGS);
-                return NULL;
-            }
-            else if (strlen(str) > 0) { // Ajout de la ligne à l'historique
-                linenoiseHistoryAdd(str);
-            }
-            return str;
-        }
-    #endif
-
-
-
-    char* double_to_str(double number)//nombre en chaine de caractère
-    {
-        if (isinf(number) && number > 0)
-                return strdup(get_infinity());
-        else if (isinf(number) && number < 0)
-            return addStr("-", get_infinity());
-        else if (isnan(number))
-            return strdup(get_nan());
-        else
-        {
-            //une fois qu'on a copié le nombre dans la chaine de caracteres, il faut le réallouer de la bonne taille
-            char* strNombre = (char*)neon_malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
-            int err = snprintf(strNombre, 310, "%lf", number);//converison du nombre
-            
-            if (err < 0 || (unsigned)err != strlen(strNombre))
-            {
-                neon_fail(66, NO_ARGS);
-                neon_free(strNombre);
-                return 0;
-            }
-            
-            removeZeros(strNombre);
-                        
-            return strNombre;
-        }
-        
-    }
-    
-    
-    void flush(void) {
-        fflush(stdout);
-    }
-    
-    
-    void printString(char* s)
-    {
-        printf("%s", s);
-    }
-    
-    
-    void setColor(unsigned char color)
-    {
-        #ifdef COLOR
-            if (color == BLUE)
-                printf("\033[1;34m"); // bleu et gras
-            else if (color == GREEN)
-                printf("\033[0;32m"); // vert
-            else if (color == RED)
-                printf("\033[1;31m"); // met en rouge et gras
-            else if (color == PURPLE)
-                printf("\033[1;35m"); // met en violet et gras
-            else if (color == DEFAULT)
-                printf("\033[0;00m");
-        #else
-        UNUSED_PARAMETER(color);
-        #endif
-    }
-    
-    
-    void clearConsole(void)
-    {
-        #if defined(LINUX)
-            system("clear");
-        #elif defined(WINDOWS)
-            system("cls");
-        #endif
-    }
-
-#else //------------------------------------------------- PASSAGE A TI_EZ80 ---------------------------------------------
-
-
+#ifdef TI_EZ80
     NeStream NeStream_open(char* name, char* mode) {
         uint8_t stream = ti_Open(name, mode);
         if (stream == 0)
@@ -465,6 +251,212 @@
     {
         nio_clear(&global_env->console);
     }
+
+    
+
+#else //------------------------------------------------- PASSAGE A TI_EZ80 ---------------------------------------------
+
+    NeStream NeStream_open(char* name, char* mode) {
+        FILE* stream = fopen(name, mode);
+        if (stream == NULL)
+            neon_fail(67, neo_new_str_create(name));
+        return stream;
+    }
+
+    void NeStream_close(NeStream stream) {
+        fclose(stream);
+    }
+
+    void NeStream_write(NeStream stream, void* data, size_t size) {
+        fwrite(data, 1, size, stream);
+    }
+
+    bool NeStream_read(NeStream stream, void* data, size_t size) {
+        size_t count = fread(data, 1, size, stream);
+        return count == size;
+    }
+
+
+    char* openFile(char* filename)
+    {
+        FILE* fichier = fopen(filename, "rt");//lit le fichier
+        if (fichier == NULL)
+        {
+            neon_fail(67, neo_new_str_create(filename));
+            return NULL;
+        }
+        
+        //on regarde la position actuelle de la tête de fichier
+    
+        fpos_t pos;
+        fgetpos(fichier, &pos);
+    
+        
+        // calcul de la longueur du programme
+        size_t longueur = 0;
+        while (fgetc(fichier)!=EOF)
+        {
+            longueur++;
+        }
+        
+        fsetpos(fichier, &pos);//remet la tête de fichier au début
+        char* program=neon_malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
+    
+
+        // copie du fichier
+        int car;
+        for (int index = 0 ; (car=fgetc(fichier)) != EOF ; index++)
+        {
+            program[index] = (char)car;
+        }
+        program[longueur] = '\0';
+        
+        fclose(fichier);
+
+        return program;
+    }
+
+
+    // cette fonction teste l'existence d'un launcher
+    bool launcher(char* filename) {
+        FILE* fichier = fopen(filename, "rt");//lit le fichier
+        if (fichier == NULL) {
+            return false;
+        }
+        fclose(fichier);
+        return true;
+    }
+
+
+    void writeFile(char* filename, char* content)
+    {
+        FILE* fichier = fopen(filename, "w+");
+        if (fichier == NULL)
+        {
+            neon_fail(67, neo_new_str_create(filename));
+            return;
+        }
+
+        fprintf(fichier, "%s", content);
+        fclose(fichier);
+        return ;
+    }
+
+    #ifdef WINDOWS
+        char* input(char *text) {
+            if (strcmp(SEQUENCE_ENTREE, text) == 0) {
+                setColor(BLUE);
+                printString(SEQUENCE_ENTREE);
+                setColor(DEFAULT);
+            }
+            else {
+                printString(text);
+            }
+            fflush(stdout);
+            
+            uint8_t capacity = 9;
+            char* buffer = neon_malloc(1 << capacity);
+            size_t buffer_index = 0;
+
+            while (true) {
+                int c = getchar();
+
+                if (c == EOF) {
+                    neon_free(buffer);
+                    neon_fail(1, NO_ARGS);
+                    return "\0";
+                }
+                else if (c == '\n') {
+                    break;
+                }
+
+                if (buffer_index >= ((size_t)1 << capacity)) {
+                    capacity++;
+                    buffer = neon_realloc(buffer, 1 << capacity);
+                }
+                buffer[buffer_index++] = c;
+            }
+
+            buffer[buffer_index] = 0;
+            return buffer;
+        }
+    #else
+
+        char* input(char *text) {
+            return readline(text);
+        }
+
+    #endif
+
+
+    char* double_to_str(double number) //nombre en chaine de caractère
+    {
+        if (isinf(number) && number > 0)
+                return strdup(get_infinity());
+        else if (isinf(number) && number < 0)
+            return addStr("-", get_infinity());
+        else if (isnan(number))
+            return strdup(get_nan());
+        else
+        {
+            //une fois qu'on a copié le nombre dans la chaine de caracteres, il faut le réallouer de la bonne taille
+            char* strNombre = (char*)neon_malloc(310*sizeof(char));//on estime qu'un double ne fait pas plus de 50 caractères de longueur
+            int err = snprintf(strNombre, 310, "%lf", number);//converison du nombre
+            
+            if (err < 0 || (unsigned)err != strlen(strNombre))
+            {
+                neon_fail(66, NO_ARGS);
+                neon_free(strNombre);
+                return 0;
+            }
+            
+            removeZeros(strNombre);
+                        
+            return strNombre;
+        }
+        
+    }
+    
+    
+    void flush(void) {
+        fflush(stdout);
+    }
+    
+    
+    void printString(char* s)
+    {
+        printf("%s", s);
+    }
+    
+    
+    void setColor(unsigned char color)
+    {
+        #ifdef COLOR
+            if (color == BLUE)
+                printf("\033[1;34m"); // bleu et gras
+            else if (color == GREEN)
+                printf("\033[0;32m"); // vert
+            else if (color == RED)
+                printf("\033[1;31m"); // met en rouge et gras
+            else if (color == PURPLE)
+                printf("\033[1;35m"); // met en violet et gras
+            else if (color == DEFAULT)
+                printf("\033[0;00m");
+        #else
+        UNUSED_PARAMETER(color);
+        #endif
+    }
+    
+    
+    void clearConsole(void)
+    {
+        #if defined(LINUX)
+            system("clear");
+        #elif defined(WINDOWS)
+            system("cls");
+        #endif
+    }
+
 
 #endif
 

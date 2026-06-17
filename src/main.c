@@ -36,7 +36,7 @@ Table des fichiers source :
 21 | syntaxtrees.c
 22 | trees.c
 23 | win_amd64.S
-24 | linenoise.c
+24 | deadline.c
 25 | nativefunctions.c
 ---------------------------
 
