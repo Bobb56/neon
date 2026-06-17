@@ -14,17 +14,17 @@
 #include "headers/strings.h"
 #include "headers/errors.h"
 
-#if defined(LINUX) || defined(WINDOWS) || defined(MINIMAL_LIBC_RISCV64)
-#include <stdio.h>
-#elif defined(TI_EZ80)
+
+#if defined(TI_EZ80)
 #include <ti/vars.h>
 #include <fileioc.h>
 #include "extern/nio_ce/headers/nspireio.h"
 #include "headers/graphicmodule.h"
+#else
+#include <stdio.h>
 #endif
 
-
-#if !defined(WINDOWS) && !defined(TI_EZ80)
+#ifdef LINUX
 #include "extern/deadline.h"
 #endif
 
@@ -342,7 +342,14 @@
         return ;
     }
 
-    #ifdef WINDOWS
+    #ifdef LINUX
+
+        char* input(char *text) {
+            return readline(text);
+        }
+        
+    #else
+
         char* input(char *text) {
             if (strcmp(SEQUENCE_ENTREE, text) == 0) {
                 setColor(BLUE);
@@ -362,6 +369,7 @@
                 int c = getchar();
 
                 if (c == EOF) {
+                    putchar('\n');
                     neon_free(buffer);
                     neon_fail(1, NO_ARGS);
                     return "\0";
@@ -379,11 +387,6 @@
 
             buffer[buffer_index] = 0;
             return buffer;
-        }
-    #else
-
-        char* input(char *text) {
-            return readline(text);
         }
 
     #endif

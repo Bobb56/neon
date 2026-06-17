@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
+#include <stddef.h>
 #include "constants.h"
 
 
@@ -19,6 +19,7 @@
 #ifdef TI_EZ80
 typedef uint8_t NeStream;
 #else
+#include <stdio.h>
 typedef FILE* NeStream;
 #endif
 

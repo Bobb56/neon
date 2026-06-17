@@ -160,7 +160,7 @@ NeonEnv* NeonEnv_init(void) {
     env->PROMISES_CNT = intptrlist_create(0);
     env->ATOMIC_TIME = PLATFORM_SPECIFIC_ATOMIC_TIME;
 
-    #if !defined(TI_EZ80) && !defined(WINDOWS)
+    #ifdef LINUX
     env->history = strlist_create(0);
     #endif
 
@@ -223,7 +223,7 @@ void NeonEnv_destroy(NeonEnv* env) {
     if (env->FILENAME != NULL)
         neon_free(env->FILENAME);
 
-    #if !defined(TI_EZ80) && !defined(WINDOWS)
+    #ifdef LINUX
     strlist_destroy(env->history, true);
     #endif
     
@@ -242,7 +242,7 @@ int neonInit(void)
     srand(time(NULL));
     
 
-    #if defined(LINUX) || defined(MINIMAL_LIBC_RISCV64)
+    #ifdef LINUX
         signal(SIGINT, handle_signal);
         signal(SIGTERM, handle_signal);
     #endif

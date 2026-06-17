@@ -16,7 +16,7 @@ Ajout d'un type de données NeObject : +0.0.1
 #define VERSION "4.1"
 
 // si la version actuelle n'est pas stable mais est en distribution
-#define EXPERIMENTAL
+// #define EXPERIMENTAL
 
 // pour débugger
 #ifdef EXPERIMENTAL
@@ -28,7 +28,7 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 // constantes qui pilotent le code spécifique à l'OS/architecture
-// ça fonctionne sur GCC et aussi sur Clang normalement
+// fonctionne sur GCC et Clang
 #ifdef MANUAL_PLATFORM_SPECIFICATION
     #define MINIMAL_LIBC
     #define MINIMAL_LIBC_RISCV64
@@ -113,6 +113,10 @@ Ajout d'un type de données NeObject : +0.0.1
     #define LAUNCHER_NAME "LAUNCHER"
     #define STACK_SIZE (4*1024)
     #define PLATFORM_SPECIFIC_ATOMIC_TIME 300
+#elif defined(MINIMAL_LIBC)
+    #define LAUNCHER_NAME "__launcher__.ne"
+    #define STACK_SIZE (8*1024)
+    #define PLATFORM_SPECIFIC_ATOMIC_TIME 1000
 #else
     #define LAUNCHER_NAME "__launcher__.ne"
     #define STACK_SIZE (8*1024*1024) // taille de la pile par défaut à 8 Mio, ça peut changer en fonction de la plateforme
