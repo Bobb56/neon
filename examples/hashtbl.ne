@@ -28,7 +28,7 @@ end
 function HashTbl~get(hashtbl, key) do
     local(cell)
     cell = hashtbl>>data[hash(key)%hashtbl>>size]
-    for (item, cell) do
+    foreach (item, cell) do
         if (item>>key == key) then
             return (item>>value)
         end

@@ -1,3 +1,4 @@
+#NEON
 initGraphics()
 
 for (y, 0, 16) do

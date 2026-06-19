@@ -1,3 +1,4 @@
+#NEON
 # programme de test de Neon qui teste la fonctionnalité de retour à l'exécution après la fin du processus principal
 
 setAtomicTime(1)

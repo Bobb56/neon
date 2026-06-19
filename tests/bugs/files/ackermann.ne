@@ -8,13 +8,13 @@ function Ackermann(m, n) do
     end
 end
 
-function Factorielle(n) do
+function Factorial(n) do
     if (n <= 1) then
         return (1)
     else
-        return (n * Factorielle(n-1))
+        return (n * Factorial(n-1))
     end
 end
 
 assert(Ackermann(3,5) == 253)
-assert(Factorielle(5) == 120)
+assert(Factorial(5) == 120)

@@ -355,7 +355,7 @@ char *readline(const char *prompt)
                 update_current_line_in_history(buffer, pos);
 
                 // We don't add the line if it is empty or the same as the previous
-                size_t history_length = global_env->history->len - 1;
+                size_t history_length = global_env->history->len;
                 bool remove_last_line = false;
 
                 // We check if it's the same as the previous

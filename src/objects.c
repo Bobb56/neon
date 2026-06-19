@@ -248,7 +248,27 @@ void neo_container_aff(NeObj neo) {
         // 2- Sinon ça va faire n'importe quoi dans les copies. Les marquages doivent rester invisibles à l'exécution
         
         NeObj neo_fun = global_env->ADRESSES->tab[index];
-        UserFunc* fun = neo_fun.userfunc;
+
+        // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+        /*if (NEO_TYPE(neo_fun) != TYPE_USERFUNC) {
+            neon_fail(52,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_new_str_create("repr"),
+                neo_new_str_create(container_name),
+                neo_new_str_create(global_env->NOMS->tab[index])
+            );
+            return;
+        }*/
+
+        UserFunc* fun = neo_to_userfunc(neo_fun);
+
+        if (fun->nbArgs < 1) {
+            neon_fail(53,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_integer_create(1)
+            );
+            return;
+        }
         
         NeObj ret = callUnaryUserFunc(fun, neo);
         neobject_destroy(ret);
@@ -284,7 +304,28 @@ char* neo_container_str(NeObj neo, bool overloaded) {
         unmark(neo); // sinon ça va faire caca, et de toute façon c'est l'utilisateur qui gère les boucles
 
         NeObj neo_fun = global_env->ADRESSES->tab[index];
-        UserFunc* fun = neo_fun.userfunc;
+
+        // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+        /*if (NEO_TYPE(neo_fun) != TYPE_USERFUNC) {
+            neon_fail(52,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_new_str_create("str"),
+                neo_new_str_create(container_name),
+                neo_new_str_create(global_env->NOMS->tab[index])
+            );
+            return NULL;
+        }*/
+
+
+        UserFunc* fun = neo_to_userfunc(neo_fun);
+
+        if (fun->nbArgs < 1) {
+            neon_fail(53,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_integer_create(1)
+            );
+            return NULL;
+        }
 
         NeObj obj = callUnaryUserFunc(fun, neo);
         
@@ -1857,7 +1898,7 @@ char* type(NeObj neo)
     if (NEO_TYPE(neo) == TYPE_NONE)
         return "NoneType";
 
-    return NULL;
+    return "unknown type";
 }
 
 
@@ -1876,6 +1917,14 @@ bool neo_equal(NeObj _op1, NeObj _op2)
         if (index >= 0) {
             NeObj neo_fun = global_env->ADRESSES->tab[index];
             UserFunc* fun = neo_fun.userfunc;
+
+            if (fun->nbArgs < 2) {
+                neon_fail(53,
+                    neo_new_str_create(global_env->NOMS->tab[index]),
+                    neo_integer_create(2)
+                );
+                return false;
+            }
 
             NeObj ret = callBinaryUserFunc(fun, _op1, _op2);
             return_on_error(false);
@@ -2027,6 +2076,14 @@ int neo_compare(NeObj a, NeObj b)
             NeObj neo_fun = global_env->ADRESSES->tab[index];
             UserFunc* fun = neo_fun.userfunc;
 
+            if (fun->nbArgs < 2) {
+                neon_fail(53,
+                    neo_new_str_create(global_env->NOMS->tab[index]),
+                    neo_integer_create(2)
+                );
+                return false;
+            }
+
             NeObj ret = callBinaryUserFunc(fun, a, b);
             if_error {
                 neobject_destroy(ret);
@@ -2166,7 +2223,27 @@ NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname) {
     }
     else {
         NeObj neo_fun = global_env->ADRESSES->tab[index];
+
+        // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+        /*if (NEO_TYPE(neo_fun) != TYPE_USERFUNC) {
+            neon_fail(52,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_new_str_create(opname),
+                neo_new_str_create(container_name),
+                neo_new_str_create(global_env->NOMS->tab[index])
+            );
+            return NEO_VOID;
+        }*/
+
         UserFunc* fun = neo_fun.userfunc;
+
+        if (fun->nbArgs < 2) {
+            neon_fail(53,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_integer_create(2)
+            );
+            return NEO_VOID;
+        }
 
         NeObj ret = callBinaryUserFunc(fun, op1, op2);
         if_error {
@@ -2188,7 +2265,27 @@ NeObj callOverloadedUnaryOperator(NeObj op1, char* opname) {
     }
     else {
         NeObj neo_fun = global_env->ADRESSES->tab[index];
+
+        // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+        /*if (NEO_TYPE(neo_fun) != TYPE_USERFUNC) {
+            neon_fail(52,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_new_str_create(opname),
+                neo_new_str_create(container_name),
+                neo_new_str_create(global_env->NOMS->tab[index])
+            );
+            return NEO_VOID;
+        }*/
+        
         UserFunc* fun = neo_fun.userfunc;
+
+        if (fun->nbArgs < 1) {
+            neon_fail(53,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_integer_create(1)
+            );
+            return NEO_VOID;
+        }
 
         NeObj ret = callUnaryUserFunc(fun, op1);
         if_error {

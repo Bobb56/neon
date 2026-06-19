@@ -200,6 +200,8 @@ bool ismarked(NeObj neo);
 void update_if_promise(NeObj* promise);
 char* var_name(NeObj obj);
 NeObj callNoArgsUserFunc(UserFunc* fun);
+NeObj callUnaryUserFunc(UserFunc* fun, NeObj arg);
+NeObj callBinaryUserFunc(UserFunc* fun, NeObj arg1, NeObj arg2);
 NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname);
 NeObj callOverloadedUnaryOperator(NeObj op1, char* opname);
 

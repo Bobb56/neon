@@ -1,3 +1,4 @@
+#NEON
 # test du menu
 initGraphics()
 l = []

@@ -62,16 +62,16 @@ Si il y a un bug bizarre sur TI_EZ80, penser aux optimisations du compilateurs
 
 
 Avancement et choses à faire :
+--> Vérifier que l'on démarque bien les objets quand il y a une erreur dans les fonctions de parcours des objets.
 --> Faire une variable numéro de ligne pour chaque processus différent, et lors d'une erreur, afficher les lignes de tous les processus
 -------------------------------
 
 PLUS TARD
+--> Surcharge de index (fonction Container~index et Container~set_index qui prend en argument l'objet, l'indice et la valeur à droite du egal, faut voir si c'est possible avec le get_address actuel)
 --> Prendre en compte les caractères plus larges que la normale dans deadline.c (les tabulations)
 --> Faire en sorte que le sérialisation des TreeBuffers soit multiplateforme
 --> Comparaison de TreeBuffers (en le parcourant de manière consciente de l'arbre dans lequel on est et en parcourant intelligemment les arbres)
---> Surcharge de call et index
 --> Ajouter un type de donnée bitmap à Neon
---> Ajouter des opérateurs bit-à-bit
 --> Ajouter un objet graphique Sprite qui est un tableau de nombres à deux dimensions. Chaque nombre n'est pas forcément un pixel mais est un rectangle, et les dimensions de chaque unité sont également précisées dans l'objet
 --> Ajouter des tables de hachage à Neon
 --> Sauvegarder un environnement entier
@@ -96,6 +96,7 @@ NOUVEAUTéS après la mise à jour 4.1 :
 - Ajout de la possibilité de formater le message dans raise, et de spécifier des arguments supplémentaires
 - Modification des arguments de la fonction raise
 - Ajouter dans la doc les ajouts/modifications d'exceptions
+- Ajout de la surcharge de l'appel de fonctions
 */
 
 

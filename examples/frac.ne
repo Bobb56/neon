@@ -1,4 +1,4 @@
-# module de fractions en Neon
+# Fractions module in Neon
 
 function pgcd(a, b) do
     while (b != 0) do
@@ -9,7 +9,6 @@ function pgcd(a, b) do
     return (a)
 end
 
-# overloaded
 function Frac~repr(frac) do
     if (frac>>denom == 1) then
         output(frac>>num)
@@ -20,6 +19,31 @@ function Frac~repr(frac) do
 end
 
 function Frac(num, denom := 1) do
+    if (type(denom) != 'Integer') then
+        raise(Error, "The denominator must be an integer, not <>", denom)
+        return ()
+    end
+
+    if (type(num) == 'Real') then
+
+        if (num == Infinity) then
+            return (Frac(num:1, denom:0))
+        end
+
+        counter = 0
+        while (not int(num) == num and counter < 10) do
+            denom *= 10
+            num *= 10
+            counter++
+        end
+
+        if (counter == 10) then
+            raise(Error, "Unable to convert <> to a fraction", num/denom)
+            return ()
+        end
+
+        num = int(num)
+    end
     return(Frac~reduced(Frac(num: num, denom: denom)))
 end
 
@@ -27,6 +51,10 @@ method Frac~reduce(frac) do
     while ((pgcd(frac>>num, frac>>denom) -> dc) > 1) do
         frac>>num = frac>>num // dc
         frac>>denom = frac>>denom // dc
+    end
+    if (frac>>num == frac>>denom) then
+        frac>>num = 1
+        frac>>denom = 1
     end
 end
 

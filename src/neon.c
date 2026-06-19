@@ -341,7 +341,7 @@ void startMessage(void)
     newLine();*/
     
     printString("Visit ");
-    setColor(GREEN); printString("https://langage-neon.raphaael.fr"); setColor(DEFAULT);
+    setColor(GREEN); printString("https://neon.raphaael.fr"); setColor(DEFAULT);
     printString(" for more information.");
     newLine();
 

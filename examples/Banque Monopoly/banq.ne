@@ -10,27 +10,27 @@ argent = []
 function load_files() do
     # ouverture du fichier de données
     try
-        txt = readFile("config_banque.dat")
+        txt = readFile("config_banq.dat")
         dat = eval(txt)
         joueurs = dat[0]
         argent = dat[1]
         
         aff = str(joueurs)
         aff = sub(aff, 1, len(aff) - 1)
-        print("\n[Données précédentes chargées : " + aff + "]")
-    except (FileNotFound) do
-        joueurs = ["banque"]
+        print("\n[Loaded previous commands : " + aff + "]")
+    except (FileSystemError) do
+        joueurs = ["banq"]
         argent = [1 EE 6]
-        print("[Nouvelle partie commencée]")
+        print("[New game started]")
     end
     
     #ouverture du fichier de commandes
     try
-        txt = readFile("banque.log")
-        print("[Commandes précédentes lancées : ]")
+        txt = readFile("banq.log")
+        print("[Previous commands : ]")
         print(txt)
-    except (FileNotFound) do
-        writeFile("banque.log", "")
+    except (FileSystemError) do
+        writeFile("banq.log", "")
     end
 end
 
@@ -39,14 +39,14 @@ end
 
 function save_data(joueurs, argent) do
     data = str([joueurs, argent])
-    writeFile("config_banque.dat", data)
+    writeFile("config_banq.dat", data)
 end
 
 
 
 function save_command(command) do
-    contenu = readFile("banque.log")
-    writeFile("banque.log", contenu + command + '\n')
+    contenu = readFile("banq.log")
+    writeFile("banq.log", contenu + command + '\n')
 end
 
 
@@ -81,10 +81,9 @@ end
 
 
 method traiter_commande(commande) do # prend une liste d'arguments et transforme ça en commande lisible
-
     if (commande[0] == 'move') then
         if (len(commande) != 4 or not(commande[1] in joueurs) or not(commande[1] in joueurs)) then
-            raise(ErrorInvalidCommand, "Cette commande est invalide")
+            raise(ErrorInvalidCommand, "Invalid command")
         else
             commande[3] = nbr(commande[3])
             argent[joueurs.index(commande[2])] += commande[3]
@@ -93,10 +92,10 @@ method traiter_commande(commande) do # prend une liste d'arguments et transforme
     
     elif (commande[0] == 'see') then
         if (len(commande) < 2) then
-            raise(ErrorInvalidCommand, "Cette commande est invalide")
+            raise(ErrorInvalidCommand, "Invalid command")
         else
             for (i, 1, len(commande)) do
-                if (not(commande[i] in joueurs)) then raise(ErrorInvalidCommand, "Cette commande est invalide") end
+                if (not(commande[i] in joueurs)) then raise(ErrorInvalidCommand, "Invalid command") end
                 output(commande[i] + ' : ')
                 print(argent[joueurs.index(commande[i])])
             end
@@ -113,7 +112,7 @@ method traiter_commande(commande) do # prend une liste d'arguments et transforme
         end
     
     elif (commande[0] == 'give') do
-        if (not(commande[1] in joueurs)) then raise(ErrorInvalidCommand, "Cette commande est invalide") end
+        if (not(commande[1] in joueurs)) then raise(ErrorInvalidCommand, "Invalid command") end
         argent[joueurs.index(commande[1])] += nbr(commande[2])
     elif (commande[0] == 'exit') then
         exit()
@@ -127,24 +126,24 @@ method traiter_commande(commande) do # prend une liste d'arguments et transforme
             end
         else
             print("Joueur déjà existant")
-            raise(ErrorInvalidCommand, "Cette commande est invalide")
+            raise(ErrorInvalidCommand, "Invalid command")
         end
     elif (commande[0] == 'deleteplayer') do
         for (i, 1, len(commande)) do
-            if (not(commande[i] in joueurs)) then raise(ErrorInvalidCommand, "Cette commande est invalide") end
+            if (not(commande[i] in joueurs)) then raise(ErrorInvalidCommand, "Invalid command") end
             ind = joueurs.index(commande[i])
             joueurs.remove(ind)
             argent.remove(ind)
         end
     elif (commande[0] == 'newgame') do
-        joueurs = ["banque"]
+        joueurs = ["banq"]
         argent = [1 EE 6]
         save_data(joueurs, argent)
-        writeFile("banque.log", "")
+        writeFile("banq.log", "")
         clear()
         print("[Nouvelle partie commencée]")
     elif (commande[0] == 'remove') do
-        if (not(commande[1] in joueurs)) then raise(ErrorInvalidCommand, "Cette commande est invalide") end
+        if (not(commande[1] in joueurs)) then raise(ErrorInvalidCommand, "Invalid command") end
         argent[joueurs.index(commande[1])] -= nbr(commande[2])
     elif (commande[0] == 'calc') do
         local(string)
@@ -155,10 +154,10 @@ method traiter_commande(commande) do # prend une liste d'arguments et transforme
         try
             print(eval(string))
         except () do
-            raise(ErrorInvalidCommand, "Cette commande est invalide")
+            raise(ErrorInvalidCommand, "Invalid command")
         end
     else
-        raise(ErrorInvalidCommand, "Cette commande est invalide")
+        raise(ErrorInvalidCommand, "Invalid command")
     end
 end
 
@@ -166,13 +165,13 @@ end
 
 
 function main() do
-    print("Bienvenue sur la programme de gestion de banque de monopoly. Voici la configuration initiale :")
-    print("Tapez move personne1 personne2 argent pour effectuer un transfert de personne 1 vers personne2 d'une somme de argent.")
-    print("Tapez see personne1 personne2 ... pour voir l'argent de personne1, personne2, ...")
-    print("Tapez give personne argent pour ajouter de l'argent à personne1")
-    print("Tapez addplayer nom argent_initial pour ajouter un joueur")
-    print("Tapez deleteplayer nom1 nom2 ... pour supprimer des joueurs")
-    print("Tapez exit pour quitter.")
+    print("Welcome to the Monopoly bank management program.")
+    print("Type: move person1 person2 amount to transfer an amount from person1 to person2.")
+    print("Type: see person1 person2 ... to view the money of person1, person2, ...")
+    print("Type: give person amount to add money to person1.")
+    print("Type: addplayer name initial_amount to add a player.")
+    print("Type: deleteplayer name1 name2 ... to remove players.")
+    print("Type: exit to quit.")
     
     load_files()
     
@@ -186,7 +185,7 @@ function main() do
             commande.traiter_commande()
             save_command("-> " + string)
         except (ErrorInvalidCommand) do
-            print("Veuillez retaper votre commande car celle-ci est invalide")
+            print("This command has not been recognized as a valid command")
         end
         save_data(joueurs, argent)
     end

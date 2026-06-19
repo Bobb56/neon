@@ -1,3 +1,4 @@
+#include "headers/neobj.h"
 #define NEON_SOURCE_ID 17
 
 #include <stdbool.h>
@@ -498,6 +499,45 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             else {
                 function = tree_fun_call->function_obj;
                 tree_fun_call->function_obj = NEO_VOID;
+            }
+
+            // Si on essaie d'exécuter un container ça va exécuter la fonction appellée Container~call (où Container est le type de container)
+            if (NEO_TYPE(function) == TYPE_CONTAINER) {
+                Container* c = neo_to_container(function);
+                // on regarde si l'appel est surchargé
+                char* container_name = global_env->CONTAINERS->tab[c->type];
+                int index = function_module(container_name, "call");
+
+                if (index != -1) {
+                    UserFunc* overloaded_fun = neo_to_userfunc(global_env->ADRESSES->tab[index]);
+                    // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+                    /*if (NEO_TYPE(function) != TYPE_USERFUNC) {
+                        neon_fail(52,
+                            neo_new_str_create(global_env->NOMS->tab[index]),
+                            neo_new_str_create("call"),
+                            neo_new_str_create(container_name),
+                            neo_new_str_create(global_env->NOMS->tab[index])
+                        );
+                        return NEO_VOID;
+                    }*/
+                    if (overloaded_fun->nbArgs < 2) {
+                        neon_fail(53,
+                            neo_new_str_create(global_env->NOMS->tab[index]),
+                            neo_integer_create(2)
+                        );
+                        return NEO_VOID;
+                    }
+
+                    // Get the arguments of the call
+                    NeList* args = neon_malloc(sizeof(NeList));
+                    treeToList(args, tb, tree_fun_call->args);
+                    NeObj neo_args = neo_list_convert(args);
+
+                    NeObj result = callBinaryUserFunc(overloaded_fun, function, neo_args);
+                    neobject_destroy(neo_args);
+                    neobject_destroy(function);
+                    return result;
+                }
             }
 
             if (NEO_TYPE(function) == TYPE_BUILTINFUNC) {
@@ -1343,7 +1383,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                             // récupère l'exception pour l'évaluer
                             TreeBufferIndex exception_expr = treelistGet(tb, exceptions)[i];
                             NeObj exception = eval_aux(tb, exception_expr);
-
+                            return_on_error(int_ret);
 
                             if (NEO_TYPE(exception) != TYPE_EXCEPTION)
                             {

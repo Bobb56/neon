@@ -8,8 +8,8 @@ for (n, 2, max+1) do
     est_premier = True
     for (k, 2, n) do
         if (n % k == 0) then
-            k = n-1 # pour sortir de la boucle, car n n'est pas premier
             est_premier = False
+            break
         end
     end
     
