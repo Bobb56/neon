@@ -94,6 +94,7 @@ void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
 
 
 int TreeBuffer_init(TreeBuffer* tb) {
+    tb->id = rand();
     tb->side_memory = false;
     tb->entry_point = TREE_VOID;
     tb->size = 0;

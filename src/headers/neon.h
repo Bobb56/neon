@@ -25,6 +25,9 @@ typedef struct NeonEnv {
     // Les arguments de la chaîne constituant le message d'erreur
     NeList* ERROR_MESSAGE_ARGUMENTS;
 
+    // Booléen qui permet de stopper l'exécution (lancer la fonction stop_execution) lorsqu'on le met à true
+    bool INTERRUPT;
+
     // cette variable indique le nombre d'instructions exécuté sur chaque processus avant de passer au suivant
     // il s'agit d'une variable et non d'une constante car la fonction setAtomicTime doit pouvoir le modifier
     int ATOMIC_TIME;
@@ -140,7 +143,7 @@ void setNeonEnv(NeonEnv* env);
 void printRes(NeObj res);
 void execFile(char* filename);
 void importFile(char* filename);
-void startMessage(void);
+void run_interactive(void);
 void terminal (void);
 int neonInit(void);
 void neonExit(void);

@@ -63,6 +63,24 @@ TreeBuffer* TreeBuffer_persistent_expr(Ast** ast, toklist* tokens, intlist* line
 
 
 
+// Cette fonction prend en argument un arbre syntaxique et revoie un identifier
+// si l'arbre correspond syntaxiquement à un token identifier, et NULL sinon
+// Concrètement, un arbre créé à partir d'un token identifier, c'est soit une variable,
+// soit une constante
+// (la fonction est en réalité un peu plus restrictive, mais pour l'utilisation qu'on en fait
+// elle est suffisante)
+char* get_tree_const(TreeBuffer* tb, TreeBufferIndex tree) {
+    char* value = NULL;
+    if (TREE_TYPE(tb, tree) == TypeConst && NEO_TYPE(treeConst(tb, tree)->obj) == TYPE_CONST) {
+        value = treeConst(tb, tree)->obj.string->string;
+    }
+    else if (TREE_TYPE(tb, tree) == TypeVariable) {
+        value = get_name(treeVar(tb, tree)->var);
+    }
+    return value;
+}
+
+
 
 
 void createVirguleTree(TreeBuffer* tb, struct TreeListTemp* tree_list, Ast** ast, toklist* tokens, intlist* lines, size_t offset) {
@@ -174,6 +192,9 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
             }
             else if (tokeq(tokens->tab[0], get_pi())) {
                 obj = neo_double_create(PI);
+            }
+            else {
+                obj = neo_const_create(tokdup(tokens->tab[0]));
             }
             return NeTree_make_const(tb, obj, lines->tab[offset]); // cet arbre se situe à la ligne [line] du fichier
         }
@@ -314,6 +335,14 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     // ou à un autre depuis global_env->ADRESSES
                     nelist_append(global_env->ATTRIBUTES, gc_extern_neo_list_convert(attr_names)); // ajout de la liste
 
+                    // Création d'une variable qui contient le type de container associé
+                    char sov = stringize(nomFonc);
+
+                    Var var = get_var(nomFonc.debut);
+                    if (NEO_TYPE(get_var_value(var)) == TYPE_EMPTY)
+                        set_var(var, neo_new_const_create(nomFonc.debut));
+
+                    unstringize(nomFonc, sov);
                 }
                 else // on vérifie que les champs sont bien comme ils ont été définis
                 {

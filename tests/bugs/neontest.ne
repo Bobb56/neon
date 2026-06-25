@@ -60,20 +60,20 @@ function printProg(percent, name, maxlength, successful) do
     spaces_right = spaces//2
     spaces_left = spaces - spaces_right
     
-    output('[' + ' '*spaces_left) ; setColor("green") ; output(percent) ; setColor("default") ; output(' '*spaces_right + '] ')
+    output('[' + ' '*spaces_left) ; setColor(Green) ; output(percent) ; setColor(Default) ; output(' '*spaces_right + '] ')
     output('Test ', name, (maxlength - len(name) + 1)*' ')
     
     if (successful == None) then
-        setColor('green')
+        setColor(Green)
         output('Running...')
     elif (successful) then
-        setColor('blue')
+        setColor(Blue)
         output('Success')
     else
-        setColor('red')
+        setColor(Red)
         output('Failed.')
     end
-    setColor('default')
+    setColor(Default)
 end
 
 # affiche le programme n°n en prenant en compte le programme actuel comme programme n°len(screen>>passed)

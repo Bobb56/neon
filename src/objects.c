@@ -358,7 +358,8 @@ char* neo_container_str(NeObj neo, bool overloaded) {
 
             char* s = neobject_str(get_container_field(c, i), overloaded);
 
-            if (global_env->CODE_ERROR != 0) {
+            if_error {
+                neon_free(str1);
                 return NULL;
             }
 
@@ -870,16 +871,15 @@ void general_nelist_destroy(NeList* list, bool gc_extern)
 }
 
 
-void nelist_deinit_until(NeList *list, size_t index_max) {
-    for (size_t i=0 ; i <= index_max ; i++)
-    {
+void nelist_deinit_until(NeList *list, int index_max) {
+    for (int i=0 ; i <= index_max ; i++) {
         neobject_destroy(list->tab[i]);
     }
     neon_free(list->tab);
 }
 
 
-void nelist_destroy_until(NeList *list, size_t index_max) {
+void nelist_destroy_until(NeList *list, int index_max) {
     nelist_deinit_until(list, index_max);
     neon_free(list);
 }
@@ -945,6 +945,11 @@ NeList* nelist_dup(NeList* l)
     for (size_t i=0 ; i < l->len ; i++)
     {
         liste->tab[i] = neo_dup(l->tab[i]); // on ajoute à la liste liste une copie de l'élément i de la liste neo
+
+        if_error {
+            nelist_deinit_until(liste, i-1);
+            return NULL;
+        }
     }
     return liste;
 }
@@ -961,7 +966,7 @@ void nelist_init(NeList* list, size_t len) {
     
     while (((size_t)1 << list->capacity) < list->len)
         list->capacity++;
-  
+
     list->tab = neon_malloc((1 << list->capacity) * sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
 }
 
@@ -1389,7 +1394,7 @@ intptr_t neo_hash(NeObj neo) {
 
             intptr_t h2 = hash_combine(fun->nbOptArgs, opt_args_hash);
             intptr_t h1 = hash_combine(intlist_hash(fun->args, fun->nbArgs), fun->nbArgs);
-            intptr_t h3 = hash_combine(fun->code, (intptr_t)fun->tree_buffer);
+            intptr_t h3 = hash_combine(fun->code, (intptr_t)fun->tree_buffer->id);
             intptr_t h4 = hash_combine(doc_hash, fun->isMethod);
             final_hash = hash_combine(
                 hash_combine(h1, h2),
@@ -1438,8 +1443,14 @@ NeObj neo_dup(NeObj neo) {
         
         mark_as_already_copied(neo, copied_list); // inscrit le nouveau pointeur de la copie directement dans l'objet
 
-        for (size_t i = 0 ; i < original_list->len ; i++)
+        for (size_t i = 0 ; i < original_list->len ; i++) {
             copied_list->tab[i] = neo_dup(nelist_nth(original_list, i));
+            
+            if_error {
+                nelist_destroy_until(copied_list, i-1);
+                return NEO_VOID;
+            }
+        }
 
         return neo_list_convert(copied_list); // et c'est le moment où on l'ajoute au GC
     }
@@ -1453,8 +1464,15 @@ NeObj neo_dup(NeObj neo) {
         
         mark_as_already_copied(neo, copied_cntr); // inscrit le nouveau pointeur de la copie directement dans l'objet
 
-        for (size_t i = 0 ; i < original_cntr->data.len ; i++)
+        for (size_t i = 0 ; i < original_cntr->data.len ; i++) {
             copied_cntr->data.tab[i] = neo_dup(nelist_nth(&original_cntr->data, i));
+
+            if_error {
+                nelist_deinit_until(&copied_cntr->data, i-1);
+                neon_free(copied_cntr);
+                return NEO_VOID;
+            }
+        }
 
         return neo_container_convert(copied_cntr); // et c'est le moment où on l'ajoute au GC
     }
@@ -1477,8 +1495,18 @@ NeObj neo_dup(NeObj neo) {
 
         mark_as_already_copied(neo, copied_func);
 
-        for (size_t i = 0 ; i < original_func->opt_args.len ; i++)
+        for (size_t i = 0 ; i < original_func->opt_args.len ; i++) {
             copied_func->opt_args.tab[i] = neo_dup(nelist_nth(&original_func->opt_args, i));
+
+            if_error {
+                nelist_deinit_until(&copied_func->opt_args, i-1);
+                neon_free(copied_func->args);
+                if (copied_func->doc != NULL)
+                    neon_free(copied_func->doc);
+                return NEO_VOID;
+            }
+
+        }
 
         return neo_userfunc_convert(copied_func); // et c'est le moment où on l'ajoute au GC
     }
@@ -1678,7 +1706,10 @@ void neobject_aff(NeObj neo)
             neo_promise_aff(neo);
         }
         else if (NEO_TYPE(neo) == TYPE_EMPTY) {
-            printString("undefined");
+            printString("???");
+        }
+        else {
+            printString("???");
         }
 
         unmark(neo);
@@ -1780,6 +1811,13 @@ char* neobject_str(NeObj neo, bool overloaded)
                     {
                         ret = addStr2(ret, " := ");
                         char* obj_str = neobject_str(nelist_nth(&fun->opt_args, i), overloaded);
+
+                        if_error {
+                            neon_free(ret);
+                            unmark(neo);
+                            return NULL;
+                        }
+
                         ret = addStr2(ret, obj_str);
                         neon_free(obj_str);
                     }
@@ -1799,7 +1837,10 @@ char* neobject_str(NeObj neo, bool overloaded)
             ret = neo_promise_str(neo);
         }
         else if (NEO_TYPE(neo) == TYPE_EMPTY) {
-            ret = strdup("undefined");
+            ret = strdup("???");
+        }
+        else {
+            ret = strdup("???");
         }
         unmark(neo);
 
@@ -1814,6 +1855,7 @@ char* neobject_str(NeObj neo, bool overloaded)
 char* neobject_short_repr(NeObj obj, size_t max_len, bool overloaded) {
     // Longueur maximale de la représentation d'un objet
     char* full_repr = neobject_str(obj, overloaded);
+    return_on_error(NULL);
 
     size_t length = strlen(full_repr);
 
@@ -1889,14 +1931,18 @@ char* type(NeObj neo)
     }
     if (NEO_TYPE(neo) == TYPE_EMPTY)
     {
-        return "undefined";
+        return "uninitialized";
+    }
+    if (NEO_TYPE(neo) == TYPE_NONE)
+    {
+        return "None";
     }
 
     if (NEO_TYPE(neo) == TYPE_UNSPECIFIED)
         return "unspecified type";
 
-    if (NEO_TYPE(neo) == TYPE_NONE)
-        return "NoneType";
+    if (neo_is_void(neo))
+        return "undefined type";
 
     return "unknown type";
 }
@@ -2012,7 +2058,7 @@ bool neo_equal(NeObj _op1, NeObj _op2)
         {
                 return  _op1.userfunc->isMethod == _op2.userfunc->isMethod &&
                         _op1.userfunc->code == _op2.userfunc->code &&
-                        _op1.userfunc->tree_buffer == _op2.userfunc->tree_buffer &&
+                        _op1.userfunc->tree_buffer->id == _op2.userfunc->tree_buffer->id &&
                         nelist_equal(&_op1.userfunc->opt_args, &_op2.userfunc->opt_args);
         }
         else

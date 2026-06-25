@@ -1,4 +1,5 @@
 #include "headers/neobj.h"
+#include "headers/syntaxtrees.h"
 #define NEON_SOURCE_ID 17
 
 #include <stdbool.h>
@@ -102,17 +103,79 @@ NO_OPT void neon_interp_next_process(void) {
 }
 
 
+void stop_execution(void) {
+    strlist options = (strlist) {
+        .tab = (char*[]) {
+            "Stop current running program",
+            "Open interactive console on current environment"
+        },
+        .len = 2,
+        .capacity = 1
+    };
+    int choice = get_option(
+        "You interrupted the execution. What do you want to do ?",
+        "Enter your choice: ",
+        &options
+    );
+
+    if (choice == 2) {
+        // Initial message
+        newLine();
+
+        setColor(PURPLE);
+        printString("Welcome to the interactive console.\n");
+
+        setColor(DEFAULT);
+        printString("Type ");
+
+        setColor(GREEN); printString("exit()"); setColor(DEFAULT);
+        printString(" to resume execution.\n\n");
+
+        // Print where we stopped the execution
+        neon_fail(104, NO_ARGS);
+        printError();
+        newLine();
+        
+        // Launch the terminal
+terminal:
+        terminal();
+
+        // Ask before exiting
+        strlist options = (strlist) {.tab = (char*[]) {"Yes", "No"}, .len = 2, .capacity = 1};
+        int choice = get_option(
+            "Do you really want to resume execution ?",
+            "Enter your choice: ",
+            &options
+        );
+
+        if (choice == 2)
+            goto terminal;
+
+        setColor(PURPLE);
+        printString("You exited the interactive console.\n");
+        setColor(DEFAULT);
+    }
+    else {
+        neon_fail(104, NO_ARGS);
+    }
+}
+
 
 
 // Cette fonction est régulièrement appelée pendant l'interprétation d'un programme Neon
 void interrupt(void) {
+    if (global_env->INTERRUPT) {
+        global_env->INTERRUPT = false;
+        stop_execution();
+    }
+
     neon_interp_yield();
 
     #ifdef TI_EZ80
     bool key_state = kb_On;
     kb_ClearOnLatch();
     if (key_state) {
-        neon_fail(104, NO_ARGS);
+        global_env->INTERRUPT = true;
         return;
     }
     #endif
@@ -187,7 +250,7 @@ void treeToList(NeList* l, TreeBuffer* tb, TreeBufferIndex tree_list) {
     size_t tree_list_length = treelistLength(tb, tree_list);
     nelist_init(l, tree_list_length);
 
-    for (size_t index = 0 ; index < tree_list_length ; index++)
+    for (int index = 0 ; index < (int)tree_list_length ; index++)
     {
         if (!TREE_ISVOID(treelistGet(tb, tree_list)[index])) {
             l->tab[index] = eval_aux(tb, treelistGet(tb, tree_list)[index]);
@@ -195,7 +258,7 @@ void treeToList(NeList* l, TreeBuffer* tb, TreeBufferIndex tree_list) {
             if_error
             {
                 // si y a eu un problème dans l'évaluation d'un argument, on doit libérer toute la liste créée jusqu'alors
-                nelist_destroy_until(l, index - 1);
+                nelist_deinit_until(l, index - 1);
                 return;
             }
         }
@@ -207,7 +270,7 @@ void treeToList(NeList* l, TreeBuffer* tb, TreeBufferIndex tree_list) {
 
 
 
-// Cette fonction appelle une UserFunction sur les arguments [values] associés aux variables de même indice dans le tableau [variables]. [nb_arguments] correspond au premier indice libre dans les tableaux, et les tableaux doivent être de longueur [fun->nbArgs]
+// Cette fonction appelle une UserFunc sur les arguments [values] associés aux variables de même indice dans le tableau [variables]. [nb_arguments] correspond au premier indice libre dans les tableaux, et les tableaux doivent être de longueur [fun->nbArgs]
 // La fonction assigne l'objet [local_args] à une vraie variable s'il est différent de NEO_VOID, et met l'objet final de la méthode dans [self_final_value] SANS REMPLACER LA PRECEDENTE VALEUR
 // L'affectation à la vraie adresse de l'objet doit être faite manuellement après avoir appelé callUserFunc
 NeObj callUserFunc(UserFunc* fun, Var* variables, NeObj* values, int variable_index, NeObj local_args, NeObj* self_final_value) {
@@ -467,7 +530,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             return_on_error(NEO_VOID);
 
             if (NEO_TYPE(fixed_func) != TYPE_USERFUNC) {
-                neon_fail(100, neo_new_str_create(type(fixed_func)));
+                neon_fail(100, neo_new_const_create(type(fixed_func)));
                 neobject_destroy(fixed_func);
                 return NEO_VOID;
             }
@@ -589,16 +652,16 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                     return NEO_VOID;
                 }
 
-                // On va stocker les arguments dans des tableaux avant de les affecter afin de ne pas mélanger les contextes : évaluation dans le contexte extérieur, puis affectation dans le contexte intérieur
-                Var* variables = neon_malloc(sizeof(Var) * fun->nbArgs);
-                NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
-                int variable_index = 0;
-
                 // Définition de __local_args__ dans le cas où la fonction peut prendre un nombre illimité d'arguments
                 NeObj local_args = NEO_VOID;
                 if (fun->unlimited_arguments) {
                     local_args = neo_list_create(0);
                 }
+
+                // On va stocker les arguments dans des tableaux avant de les affecter afin de ne pas mélanger les contextes : évaluation dans le contexte extérieur, puis affectation dans le contexte intérieur
+                Var* variables = neon_malloc(sizeof(Var) * fun->nbArgs);
+                NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+                int variable_index = 0;
 
                 // Association valeurs/variables
 
@@ -654,15 +717,9 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 return return_value;
             }
 
-            else if (NEO_TYPE(function) == TYPE_EMPTY)
-            {
-                neon_fail(8, NO_ARGS);
-                neobject_destroy(function);
-                return NEO_VOID;
-            }
             else
             {
-                neon_fail(9, NO_ARGS);
+                neon_fail(9, neo_new_const_create(type(function)));
                 neobject_destroy(function);
                 return NEO_VOID;
             }
@@ -760,7 +817,7 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
             if (NEO_TYPE(neo) != TYPE_CONTAINER)
             {
                 // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
-                neon_fail(80, neo_new_str_create(type(neo)));
+                neon_fail(80, neo_new_const_create(type(neo)));
                 neobject_destroy(neo);
                 return NEO_VOID;
             }
@@ -891,7 +948,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             if (NEO_TYPE(neo) != TYPE_CONTAINER)
             {
                 // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
-                neon_fail(80, neo_new_str_create(type(neo)));
+                neon_fail(80, neo_new_const_create(type(neo)));
                 neobject_destroy(neo);
                 return NULL;
             }
@@ -1387,7 +1444,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                             if (NEO_TYPE(exception) != TYPE_EXCEPTION)
                             {
-                                neon_fail(78, neo_new_str_create(type(exception)));
+                                neon_fail(78, neo_new_const_create(type(exception)));
                                 return int_ret;
                             }
                             else
@@ -1511,7 +1568,7 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
                 {
                     if (param_length == 0) // il faut au moins un argument
                     {
-                        neon_fail(69, NO_ARGS);
+                        neon_fail(69, neo_new_str_create("local"));
                         return 0;
                     }
                     else if (global_env->process_cycle->process->var_loc.len == 0)
@@ -1522,14 +1579,23 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     for (int i = 0 ; i < param_length ; i++) // pour toutes les variables
                     {
-                        // va traiter la variable comme étant locale
-                        Var var = treeVar(tb, treelistGet(tb, tree_kw_param->params)[i])->var;
-                        Process* proc = global_env->process_cycle->process;
+                        // Get the tree
+                        TreeBufferIndex tree_var = treelistGet(tb, tree_kw_param->params)[i];
+                        
+                        // Check that it is a variable
+                        if (TREE_TYPE(tb, tree_var) != TypeVariable) {
+                            neon_fail(55, neo_new_str_create("local"), neo_new_str_create(printable_tree_type(tb, tree_var)));
+                            return 0;
+                        }
+                        else {
+                            // va traiter la variable comme étant locale
+                            Var var = treeVar(tb, tree_var)->var;
+                            Process* proc = global_env->process_cycle->process;
 
-                        if (!isLocal(var, &proc->var_loc))
-                            local(var, proc);
+                            if (!isLocal(var, &proc->var_loc))
+                                local(var, proc);
+                        }
                     }
-                    
                 }
 
                 else if (tree_kw_param->code == AWAIT)
@@ -1560,6 +1626,58 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
                     return_on_error(0); // Au cas où il y a une erreur dans le isTrue
 
+                }
+
+                else if (tree_kw_param->code == DEFINE) {
+
+                    if (param_length == 0) // il faut au moins un argument
+                    {
+                        neon_fail(69, neo_new_str_create("define"));
+                        return 0;
+                    }
+
+                    for (int i = 0 ; i < param_length ; i++) // pour toutes les variables
+                    {
+                        TreeBufferIndex tree_var = treelistGet(tb, tree_kw_param->params)[i];
+                        
+                        if (TREE_TYPE(tb, tree_var) != TypeVariable) {
+                            neon_fail(55, neo_new_str_create("define"), neo_new_str_create(printable_tree_type(tb, tree_var)));
+                            return 0;
+                        }
+                        else {
+                            Var var = treeVar(tb, tree_var)->var;
+                            char* identifier = get_name(var);
+                            replace_var(var, neo_new_const_create(identifier));
+                        }
+                    }
+                }
+
+                else if (tree_kw_param->code == INIT) {
+
+                    if (param_length == 0) // il faut au moins un argument
+                    {
+                        neon_fail(69, neo_new_str_create("init"));
+                        return 0;
+                    }
+
+                    for (int i = 0 ; i < param_length ; i++) // pour toutes les variables
+                    {
+                        TreeBufferIndex tree_var = treelistGet(tb, tree_kw_param->params)[i];
+                        
+                        if (TREE_TYPE(tb, tree_var) != TypeVariable) {
+                            neon_fail(55, neo_new_str_create("init"), neo_new_str_create(printable_tree_type(tb, tree_var)));
+                            return 0;
+                        }
+                        else {
+                            Var var = treeVar(tb, tree_var)->var;
+                            char* identifier = get_name(var);
+                            
+                            Module mod = get_module_from_name(identifier);
+                            return_on_error(0);
+
+                            init_module(mod, global_env);
+                        }
+                    }
                 }
 
                 break;

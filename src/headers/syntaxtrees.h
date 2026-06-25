@@ -9,6 +9,7 @@
 #include "trees.h"
 
 
+char* get_tree_const(TreeBuffer* tb, TreeBufferIndex tree);
 TreeBuffer createExpressionTree(char* string, bool free_after);
 void affExpr(TreeBuffer* tb, TreeBufferIndex tree);
 TreeBufferIndex createConditionBlockTree(TreeBuffer* tb, Ast** ast, toklist* tokens, intlist* lines, size_t offset);

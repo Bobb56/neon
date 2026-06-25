@@ -5,6 +5,21 @@
 #include "objects.h"
 #include "neonio.h"
 
+
+// Abstraction over NeStream for reading/writing obfuscated files
+#define OBF_CONST_SIZE      8
+
+typedef struct ObfNeStream {
+    NeStream fd;
+    uint8_t obf_const[OBF_CONST_SIZE];
+    uint8_t index;
+} ObfNeStream;
+
+ObfNeStream NeStream_obf_create(char* name);
+ObfNeStream NeStream_obf_open(char* name);
+void NeStream_obf_close(ObfNeStream* stream);
+
+
 typedef uint8_t PointerType;
 #define GC_EXTERN               128
 #define IGNORE_GC_PROPERTY      127
@@ -30,8 +45,11 @@ typedef union {
     void* pointer;
 } PointerUnion;
 
-NeObj neobject_deserialize(NeStream stream);
-void neobject_serialize(NeStream stream, NeObj neo);
+
+
+
+NeObj neobject_deserialize(ObfNeStream* stream);
+void neobject_serialize(ObfNeStream* stream, NeObj neo);
 
 void NeTree_update_ptr_table(TreeBuffer* tb, TreeBufferIndex tree, void* args);
 void update_ptr_table_list(NeList* list, intptrlist* ptrTable, intlist* typesTable, intlist* containers, intlist* vars, intlist* expt);

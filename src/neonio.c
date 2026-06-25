@@ -678,3 +678,44 @@ void neon_pause(char* text) {
     if (res != NULL)
         neon_free(res);
 }
+
+
+int get_option(char* title, char* prompt, strlist* choices) {
+    setColor(GREEN);
+    printString(title);
+    newLine();
+
+    for (size_t i=0 ; i < choices->len ; i++) {
+        setColor(GREEN);
+        printInt(i+1);
+        printString(". ");
+
+        setColor(DEFAULT);
+        printString(choices->tab[i]);
+        newLine();
+    }
+
+    while (true) {
+        neon_reset_error();
+        char* answer = input(prompt);
+
+        if (answer != NULL && strlen(answer) > 0) {
+            int to_int = str_to_int(answer);
+            neon_free(answer);
+
+            if_error {
+                neon_reset_error();
+                printString("Error: Please enter a valid number\n");
+            }
+            else if (to_int < 1 || to_int > (int)choices->len) {
+                printString("Error: Please enter a number between 1 and ");
+                printInt(choices->len);
+                newLine();
+            }
+            else {
+                return to_int;
+            }
+        }
+    }
+
+}

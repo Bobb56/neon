@@ -7,7 +7,7 @@
 #include "objects.h"
 #include "constants.h"
 
-#define NBOPERATEURS 40
+#define NBOPERATEURS 41
 
 NeObj _and(TreeBuffer* tb, TreeBufferIndex tree1, TreeBufferIndex tree2);
 NeObj _or(TreeBuffer* tb, TreeBufferIndex tree1, TreeBufferIndex tree2);
@@ -45,6 +45,7 @@ NeObj _exponent(NeObj op1, NeObj op2);
 NeObj _implique(NeObj op1, NeObj op2);
 NeObj _in(NeObj op1, NeObj op2);
 NeObj _swap(NeObj* op1, NeObj* op2);
+NeObj _is(TreeBuffer* tb, TreeBufferIndex op1, TreeBufferIndex op2);
 
 
 extern void* operators_functions[NBOPERATEURS];

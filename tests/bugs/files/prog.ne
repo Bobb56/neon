@@ -25,34 +25,34 @@ function __not(l) do return (not l[0]) end
 
 function eval(tree) do
     local(func, objects)
-    if (type(tree) == 'Function') then
+    if (tree is Func) then
         func = tree>>func
         objects = []
         foreach (expr, tree>>arguments) do
             objects.append(eval(expr))
         end
         return (func(objects))
-    elif (type(tree) == 'Const') then
+    elif (tree is ConstValue) then
         return (tree>>content)
-    elif (type(tree) == 'Var') then
+    elif (tree is Var) then
         return (VARIABLES[tree>>var])
     end
 end
 
 function exec(tree) do
     foreach (son, tree>>sons) do
-        if (type(son) == 'Affect') then
+        if (son is Affect) then
             while (son>>var >= len(VARIABLES)) then VARIABLES.append(None) end
             
             VARIABLES[son>>var] = eval(son>>expr)
         
-        elif (type(son) == 'IfElse') then
+        elif (son is IfElse) then
             if (eval(son>>condition)) then
                 exec(son>>statementif)
             elif (son>>statementelse>>sons != None) then
                 exec(son>>statementelse)
             end
-        elif (type(son) == 'WhileDo') then
+        elif (son is WhileDo) then
             while (eval(son>>condition)) do
                 exec(son>>statement)
             end
@@ -73,7 +73,7 @@ end
 
 function make_operator(func) do
     function operator(..., func := func) do
-        return (Function(func: func, arguments: __local_args__))
+        return (Func(func: func, arguments: __local_args__))
     end
     return (operator)
 end
@@ -98,7 +98,7 @@ function affect(name, exp) do
 end
 
 function const(val) do
-    return (Const(content: val))
+    return (ConstValue(content: val))
 end
 
 function var(name) do

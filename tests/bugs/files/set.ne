@@ -51,7 +51,7 @@ function Set~isSubset(set1, set2) do
 end
 
 function Set~equal(set1, set2) do
-    if (type(set1) == "Set" and type(set2) == "Set") then
+    if (set1 is Set and set2 is Set) then
         return (set1.Set~isSuperset(set2) and set2.Set~isSuperset(set1))
     end
     return (False)

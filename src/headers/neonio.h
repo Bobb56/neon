@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "constants.h"
+#include "dynarrays.h"
 
 
 #ifdef DEBUG
@@ -50,6 +51,7 @@ bool launcher(char* filename);
 char* openFile(char* filename);
 void writeFile(char* filename, char* content);
 void neon_pause(char* text);
+int get_option(char* title, char* prompt, strlist* choices);
 
 #ifdef TI_EZ80
 char* argsAns(void);

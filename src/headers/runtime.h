@@ -20,6 +20,7 @@
 #define tb_exec(tb)         exec(tb, (tb)->entry_point)
 #define tb_exec_aux(tb)     exec_aux(tb, (tb)->entry_point)
 
+void stop_execution(void);
 bool neoIsTrue(NeObj neo);
 bool isTrue(TreeBuffer* tb, TreeBufferIndex tree);
 NeObj eval(TreeBuffer* tb, TreeBufferIndex tree);

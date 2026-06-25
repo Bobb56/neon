@@ -18,7 +18,7 @@ function g() do
 end
 
 function join(process) do
-    await(type(process) != "Promise")
+    await(not process is Promise)
 end
 
 

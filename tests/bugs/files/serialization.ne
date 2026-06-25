@@ -22,4 +22,4 @@ promise = parallel f(1000)
 saveObj('files/data/promise', promise)
 promise2 = loadObj('files/data/promise')
 
-assert(type(promise2) == 'Promise')
+assert(promise2 is Promise)

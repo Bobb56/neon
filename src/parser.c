@@ -144,28 +144,28 @@ static strlist operateurs1 = (strlist) {
 
 // opérateurs mots
 static strlist operateurs2 = (strlist) {
-    .tab = (char*[]) {"and","or","xor","not", "del", "EE", "in", "parallel"},
-    .len = 8,
-    .capacity = 3
+    .tab = (char*[]) {"and","or","xor","not", "del", "EE", "in", "parallel", "is"},
+    .len = 9,
+    .capacity = 4
 };
 
 
 static strlist OPERATEURS = (strlist) {
-    .tab = (char*[]) {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "...", "parallel"},
+    .tab = (char*[]) {"and","or","xor","+","*","-","/","**","==","!=","<=",">=","<",">","=","+=","-=","*=","/=","++","--","not","%","//","&","<-","@", "_", "del", "->", ".", "EE", "=>", "in", ">>", ":", "<->", ":=", "...", "parallel", "is"},
     .len = NBOPERATEURS,
     .capacity = NBOPERATEURS
 };
 
 
 static intlist PRIORITE = (intlist) {
-    .tab = (int[]) {7, 7, 7, 5, 4, 5, 4, 3, 6, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 3, 3, 7, 4, 4, 2, 8, 2, 1, 8, 8, 2, 3, 7, 6, 0, 8, 8, 8, 8, 7},
+    .tab = (int[]) {7, 7, 7, 5, 4, 5, 4, 3, 6, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 3, 3, 7, 4, 4, 2, 8, 2, 1, 8, 8, 2, 3, 7, 6, 0, 8, 8, 8, 8, 7, 6},
     .len = NBOPERATEURS,
     .capacity = NBOPERATEURS // les tableaux ne sont jamais modifiés de toute façon, donc la capacité est anecdotique
 };
 
 
 static intlist OPERANDES = (intlist) {
-    .tab = (int[]) {RIGHT_LEFT | LAZY,RIGHT_LEFT | LAZY,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT | LAZY, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, SPECIAL, RIGHT},
+    .tab = (int[]) {RIGHT_LEFT | LAZY,RIGHT_LEFT | LAZY,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,RIGHT_LEFT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VAR_RIGHT,VARLEFT,VARLEFT,RIGHT,RIGHT_LEFT,RIGHT_LEFT,VARRIGHT,RIGHT_LEFT,RIGHT, RIGHT, VARRIGHT, LEFT_VAR, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT | LAZY, RIGHT_LEFT, RIGHT_LEFT, RIGHT_LEFT, VAR_VAR, VAR_RIGHT, SPECIAL, RIGHT, RIGHT_LEFT | LAZY},
     .len = NBOPERATEURS,
     .capacity = NBOPERATEURS // les tableaux ne sont jamais modifiés de toute façon, donc la capacité est anecdotique
 };
@@ -177,15 +177,15 @@ static intlist OPERANDES = (intlist) {
 
 //mots de blocs d'instructions
 static strlist blockwords = (strlist) {
-    .tab = (char*[]) {"if","while","for", "foreach", "ei", "return", "import", "local", "tr", "expt", "await", "atmc"},
-    .len = 12,
+    .tab = (char*[]) {"if","while","for", "foreach", "ei", "return", "import", "local", "tr", "expt", "await", "atmc", "define", "init"},
+    .len = 14,
     .capacity = 4
 };
 
 static strlist blockwords1Line = (strlist) {
-    .tab = (char*[]) {"return", "import", "local", "await"},
-    .len = 4,
-    .capacity = 2
+    .tab = (char*[]) {"return", "import", "local", "await", "define", "init"},
+    .len = 6,
+    .capacity = 3
 };
 
 static strlist keywordFunction = (strlist) {
@@ -213,9 +213,30 @@ static strlist neon_boolean = (strlist) {
 };
 
 static strlist constant = (strlist) {
-    .tab = (char*[]) {"None", "Infinity", "NaN", "Pi"},
-    .len = 4,
-    .capacity = 2
+    .tab = (char*[]) {
+        "None",
+        "Infinity",
+        "NaN",
+        "Pi",
+        "Bool",
+        "String",
+        "Const",
+        "Integer",
+        "Real",
+        "BuiltInFunction",
+        "List",
+        "Method",
+        "Function",
+        "Exception",
+        "Promise",
+        "Red",
+        "Blue",
+        "Green",
+        "Purple",
+        "Default"
+    },
+    .len = 20,
+    .capacity = 5
 };
 
 char* get_infinity(void) {
@@ -1818,7 +1839,7 @@ void statements(intlist* types, toklist* tokens, Ast** ast, intlist* lines, size
         }
 
         
-        typeact=ast[i]->type;        
+        typeact=ast[i]->type;
 
 
         // on vérifie entre les moments où on finit des statements que les trucs sont bien ce qu'il faut

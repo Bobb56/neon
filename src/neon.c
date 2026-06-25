@@ -36,7 +36,7 @@ NeonEnv* global_env = NULL;
 
     void handle_signal(int sig) {
         if (sig == SIGINT || sig == SIGTERM) {
-            neon_fail(104, NO_ARGS);
+            global_env->INTERRUPT = true;
         }
     }
 #endif
@@ -48,7 +48,7 @@ NeonEnv* global_env = NULL;
     // Fonction de gestion du signal
     BOOL WINAPI ctrlHandler(DWORD signal) {
         if (signal == CTRL_C_EVENT) {
-            neon_fail(104, NO_ARGS);
+            global_env->INTERRUPT = true;
             return TRUE;  // Renvoyer TRUE pour indiquer que l'événement a été traité
         }
         return FALSE;
@@ -66,16 +66,17 @@ void setNeonEnv(NeonEnv* env) {
 
 void defineVariables(NeonEnv* env)
 {
-    // définition de la variable de version
+    // Définition de la variable de version
     variable_append(env, "__version__", neo_str_create(strdup(VERSION)));
 
-    // définition de la variable de plateforme
+    // Définition de la variable de plateforme
     variable_append(env, "__platform__", neo_str_create(strdup(PLATFORM)));
 
     // le nom du fichier
     variable_append(env, "__name__", neo_str_create(strdup("__main__")));
 
-    env->NAME = env->ADRESSES->len - 1; // l'adresse de __name__ à modifier
+    // L'adresse de __name__ à modifier
+    env->NAME = env->ADRESSES->len - 1;
 }
 
 
@@ -144,6 +145,7 @@ NeonEnv* NeonEnv_init(void) {
     env->LINENUMBER = 0;
     env->FILENAME = NULL;
     env->EXCEPTION = NULL;
+    env->INTERRUPT = false;
     env->atomic_counter = 0;
     env->RETURN_VALUE = NEO_VOID;
     env->OBJECTS_LIST = NEO_VOID;
@@ -301,9 +303,7 @@ void printRes(NeObj res)
         printString(") = ");
         
         // on a besoin d'un runtime pour exécuter neobject_aff car il pourrait lancer une fonction utilisateur si surchargé
-        initRuntime();
         neobject_aff(res);
-        exitRuntime();
         
         newLine();
     }
@@ -378,15 +378,15 @@ void storeAns(NeObj res) {
 }
 
 
-
-
+void run_interactive(void) {
+    startMessage();
+    initRuntime();
+    terminal();
+    exitRuntime();
+}
 
 
 void terminal(void) {
-    char* exp;
-    NeObj res ;
-    TreeBuffer tb;
-        
     while (true) {
         neon_reset_error(); // réinitialise les erreurs
 
@@ -394,7 +394,7 @@ void terminal(void) {
             neon_free(global_env->FILENAME);
         global_env->FILENAME = NULL;
 
-        exp = inputCode();
+        char* exp = inputCode();
 
         if (exp == NULL && global_env->CODE_ERROR == 0) // pour afficher le keyboardInterrupt
             neon_fail(104, NO_ARGS);
@@ -420,7 +420,7 @@ void terminal(void) {
             continue;
         }
 
-        tb = createSyntaxTree(exp, true);
+        TreeBuffer tb = createSyntaxTree(exp, true);
 
         if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
             printError();
@@ -433,7 +433,7 @@ void terminal(void) {
         {
             TreeBufferIndex exprtree = treelistGet(&tb, treeSntxTree(&tb, tb.entry_point)->treelist)[0];
 
-            res = eval(&tb, exprtree);
+            NeObj res = eval_aux(&tb, exprtree);
 
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
@@ -453,7 +453,7 @@ void terminal(void) {
         }
         else if (treelistLength(&tb, treeSntxTree(&tb, tb.entry_point)->treelist) > 0)
         {
-            exec(&tb, tb.entry_point);
+            exec_aux(&tb, tb.entry_point);
             if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0)
             {
                 printError();
@@ -486,6 +486,7 @@ void execFile(char* filename) {
     TreeBuffer tb = createSyntaxTree(program, true);
     
     if_error {
+        neon_free(program);
         goto handle_error;
     }
 

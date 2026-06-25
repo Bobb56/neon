@@ -1,7 +1,7 @@
 i = Cmplx(re: 0, im: 1)
 
 function Cmplx(re, im := 0) do
-    if (type(re) in ['Real', 'Integer'] and type(im) in ['Real', 'Integer']) then
+    if (type(re) in [Real, Integer] and type(im) in [Real, Integer]) then
         return (Cmplx(re:re, im:im))
     else
         return (re)
@@ -86,7 +86,7 @@ end
 
 function Cmplx~equal(z1, z2) do
     z1 = Cmplx(z1) ; z2 = Cmplx(z2)
-    return (type(z1) == 'Cmplx' and type(z2) == 'Cmplx' and z1>>re == z2>>re and z1>>im == z2>>im)
+    return (z1 is Cmplx and z2 is Cmplx and z1>>re == z2>>re and z1>>im == z2>>im)
 end
 
 

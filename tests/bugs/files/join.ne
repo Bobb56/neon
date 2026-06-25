@@ -1,7 +1,7 @@
 setAtomicTime(1)
 
 function join(process) do
-    while (type(process) == "Promise") do pass end
+    while (process is Promise) do pass end
 end
 
 function processus() do

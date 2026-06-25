@@ -5,6 +5,7 @@
 #include "headers/errors.h"
 #include "headers/constants.h"
 #include "headers/objects.h"
+#include <string.h>
 
 #ifdef HAS_GRAPHIC_MODULE
 #include "headers/graphicmodule.h"
@@ -15,11 +16,22 @@
 char* get_module_name(Module module) {
     switch (module) {
         case StandardModule:
-            return "standard";
+            return "Standard";
         case GraphicModule:
-            return "graphics";
+            return "Graphics";
         default:
             return "unknown";
+    }
+}
+
+Module get_module_from_name(char* name) {
+    if (strcmp(name, "Standard") == 0)
+        return StandardModule;
+    else if (strcmp(name, "Graphics") == 0)
+        return GraphicModule;
+    else {
+        neon_fail(31, neo_new_str_create(name));
+        return (Module)-1;
     }
 }
 

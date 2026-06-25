@@ -16,5 +16,6 @@ void init_module(Module module, NeonEnv* env);
 NeObj call_function(int id, Module module, NeList* args);
 const char* get_function_name(int id, Module module);
 NeObj get_function(int id, Module module);
+Module get_module_from_name(char* name);
 
 #endif

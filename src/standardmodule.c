@@ -210,12 +210,11 @@ NeObj _insert_(NeList* args)
 
 
 
-NeObj _type_(NeList* args)
-{
-  char* retour = type(ARG(0));
-  
-  return neo_str_create(strdup(retour));
-  
+NeObj _type_(NeList* args) {
+    if (NEO_TYPE(ARG(0)) == TYPE_NONE)
+        return neo_none_create();
+    else
+        return neo_new_const_create(type(ARG(0)));
 }
 
 
@@ -982,7 +981,7 @@ NeObj _sort_desc_(NeList* args)
 NeObj _sin_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(sin(neo_to_double(ARG(0))));
@@ -992,7 +991,7 @@ NeObj _sin_(NeList* args)
 NeObj _cos_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(cos(neo_to_double(ARG(0))));
@@ -1002,7 +1001,7 @@ NeObj _cos_(NeList* args)
 NeObj _tan_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(tan(neo_to_double(ARG(0))));
@@ -1012,7 +1011,7 @@ NeObj _tan_(NeList* args)
 NeObj _deg_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     double angle = neo_to_double(ARG(0));
@@ -1023,7 +1022,7 @@ NeObj _deg_(NeList* args)
 NeObj _rad_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     double angle = neo_to_double(ARG(0));
@@ -1034,7 +1033,7 @@ NeObj _rad_(NeList* args)
 NeObj _sqrt_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(sqrt(neo_to_double(ARG(0))));
@@ -1044,7 +1043,7 @@ NeObj _sqrt_(NeList* args)
 NeObj _ln_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(log(neo_to_double(ARG(0))));;
@@ -1054,7 +1053,7 @@ NeObj _ln_(NeList* args)
 NeObj _exp_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(exp(neo_to_double(ARG(0))));
@@ -1064,7 +1063,7 @@ NeObj _exp_(NeList* args)
 NeObj _log_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(log10(neo_to_double(ARG(0))));
@@ -1074,7 +1073,7 @@ NeObj _log_(NeList* args)
 NeObj _log2_(NeList* args)
 {
     if (!is_number(ARG(0))) {
-        neon_fail(114, neo_new_str_create(type(ARG(0))));
+        neon_fail(114, neo_new_const_create(type(ARG(0))));
         return NEO_VOID;
     }
     return neo_double_create(log2(neo_to_double(ARG(0))));
@@ -1189,21 +1188,21 @@ NeObj _gc_(NeList* args) {
 
 
 NeObj _setColor_(NeList* args) {
-    char* color = neo_to_string(ARG(0));
+    char* color = neo_to_const(ARG(0));
 
-    if (strcmp(color, "blue") == 0) {
+    if (strcmp(color, "Blue") == 0) {
         setColor(BLUE);
     }
-    else if (strcmp(color, "default") == 0) {
+    else if (strcmp(color, "Default") == 0) {
         setColor(DEFAULT);
     }
-    else if (strcmp(color, "green") == 0) {
+    else if (strcmp(color, "Green") == 0) {
         setColor(GREEN);
     }
-    else if (strcmp(color, "red") == 0) {
+    else if (strcmp(color, "Red") == 0) {
         setColor(RED);
     }
-    else if (strcmp(color, "purple") == 0) {
+    else if (strcmp(color, "Purple") == 0) {
         setColor(PURPLE);
     }
     else {
@@ -1213,20 +1212,6 @@ NeObj _setColor_(NeList* args) {
 }
 
 
-NeObj _init_(NeList* args) {
-    for (size_t i=0 ; i < args->len ; i++) {
-        char* moduleName = neo_to_string(ARG(i));
-
-        if (strcmp(moduleName, "graphics") == 0) {
-            init_module(GraphicModule, global_env);
-        }
-        else {
-            neon_fail(31, neo_new_str_create(moduleName));
-            return NEO_VOID;
-        }
-    }
-    return neo_none_create();
-}
 
 
 
@@ -1389,16 +1374,16 @@ NeObj _saveObj_(NeList* args) {
     }
     #endif
 
-    NeStream stream = NeStream_open(file_name, "w+");
+    ObfNeStream stream = NeStream_obf_create(file_name);
     return_on_error(NEO_VOID);
 
-    neobject_serialize(stream, ARG(1));
+    neobject_serialize(&stream, ARG(1));
 
     #ifndef TI_EZ80
     neon_free(file_name);
     #endif
 
-    NeStream_close(stream);
+    NeStream_obf_close(&stream);
     return neo_none_create();
 }
 
@@ -1414,16 +1399,16 @@ NeObj _loadObj_(NeList* args) {
     }
     #endif
 
-    NeStream stream = NeStream_open(file_name, "r");
+    ObfNeStream stream = NeStream_obf_open(file_name);
     return_on_error(NEO_VOID);
 
-    NeObj neo = neobject_deserialize(stream);
+    NeObj neo = neobject_deserialize(&stream);
 
     #ifndef TI_EZ80
     neon_free(file_name);
     #endif
     
-    NeStream_close(stream);
+    NeStream_obf_close(&stream);
     return_on_error(NEO_VOID);
     return neo;
 }
@@ -1564,7 +1549,6 @@ NeObj (*builtinfunctions_pointers[NBBUILTINFUNC])(NeList*) = {
     _load_namespace_,
     _gc_,
     _setColor_,
-    _init_,
     _detectFiles_,
     _safeExec_,
     _bin_,
@@ -1632,7 +1616,6 @@ const char* const builtinfunctions_names[] = {
     "loadNamespace",
     "gc",
     "setColor",
-    "init",
     "detectFiles",
     "safeExec",
     "bin",
@@ -1965,15 +1948,9 @@ static const Function builtinfunctions[] = {
         .typeRetour = TYPE_NONE
     },
     (Function) {
-        .help = "Changes the writing text color in console if available.\nColors: 'red', 'green', 'blue', 'purple' and 'default'",
+        .help = "Changes the writing text color in console if available.\nColors: Red, Green, Blue, Purple and Default",
         .nbArgs = 1,
-        .typeArgs = (int[]){TYPE_STRING},
-        .typeRetour = TYPE_NONE
-    },
-    (Function) {
-        .help = "Initializes a native module",
-        .nbArgs = -1,
-        .typeArgs = (int[]){TYPE_STRING},
+        .typeArgs = (int[]){TYPE_CONST},
         .typeRetour = TYPE_NONE
     },
     (Function) {

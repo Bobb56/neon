@@ -57,15 +57,19 @@
 #include "../headers/neon.h"
 
 //VT100 escape sequences
-#define BACKSPACE               127
 #define CTRL_D                  4
 #define CTRL_C                  3
+#define CTRL_DEL                8
+#define TAB                     9
 #define END_OF_LINE             13
+#define BACKSPACE               127
 #define LEFT_ARROW              0x445b1b
 #define RIGHT_ARROW             0x435b1b
 #define UP_ARROW                0x415b1b
 #define DOWN_ARROW              0x425b1b
 #define DEL                     0x7e335b1b
+#define CTRL_RIGHT              0x43353b315b1b
+#define CTRL_LEFT               0x44353b315b1b
 
 #define TO_KEY(key)   (*(uintptr_t*)key)
 
@@ -283,8 +287,7 @@ char *readline(const char *prompt)
         uint8_t key[8] = {0};
         read(STDIN_FILENO, key, 6);
         
-        //printf("char: %ld\n\n\n", TO_KEY(key));
-
+        //printf("char: \n\n\n%ld\n\n\n", TO_KEY(key));
 
         // Handle history navigating start and end
         if (TO_KEY(key) == UP_ARROW || TO_KEY(key) == DOWN_ARROW) {
@@ -421,13 +424,49 @@ char *readline(const char *prompt)
                 break;
             }
 
+            case TAB: {
+                const size_t tab_size = 2;
+                
+                // Resize buffer if needed
+                if (pos + tab_size >= size) {
+                    while (pos + tab_size >= size) {
+                        size <<= 1;
+                    }
+                    buffer = realloc(buffer, size);
+                        if (buffer == NULL) goto readline_exit;
+                }
+
+                // Move characters if we insert characters
+                for (size_t i = pos + tab_size - 1 ; i < pos-diff ; i--) {
+                    buffer[i] = buffer[i-4];
+                }
+
+                for (size_t i=0 ; i < tab_size ; i++) {
+                    buffer[pos-diff] = ' ';
+                    pos++;
+                    move_right();
+                }
+
+                write_line(prompt, buffer, pos);
+                break;
+            }
+
+            case CTRL_RIGHT:
+            case CTRL_LEFT:
+            case CTRL_DEL:
+                break;
+
             default: {
+
+                // If unknown escape sequence, quit
+                if ((TO_KEY(key) & 127) == 0x1b)
+                    break;
 
                 for (int i=0 ; key[i] != 0 && i < 6; i++) {
                     int ch = key[i];
 
                     if (!IS_TRAILING_BYTE(ch))
-                        move_right(); //for added characters
+                        move_right(); // for added characters
 
                     if (ch == '\n') break;
 

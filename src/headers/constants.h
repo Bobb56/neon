@@ -5,7 +5,7 @@
 
 /*
 Numérotation de versions :
-Ajout d'opérateur ou de fonction ou modification d'un élément de syntaxe : +0.0.1
+Ajout d'opérateur ou de fonction, modification majeure des fonctionnalités d'une fonction ou modification d'un élément de syntaxe : +0.0.1
 Ajout d'une nouvelle syntaxe ou modification de la structure d'exécution : +0.1
 Modification mineure : +0.0.0.1
 Modification du look de l'interpréteur en mode console : +0.1
@@ -13,7 +13,7 @@ Ajout d'un type de données NeObject : +0.0.1
 */
 
 
-#define VERSION "4.1"
+#define VERSION "4.3.15.2"
 
 // si la version actuelle n'est pas stable mais est en distribution
 // #define EXPERIMENTAL
@@ -71,22 +71,22 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 #ifdef LINUX_AMD64
-    #define PLATFORM "LINUX_AMD64"
+    #define PLATFORM        "LINUX_AMD64"
 #endif
 #ifdef LINUX_RISCV64
-    #define PLATFORM "LINUX_RISCV64"
+    #define PLATFORM        "LINUX_RISCV64"
 #endif
 #ifdef WINDOWS_AMD64
-    #define PLATFORM "WINDOWS_AMD64"
+    #define PLATFORM        "WINDOWS_AMD64"
 #endif
 #ifdef TI_EZ80
-    #define PLATFORM "TI_EZ80"
+    #define PLATFORM        "TI_EZ80"
 #endif
 #ifdef MINIMAL_LIBC_AMD64
-    #define PLATFORM "MINIMAL_LIBC_AMD64"
+    #define PLATFORM        "MINIMAL_LIBC_AMD64"
 #endif
 #ifdef MINIMAL_LIBC_RISCV64
-    #define PLATFORM "MINIMAL_LIBC_RISCV64"
+    #define PLATFORM        "MINIMAL_LIBC_RISCV64"
 #endif
 
 
@@ -188,8 +188,10 @@ Ajout d'un type de données NeObject : +0.0.1
 // valeurs des blockword1line
 #define RETURN 1
 #define IMPORT 2
-#define LOCAL 3
-#define AWAIT 4
+#define LOCAL  3
+#define AWAIT  4
+#define DEFINE 5
+#define INIT   6
 
 // ces types servent à la fois de type d'objet dans l'arbre de syntaxe,
 // de type d'élément de syntaxe utilisé par cut et de type de NeObject

@@ -1,3 +1,4 @@
+#include "headers/runtime.h"
 #define NEON_SOURCE_ID 10
 
 #include <string.h>
@@ -47,7 +48,6 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > ATOMIC_TIME
 
 Liste des choses qui ne marchent pas
---> La ligne de l'erreur avec du code parallèle
 _____________________
 
 Potentielles futures erreurs :
@@ -62,20 +62,16 @@ Si il y a un bug bizarre sur TI_EZ80, penser aux optimisations du compilateurs
 
 
 Avancement et choses à faire :
---> Vérifier que l'on démarque bien les objets quand il y a une erreur dans les fonctions de parcours des objets.
---> Faire une variable numéro de ligne pour chaque processus différent, et lors d'une erreur, afficher les lignes de tous les processus
--------------------------------
-
-PLUS TARD
---> Surcharge de index (fonction Container~index et Container~set_index qui prend en argument l'objet, l'indice et la valeur à droite du egal, faut voir si c'est possible avec le get_address actuel)
---> Prendre en compte les caractères plus larges que la normale dans deadline.c (les tabulations)
---> Faire en sorte que le sérialisation des TreeBuffers soit multiplateforme
---> Comparaison de TreeBuffers (en le parcourant de manière consciente de l'arbre dans lequel on est et en parcourant intelligemment les arbres)
---> Ajouter un type de donnée bitmap à Neon
+------------------------------
+--> Ajouter un type de donnée bitmap/nombres scalaires à Neon
 --> Ajouter un objet graphique Sprite qui est un tableau de nombres à deux dimensions. Chaque nombre n'est pas forcément un pixel mais est un rectangle, et les dimensions de chaque unité sont également précisées dans l'objet
 --> Ajouter des tables de hachage à Neon
+--> Permetter la gestion propre des namespaces (ajouter un mot-clé module), et mieux gérer les modules built-in
+--> Ajouter une page Features history sur le site, ou bien une section News, ou Changelog sur la page de téléchargement, pour présenter les nouveautés apportées par chaque version. Un peu comme une grande page avec plein de cadres et une timeline, sur laquelle on peut faire des liens vers un cadre en particulier
+--> Faire une variable numéro de ligne pour chaque processus différent, et lors d'une erreur, afficher les lignes de tous les processus
 --> Sauvegarder un environnement entier
 --> Implémentation de sauvegarde de pile en retour précipité d'eval et compagnie, et de restauration d'état à partir de la valeur de la pile
+--> Afficher une backtrace en retour d'erreur
 --> Lors de la restauration d'une pile, réexécuter les contextes dont le code a changé
 --> Proposer de sauvegarder l'environnement au moment où il y a une erreur et où Neon s'apprête à quitter
 > Faire des vrais arguments (genre -i, etc)
@@ -83,23 +79,35 @@ PLUS TARD
 
 
 NOUVEAUTéS après la mise à jour 4.1 :
--------------------------------------------
-- Fonction index sur les chaînes de caractères
-- Affichage de la signature de la fonction dans help() d'une fonction built-in
-- Ajout des fonctions bin et hex pour convertir des nombres en décimal et binaire
-- Ajout des fonctions saveObj et loadObj pour sauvegarder n'importe quel objet Neon dans un fichier
-- Suppression de la fonction initGraphics et remplacement par une fonction init qui prend des noms de modules natifs en arguments et les initialise
-- Restriction des règles des arguments optionnels dans les fonctions
-- Ajouter dans la doc: si on a un argument qui s'appelle __local_args__, il overwrite la valeur de la variable __local_args__
-- Ajout de la fonction format
-- Ajout de la fonction hash pour hacher n'importe quel objet
-- Ajout de la possibilité de formater le message dans raise, et de spécifier des arguments supplémentaires
-- Modification des arguments de la fonction raise
-- Ajouter dans la doc les ajouts/modifications d'exceptions
-- Ajout de la surcharge de l'appel de fonctions
+-------------------------------------
++0.0.1      Fonction index sur les chaînes de caractères
++0.0.1      Affichage de la signature de la fonction dans help() d'une fonction built-in
++0.0.2      Ajout des fonctions bin et hex pour convertir des nombres en décimal et binaire
++0.0.2      Ajout des fonctions saveObj et loadObj pour sauvegarder n'importe quel objet Neon dans un fichier
++0.0.0.1    Suppression de la fonction initGraphics et remplacement par une fonction init qui prend des noms de modules natifs en arguments et les initialise
++0.0.0.1    Restriction des règles des arguments optionnels dans les fonctions
++0.0.1      Ajout de la fonction format
++0.0.1      Ajout de la fonction hash pour hacher n'importe quel objet
++0.0.1      Ajout de la possibilité de formater le message dans raise, et de spécifier des arguments supplémentaires
++0.1        Modification de l'affichage des erreurs et amélioration des messages d'erreur avec des informations spécifiques au problème ayant déclenché l'erreur
++0.0.1      Ajout de la surcharge de l'appel de fonctions
++0.0.1      Ajout de l'opérateur is
++0.0.1      Modification du type de retour de la fonction type
++0.1        Ajout de l'instruction define(var1, var2, ...) pour définir des constantes symboliques
++0.0.1      Remplacement de la fonction init par une instruction init, et fonctionnement avec des identifiers plutôt que des chaînes de caractères
++0.0.1      Modification des paramètres de la fonction setColor (constantes au lieu de chaînes de caractères)
++0.0.1      Obfuscation des données écrites par saveObj
+----------- TOTAL
++0.2.15.2
+
+Choses en plus à ajouter dans la doc :
+--------------------------------------
+- Si on a un argument qui s'appelle __local_args__, il overwrite la valeur de la variable __local_args__
+- Ajouts/modifications d'exceptions
+- Ajout de l'opérateur is, fonctionnement un peu bizarre, fonctionne par mot et non par objet, modification de la fonction type qui renvoie une constante, création de Container qui crée une constante si la variable n'est pas déjà définie, le type de None c'est lui-même
+- Les nouveaux mots-clé réservés (couleurs, types)
+- Incompatibilité des fichiers sérialisés
 */
-
-
 
 
 
@@ -127,8 +135,7 @@ int main (int argc, char* argv[]) {
             execFile(LAUNCHER_NAME);
         }
         else {
-            startMessage();
-            terminal();
+            run_interactive();
         }
     #else
         // ajout des arguments dans le tableau contenant les arguments du programme
@@ -144,8 +151,7 @@ int main (int argc, char* argv[]) {
             execFile(LAUNCHER_NAME);
         }
         else {
-            startMessage();
-            terminal();
+            run_interactive();
         }
     #endif
 

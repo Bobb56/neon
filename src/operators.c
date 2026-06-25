@@ -1,4 +1,5 @@
 #include "headers/constants.h"
+#include "headers/trees.h"
 #include <stddef.h>
 #define NEON_SOURCE_ID 14
 
@@ -54,7 +55,8 @@ void* operators_functions[NBOPERATEURS] = {
     (void*)_swap,
     NULL,
     NULL,
-    NULL
+    NULL,
+    (void*)_is
 };
 
 
@@ -164,9 +166,9 @@ NeObj _sub(NeObj _op1, NeObj _op2)
   {
     return neo_double_create((double)neo_to_integer(_op1) - neo_to_double(_op2));
   }
-  else if (NEO_TYPE(_op2)==TYPE_INTEGER && NEO_TYPE(_op1)==TYPE_DOUBLE)
+  else if (NEO_TYPE(_op1)==TYPE_DOUBLE && NEO_TYPE(_op2)==TYPE_INTEGER)
   {
-    return neo_double_create((double)neo_to_integer(_op1) - neo_to_double(_op2));
+    return neo_double_create(neo_to_double(_op1) - (double)neo_to_integer(_op2));
   }
 
 
@@ -1042,4 +1044,24 @@ NeObj _deref(NeObj op1) {
         
     int index = strlist_index(global_env->NOMS,nom);    
     return neo_copy(global_env->ADRESSES->tab[index]);
+}
+
+
+
+NeObj _is(TreeBuffer* tb, TreeBufferIndex tree1, TreeBufferIndex tree2) {
+  
+  // We get the string corresponding to the right operand
+  char* value = get_tree_const(tb, tree2);
+
+  // If value is still NULL, it means that the right argument is not a syntactic `word`
+  if (value == NULL) {
+    neon_fail(54, NO_ARGS);
+    return NEO_VOID;
+  }
+
+  NeObj op1 = eval_aux(tb, tree1);
+  bool result = strcmp(value, type(op1)) == 0;
+  neobject_destroy(op1);
+
+  return neo_bool_create(result);
 }
