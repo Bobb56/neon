@@ -64,6 +64,9 @@ Si il y a un bug bizarre sur TI_EZ80, penser aux optimisations du compilateurs
 
 Avancement et choses à faire :
 ------------------------------
+--> Sérialisation des InterpContext dans struct ParallelCall
+--> Sérialisation des InterpContext et de l'environnement entier.
+----> Un environnement se sérialise en deux phases : Sérialisation de l'environnement global (variables, etc) et sérialisation des objets de runtime : InterpContext, var_loc?, ...
 --> Ajouter un type de donnée bitmap/nombres scalaires à Neon
 --> Ajouter un objet graphique Sprite qui est un tableau de nombres à deux dimensions. Chaque nombre n'est pas forcément un pixel mais est un rectangle, et les dimensions de chaque unité sont également précisées dans l'objet
 --> Ajouter des tables de hachage à Neon
@@ -146,7 +149,7 @@ int main (int argc, char* argv[]) {
         variable_append(global_env, "__args__", l);
 
         if (argc >= 2) {
-            execFile(argv[1]);
+            liveExecFile(argv[1]);
         }
         else if (launcher(LAUNCHER_NAME)) {
             execFile(LAUNCHER_NAME);

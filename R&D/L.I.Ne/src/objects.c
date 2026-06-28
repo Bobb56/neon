@@ -1,0 +1,2343 @@
+#include <stddef.h>
+#define NEON_SOURCE_ID 13
+
+// bibliothèque générale de structures des données Neon
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "headers/constants.h"
+#include "headers/neobj.h"
+#include "headers/neonio.h"
+#include "headers/objects.h"
+#include "headers/dynarrays.h"
+#include "headers/gc.h"
+#include "headers/operators.h"
+#include "headers/runtime.h"
+#include "headers/strings.h"
+#include "headers/neon.h"
+#include "headers/errors.h"
+#include "headers/trees.h"
+#include "headers/nativefunctions.h"
+
+
+
+/////////////// MANIPULATION DES VARIABLES ///////////////////
+
+void variable_append(NeonEnv* env, char* name, NeObj value) {
+    nelist_append(env->ADRESSES, value);
+    strlist_append(env->NOMS, strdup(name));
+}
+
+NeObj* get_absolute_address(Var rel_var_addr) {
+    return nelist_nth_addr(global_env->ADRESSES, (size_t)rel_var_addr);
+}
+
+NeObj get_var_value(Var rel_var_addr) {
+    return nelist_nth(global_env->ADRESSES, (size_t)rel_var_addr);
+}
+
+
+char* var_name(NeObj obj) {
+    if (nelist_inList(global_env->ADRESSES, obj)) {
+        return global_env->NOMS->tab[nelist_index(global_env->ADRESSES, obj)];
+    }
+    else {
+        return "<anonymous object>";
+    }
+}
+
+Var get_var_from_addr(NeObj* obj) {
+    return ((uintptr_t)obj - (uintptr_t)global_env->ADRESSES->tab) / sizeof(NeObj);
+}
+
+
+Var get_local_args(void) {
+    static Var var = -1;
+    if (var == -1) {
+        var = get_var("__local_args__");
+    }
+    return var;
+}
+
+
+// cette fonction récupère la variable nommée name, et la crée si elle n'existe pas
+Var get_var(char* name) {
+    int index = strlist_index(global_env->NOMS,name);
+    if (index < 0) { // on crée la variable
+        neon_reset_error();
+        strlist_append(global_env->NOMS, strdup(name));
+        nelist_append(global_env->ADRESSES, neo_empty_create());
+        return global_env->ADRESSES->len - 1;
+    }
+    return index;
+}
+
+char* get_name(Var var) {
+    return global_env->NOMS->tab[var];
+}
+
+// change le contenu d'une variable sans se soucier de ce qui était dedans avant
+void set_var(Var var, NeObj object) {
+    global_env->ADRESSES->tab[var] = object;
+}
+
+// remplace le contenu d'une variable
+void replace_var(Var var, NeObj object) {
+    neobject_destroy(global_env->ADRESSES->tab[var]);
+    global_env->ADRESSES->tab[var] = object;
+}
+
+void free_var(Var var) {
+    neobject_destroy(global_env->ADRESSES->tab[var]);
+}
+
+
+//////////////////// MANIPULATION D'OBJETS SECONDAIRES ////////////////////
+
+
+NeObj neobject_create(uint8_t type)
+{
+    NeObj neo = (NeObj) {.type = type};
+    return neo;
+}
+
+
+
+void var_reset(NeObj* var) {
+    *var = neo_empty_create();
+    return;
+}
+
+
+
+////////////////////////// TYPE EMPTY /////////////////////////
+
+NeObj neo_empty_create(void) {
+    return neobject_create(TYPE_EMPTY);
+}
+
+bool neo_is_void(NeObj neo) {
+    return neo.type == NEO_VOID.type && neo.integer == NEO_VOID.integer;
+}
+
+bool neo_exact_equal(NeObj a, NeObj b) {
+    return memcmp(&a, &b, sizeof(NeObj)) == 0;
+}
+
+//////////////////////// TYPE_CONTAINER ///////////////////
+
+
+
+Container* container_create(int type, NeList data) {
+    Container* c = neon_malloc(sizeof(Container));
+    c->type = type;
+    c->data = data;
+    c->refc = 1;
+    return c;
+}
+
+
+NeObj gc_extern_neo_container_create(int type, NeList data)
+{
+    NeObj neo = neobject_create(TYPE_CONTAINER);
+    neo.container = container_create(type, data);
+    return neo;
+}
+
+
+
+NeObj neo_container_create(int type, NeList data)
+{
+    return neo_container_convert(container_create(type, data));
+}
+
+
+NeObj gc_extern_neo_container_convert(Container* c) {
+    NeObj neo = neobject_create(TYPE_CONTAINER);
+    neo.container = c;
+    return neo;
+}
+
+NeObj neo_container_convert(Container* c) {
+    NeObj neo = neobject_create(TYPE_CONTAINER);
+    neo.container = c;
+
+    gc_add_deep_object(neo);
+    return neo;
+}
+
+Container* neo_to_container(NeObj neo) {
+    return neo.container;
+}
+
+
+// renvoie l'indice dans le container du champ du nom name
+int get_field_index(Container* c, char* name) {
+    NeList* list = neo_to_list(global_env->ATTRIBUTES->tab[c->type]);
+            
+    size_t index = 0;
+    for (; index < list->len && strcmp(neo_to_string(list->tab[index]), name) != 0 ; index++);
+
+    if (index == list->len - 1 && strcmp(neo_to_string(list->tab[index]), name) != 0)
+    {
+        neon_fail(82, neo_new_str_create(global_env->CONTAINERS->tab[c->type]), neo_new_str_create(name));
+        return -1;
+    }
+    return index;
+}
+
+
+NeObj* get_container_field_addr(Container* c, size_t index) {
+    return nelist_nth_addr(&c->data, index);
+}
+
+NeObj get_container_field(Container* c, size_t index) {
+    return nelist_nth(&c->data, index);
+}
+
+void container_destroy(Container* c) {
+    nelist_deinit(&c->data);
+    neon_free(c);
+}
+
+
+
+
+NeObj callNoArgsUserFunc(UserFunc* fun) {
+    NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+    NeObj ret_value = callUserFunc(fun, fun->args, values, 1, NEO_VOID, NULL);
+    neon_free(values);
+    return ret_value;
+}
+
+
+
+NeObj callUnaryUserFunc(UserFunc* fun, NeObj arg) {
+    NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+    values[0] = neo_copy(arg);
+    NeObj ret_value = callUserFunc(fun, fun->args, values, 1, NEO_VOID, NULL);
+    neon_free(values);
+    return ret_value;
+}
+
+
+
+NeObj callBinaryUserFunc(UserFunc* fun, NeObj arg1, NeObj arg2) {
+    NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+    values[0] = neo_copy(arg1);
+    values[1] = neo_copy(arg2);
+    NeObj ret_value = callUserFunc(fun, fun->args, values, 2, NEO_VOID, NULL);
+    neon_free(values);
+    return ret_value;
+}
+
+
+
+
+void neo_container_aff(NeObj neo) {
+    Container* c = neo_to_container(neo);
+    // on regarde si l'affichage est surchargé
+    char* container_name = global_env->CONTAINERS->tab[c->type];
+    int index = function_module(container_name, "repr");
+    
+    if (index >= 0) { // on exécute la fonction surchargée
+        unmark(neo); // on va passer l'objet en argument à une fonction utilisateur, donc :
+        // 1- C'est l'utilisateur qui gère les boucles infinies dans son objet
+        // 2- Sinon ça va faire n'importe quoi dans les copies. Les marquages doivent rester invisibles à l'exécution
+        
+        NeObj neo_fun = global_env->ADRESSES->tab[index];
+
+        // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+        /*if (NEO_TYPE(neo_fun) != TYPE_USERFUNC) {
+            neon_fail(52,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_new_str_create("repr"),
+                neo_new_str_create(container_name),
+                neo_new_str_create(global_env->NOMS->tab[index])
+            );
+            return;
+        }*/
+
+        UserFunc* fun = neo_to_userfunc(neo_fun);
+
+        if (fun->nbArgs < 1) {
+            neon_fail(53,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_integer_create(1)
+            );
+            return;
+        }
+        
+        NeObj ret = callUnaryUserFunc(fun, neo);
+        neobject_destroy(ret);
+    }
+    else {
+        // on n'a pas trouvé de surcharge sur l'affichage
+
+        NeList* list = global_env->ATTRIBUTES->tab[c->type].nelist;
+
+        printString(global_env->CONTAINERS->tab[c->type]);
+        printString("(");
+        for (size_t i=0 ; i < c->data.len ; i++)
+        {
+            printString(neo_to_string(list->tab[i]));
+            printString(": ");
+            neobject_aff(get_container_field(c, i));
+            if (i < c->data.len - 1)
+                printString(", ");
+        }
+        printString(")");
+    }
+}
+
+
+char* neo_container_str(NeObj neo, bool overloaded) {
+    Container* c = neo_to_container(neo);
+
+    // on regarde si str est surchargé
+    char* container_name = global_env->CONTAINERS->tab[c->type];
+    int index = function_module(container_name, "str");
+    
+    if (overloaded && index >= 0) { // on exécute la fonction surchargée
+        unmark(neo); // sinon ça va faire caca, et de toute façon c'est l'utilisateur qui gère les boucles
+
+        NeObj neo_fun = global_env->ADRESSES->tab[index];
+
+        // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+        /*if (NEO_TYPE(neo_fun) != TYPE_USERFUNC) {
+            neon_fail(52,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_new_str_create("str"),
+                neo_new_str_create(container_name),
+                neo_new_str_create(global_env->NOMS->tab[index])
+            );
+            return NULL;
+        }*/
+
+
+        UserFunc* fun = neo_to_userfunc(neo_fun);
+
+        if (fun->nbArgs < 1) {
+            neon_fail(53,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_integer_create(1)
+            );
+            return NULL;
+        }
+
+        NeObj obj = callUnaryUserFunc(fun, neo);
+        
+        if_error {
+            neobject_destroy(obj);
+            return NULL;
+        }
+        
+        if (NEO_TYPE(obj) != TYPE_STRING) {
+            neon_fail(118, neo_copy(obj));
+            neobject_destroy(obj);
+            return NULL;
+        }
+
+        char* ret = strdup(neo_to_string(obj));
+        neobject_destroy(obj);
+        return ret;
+    }
+    else {
+        // on n'a pas trouvé de surcharge sur str
+
+        NeList* list = global_env->ATTRIBUTES->tab[c->type].nelist;
+
+        char* str1 = strdup(global_env->CONTAINERS->tab[c->type]);
+        str1 = addStr2(str1, "(");
+        for (size_t i=0 ; i < c->data.len ; i++)
+        {
+            str1 = addStr2(str1, neo_to_string(list->tab[i]));
+            str1 = addStr2(str1, ": ");
+
+            char* s = neobject_str(get_container_field(c, i), overloaded);
+
+            if_error {
+                neon_free(str1);
+                return NULL;
+            }
+
+            str1 = addStr2(str1, s);
+            neon_free(s);
+
+            if (i < c->data.len - 1)
+                str1 = addStr2(str1, ", ");
+        }
+
+        return addStr2(str1, ")");
+    }
+}
+
+
+/////////////////// TYPE_BOOL /////////////////////
+
+NeObj neo_bool_create(bool neon_boolean)
+{
+    NeObj neo = neobject_create(TYPE_BOOL);
+    neo.integer = neon_boolean;
+
+    return neo;
+}
+
+
+bool neo_is_true(NeObj neo)
+{
+    return neo.integer;
+}
+
+
+bool neo_to_bool(NeObj neo)
+{
+  return neo.integer;
+}
+
+void neo_bool_aff(NeObj neo) {
+    if (neo_is_true(neo))
+        printString("True");
+    else
+        printString("False");
+}
+
+char* neo_bool_str(NeObj neo) {
+    if (neo_is_true(neo))
+        return strdup("True");
+    else
+        return strdup("False");
+}
+
+
+///////////////// TYPE_NUMBER ////////////////////
+
+NeObj neo_double_create(double number) {
+    NeObj neo = neobject_create(TYPE_DOUBLE);
+    neo.floating = number;
+
+    return neo;
+}
+
+
+NeObj neo_integer_create(intptr_t number) {
+    NeObj neo = neobject_create(TYPE_INTEGER);
+    neo.integer = number;
+
+    return neo;
+}
+
+intptr_t randint(intptr_t min, intptr_t max) {
+
+    if (min >= max)
+    {
+        neon_fail(64, neo_integer_create(min), neo_integer_create(max));// la fonction randint prend en argument un entier positif
+        return 0;
+    }
+
+    intptr_t range = max - min;
+
+    int result = rand()%range + min;
+
+    return result;
+}
+
+
+intptr_t neo_to_integer(NeObj neo)
+{
+    if (NEO_TYPE(neo) == TYPE_DOUBLE)
+        return (int)neo.floating;
+
+    return neo.integer;
+}
+
+double neo_to_double(NeObj neo)
+{
+    if (NEO_TYPE(neo) == TYPE_INTEGER)
+        return (double)neo.integer;
+    
+    return neo.floating;
+}
+
+bool is_number(NeObj obj) {
+    return NEO_TYPE(obj) == TYPE_INTEGER || NEO_TYPE(obj) == TYPE_DOUBLE;
+}
+
+
+////////////////// TYPE_FUNCTION //////////////////
+
+NeObj neo_fun_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour)
+{
+    NeObj neo = neobject_create(TYPE_BUILTINFUNC);
+    neo.function = function_create(id, module, help, nbArgs, typeArgs, typeRetour);
+
+    return neo;
+}
+
+void function_destroy(Function* fun) {
+    neon_free(fun);
+}
+
+
+Function* function_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour)
+{
+    Function* fun = neon_malloc(sizeof(Function));
+    fun->id = id;
+    fun->module = module;
+    fun->nbArgs = nbArgs;
+    fun->help = help;
+    fun->typeRetour = typeRetour;
+    fun->refc = 1;
+    fun->typeArgs = typeArgs;
+    return fun;
+}
+
+
+NeObj functionCall(NeObj fun, NeList* args)
+{
+    Function* f = fun.function;
+    if (f->nbArgs != -1 && (size_t)f->nbArgs != args->len)
+    {
+        neon_fail(36, neo_new_str_create(get_function_name(f->id, f->module)), neo_integer_create(f->nbArgs), neo_integer_create((intptr_t)args->len)); // nombre d'arguments invalide pour appeler cette fonction
+        return NEO_VOID;
+    }
+    return call_function(f->id, f->module, args);
+}
+
+
+
+
+
+bool funcArgsCheck(Function* fun, NeList* args)
+{
+
+    if (fun->nbArgs == -1)
+    {
+        for (size_t i=0 ; i < args->len ; i++)
+        {
+            if (fun->typeArgs[0] != TYPE_UNSPECIFIED && NEO_TYPE(args->tab[i]) != fun->typeArgs[i])
+            {
+                return false;
+            }
+        }
+    }
+    else
+    {
+        if ((size_t)fun->nbArgs != args->len)
+            return false;
+        
+        for (size_t i=0 ; i < args->len ; i++)
+        {
+            if (fun->typeArgs[i] != TYPE_UNSPECIFIED && NEO_TYPE(args->tab[i]) != fun->typeArgs[i])
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+
+
+Function* neo_to_function(NeObj neo) {
+    return neo.function;
+}
+
+
+////////////////////// TYPE_USERFUNC ///////////////////////
+
+bool neo_isMethod(NeObj obj) {
+    if (NEO_TYPE(obj) != TYPE_USERFUNC)
+        return false;
+
+    return obj.userfunc->isMethod;
+}
+
+UserFunc* neo_to_userfunc(NeObj neo) {
+    return neo.userfunc;
+}
+
+
+UserFunc* userfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList opt_args, bool isMethod) {
+    UserFunc* fun = neon_malloc(sizeof(UserFunc));
+    fun->isMethod = isMethod;
+    fun->runningInstances = 0;
+    fun->args = args;
+    fun->code = code;
+    fun->tree_buffer = tree_buffer;
+    fun->nbArgs = nbArgs;
+    fun->opt_args = opt_args;
+    fun->nbOptArgs = nbOptArgs;
+    fun -> unlimited_arguments = unlimited_arguments;
+    fun->doc = NULL;
+    fun->refc = 1;
+    return fun;
+}
+
+
+NeObj neo_userfunc_convert(UserFunc* fun) {
+    NeObj obj = neobject_create(TYPE_USERFUNC);
+    obj.userfunc = fun;
+    gc_add_deep_object(obj);
+    return obj;
+}
+
+
+NeObj gc_extern_neo_userfunc_convert(UserFunc* fun) {
+    NeObj obj = neobject_create(TYPE_USERFUNC);
+    obj.userfunc = fun;
+    return obj;
+}
+
+
+NeObj neo_partialfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, bool isMethod) {
+    UserFunc* fun = userfunc_create(args, tree_buffer, code, nbArgs, unlimited_arguments, nbOptArgs, NELIST_VOID, isMethod);
+    NeObj neo = neobject_create(TYPE_PARTIALFUNC);
+    neo.userfunc = fun;
+    return neo;
+}
+
+
+
+// cette fonction prend en entrée une userFunc pas encore définie (donc opt_args = NULL), et renvoie une nouvelle fonction
+// qui correspond à la userfunc définie
+NeObj neo_userfunc_define(NeObj obj, NeList opt_args) {
+    UserFunc* fun = neo_to_userfunc(obj);
+
+    Var* args = neon_malloc(sizeof(Var) * fun->nbArgs);
+    for (int i=0 ; i < fun->nbArgs ; i++)
+        args[i] = fun->args[i];
+
+    UserFunc* new_fun = userfunc_create(args, fun->tree_buffer, fun->code, fun->nbArgs, fun->unlimited_arguments, fun->nbOptArgs, opt_args, fun->isMethod);
+
+    return neo_userfunc_convert(new_fun);
+}
+
+void partialfunc_destroy(UserFunc* fun) {
+    neon_free(fun->args);
+    neon_free(fun);
+}
+
+void userfunc_destroy(UserFunc* fun) {
+    if (fun->doc != NULL)
+        neon_free(fun->doc);
+    neon_free(fun->args);
+    nelist_deinit(&fun->opt_args);
+    neon_free(fun);
+}
+
+
+//////////////////// TYPE_PROMISE /////////////////
+
+
+
+
+NeObj neo_promise_create(int id) {
+    // une promesse contient un identifiant correspondant au processus dont elle dépend
+    NeObj neo = neobject_create(TYPE_PROMISE);
+    neo.refc_ptr = global_env->PROMISES_CNT.tab[id];
+
+    return neo;
+}
+
+int get_promise_id(NeObj promise) {
+    int id = 0;
+    while (global_env->PROMISES_CNT.tab[id] != promise.refc_ptr) id++;
+    return id;
+}
+
+
+void neo_promise_aff(NeObj promise) {
+    printString("<promise from process ");
+    printInt(get_promise_id(promise));
+    printString(">");
+}
+
+char* neo_promise_str(NeObj neo) {
+    char* s1 = strdup("<promise from process ");
+    char* s2 = int_to_str(neo_to_integer(neo));
+    s1 = addStr2(s1, s2);
+    neon_free(s2);
+    s2 = strdup(">");
+    char* ret = addStr2(s1, s2);
+    neon_free(s2);
+    return ret;
+}
+
+
+///////////////////// TYPE_STRING /////////////////////
+
+
+
+
+NeObj neo_str_create(char* string) // attention, la chaine de caractères passée en argument va être mise dans le NeObject directement sans être copiée. Donc elle doit être dans le tas, et ne pas être libérée par l'extérieur
+{
+    NeObj neo = neobject_create(TYPE_STRING);
+    neo.string = neon_malloc(sizeof(String));
+    neo.string->refc = 1;
+    neo.string->string = string;
+    return neo;
+}
+
+NeObj neo_new_str_create(const char* string) {
+    return neo_str_create(strdup(string));
+}
+
+char* neo_to_string(NeObj neo)
+{
+    return neo.string->string;
+}
+
+
+void neo_string_aff(NeObj neo) {
+    printString("'");
+    char* traite = traitementStringInverse(neo.string->string);
+    printString(traite);
+    printString("'");
+    neon_free(traite);
+}
+
+char* neo_string_str(NeObj neo) {
+    char* traite = traitementStringInverse(neo.string->string);
+    char* str1 = addStr("'",traite);
+    char* ret = addStr(str1,"'");
+    neon_free(str1);neon_free(traite);
+    return ret;
+}
+
+void string_destroy(String* string) {
+    neon_free(string->string);
+    neon_free(string);
+}
+
+///////////////////// TYPE_EXCEPTION ////////////////
+
+
+NeObj neo_exception_create(int index)
+{
+    NeObj neo = neobject_create(TYPE_EXCEPTION);
+    // détermine la place de la chaine dans le tableau exception
+    neo.integer = index;
+
+    return neo;
+}
+
+int get_exception_code(NeObj exception) {
+    return exception.integer;
+}
+
+void neo_exception_aff(NeObj neo) {
+    printString(global_env->EXCEPTIONS->tab[get_exception_code(neo)]);
+}
+
+///////////////////// TYPE_CONST //////////////////
+// je crois que ce type sert à rien, mais il est là quand même au cas où
+
+
+NeObj neo_const_create(char* string) // attention, la chaine de caractères passée en argument va être mise dans le NeObject directement sans être copiée. Donc elle doit être dans le tas, et ne pas être libérée par l'extérieur
+{
+    NeObj neo = neo_str_create(string);
+    neo.type = TYPE_CONST;
+    return neo;
+}
+
+NeObj neo_new_const_create(const char* string) {
+    return neo_const_create(strdup(string));
+}
+
+
+
+char* neo_to_const(NeObj neo)
+{
+    return neo.string->string;
+}
+
+
+
+//////////////////// TYPE_NONE /////////////////
+
+
+NeObj neo_none_create(void) // attention, la chaine de caractères passée en argument va être mise dans le NeObject directement sans être copiée. Donc elle doit être dans le tas, et ne pas être libérée par l'extérieur
+{
+    NeObj neo = neobject_create(TYPE_NONE);
+    return neo;
+}
+
+
+
+///////////////////// TYPE_LIST /////////////////
+
+bool nelist_is_void(NeList* list) {
+    return list->tab == NELIST_VOID.tab && list->len == NELIST_VOID.len;
+}
+
+bool nelist_equal(NeList* l1, NeList* l2)
+{
+    bool bo = l1->len == l2->len;
+    for (size_t i=0 ; bo && i < l1->len ; i++)
+        bo = bo && neo_equal(nelist_nth(l1, i), nelist_nth(l2, i));
+    
+    return bo;
+}
+
+
+void nelist_aff(NeList* liste)
+{
+    if (liste->len == 0)
+    {
+        printString("[]");
+    }
+    else
+    {
+        printString("[");
+        for (size_t i=0 ; i < liste->len-1 ; i++)
+        {
+            neobject_aff(nelist_nth(liste, i));
+            printString(", ");
+        }
+        neobject_aff(nelist_nth(liste, liste->len-1));
+        printString("]");
+    }
+}
+
+
+
+char* nelist_str(NeList* list, bool overloaded)
+{
+    if (list->len == 0)
+    {
+        return strdup("[]");
+    }
+    else
+    {
+        char* str1 = strdup("["), *temp;
+        for (size_t i=0 ; i < list->len - 1 ; i++)
+        {
+            temp = neobject_str(nelist_nth(list, i), overloaded);
+            if_error {
+                neon_free(str1);
+                return NULL;
+            }
+            
+            str1 = addStr2(str1,temp);
+            neon_free(temp);
+            str1 = addStr2(str1,", ");
+        }
+        temp = neobject_str(nelist_nth(list, list->len-1), overloaded);
+
+        if_error {
+            neon_free(str1);
+            return NULL;
+        }
+        
+        str1 = addStr2(str1,temp);
+        neon_free(temp);
+
+        return addStr2(str1, "]");
+    }
+}
+
+
+size_t nelist_getsize(NeList* list) {
+    size_t size = sizeof(NeList);
+    for (size_t i=0 ; i < list->len ; i++)
+        size += neobject_getsize(list->tab[i]);
+
+    // Ajout de la taille supplémentaire à cause de capacity
+    size += sizeof(NeObj) * ((1 << list->capacity) - list->len);
+    return size;
+}
+
+
+
+
+void general_nelist_deinit(NeList* list, bool gc_extern) {
+    for (size_t i=0 ; i<list->len ; i++)
+    {
+        //if (list == global_env->ADRESSES)
+        //    printf("Suppression de %s\n", global_env->NOMS->tab[i]);
+        general_neobject_destroy(list->tab[i], gc_extern);
+    }
+    neon_free(list->tab);
+}
+
+void general_nelist_destroy(NeList* list, bool gc_extern)
+{
+    general_nelist_deinit(list, gc_extern);
+    neon_free(list);
+}
+
+
+void nelist_deinit_until(NeList *list, int index_max) {
+    for (int i=0 ; i <= index_max ; i++) {
+        neobject_destroy(list->tab[i]);
+    }
+    neon_free(list->tab);
+}
+
+
+void nelist_destroy_until(NeList *list, int index_max) {
+    nelist_deinit_until(list, index_max);
+    neon_free(list);
+}
+
+
+NeList* nelist_reverse(NeList* list) {
+    NeList* reversed = nelist_create(list->len);
+    for (size_t i = 0 ; i < list->len ; i++) {
+        reversed->tab[i] = neo_copy(list->tab[list->len - i - 1]);
+    }
+    return reversed;
+}
+
+
+
+
+
+bool nelist_inList2(NeList* list, NeObj neo)
+{
+    bool bo = false;
+    
+    for (size_t i = 0 ; i < list->len ; i++)
+    {
+        if (neo_equal(list->tab[i], neo))
+        {
+            bo = true;
+            break;
+        }
+    }
+
+    return bo;
+}
+
+
+
+bool nelist_inList(NeList* list, NeObj neo)
+{
+    bool bo = false;
+    
+    for (size_t i = 0 ; i < list->len ; i++)
+    {
+        if (neo_exact_equal(list->tab[i], neo))
+        {
+            bo = true;
+            break;
+        }
+    }
+
+    return bo;
+}
+
+
+NeList* neo_to_list(NeObj neo) {
+    return neo.nelist;
+}
+
+
+NeList* nelist_dup(NeList* l)
+{
+    //copie de deux listes, partie récursive de la fonction
+    
+    NeList* liste = nelist_create(l->len); //nouvelle liste
+    for (size_t i=0 ; i < l->len ; i++)
+    {
+        liste->tab[i] = neo_dup(l->tab[i]); // on ajoute à la liste liste une copie de l'élément i de la liste neo
+
+        if_error {
+            nelist_deinit_until(liste, i-1);
+            return NULL;
+        }
+    }
+    return liste;
+}
+
+
+
+void nelist_init(NeList* list, size_t len) {
+    list->myCopy = NULL;
+    list->refc = 1;
+    list->len = len; // initialise la bonne longueur
+    list->capacity = 0;
+    list->next = NEO_VOID;
+    list->prev = NEO_VOID;
+    
+    while (((size_t)1 << list->capacity) < list->len)
+        list->capacity++;
+
+    list->tab = neon_malloc((1 << list->capacity) * sizeof(NeObj));//initialise le tableau de longueur len avec de zéros
+}
+
+
+NeList* nelist_create(size_t len)
+{
+    NeList* list = neon_malloc(sizeof(NeList));//crée la structure
+    nelist_init(list, len);
+    return list;//retourne la structure
+}
+
+
+NeList* nelist_literal_create(NeObj* elements) {
+    // First we compute the size of the literal list
+    size_t size = 0;
+    while (!neo_is_void(elements[size])) size++;
+
+    NeList* list = nelist_create(size);
+    for (size_t i=0 ; i < size ; i++) {
+        list->tab[i] = elements[i];
+    }
+    return list;
+}
+
+
+
+void nelist_append(NeList* list, NeObj ptr)//ajoute un élément à la fin de la liste
+{
+    NeObj* tmp;
+
+    if ((size_t)1 << list->capacity == list->len)
+    {
+        list->capacity++;
+        tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj));//réallocation de list.tab
+        list->tab = tmp;//affectation du pointeur de tmp vers list.tab
+    }
+
+    list->tab[list->len]=ptr;//affecte ptr au dernier élément
+    list->len++;//incrémente la longueur
+}
+
+
+NeObj* nelist_nth_addr(NeList* list, size_t index) {
+    update_if_promise(&list->tab[index]);
+    return &list->tab[index];
+}
+
+NeObj nelist_nth(NeList* list, size_t index) {
+    update_if_promise(&list->tab[index]);
+    return list->tab[index];
+}
+
+
+void nelist_insert(NeList* list, NeObj neo, size_t index)//ajoute un élément à la place indiquée
+{
+    if (index > list->len) {
+        neon_fail(37, neo_integer_create((intptr_t)list->len), neo_integer_create((intptr_t)index)); // out of range
+        return ;
+    }
+  
+    NeObj* tmp;
+  
+    if ((size_t)1 << list->capacity == list->len) {
+        list->capacity++;
+        tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj)); // réallocation de list.tab
+        list->tab = tmp; // affectation du pointeur de tmp vers list.tab
+    }
+  
+    for (size_t i = list->len ; i > index; i--)//décale tous les éléments à partir de celui à supprimer
+        list->tab[i]=list->tab[i-1];
+    
+    
+    list->tab[index]=neo;
+    list->len++;//incrémente la longueur
+}
+
+
+
+
+
+
+void nelist_remove(NeList* list, size_t index)
+{
+    if (index >= list->len)
+    {
+        neon_fail(39, neo_integer_create((intptr_t)index), neo_integer_create((intptr_t)list->len));//out of range
+        return ;
+    }
+  
+    neobject_destroy(list->tab[index]);
+  
+    for (size_t i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
+        list->tab[i]=list->tab[i+1];
+    
+    NeObj* tmp;
+  
+    if ((size_t)1 << (list->capacity - 1) == list->len-1)
+    {
+        list->capacity--;
+        tmp = neon_realloc(list->tab, (1 << list->capacity) * sizeof(NeObj));//réalloue un nouveau pointeur de la bonne taille
+        list->tab = tmp;
+    }
+  
+  
+    list->len--;
+}
+
+
+
+
+int nelist_index(NeList* liste, NeObj neo)
+{
+    
+    for (size_t i=0 ; i < liste->len ; i++)
+    {
+        if (neo_exact_equal(liste->tab[i], neo))
+        {
+            return i;
+        }
+    }
+    neon_fail(88, neo_copy(neo), neo_str_create(neobject_short_repr(gc_extern_neo_list_convert(liste), SHORT_REPR_ERR_SIZE, false))); // cet objet n'existe pas
+    
+    return -1;
+}
+
+
+
+
+int nelist_index2(NeList* l, NeObj neo)
+{
+    for (size_t i = 0; i < l->len ; i++)
+    {
+        if (neo_equal(neo, l->tab[i]))
+            return i;
+    }
+    neon_fail(88, neo_copy(neo), neo_str_create(neobject_short_repr(gc_extern_neo_list_convert(l), SHORT_REPR_ERR_SIZE, false))); // cet objet n'existe pas
+    return -1;
+}
+
+
+
+// listes dans les neobjects
+
+/*
+Cette fonction doit absolument recevoir une liste valide, car on va directement copier l'objet pour l'ajouter
+au garbage collector
+*/
+NeObj neo_list_convert(NeList* list) {
+    NeObj neo = neobject_create(TYPE_LIST);
+    neo.nelist = list;
+
+    // pour le garbage collector
+    gc_add_deep_object(neo);
+
+    return neo;
+}
+
+// cette fonction fabrique un NeObj à partir d'une NeList*, mais ne l'inclus pas dans la système de Garbage Collection
+// ca permet de fabriquer des objets qui ne sont pas accessibles depuis global_env->ADRESSES et qui ne disparaissent pas lorsque l'on
+// appelle le garbage collector
+NeObj gc_extern_neo_list_convert(NeList* list) {
+    NeObj neo = neobject_create(TYPE_LIST);
+    neo.nelist = list;
+
+    return neo;
+}
+
+
+
+NeObj neo_list_create(size_t len)
+{
+    return neo_list_convert(nelist_create(len));
+}
+
+
+
+// supprime totalement une liste sans libérer ses éléments, de manière respectueuse du compteur de références
+void neo_list_neon_free(NeObj list) {
+    if (*list.refc_ptr == 1) { // il ne restait plus qu'un seul pointeur sur cette NeList, donc on peut bel et bien la supprimer
+        NeList* nelist = neo_to_list(list);
+        neon_free(nelist->tab);
+        neon_free(nelist);
+    }
+    // si des gens pointent encore vers la liste, il restera encore le refc et la NeList, donc c'est ok
+}
+
+
+
+void neo_list_append(NeObj neo, NeObj ptr)
+{
+    nelist_append(neo.nelist, ptr);
+    return;
+}
+
+
+
+
+void neo_list_remove(NeObj neo, size_t index)
+{
+    nelist_remove(neo.nelist, index);
+    return;
+}
+
+
+
+void neo_list_insert(NeObj neo, NeObj ptr, size_t index)
+{
+    nelist_insert(neo.nelist, ptr, index);
+    return;
+}
+
+
+
+NeObj neo_list_nth(NeObj neo, size_t index)
+{
+    return nelist_nth(neo.nelist, index);
+}
+
+
+size_t neo_list_len(NeObj neo)
+{
+    return neo.nelist->len;
+}
+
+
+
+
+
+
+
+NeObj neo_copy(NeObj neo) {
+    // il y a le cas des TYPE_EMPTY et des TYPE_NONE que l'on peut copier mais on a aucun refc à incrémenter
+    // en fin de compte, un refc ça sert à compter les références du ptr au dessus donc s'il n'y en a pas il sert à rien
+    
+    if (neo.type & HEAP_ALLOCATED)
+        *neo.refc_ptr += 1; // pour les promesses, cette opération va incrémenter le bon indice de global_env->PROMISES_CNT
+
+    return neo;
+}
+
+
+/*
+Toutes ces fonctions de manipulation de NeObjects entiers doivent faire attention à ne pas boucler infiniment
+et de manière générale à gérer correctement les objets qui pointent sur eux-même
+Pour un titre purement informatif, on a mis en place un système de marquage consistant à changer la valeur de refc en la
+mettant en négatif. Ca permet de la conserver tout en ajoutant une information binaire.
+Pour neo_dup, il faut ajouter plus qu'une information binaire puisqu'au cas où l'objet a déjà été
+copié il faut être capable de retrouver le pointeur de la copie de l'objet pour le renvoyer.
+
+
+*/
+
+// ces deux fonctions sont utiles pour l'algorithme de deepcopy. Quand il commence la copie d'un NeObject qui est une liste
+// ou un container, il stocke dans l'objet deux informations : le fait qu'il a déjà été copié, et le pointeur vers sa copie.
+// comme ça dans les appels récursifs de la deepcopy, quand on rencontre un objet qui a déjà été copié, on peut directement
+// mettre le pointeur de sa version copiée
+
+void mark_as_already_copied(NeObj neo, void* copy) {
+    if (NEO_TYPE(neo) == TYPE_LIST) {
+        NeList* original = neo_to_list(neo);
+        original->myCopy = copy;
+    }
+    else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+        Container* original = neo_to_container(neo);
+        original->data.container_myCopy = copy;
+    }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* original = neo_to_userfunc(neo);
+        original->opt_args.userfunc_myCopy = copy;
+    }
+    // les autres types d'objets ne sont pas sensibles aux dépendances de pointeurs
+}
+
+NeObj get_previous_copy(NeObj neo) {
+    if (NEO_TYPE(neo) == TYPE_LIST) {
+        NeList* list = neo_to_list(neo);
+        if (list->myCopy != UNIT && list->myCopy != NULL)
+            return gc_extern_neo_list_convert(list->myCopy); // la liste list->myCopy est déjà dans le GC depuis la première fois qu'elle a été copiée, la seule chose qu'on a à faire c'est l'envelopper dans un NeObject
+        else
+            return NEO_VOID;
+    }
+    else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+        Container* container = neo_to_container(neo);
+        if (container->data.container_myCopy != UNIT && container->data.container_myCopy != NULL)
+            return gc_extern_neo_container_convert(container->data.container_myCopy);
+        else
+            return NEO_VOID;
+    }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* function = neo_to_userfunc(neo);
+        if (function->opt_args.userfunc_myCopy != UNIT && function->opt_args.userfunc_myCopy != NULL)
+            return gc_extern_neo_userfunc_convert(function->opt_args.userfunc_myCopy);
+        else
+            return NEO_VOID;
+    }
+    return NEO_VOID;
+    // les autres types d'objets ne sont pas sensibles aux dépendances de pointeurs
+}
+
+
+NeObj neo_deepcopy(NeObj neo) {
+    NeObj copy = neo_dup(neo);
+    // tous les global_env->CONTAINERS et toutes les listes ont été marqué.es, il faut donc les démarquer
+    recursive_unmark(neo);
+    return copy;
+}
+
+
+
+
+/*
+Cette fonction prend en argument un pointeur sur une promesse, et la remplace par la valeur de renvoi du processus correspondant
+si celui-ci a terminé
+Cette fonction peut être appelées sur n'importe quel objet, mais n'aura d'effet que sur une promesse
+Cette fonction ne doit pas être utilisée directement en dehors de varlib. Elle est interne à varlib
+*/
+void update_if_promise(NeObj* promise) {
+    if (NEO_TYPE((*promise)) == TYPE_PROMISE)
+    {
+        int id = get_promise_id(*promise);
+
+        if (!neo_is_void(global_env->PROMISES->tab[id])) // la promesse a été résolue
+        {
+            // il n'y a pas besoin de spécialement soustraire un au compteur car comme on détruit neo, neobject_destroy le fait tout seul
+
+            if (*global_env->PROMISES_CNT.tab[id] == 1) // cette promesse était la dernière promesse non résolue
+            {
+                *global_env->PROMISES_CNT.tab[id] += 1; // si on laisse le compteur à 1, global_env->PROMISES.tab[id] va être supprimé par le neobject_destroy
+
+                neobject_destroy(*promise); // on supprime la promesse en elle même
+                // on la remplace par la valeur de retour (sans faire de copie puisque c'est la dernière)
+                *promise = global_env->PROMISES->tab[id];
+
+                global_env->PROMISES->tab[id] = NEO_VOID;
+                *global_env->PROMISES_CNT.tab[id] = 0;
+            }
+            else
+            {
+                _affect2(promise, global_env->PROMISES->tab[id]);
+                *global_env->PROMISES_CNT.tab[id] -= 1;
+            }
+
+            update_if_promise(promise);
+        }
+        return;
+    }
+    return;
+}
+
+
+intptr_t mix(intptr_t a) {
+    return ((~(a >>3)) ^ (a << 5) ^ 834583528601659) * 98710409178618791;
+}
+
+intptr_t hash_combine(intptr_t a, intptr_t b) {
+    return (((a ^ (~b)) ^ 126592460022139) + 982513480613713) * 522678417827381;
+}
+
+intptr_t string_hash(char* string) {
+    intptr_t hash = 407558787683791;
+    while (*string) {
+        hash = hash_combine(*(string++), hash);
+    }
+    return hash;
+}
+
+
+intptr_t intlist_hash(int* list, int len) {
+    intptr_t hash = 527355878564833;
+    for (int i=0 ; i < len ; i++) {
+        hash = hash_combine(list[i], hash);
+    }
+    return hash;
+}
+
+
+intptr_t nelist_hash(NeList* list) {
+    intptr_t hash = 743931041025407;
+    for (size_t i=0 ; i < list->len ; i++) {
+        hash = hash_combine(hash, neo_hash(list->tab[i]));
+    }
+    return hash;
+}
+
+intptr_t neo_hash(NeObj neo) {
+    intptr_t final_hash = 0;
+
+    if (ismarked(neo))
+        return final_hash;
+
+    if (neo.type & HEAP_ALLOCATED) {
+        if (NEO_TYPE(neo) == TYPE_STRING || NEO_TYPE(neo) == TYPE_CONST) {
+            final_hash = hash_combine(string_hash(neo_to_string(neo)), NEO_TYPE(neo));
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_LIST) {
+            final_hash = nelist_hash(neo_to_list(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
+            Function* fun = neo_to_function(neo);
+            intptr_t types_hash = hash_combine(
+                hash_combine(fun->nbArgs, intlist_hash((int*)fun->typeArgs, fun->nbArgs)),
+                fun->typeRetour
+            );
+            intptr_t fun_id_hash = hash_combine(fun->id, fun->module);
+
+            intptr_t fun_hash = hash_combine(
+                hash_combine(
+                    fun_id_hash,
+                    string_hash((char*)fun->help)
+                ),
+                hash_combine(
+                    types_hash,
+                    649525520993879
+                )
+            );
+            
+            final_hash = fun_hash;
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_PARTIALFUNC || NEO_TYPE(neo) == TYPE_USERFUNC) {
+            UserFunc* fun = neo_to_userfunc(neo);
+            intptr_t opt_args_hash = (NEO_TYPE(neo) == TYPE_PARTIALFUNC) ? 3462287 : nelist_hash(&fun->opt_args);
+            intptr_t doc_hash = (fun->doc == NULL) ? 520067123203699 : string_hash(fun->doc);
+
+            intptr_t h2 = hash_combine(fun->nbOptArgs, opt_args_hash);
+            intptr_t h1 = hash_combine(intlist_hash(fun->args, fun->nbArgs), fun->nbArgs);
+            intptr_t h3 = hash_combine(fun->code, (intptr_t)fun->tree_buffer->id);
+            intptr_t h4 = hash_combine(doc_hash, fun->isMethod);
+            final_hash = hash_combine(
+                hash_combine(h1, h2),
+                hash_combine(h3, h4)
+            );
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+            Container* c = neo_to_container(neo);
+            final_hash = hash_combine(c->type, nelist_hash(&c->data));
+        }
+        else {
+            final_hash = hash_combine(neo.type, neo.integer);
+        }
+    }
+    else {
+        final_hash = hash_combine(neo.type, neo.integer);
+    }
+
+    unmark(neo);
+    return mix(final_hash);
+}
+
+
+
+NeObj neo_dup(NeObj neo) {
+
+    // si l'objet que l'on veut copier a déjà été copié, on renvoie directement sa copie
+    // quand l'objet a été créé pour la première fois, son refc a été initialisé à 0
+    // puis à chaque fois que l'on récupère sa copie ici, il faut incrémenter son refc puisqu'un nouvel objet pointe désormais sur lui
+    NeObj copy = get_previous_copy(neo);
+
+    if (!neo_is_void(copy)) {
+        return neo_copy(copy); // il faut quand même incrémenter le compteur de références
+    }
+
+    // sinon, on le copie en bonne et due forme
+
+    // pour les listes et les global_env->CONTAINERS, une copie profonde a un réel impact puisque ces objets contiennent d'autres objets
+    // en revanche pour tous les autres objets ça ne change strictement rien pour l'utilisateur d'avoir une réelle copie ou non
+    
+    if (NEO_TYPE(neo) == TYPE_LIST) {
+        // on ne peut pas ajouter la liste maintenant au garbage collector puisque son pointeur est pour le moment invalide
+        NeList* original_list = neo_to_list(neo);
+        NeList* copied_list = nelist_create(original_list->len);
+        
+        mark_as_already_copied(neo, copied_list); // inscrit le nouveau pointeur de la copie directement dans l'objet
+
+        for (size_t i = 0 ; i < original_list->len ; i++) {
+            copied_list->tab[i] = neo_dup(nelist_nth(original_list, i));
+            
+            if_error {
+                nelist_destroy_until(copied_list, i-1);
+                return NEO_VOID;
+            }
+        }
+
+        return neo_list_convert(copied_list); // et c'est le moment où on l'ajoute au GC
+    }
+
+    else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+        Container* original_cntr = neo_to_container(neo);
+
+        NeList copied_cntr_data;
+        nelist_init(&copied_cntr_data, original_cntr->data.len);
+        Container* copied_cntr = container_create(original_cntr->type, copied_cntr_data);
+        
+        mark_as_already_copied(neo, copied_cntr); // inscrit le nouveau pointeur de la copie directement dans l'objet
+
+        for (size_t i = 0 ; i < original_cntr->data.len ; i++) {
+            copied_cntr->data.tab[i] = neo_dup(nelist_nth(&original_cntr->data, i));
+
+            if_error {
+                nelist_deinit_until(&copied_cntr->data, i-1);
+                neon_free(copied_cntr);
+                return NEO_VOID;
+            }
+        }
+
+        return neo_container_convert(copied_cntr); // et c'est le moment où on l'ajoute au GC
+    }
+
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* original_func = neo_to_userfunc(neo);
+
+        // Copie de args
+        Var* args_copy = neon_malloc(sizeof(Var) * original_func->nbArgs);
+        for (int i=0 ; i < original_func->nbArgs ; i++)
+            args_copy[i] = original_func->args[i];
+
+        // Création de l'objet
+        NeList opt_args;
+        nelist_init(&opt_args, original_func->opt_args.len);
+        UserFunc* copied_func = userfunc_create(args_copy, original_func->tree_buffer, original_func->code, original_func->nbArgs, original_func->unlimited_arguments, original_func->nbOptArgs, opt_args, original_func->isMethod);
+
+        if (original_func->doc != NULL)
+            copied_func->doc = strdup(original_func->doc);
+
+        mark_as_already_copied(neo, copied_func);
+
+        for (size_t i = 0 ; i < original_func->opt_args.len ; i++) {
+            copied_func->opt_args.tab[i] = neo_dup(nelist_nth(&original_func->opt_args, i));
+
+            if_error {
+                nelist_deinit_until(&copied_func->opt_args, i-1);
+                neon_free(copied_func->args);
+                if (copied_func->doc != NULL)
+                    neon_free(copied_func->doc);
+                return NEO_VOID;
+            }
+
+        }
+
+        return neo_userfunc_convert(copied_func); // et c'est le moment où on l'ajoute au GC
+    }
+
+    else
+        return neo_copy(neo);
+    
+    return NEO_VOID;
+}
+
+
+size_t neobject_getsize(NeObj neo) {
+
+    if (neo.type & HEAP_ALLOCATED) {
+        if (NEO_TYPE(neo) == TYPE_STRING || NEO_TYPE(neo) == TYPE_CONST) {
+            return sizeof(NeObj) + sizeof(String) + strlen(neo.string->string) + 1;
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_LIST) {
+            return sizeof(NeObj) + nelist_getsize(neo.nelist);
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
+            size_t nbArgs = (neo.function->nbArgs == -1) ? 0 : (size_t)neo.function->nbArgs;
+            return sizeof(NeObj) + sizeof(Function) + sizeof(int) * nbArgs + strlen(neo.function->help) + 1;
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+            return sizeof(NeObj) + sizeof(UserFunc) + sizeof(Var) * neo.userfunc->nbArgs + nelist_getsize(&neo.userfunc->opt_args);
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+            return sizeof(NeObj) + sizeof(Container) + nelist_getsize(&neo.container->data);
+        }
+
+        else {
+            return sizeof(NeObj);
+        }
+    }
+    else {
+        return sizeof(NeObj);
+    }
+}
+
+
+void general_neobject_destroy(NeObj neo, bool gc_extern)
+{
+    if (neo.type & HEAP_ALLOCATED)
+    {
+        *neo.refc_ptr -= 1;
+
+        if (*neo.refc_ptr == 0) // on supprime neo->data
+        {
+            if (ismarked(neo)) // si l'objet est marqué, c'est qu'on est un des appels récursifs de sa suppression, donc il sera supprimé
+                return;
+            
+            mark(neo);
+
+            if (NEO_TYPE(neo) == TYPE_STRING || NEO_TYPE(neo) == TYPE_CONST) {
+                string_destroy(neo.string);
+            }
+
+            else if (NEO_TYPE(neo) == TYPE_LIST) {
+                if (!gc_extern)
+                    gc_remove_nelist(neo.nelist);
+                nelist_destroy(neo.nelist);
+            }
+            else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
+                function_destroy(neo.function);
+            }
+
+            else if (NEO_TYPE(neo) == TYPE_PARTIALFUNC) {
+                partialfunc_destroy(neo.userfunc);
+            }
+
+            else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+                if (!gc_extern)
+                    gc_remove_userfunc(neo.userfunc);
+                userfunc_destroy(neo.userfunc);
+            }
+
+            else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+                if (!gc_extern)
+                    gc_remove_container(neo.container);
+                container_destroy(neo.container);
+            }
+            else if (NEO_TYPE(neo) == TYPE_PROMISE)
+            {
+                int id = get_promise_id(neo);
+                neobject_destroy(global_env->PROMISES->tab[(int)id]);
+                global_env->PROMISES->tab[(int)id] = NEO_VOID;
+            }
+
+        }
+    }
+    
+}
+
+
+void neobject_aff(NeObj neo)
+{
+    // on doit à tout prix éviter une boucle infinie due aux objets auto-référençant
+    // pour ça avant d'afficher un objet on le marque, on le démarque après
+    // si au moment d'afficher un objet il est marqué, alors on ne l'affiche pas
+
+    if (ismarked(neo)) { // c'est le deuxième fois qu'on nous demande d'afficher cet objet
+        setColor(RED);
+        printString("*");
+        setColor(DEFAULT);
+    }
+    else {
+        mark(neo);
+        
+        if (NEO_TYPE(neo) == TYPE_DOUBLE) {
+            printDouble(neo_to_double(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_INTEGER) {
+            printInt(neo_to_integer(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_BOOL) {
+            neo_bool_aff(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_STRING) {
+            neo_string_aff(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_LIST) {
+            nelist_aff(neo_to_list(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_CONST) {
+            printString(neo_to_string(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_EXCEPTION) {
+            neo_exception_aff(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_NONE) {
+            printString("None");
+        }
+        else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
+            Function* f = neo_to_function(neo);
+            printString("<built-in function ");
+            printString((char*)get_function_name(f->id, f->module));
+            printString(">");
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+            UserFunc* fun = neo_to_userfunc(neo);
+
+            if (neo_isMethod(neo))
+                printString("method ");
+            else
+                printString("function ");
+
+            // La raison pour laquelle on n'utilise pas la soft-comparaison entre la fonction et les variables de ADRESSES
+            // est que l'opérateur d'égalité peut être surchargé donc peut donner de faux résultats ici
+            int index = nelist_index(global_env->ADRESSES, neo);
+            if (index == -1) {
+                printString("<anonymous>");
+                neon_reset_error();
+            }
+            else {
+                printString(global_env->NOMS->tab[index]);
+            }
+
+            printString("(");
+
+            bool bo = false;
+
+            for (size_t i = 0 ; i < fun->nbArgs ; i++)
+            {
+                if (fun->unlimited_arguments && i == (size_t)(fun->nbArgs - fun->nbOptArgs) && !bo) {
+                    printString("...");
+                    i --;
+                    bo = true;
+                }
+                else {
+                    // affichage de la variable fun->args[i]
+                    char* nom = get_name(fun->args[i]);
+                    printString(nom);
+
+                    if (!neo_is_void(nelist_nth(&fun->opt_args, i))) // expression non vide
+                    {
+                        printString(" := ");
+                        neobject_aff(nelist_nth(&fun->opt_args, i));
+                    }
+                }
+
+                if (i < (size_t)(fun->nbArgs - 1))
+                    printString(", ");
+            }
+            printString(")");
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+            neo_container_aff(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_PROMISE) {
+            neo_promise_aff(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_EMPTY) {
+            printString("???");
+        }
+        else {
+            printString("???");
+        }
+
+        unmark(neo);
+    }
+
+}
+
+
+
+char* neobject_str(NeObj neo, bool overloaded)
+{
+    // on doit à tout prix éviter une boucle infinie due aux objets auto-référençant
+    // pour ça avant d'afficher un objet on le marque, on le démarque après
+    // si au moment d'afficher un objet il est marqué, alors on ne l'affiche pas
+
+    if (ismarked(neo)) { // c'est le deuxième fois qu'on nous demande d'afficher cet objet
+        return strdup("*");
+    }
+    else {
+        mark(neo);
+
+        char* ret = NULL; // la chaîne finale que l'on va renvoyer
+
+        if (NEO_TYPE(neo) == TYPE_INTEGER)
+        {
+            ret = int_to_str(neo_to_integer(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_DOUBLE)
+        {
+            ret = double_to_str(neo_to_double(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_BOOL)
+        {
+            ret = neo_bool_str(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_STRING)
+        {
+            ret = neo_string_str(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_LIST)
+        {
+            ret = nelist_str(neo.nelist, overloaded);
+        }
+        else if (NEO_TYPE(neo) == TYPE_CONST)
+        {
+            ret = strdup(neo_to_string(neo));
+        }
+        else if (NEO_TYPE(neo) == TYPE_EXCEPTION)
+        {
+            ret = strdup(global_env->EXCEPTIONS->tab[get_exception_code(neo)]);
+        }
+        else if (NEO_TYPE(neo) == TYPE_NONE)
+        {
+            ret = strdup("None");
+        }
+        else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC)
+        {
+            Function* f = neo_to_function(neo);
+            ret = addStr("<built-in function ", (char*)get_function_name(f->id, f->module));
+            ret = addStr2(ret, ">");
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+            UserFunc* fun = neo_to_userfunc(neo);
+
+            if (neo_isMethod(neo))
+                ret = "method ";
+            else
+                ret = "function ";
+
+            // La raison pour laquelle on n'utilise pas la soft-comparaison entre la fonction et les variables de ADRESSES
+            // est que l'opérateur d'égalité peut être surchargé donc peut donner de faux résultats ici
+            int index = nelist_index(global_env->ADRESSES, neo);
+            if (index == -1) {
+                ret = addStr(ret, "<anonymous>");
+                neon_reset_error();
+            }
+            else {
+                ret = addStr(ret, global_env->NOMS->tab[index]);
+            }
+
+            ret = addStr2(ret, "(");
+
+            bool bo = false;
+
+            for (size_t i = 0 ; i < fun->nbArgs ; i++)
+            {
+                if (fun->unlimited_arguments && i == (size_t)(fun->nbArgs - fun->nbOptArgs) && !bo) {
+                    ret = addStr2(ret, "...");
+                    i --;
+                    bo = true;
+                }
+                else {
+                    // affichage de la variable fun->args[i]
+                    char* nom = get_name(fun->args[i]);
+                    ret = addStr2(ret, nom);
+
+                    if (!neo_is_void(nelist_nth(&fun->opt_args, i))) // expression non vide
+                    {
+                        ret = addStr2(ret, " := ");
+                        char* obj_str = neobject_str(nelist_nth(&fun->opt_args, i), overloaded);
+
+                        if_error {
+                            neon_free(ret);
+                            unmark(neo);
+                            return NULL;
+                        }
+
+                        ret = addStr2(ret, obj_str);
+                        neon_free(obj_str);
+                    }
+                }
+
+                if (i < (size_t)(fun->nbArgs - 1))
+                    ret = addStr2(ret, ", ");
+            }
+            ret = addStr2(ret, ")");
+        }
+
+        else if (NEO_TYPE(neo) == TYPE_CONTAINER)
+        {
+            ret = neo_container_str(neo, overloaded);
+        }
+        else if (NEO_TYPE(neo) == TYPE_PROMISE) {
+            ret = neo_promise_str(neo);
+        }
+        else if (NEO_TYPE(neo) == TYPE_EMPTY) {
+            ret = strdup("???");
+        }
+        else {
+            ret = strdup("???");
+        }
+        unmark(neo);
+
+        return ret;
+    }
+
+    return NULL;
+}
+
+
+
+char* neobject_short_repr(NeObj obj, size_t max_len, bool overloaded) {
+    // Longueur maximale de la représentation d'un objet
+    char* full_repr = neobject_str(obj, overloaded);
+    return_on_error(NULL);
+
+    size_t length = strlen(full_repr);
+
+    if (length <= max_len) {
+        return full_repr;
+    }
+    else {
+        char* short_repr = neon_malloc(sizeof(char) * (max_len + 1));
+        
+        // Recopie des extrémités de l'objet
+        for (size_t i=0 ; i < max_len/2 - 1 ; i++) {
+            short_repr[i] = full_repr[i];
+            short_repr[max_len-i-1] = full_repr[length-i-1];
+        }
+
+        // Met des points au milieu
+        for (size_t i=max_len/2 - 1 ; i <= max_len/2 + 1 ; i++) {
+            short_repr[i] = '.';
+        }
+
+        short_repr[max_len] = '\0';
+
+        neon_free(full_repr);
+        return short_repr;
+    }
+}
+
+
+
+
+
+char* type(NeObj neo)
+{
+    if (NEO_TYPE(neo) == TYPE_BOOL)
+        return "Bool";
+
+    if (NEO_TYPE(neo) == TYPE_STRING)
+        return "String";
+
+    if (NEO_TYPE(neo) == TYPE_CONST)
+        return "Const";
+
+    if (NEO_TYPE(neo) == TYPE_INTEGER)
+        return "Integer";
+
+    if (NEO_TYPE(neo) == TYPE_DOUBLE)
+        return "Real";
+
+    if (NEO_TYPE(neo) == TYPE_BUILTINFUNC)
+        return "Built-in function";
+
+    if (NEO_TYPE(neo) == TYPE_LIST)
+        return "List";
+
+    if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        if (neo_isMethod(neo))
+            return "Method";
+        else
+            return "Function";
+    }
+
+    if (NEO_TYPE(neo) == TYPE_EXCEPTION)
+        return "Exception";
+    
+    if (NEO_TYPE(neo) == TYPE_CONTAINER)
+    {
+        Container* c = neo_to_container(neo);
+        return global_env->CONTAINERS->tab[c->type];
+    }
+    if (NEO_TYPE(neo) == TYPE_PROMISE)
+    {
+        return "Promise";
+    }
+    if (NEO_TYPE(neo) == TYPE_EMPTY)
+    {
+        return "uninitialized";
+    }
+    if (NEO_TYPE(neo) == TYPE_NONE)
+    {
+        return "None";
+    }
+
+    if (NEO_TYPE(neo) == TYPE_UNSPECIFIED)
+        return "unspecified type";
+
+    if (neo_is_void(neo))
+        return "undefined type";
+
+    return "unknown type";
+}
+
+
+
+bool neo_equal(NeObj _op1, NeObj _op2)
+{
+
+    if (ismarked(_op1) && ismarked(_op2))
+        return true;
+
+    // si l'un des objets est un NeObject, on regarde si == est surchargé
+    if (NEO_TYPE(_op1) == TYPE_CONTAINER || NEO_TYPE(_op2) == TYPE_CONTAINER) {
+        Container* c = (NEO_TYPE(_op1) == TYPE_CONTAINER) ? neo_to_container(_op1) : neo_to_container(_op2);
+        char* container_name = global_env->CONTAINERS->tab[c->type];
+        int index = function_module(container_name, "equal");
+        if (index >= 0) {
+            NeObj neo_fun = global_env->ADRESSES->tab[index];
+            UserFunc* fun = neo_fun.userfunc;
+
+            if (fun->nbArgs < 2) {
+                neon_fail(53,
+                    neo_new_str_create(global_env->NOMS->tab[index]),
+                    neo_integer_create(2)
+                );
+                return false;
+            }
+
+            NeObj ret = callBinaryUserFunc(fun, _op1, _op2);
+            return_on_error(false);
+
+            bool bo = neoIsTrue(ret);
+            neobject_destroy(ret);
+            return bo;
+        }
+    }
+
+
+    if ((NEO_TYPE(_op1)==TYPE_INTEGER || NEO_TYPE(_op1)==TYPE_DOUBLE) && (NEO_TYPE(_op2)==TYPE_INTEGER || NEO_TYPE(_op2)==TYPE_DOUBLE))
+    {
+        double op1 = (NEO_TYPE(_op1) == TYPE_INTEGER) ? (double)neo_to_integer(_op1) : neo_to_double(_op1);
+        double op2 = (NEO_TYPE(_op2) == TYPE_INTEGER) ? (double)neo_to_integer(_op2) : neo_to_double(_op2);
+        return op1 == op2;
+    }
+
+    else if (NEO_TYPE(_op1)==TYPE_STRING)
+    {
+        if (NEO_TYPE(_op2)==TYPE_STRING)
+        {
+            return strcmp(neo_to_string(_op1),neo_to_string(_op2)) == 0;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    else if (NEO_TYPE(_op1)==TYPE_CONST)
+    {
+        if (NEO_TYPE(_op2)==TYPE_CONST)
+        {
+            return strcmp(neo_to_string(_op1),neo_to_string(_op2)) == 0;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    else if (NEO_TYPE(_op1)==TYPE_BOOL)
+    {
+        if (NEO_TYPE(_op2)==TYPE_BOOL)
+        {
+            return neo_to_bool(_op1)==neo_to_bool(_op2);
+        }
+        else
+        {
+            return false;
+        }
+    }
+  
+    else if (NEO_TYPE(_op1)==TYPE_NONE && NEO_TYPE(_op2)==TYPE_NONE)
+        return true;
+  
+    else if (NEO_TYPE(_op1)==TYPE_EXCEPTION)
+    {
+        if (NEO_TYPE(_op2)==TYPE_EXCEPTION)
+        {
+            return get_exception_code(_op1) == get_exception_code(_op2);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    else if (NEO_TYPE(_op1) == TYPE_BUILTINFUNC)
+    {
+        if (NEO_TYPE(_op2) == TYPE_BUILTINFUNC)
+        {
+            return _op1.function->id == _op2.function->id && _op1.function->module == _op2.function->module;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    else if (NEO_TYPE(_op1) == TYPE_USERFUNC)
+    {
+        if (NEO_TYPE(_op2) == TYPE_USERFUNC)
+        {
+                return  _op1.userfunc->isMethod == _op2.userfunc->isMethod &&
+                        _op1.userfunc->code == _op2.userfunc->code &&
+                        _op1.userfunc->tree_buffer->id == _op2.userfunc->tree_buffer->id &&
+                        nelist_equal(&_op1.userfunc->opt_args, &_op2.userfunc->opt_args);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    else if (NEO_TYPE(_op1) == TYPE_LIST)
+    {
+        if (NEO_TYPE(_op2) == TYPE_LIST)
+        {
+            mark(_op1); mark(_op2); // marque les deux objets comme déjà comparés, on lance l'appel récursif
+            bool bo = nelist_equal(neo_to_list(_op1), neo_to_list(_op2));
+            unmark(_op1); unmark(_op2);
+            return bo;
+        }
+        else
+            return false;
+    }
+
+    else if (NEO_TYPE(_op1) == TYPE_CONTAINER)
+    {
+        if (NEO_TYPE(_op2) == TYPE_CONTAINER)
+        {
+            mark(_op1); mark(_op2); // marque les deux objets comme déjà comparés, on lance l'appel récursif
+            Container* c1 = neo_to_container(_op1);
+            Container* c2 = neo_to_container(_op2);
+            bool bo = c1->type == c2->type && nelist_equal(&c1->data, &c2->data);
+            unmark(_op1); unmark(_op2);
+            return bo;
+        }
+        else
+            return false;
+    }
+    else if (NEO_TYPE(_op1) == TYPE_PROMISE)
+        return NEO_TYPE(_op2) == TYPE_PROMISE && get_promise_id(_op1) == get_promise_id(_op2);
+
+    else if (NEO_TYPE(_op1) == TYPE_EMPTY)
+        return NEO_TYPE(_op2) == TYPE_EMPTY;
+    else if (neo_is_void(_op1))
+        return neo_is_void(_op2);
+
+    return false; // dans tous les autres cas
+  
+}
+
+
+
+
+
+
+int neo_compare(NeObj a, NeObj b)
+{
+    // si l'un des objets est un NeObject, on regarde si == est surchargé
+    if (NEO_TYPE(a) == TYPE_CONTAINER || NEO_TYPE(b) == TYPE_CONTAINER) {
+        Container* c = (NEO_TYPE(a) == TYPE_CONTAINER) ? neo_to_container(a) : neo_to_container(b);
+        char* container_name = global_env->CONTAINERS->tab[c->type];
+        int index = function_module(container_name, "comp");
+        if (index >= 0) {
+            NeObj neo_fun = global_env->ADRESSES->tab[index];
+            UserFunc* fun = neo_fun.userfunc;
+
+            if (fun->nbArgs < 2) {
+                neon_fail(53,
+                    neo_new_str_create(global_env->NOMS->tab[index]),
+                    neo_integer_create(2)
+                );
+                return false;
+            }
+
+            NeObj ret = callBinaryUserFunc(fun, a, b);
+            if_error {
+                neobject_destroy(ret);
+                return 0;
+            }
+            
+            int res = neo_to_integer(ret);
+            neobject_destroy(ret);
+            return res;
+        }
+    }
+
+    if ((NEO_TYPE(a) == TYPE_INTEGER || NEO_TYPE(a) == TYPE_DOUBLE) && (NEO_TYPE(b) == TYPE_INTEGER || NEO_TYPE(b) == TYPE_DOUBLE))
+    {
+        double op1 = (NEO_TYPE(a) == TYPE_INTEGER) ? (double)neo_to_integer(a) : neo_to_double(a);
+        double op2 = (NEO_TYPE(b) == TYPE_INTEGER) ? (double)neo_to_integer(b) : neo_to_double(b);
+        if (op1 < op2)
+            return -1;
+        else if (op1 > op2)
+            return 1;
+        else
+            return 0;
+    }
+    
+    else if ((NEO_TYPE(a) == TYPE_STRING && NEO_TYPE(b) == TYPE_STRING) || (NEO_TYPE(a) == TYPE_CONST && NEO_TYPE(b) == TYPE_CONST))
+    {
+        return strcmp(neo_to_string(a), neo_to_string(b));
+    }
+    else
+    {
+        //erreur
+        neon_fail(90, neo_copy(a), neo_copy(b));
+        return 0;
+    }
+}
+
+
+int neo_compare2(NeObj a, NeObj b)
+{
+    int c = neo_compare(b,a);
+    if (global_env->CODE_ERROR != 0)
+        return 0;
+    else
+        return c;
+}
+
+
+
+
+
+
+
+// Des fonctions pour marquer temporairement des NeObjects pour savoir si on est déjà passé par eux.
+
+
+void mark(NeObj neo) {
+    if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+        Container* c = neo_to_container(neo);
+        c->data.container_myCopy = UNIT;
+    }
+    else if (NEO_TYPE(neo) == TYPE_LIST) {
+        NeList* l = neo_to_list(neo);
+        l->myCopy = UNIT;
+    }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(neo);
+        f->opt_args.userfunc_myCopy = UNIT;
+    }
+}
+
+void unmark(NeObj neo) {
+    if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+        Container* c = neo_to_container(neo);
+        c->data.container_myCopy = NULL;
+    }
+    else if (NEO_TYPE(neo) == TYPE_LIST) {
+        NeList* l = neo_to_list(neo);
+        l->myCopy = NULL;
+    }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(neo);
+        f->opt_args.userfunc_myCopy = NULL;
+    }
+}
+
+bool ismarked(NeObj neo) {
+    if (NEO_TYPE(neo) == TYPE_CONTAINER) {
+        Container* c = neo_to_container(neo);
+        return c->data.container_myCopy;
+    }
+    else if (NEO_TYPE(neo) == TYPE_LIST) {
+        NeList* l = neo_to_list(neo);
+        return l->myCopy;
+    }
+    else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
+        UserFunc* f = neo_to_userfunc(neo);
+        return f->opt_args.userfunc_myCopy;
+    }
+    return false;
+}
+
+void recursive_unmark(NeObj neo) {
+    // si l'objet n'est pas marqué, il n'y a forcément rien à démarquer dedans, soit parce que l'on ne l'a pas copié, soit
+    // parce que cet algorithme l'a déjà démarqué
+    if (ismarked(neo)) {
+        unmark(neo);
+
+        NeList list;
+        if (NEO_TYPE(neo) == TYPE_LIST)
+            list = *neo_to_list(neo);
+        else if (NEO_TYPE(neo) == TYPE_CONTAINER)
+            list = neo_to_container(neo)->data;
+        else if (NEO_TYPE(neo) == TYPE_USERFUNC)
+            list = neo_to_userfunc(neo)->opt_args;
+        else
+            return;
+
+        // démarque tous les fils
+        for (size_t i=0 ; i < list.len ; i++) {
+            recursive_unmark(list.tab[i]);
+        }
+    }
+}
+
+
+
+
+
+
+NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname) {
+    Container* c = (NEO_TYPE(op1) == TYPE_CONTAINER) ? neo_to_container(op1) : neo_to_container(op2);
+    char* container_name = global_env->CONTAINERS->tab[c->type];
+    int index = function_module(container_name, opname);
+    if (index == -1) {
+        neon_fail(107, neo_new_str_create(opname), neo_new_str_create(container_name));
+        return NEO_VOID;
+    }
+    else {
+        NeObj neo_fun = global_env->ADRESSES->tab[index];
+
+        // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+        /*if (NEO_TYPE(neo_fun) != TYPE_USERFUNC) {
+            neon_fail(52,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_new_str_create(opname),
+                neo_new_str_create(container_name),
+                neo_new_str_create(global_env->NOMS->tab[index])
+            );
+            return NEO_VOID;
+        }*/
+
+        UserFunc* fun = neo_fun.userfunc;
+
+        if (fun->nbArgs < 2) {
+            neon_fail(53,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_integer_create(2)
+            );
+            return NEO_VOID;
+        }
+
+        NeObj ret = callBinaryUserFunc(fun, op1, op2);
+        if_error {
+            neobject_destroy(ret);
+            return NEO_VOID;
+        }
+        return ret;
+    }
+}
+
+
+NeObj callOverloadedUnaryOperator(NeObj op1, char* opname) {
+    Container* c = neo_to_container(op1);
+    char* container_name = global_env->CONTAINERS->tab[c->type];
+    int index = function_module(container_name, opname);
+    if (index == -1) {
+        neon_fail(107, neo_new_str_create(opname), neo_new_str_create(container_name));
+        return NEO_VOID;
+    }
+    else {
+        NeObj neo_fun = global_env->ADRESSES->tab[index];
+
+        // La fonction function_module vérifie déjà que l'objet est de type USERFUNC
+        /*if (NEO_TYPE(neo_fun) != TYPE_USERFUNC) {
+            neon_fail(52,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_new_str_create(opname),
+                neo_new_str_create(container_name),
+                neo_new_str_create(global_env->NOMS->tab[index])
+            );
+            return NEO_VOID;
+        }*/
+        
+        UserFunc* fun = neo_fun.userfunc;
+
+        if (fun->nbArgs < 1) {
+            neon_fail(53,
+                neo_new_str_create(global_env->NOMS->tab[index]),
+                neo_integer_create(1)
+            );
+            return NEO_VOID;
+        }
+
+        NeObj ret = callUnaryUserFunc(fun, op1);
+        if_error {
+            neobject_destroy(ret);
+            return NEO_VOID;
+        }
+        return ret;
+    }
+}

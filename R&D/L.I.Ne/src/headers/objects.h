@@ -1,0 +1,208 @@
+#ifndef OBJECTS_H
+#define OBJECTS_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "constants.h"
+#include "stdio.h"
+#include "trees.h"
+#include "nativefunctions.h"
+
+#include "neobj.h"
+
+
+struct String
+{
+    int refc;
+    char* string;
+};
+
+
+
+struct NeList
+{
+    int refc;
+    NeObj* tab; // tableau de pointeurs de NeObjects
+    size_t len;
+    int capacity;
+    union { // Champ utilisé pour stocker la copie de l'objet dans lequel est la NeList
+        struct NeList* myCopy;
+        struct Container* container_myCopy;
+        struct UserFunc* userfunc_myCopy;
+    };
+    NeObj next;
+    NeObj prev;
+};
+
+struct Container
+{
+    int refc;
+    int type;
+    NeList data;
+};
+
+
+
+struct Function
+{
+    int refc;
+    Module module;
+    int id;
+    const char* help;
+    int nbArgs;
+    const int* typeArgs;
+    int typeRetour;
+};
+
+
+struct UserFunc
+{
+    int refc;
+    int runningInstances; // compte combien d'instances de la fonction sont en cours d'exécution
+    bool isMethod;
+    Var* args;
+    uint8_t nbArgs;
+    bool unlimited_arguments;
+    uint8_t nbOptArgs; // nombre d'arguments vraiment, vraiment optionnels (par définition, ceux qui sont après ...)
+    TreeBuffer* tree_buffer;
+    TreeBufferIndex code;
+    NeList opt_args; // valeurs par défaut des arguments optionnels
+    char* doc;
+};
+
+
+typedef struct NeonEnv NeonEnv;
+
+
+
+#define NEO_TYPE(neo)                       (neo).type
+#define NEO_VOID                            ((NeObj) {.type = 0, .integer = 0})
+#define NELIST_VOID                         ((NeList){.len=0, .tab=NULL})
+#define NEO_SPECIAL(code)                   ((NeObj) {.type = TYPE_EMPTY, .integer = code})
+#define IS_NEO_SPECIAL_CODE(neo, code)      (neo.type == TYPE_EMPTY && neo.integer == code)
+
+#define neobject_destroy(neo)               general_neobject_destroy(neo, false)
+#define gc_extern_neobject_destroy(neo)     general_neobject_destroy(neo, true)
+#define nelist_destroy(list)                general_nelist_destroy(list, false)
+#define nelist_deinit(list)                 general_nelist_deinit(list, false)
+#define gc_extern_nelist_destroy(list)      general_nelist_destroy(list, true)
+
+bool neo_is_void(NeObj neo);
+bool neo_exact_equal(NeObj a, NeObj b);
+
+void variable_append(NeonEnv* env, char* name, NeObj value);
+void free_var(Var var);
+void replace_var(Var var, NeObj object);
+void set_var(Var var, NeObj object);
+NeObj* get_absolute_address(Var var);
+NeObj get_var_value(Var var);
+Var get_local_args(void);
+Var get_var(char* name);
+Var get_var_from_addr(NeObj* obj);
+char* get_name(Var var);
+UserFunc* neo_to_userfunc(NeObj neo);
+Function* neo_to_function(NeObj neo);
+NeObj neo_empty_create(void);
+void var_reset(NeObj* neo);
+Container* container_create(int type, NeList data);
+NeObj neo_container_create(int type, NeList data);
+Container* neo_to_container(NeObj);
+NeObj gc_extern_neo_container_convert(Container* c);
+NeObj neo_container_convert(Container* c);
+int get_field_index(Container* c, char* name);
+NeObj* get_container_field_addr(Container* c, size_t index);
+NeObj get_container_field(Container* c, size_t index);
+void container_destroy(Container* c);
+NeObj neo_promise_create(int id);
+int get_promise_id(NeObj promise);
+size_t neobject_getsize(NeObj);
+void general_neobject_destroy(NeObj neo, bool gc_extern);
+void neobject_aff(NeObj neo);
+char* neobject_short_repr(NeObj obj, size_t max_len, bool overloaded);
+void nelist_init(NeList* list, size_t len);
+NeList* nelist_create(size_t len);
+NeList* nelist_literal_create(NeObj* elements);
+size_t nelist_getsize(NeList* list);
+void nelist_append(NeList* list, NeObj ptr);//ajoute un élément à la fin de la liste
+NeObj* nelist_nth_addr(NeList* list, size_t index);
+NeObj nelist_nth(NeList* list, size_t index);
+NeList* nelist_reverse(NeList* list);
+void nelist_remove(NeList* list, size_t index);
+void nelist_aff(NeList* liste);
+void general_nelist_deinit(NeList*, bool);
+void general_nelist_destroy(NeList* list, bool gc_extern);
+void nelist_deinit_until(NeList *list, int index_max);
+void nelist_destroy_until(NeList *list, int index_max);
+NeObj neo_integer_create(intptr_t number);
+NeObj neo_double_create(double number);
+intptr_t randint(intptr_t min, intptr_t max);
+intptr_t neo_to_integer(NeObj neo);
+double neo_to_double(NeObj neo);
+bool is_number(NeObj obj);
+NeObj neo_bool_create(bool neon_boolean);
+bool neo_is_true(NeObj neo);
+void string_destroy(String* string);
+NeObj neo_new_str_create(const char* string);
+NeObj neo_new_const_create(const char* string);
+NeObj neo_str_create(char* string);
+NeObj neo_list_create(size_t len);
+void neo_list_append(NeObj neo, NeObj ptr);
+NeObj neo_list_nth(NeObj neo, size_t index);
+NeObj neo_const_create(char* string);
+bool neo_to_bool(NeObj neo);
+char* neo_to_string(NeObj neo);
+char* neo_to_const(NeObj neo);
+NeObj neo_none_create(void);
+NeObj neo_copy(NeObj neo);
+NeObj neo_dup(NeObj neo);
+intptr_t neo_hash(NeObj neo);
+NeObj neo_deepcopy(NeObj neo);
+NeList* nelist_dup(NeList*);
+size_t neo_list_len(NeObj neo);
+int nelist_index(NeList* liste, NeObj neo);
+int nelist_index2(NeList* l, NeObj neo);
+void nelist_insert(NeList* list, NeObj neo, size_t index);
+void neo_list_insert(NeObj neo, NeObj ptr, size_t index);
+void neo_list_remove(NeObj neo, size_t index);
+NeList* neo_to_list(NeObj neo);
+char* neobject_str(NeObj obj, bool overloaded);
+char* nelist_str(NeList* list, bool overloaded);
+NeObj neo_list_convert(NeList* list);
+NeObj gc_extern_neo_list_convert(NeList* list);
+void function_destroy(Function* f);
+Function* function_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour);
+NeObj neo_fun_create(int id, Module module, const char* help, int nbArgs, const int* typeArgs, int typeRetour);
+bool funcArgsCheck(Function* fun, NeList* args);
+NeObj functionCall(NeObj fun, NeList* args);
+char* type(NeObj neo);
+bool neo_isMethod(NeObj obj);
+NeObj neo_partialfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, bool isMethod);
+UserFunc* userfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList opt_args, bool isMethod);
+bool nelist_is_void(NeList* list);
+NeObj neo_userfunc_convert(UserFunc* fun);
+NeObj gc_extern_neo_userfunc_convert(UserFunc* fun);
+NeObj neo_userfunc_create(Var* args, TreeBuffer* tree_buffer, TreeBufferIndex code, int nbArgs, bool unlimited_arguments, int nbOptArgs, NeList* opt_args, bool isMethod);
+NeObj neo_userfunc_define(NeObj obj, NeList opt_args);
+NeObj neo_exception_create(int index);
+int get_exception_code(NeObj exception);
+bool neo_equal(NeObj _op1, NeObj _op2);
+bool nelist_inList(NeList* list, NeObj neo);
+bool nelist_inList2(NeList* list, NeObj neo);
+bool nelist_equal(NeList* l1, NeList* l2);
+int neo_compare(NeObj a, NeObj b); // ordre croissant
+int neo_compare2(NeObj a, NeObj b); // ordre décroissant
+void neo_list_free(NeObj list);
+void mark(NeObj neo);
+void unmark(NeObj neo);
+void recursive_unmark(NeObj neo);
+bool ismarked(NeObj neo);
+void update_if_promise(NeObj* promise);
+char* var_name(NeObj obj);
+NeObj callNoArgsUserFunc(UserFunc* fun);
+NeObj callUnaryUserFunc(UserFunc* fun, NeObj arg);
+NeObj callBinaryUserFunc(UserFunc* fun, NeObj arg1, NeObj arg2);
+NeObj callOverloadedBinaryOperator(NeObj op1, NeObj op2, char* opname);
+NeObj callOverloadedUnaryOperator(NeObj op1, char* opname);
+
+#endif
