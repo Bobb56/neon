@@ -1414,10 +1414,13 @@ int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
             TreeBufferIndex treelist = treeSntxTree(tb, tree)->treelist;
             TreeBufferIndex* treelist_array = treelistGet(tb, treelist);
-
+            
             for (int inst=0 ; inst < treelistLength(tb, treelist) ; inst++) {
-                exec(tb, treelist_array[inst]);
+                int code = exec(tb, treelist_array[inst]);
                 return_on_error(0);
+
+                if (code != NORMAL)
+                    return code;
             }
 
             return NORMAL;

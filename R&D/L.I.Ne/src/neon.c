@@ -542,13 +542,13 @@ void liveExecFile(char* filename) {
 
     printf("Désempilement complet des contextes effectué.\n");
 
-    InterpContext_back(interp_context, 5);
+    InterpContext_back(interp_context, 1);
 
     neon_reset_error();
 
-    printf("Relancement de l'exécution au dernier point valide...\n");
+    //printf("Relancement de l'exécution au dernier point valide...\n");
 
-    tb_exec(&tb);
+    //tb_exec(&tb);
 
     printf("Fini.\n");
 
