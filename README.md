@@ -6,7 +6,7 @@ Neon is a general-purpose interpreted programming language with built-in concurr
 
 Unlike traditional scripting languages, concurrency is a fundamental part of Neon rather than an external library.
 
-> Neon is **the best programming language** for easily building games for TI-84 Plus CE/TI-83 Premium CE
+### _Neon is **the best programming language** for easily building games for TI-84 Plus CE/TI-83 Premium CE_
 
 ![](https://i.postimg.cc/18Pq5gcz/ligne.png) ![](https://i.postimg.cc/XpzFrn16/mandelbrot.png) ![](https://i.postimg.cc/bG1YGLzR/apples.gif)
 
