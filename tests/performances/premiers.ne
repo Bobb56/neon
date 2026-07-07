@@ -1,4 +1,4 @@
-max = 20000 # nbr(input ("Jusqu'ou voulez-vous que l'on detecte les nombres premiers ? "))
+max = 1000 # nbr(input ("Jusqu'ou voulez-vous que l'on detecte les nombres premiers ? "))
 
 est_premier = False
 
@@ -16,7 +16,7 @@ for (n, 2, max+1) do
     end
     
     if (est_premier) then
-        #print(n)
+        print(n)
         premiers.append(n)
     end
 end
