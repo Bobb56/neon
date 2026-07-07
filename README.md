@@ -1,3 +1,5 @@
+![](images/frac.png)
+
 # Neon
 
 > A lightweight, concurrent scripting language designed for constrained systems.
@@ -8,9 +10,9 @@ Unlike traditional scripting languages, concurrency is a fundamental part of Neo
 
 ### The best programming language for easily building games for TI-84 Plus CE/TI-83 Premium CE
 
-![](https://i.postimg.cc/18Pq5gcz/ligne.png) ![](https://i.postimg.cc/XpzFrn16/mandelbrot.png) ![](https://i.postimg.cc/bG1YGLzR/apples.gif)
+![](images/ligne.png) ![](images/mandelbrot.png) ![](images/apples.gif)
 
-![](https://i.postimg.cc/QBcNBSXm/ligne.gif) ![](https://i.postimg.cc/Z96Y9jTx/premiers.gif)
+![](images/ligne.gif) ![](images/premiers.gif)
 
 ---
 
