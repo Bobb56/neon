@@ -1326,7 +1326,7 @@ intptr_t hash_combine(intptr_t a, intptr_t b) {
 }
 
 intptr_t string_hash(char* string) {
-    intptr_t hash = 407558787683791;
+    intptr_t hash = INTPTR(407558787683791);
     while (*string) {
         hash = hash_combine(*(string++), hash);
     }
@@ -1335,7 +1335,7 @@ intptr_t string_hash(char* string) {
 
 
 intptr_t intlist_hash(int* list, int len) {
-    intptr_t hash = 527355878564833;
+    intptr_t hash = INTPTR(527355878564833);
     for (int i=0 ; i < len ; i++) {
         hash = hash_combine(list[i], hash);
     }
@@ -1344,7 +1344,7 @@ intptr_t intlist_hash(int* list, int len) {
 
 
 intptr_t nelist_hash(NeList* list) {
-    intptr_t hash = 743931041025407;
+    intptr_t hash = INTPTR(743931041025407);
     for (size_t i=0 ; i < list->len ; i++) {
         hash = hash_combine(hash, neo_hash(list->tab[i]));
     }
@@ -1380,7 +1380,7 @@ intptr_t neo_hash(NeObj neo) {
                 ),
                 hash_combine(
                     types_hash,
-                    649525520993879
+                    INTPTR(649525520993879)
                 )
             );
             
@@ -1390,7 +1390,7 @@ intptr_t neo_hash(NeObj neo) {
         else if (NEO_TYPE(neo) == TYPE_PARTIALFUNC || NEO_TYPE(neo) == TYPE_USERFUNC) {
             UserFunc* fun = neo_to_userfunc(neo);
             intptr_t opt_args_hash = (NEO_TYPE(neo) == TYPE_PARTIALFUNC) ? 3462287 : nelist_hash(&fun->opt_args);
-            intptr_t doc_hash = (fun->doc == NULL) ? 520067123203699 : string_hash(fun->doc);
+            intptr_t doc_hash = (fun->doc == NULL) ? INTPTR(520067123203699) : string_hash(fun->doc);
 
             intptr_t h2 = hash_combine(fun->nbOptArgs, opt_args_hash);
             intptr_t h1 = hash_combine(intlist_hash(fun->args, fun->nbArgs), fun->nbArgs);

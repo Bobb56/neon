@@ -18,7 +18,8 @@
 // that is used by neonide_print and neonide_input
 // Needs to be initialized by a console before using
 // neonide_print and neonide_input and to be deinit after
-// see -> void start_using_console(char* name) { ... }
+// see -> void start_console(void) { ... }
+//	   -> void run_neon_program(char* name) { ... }
 static struct estate* global_console_state = NULL;
 
 #define INPUT_MAX_LINES		2
@@ -197,11 +198,13 @@ beginning:
 	}
 }
 
+
+
 void draw_console(struct estate *state)
 {
 	// Moves scr_offset on the beginning of the line of the cursor
 	// Works in the use cases but could not work in all situations
-	if (state->scr_offset >= state->c1 && state->scr_offset <= state->c2) {
+	/*if (state->scr_offset >= state->c1 && state->scr_offset <= state->c2) {
 		state->scr_offset = state->c1;
 		
 		while (state->scr_offset > 0 && state->text[state->scr_offset] != '\n') {
@@ -213,7 +216,7 @@ void draw_console(struct estate *state)
 			state->scr_line_offset = 0;
 			state->scr_offset++;
 		}
-	}
+	}*/
 
 	console_draw_text_area(state);
 	
@@ -255,10 +258,10 @@ void draw_console(struct estate *state)
 	
 
 	fontlib_SetCursorPosition(121, 0);
-	if (state->console)
+	if (!state->running_program)
 		fontlib_DrawString("Console");
 	else
-	 	fontlib_DrawString(state->running_program);
+	 	fontlib_DrawString(state->running_program_name);
 
 
 	fontlib_SetCursorPosition(280, 0);
@@ -344,13 +347,13 @@ void neonide_print_string(char* text) {
 
 	while (*text) {
 		insert_char(global_console_state, *text);
-		text++;
 
 		// Flush the console at \n and every FLUSH_FREQUENCY characters
 		counter = (counter + 1)%FLUSH_FREQUENCY;
 		if (*text == '\n' || counter == 0) {
 			neonide_flush();
 		}
+		text++;
 	}
 }
 
@@ -672,20 +675,40 @@ char* neonide_input(char* prompt) {
 
 
 
-void start_using_console(char* name)
+void start_console(void)
 {
 	struct estate state;
 	// Initialize the global console
 	global_console_state = &state;
 	initialize_console(&state);
 
-	if (name == NULL)
-		state.console = true;
-	else
-	 	strcpy(state.running_program, name);
-
     neonInit();
 	run_interactive();
+	neonExit();
+
+	deinit_console(&state);
+	global_console_state = NULL;
+}
+
+
+void run_neon_program(char* name) {
+	struct estate state;
+	// Initialize the global console
+	global_console_state = &state;
+	initialize_console(&state);
+
+	state.running_program = true;
+	strcpy(state.running_program_name, name);
+
+    neonInit();
+
+	NeObj l = neo_list_create(0);
+	variable_append(global_env, "__args__", l);
+	
+	execFile(name);
+
+	terminal();
+
 	neonExit();
 
 	deinit_console(&state);

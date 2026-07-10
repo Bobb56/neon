@@ -9,7 +9,9 @@
 
 /*
 TODO:
-- Make NeonIDE as an app and integrate Neon inside
+- KEY_CLEAR -> KEY_STO
+- Update is_control
+- Make an inventory of all key bindings and keep/change some
 */
 
 #include "headers/neonide.h"
@@ -56,6 +58,7 @@ static bool initialize(struct estate *state)
 	state->dropshadow_color = 13;
 	state->focus_color = 12;
 	state->saved = true;
+	state->running_program = false;
 
 	state->selection_active = false;
 	state->alpha_state = 0;
@@ -77,8 +80,10 @@ static bool initialize(struct estate *state)
 void initialize_editor(struct estate* state) {
 	state->max_buffer_size = 16384;
 	state->max_lines = 10000;
-	state->text = malloc_noheap(state->max_buffer_size);
-	state->lines = malloc_noheap(state->max_lines * sizeof(int16_t));
+	//state->text = malloc_noheap(state->max_buffer_size);
+	//state->lines = malloc_noheap(state->max_lines * sizeof(int16_t));
+	state->text = malloc(state->max_buffer_size);
+	state->lines = malloc(state->max_lines * sizeof(int16_t));
 	initialize(state);
 }
 
@@ -105,5 +110,7 @@ void deinit_console(struct estate* state) {
 }
 
 void deinit_editor(struct estate* state) {
-	free_all_noheap();
+	//free_all_noheap();
+	free(state->lines);
+	free(state->text);
 }

@@ -22,7 +22,8 @@ Entre deux sessions d'utilisation de la mémoire temporaire, on peut écrire dan
 #include <string.h>
 
 #ifdef TI_EZ80
-#include "ti/vars.h"
+#include <ti/vars.h>
+#include <graphx.h>
 #endif
 
 static int buffer_size = 0;
@@ -60,6 +61,12 @@ void side_memory_exit(void) {
 
 // Début d'une session d'utilisation de la side memory
 void side_memory_start(void) {
+    #ifdef TI_EZ80
+        if (gfx_vbuffer != INITIAL_BASE_POINTER()) {
+            gfx_BlitScreen();
+            gfx_SwapDraw();
+        }
+    #endif
     pointer = base_pointer;
     open = true;
 }

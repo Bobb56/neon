@@ -386,14 +386,7 @@ int handle_key(struct estate *state, short k)
 				write_file(state);
 			break;
 		case KEY_SAVE: //save
-			if (!state->named)
-			{
-				draw_editor(state);
-				gfx_SwapDraw();
-				if (show_save_dialog(state))
-					break;
-			}
-			write_file(state);
+			insert_char(state, '=');
 			break;
 		case KEY_WSLEFT:
 			cursor_to_left_word_select(state);
@@ -476,6 +469,7 @@ int handle_key(struct estate *state, short k)
             	return -1;
 			break;
 		case KEY_F5:
+			draw_editor(state);
             gfx_SwapDraw();
             show_unimplemented_dialog(state);
             gfx_SwapDraw();
@@ -841,16 +835,15 @@ void cursor_to_l_end(struct estate *state)
 
 void load_text(struct estate *state)
 {
-	ti_var_t var;
-	var = ti_Open(state->filename, "r");
+	ti_var_t var = ti_Open(state->filename, "r");
 	if (var == 0) {
 		return; //no error out
 	}
 
-	char buffer[5];
-	ti_Read(buffer, 5, 1, var);
-	if (strncmp(buffer, "NEON\x00", 5) != 0) {
-		for (int i=0 ; i < 5 ; i++) {
+	char buffer[NEON_DEFAULT_FILE_HEADER_SIZE];
+	ti_Read(buffer, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
+	if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) != 0) {
+		for (int i=0 ; i < NEON_DEFAULT_FILE_HEADER_SIZE ; i++) {
 			insert_char(state, buffer[i]);
 		}
 	}
@@ -860,64 +853,53 @@ void load_text(struct estate *state)
 	{
 		insert_char(state, c);
 	}
+
+	cursor_to_start(state);
+
 	ti_Close(var);
 	state->saved = true;
 }
 
 void write_file(struct estate *state)
 {
+	// We always write a header, except if the file starts with #NEON
+	bool need_neon_header = !string_equal(state, 0, NEON_PLAIN_TEXT_HEADER);
+
+	// Compute the size of the resulting file
 	int24_t fullsize = state->c1 + (state->max_buffer_size - (state->c2 + 1));
 
-	ti_var_t var;						 /*
-    var = ti_Open(state->filename, "r");*/
-	bool current_archive_status = false; /*
-    if(var){
-        current_archive_status = ti_IsArchived(var);
-    }
-    ti_Close(var);*/
-	//int i = 0;
-	var = ti_Open(state->filename, "w");
-	ti_Resize(fullsize, var); //makes saving a lot faster due to only needing to resize the variable once
+	if (need_neon_header)
+		fullsize += 5;
 
-	if (!string_equal(state, 0, "#NEON")) {
-		ti_Write("NEON\x00", 5, 1, var);
+	bool current_archive_status = false;
+
+	ti_var_t var = ti_Open(state->filename, "w");
+	//makes saving a lot faster due to only needing to resize the variable once
+	ti_Resize(fullsize, var);
+
+	if (need_neon_header) {
+		ti_Write(NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
 	}
 
 	ti_Write(state->text, state->c1, 1, var);
 	ti_Write(state->text + state->c2 + 1, state->max_buffer_size - (state->c2 + 1), 1, var);
-	/*while (i < state->max_buffer_size) {
-		if (i == state->c1)
-			i = state->c2 + 1;
-		if (i >= state->max_buffer_size)
-			break;
-		ti_PutC(state->text[i], var);
-		i++;
-	}*/
-	/*
-	 if (state->eof > 0){
-	 ti_Resize(state->eof, var);
-	 ti_Write(&state->text, state->eof, 1, var);
-	 }
-	 */
-	//ti_Close(var);
+
 	//Do TIOS autoarchive, if needed.
-	if (state->autoarchive)
-	{
+	if (state->autoarchive) {
 		ti_SetArchiveStatus(true, var);
 	}
-	else
-	{
+	else {
 		ti_SetArchiveStatus(current_archive_status, var);
 	}
+
 	ti_Close(var);
 	state->saved = true;
 }
 
+
+
 /**
 Parse the NEIDERC file.
-
-
-
 */
 void parseRC(struct estate *state)
 {

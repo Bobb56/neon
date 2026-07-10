@@ -483,7 +483,7 @@ void execFile(char* filename) {
 
 handle_error:
     printError();
-    neon_pause("Press ENTER to leave Neon...");
+    //neon_pause("Press ENTER to leave Neon...");
     return;
 }
 

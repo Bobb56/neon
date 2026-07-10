@@ -1,4 +1,3 @@
-#include "headers/runtime.h"
 #define NEON_SOURCE_ID 10
 
 #include <string.h>

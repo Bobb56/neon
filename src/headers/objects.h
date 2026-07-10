@@ -88,6 +88,9 @@ typedef struct NeonEnv NeonEnv;
 #define nelist_deinit(list)                 general_nelist_deinit(list, false)
 #define gc_extern_nelist_destroy(list)      general_nelist_destroy(list, true)
 
+
+#define INTPTR(n)                           (n%INTPTR_MAX)
+
 bool neo_is_void(NeObj neo);
 bool neo_exact_equal(NeObj a, NeObj b);
 

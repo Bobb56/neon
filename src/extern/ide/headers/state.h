@@ -53,10 +53,10 @@ struct estate {
 	int24_t multi_lines;
 	//The file name
 	char filename[10];
-	//true if we are in REPL, false if we are running a program
-	bool console;
+	//true if we are running a program from a Neon file
+	bool running_program;
 	//The currently running program
-	char running_program[10];
+	char running_program_name[10];
 	//Whether the file name is user defined
 	bool named;
 	//A pointer within the line array. Same line as cursor.

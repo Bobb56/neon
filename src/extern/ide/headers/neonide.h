@@ -30,7 +30,11 @@
 #include "libmalloc.h"
 
 
-#define NEONIDE_VERSION_STRING "NeonIDE 1.0"
+#define NEONIDE_VERSION_STRING          "NeonIDE 1.0"
+
+#define NEON_PLAIN_TEXT_HEADER          "#NEON"
+#define NEON_DEFAULT_FILE_HEADER        "NEON\x00"
+#define NEON_DEFAULT_FILE_HEADER_SIZE   5
 
 void initialize_void(struct estate *state);
 void initialize_editor(struct estate* state);
