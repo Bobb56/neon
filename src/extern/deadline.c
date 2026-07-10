@@ -42,6 +42,9 @@
 
 #define NEON_SOURCE_ID 24
 
+#include "../headers/constants.h"
+#ifdef LINUX
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -503,3 +506,6 @@ readline_exit:
     putchar('\n');
     return buffer;
 }
+
+
+#endif

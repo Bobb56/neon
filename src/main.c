@@ -9,6 +9,8 @@
 
 #ifdef TI_EZ80
 #include "headers/errors.h"
+#include "extern/ide/headers/home.h"
+#include "extern/ide/headers/font.h"
 #endif
 
 /*
@@ -40,6 +42,10 @@ Table des fichiers source :
 24 | deadline.c
 25 | nativefunctions.c
 26 | interpcontext.c
+
+
+100 | ide/console.c
+
 ---------------------------
 
 CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
@@ -111,7 +117,49 @@ Choses en plus à ajouter dans la doc :
 */
 
 
+#ifdef TI_EZ80
+int main(void) {
+    kb_EnableOnLatch();
+    gfx_Begin();
+    set_neon_palette();
+    fontlib_SetFont(font, 0);
 
+	home_menu();
+
+    gfx_End();
+    kb_DisableOnLatch();
+    return 0;
+}
+#else
+int main(int argc, char* argv[]) {
+    int error = neonInit();
+    if (error < 0)
+        return 0;
+
+    // définition de la liste des arguments
+    NeObj l = neo_list_create(0);
+    // ajout des arguments dans le tableau contenant les arguments du programme
+    for (int i = 2 ; i < argc ; i++)
+        neo_list_append(l, neo_str_create(strdup(argv[i])));
+
+    variable_append(global_env, "__args__", l);
+
+    if (argc >= 2) {
+        execFile(argv[1]);
+    }
+    else if (launcher(LAUNCHER_NAME)) {
+        execFile(LAUNCHER_NAME);
+    }
+    else {
+        run_interactive();
+    }
+    neonExit();
+    return 0;
+}
+
+#endif
+
+/*
 #ifdef TI_EZ80
 int main(void) {
 #else
@@ -159,3 +207,4 @@ int main (int argc, char* argv[]) {
     neonExit();
     return 0;
 }
+*/

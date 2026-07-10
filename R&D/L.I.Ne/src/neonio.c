@@ -18,7 +18,7 @@
 #if defined(TI_EZ80)
 #include <ti/vars.h>
 #include <fileioc.h>
-#include "extern/nio_ce/headers/nspireio.h"
+#include "extern/ide/console.h"
 #include "headers/graphicmodule.h"
 #else
 #include <stdio.h>

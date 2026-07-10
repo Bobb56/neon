@@ -148,17 +148,17 @@ NeObj getTextWidth(NeList* args) {
         return neo_none_create();
     }
 
-    if (NEO_TYPE(c->data->tab[0]) != TYPE_STRING ||
-        NEO_TYPE(c->data->tab[1]) != TYPE_INTEGER ||
-        NEO_TYPE(c->data->tab[2]) != TYPE_INTEGER ||
-        NEO_TYPE(c->data->tab[3]) != TYPE_INTEGER ||
-        NEO_TYPE(c->data->tab[4]) != TYPE_INTEGER ||
-        NEO_TYPE(c->data->tab[5]) != TYPE_INTEGER) {
+    if (NEO_TYPE(c->data.tab[0]) != TYPE_STRING ||
+        NEO_TYPE(c->data.tab[1]) != TYPE_INTEGER ||
+        NEO_TYPE(c->data.tab[2]) != TYPE_INTEGER ||
+        NEO_TYPE(c->data.tab[3]) != TYPE_INTEGER ||
+        NEO_TYPE(c->data.tab[4]) != TYPE_INTEGER ||
+        NEO_TYPE(c->data.tab[5]) != TYPE_INTEGER) {
             neon_fail(117, neo_new_str_create("Text"), neo_new_str_create("Text"));
             return neo_none_create();
     }
-    char* text = neo_to_string(c->data->tab[0]);
-    intptr_t size = neo_to_integer(c->data->tab[5]) - 1;
+    char* text = neo_to_string(c->data.tab[0]);
+    intptr_t size = neo_to_integer(c->data.tab[5]) - 1;
 
     intptr_t x_width = size/2;
     intptr_t y_width = size - x_width;
@@ -186,7 +186,7 @@ void draw_obj(NeObj obj) {
     // on dessine directement l'objet
     if (NEO_TYPE(obj) == TYPE_CONTAINER) {
         Container* c = neo_to_container(obj);
-        NeList* args = c->data;
+        NeList* args = &c->data;
 
         if (c->type == global_env->graphic_containers.Circle) { // draws a circle
             if (!is_number(ARG(0)) ||
@@ -316,14 +316,14 @@ void draw_obj(NeObj obj) {
                 Container* point = neo_to_container(points->tab[i]);
 
                 if (point->type != global_env->graphic_containers.Point ||
-                    !is_number(point->data->tab[0]) ||
-                    !is_number(point->data->tab[1])) {
+                    !is_number(point->data.tab[0]) ||
+                    !is_number(point->data.tab[1])) {
                     neon_fail(117, neo_new_str_create("Polygon"), neo_new_str_create("Polygon"));
                     return;
                 }
 
-                points_arr[2*i] = neo_to_integer(point->data->tab[0]);
-                points_arr[2*i+1] = neo_to_integer(point->data->tab[1]);
+                points_arr[2*i] = neo_to_integer(point->data.tab[0]);
+                points_arr[2*i+1] = neo_to_integer(point->data.tab[1]);
             }
 
             gfx_SetColor(color);
@@ -368,7 +368,7 @@ void draw_obj(NeObj obj) {
                 custom_floodfill(x, y, color);
         }
         else {
-            draw_nelist(c->data);
+            draw_nelist(&c->data);
         }
     }
     else if (NEO_TYPE(obj) == TYPE_USERFUNC) {

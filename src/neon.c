@@ -177,7 +177,6 @@ NeonEnv* NeonEnv_init(void) {
     defineVariables(env);
 
     #ifdef TI_EZ80
-    nio_init(&env->console, NIO_MAX_COLS, NIO_MAX_ROWS, 0, 0, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK, true);
     env->text_transparent_color = 255;
     #endif
     
@@ -188,7 +187,6 @@ NeonEnv* NeonEnv_set(NeonEnv* new_env) {
     NeonEnv* global_env_sov = global_env;
     global_env = new_env;
     #ifdef TI_EZ80
-    nio_set_default(&global_env->console);
     gfx_SetTextTransparentColor(global_env->text_transparent_color);
     #endif
     return global_env_sov;
@@ -228,10 +226,6 @@ void NeonEnv_destroy(NeonEnv* env) {
     #ifdef LINUX
     strlist_destroy(env->history, true);
     #endif
-    
-    #ifdef TI_EZ80
-    nio_free(&global_env->console);
-    #endif
 
     neon_free(env);
 }
@@ -242,7 +236,6 @@ void NeonEnv_destroy(NeonEnv* env) {
 int neonInit(void)
 {
     srand(time(NULL));
-    
 
     #ifdef LINUX
         signal(SIGINT, handle_signal);
@@ -251,12 +244,6 @@ int neonInit(void)
     
     #ifdef WINDOWS
         SetConsoleCtrlHandler(ctrlHandler, TRUE);
-    #endif
-
-    #ifdef TI_EZ80
-        kb_EnableOnLatch();
-        gfx_Begin();
-        set_neon_palette();
     #endif
 
     // Initialisation de l'allocateur secondaire
@@ -275,10 +262,6 @@ int neonInit(void)
 void neonExit(void)
 {
     NeonEnv_destroy(global_env);
-    #ifdef TI_EZ80
-    gfx_End();
-    kb_DisableOnLatch();
-    #endif
 
     // Nettoyage de l'allocateur secondaire
     side_memory_exit();
@@ -317,7 +300,7 @@ void printRes(NeObj res)
 void startMessage(void)
 {
     setColor(BLUE);
-    printString("                  Welcome to Neon");
+    printString("            Welcome to Neon");
 
     newLine();
 
@@ -331,8 +314,6 @@ void startMessage(void)
 
     printString(", compiled on ");
     printString(__TIMESTAMP__);
-    /*printString(" by GCC ");
-    printString(__VERSION__);*/
     newLine();
     
     /*printString("Discuss on the official Discord server : ");

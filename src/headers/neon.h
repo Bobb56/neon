@@ -8,7 +8,6 @@
 #include "processcycle.h"
 
 #ifdef TI_EZ80
-#include "extern/nio_ce/headers/nspireio.h"
 #include "graphicmodule.h"
 #endif
 
@@ -115,9 +114,7 @@ typedef struct NeonEnv {
     // dans ce cycle
     ProcessCycle* process_cycle;
 
-    // la console de nio_ce
     #ifdef TI_EZ80
-    nio_console console;
     uint8_t text_transparent_color;
 
     // cette variable permet d'associer à chaque type de figure son indice

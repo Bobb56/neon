@@ -1,5 +1,3 @@
-#include "headers/neobj.h"
-#include "headers/syntaxtrees.h"
 #define NEON_SOURCE_ID 17
 
 #include <stdbool.h>
@@ -8,6 +6,7 @@
 #include <string.h>
 
 #include "headers/constants.h"
+#include "headers/neobj.h"
 #include "headers/dynarrays.h"
 #include "headers/neon.h"
 #include "headers/objects.h"
@@ -22,6 +21,10 @@
 #include "headers/contexts.h"
 #include "headers/nativefunctions.h"
 #include "headers/neonio.h"
+
+#ifdef TI_EZ80
+#include <keypadc.h>
+#endif
 
 
 void update__name__(char* name)

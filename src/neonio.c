@@ -18,7 +18,7 @@
 #if defined(TI_EZ80)
 #include <ti/vars.h>
 #include <fileioc.h>
-#include "extern/nio_ce/headers/nspireio.h"
+#include "extern/ide/headers/console.h"
 #include "headers/graphicmodule.h"
 #else
 #include <stdio.h>
@@ -41,11 +41,11 @@
         ti_Close(stream);
     }
 
-    void NeStream_write(NeStream stream, void* data, int size) {
+    void NeStream_write(NeStream stream, void* data, size_t size) {
         ti_Write(data, 1, size, stream);
     }
 
-    bool NeStream_read(NeStream stream, void* data, int size) {
+    bool NeStream_read(NeStream stream, void* data, size_t size) {
         int count = ti_Read(data, 1, size, stream);
         return count == size;
     }
@@ -153,43 +153,7 @@
 
     char* input(char *text)
     {
-        char* var = neon_malloc(501*sizeof(char)); // allocation d'un pointeur pour l'entrée de l'utilisateur (+1 char pour le caractère nul)
-        
-        if (var == NULL) {
-            neon_fail(12, NO_ARGS);
-            return NULL;
-        }
-        
-        memset(var, (char)0, 501*sizeof(char)); //initialise le pointeur à '\0' partout
-        //on effectue l'entrée
-        printString(text);
-    
-        if (!nio_getsn(var, 500))
-        {
-            neon_fail(1, NO_ARGS);
-            return NULL;
-        }
-
-        // crée un deuxième pointeur pour y copier le contenu de l'entrée de la vraie longueur
-        char* newVar = neon_malloc(sizeof(char)*(strlen(var)+1));//réserve une place de la longueur de l'entrée + 1 pour le caractère nul
-
-        if (newVar == NULL) {
-            neon_fail(12, NO_ARGS);
-            neon_free(var);
-            return NULL;
-        }
-    
-        void* ptrtest = strcpy(newVar, var); //copie de var dans newVar
-    
-        neon_free(var);
-    
-        if (ptrtest == NULL) {
-            neon_free(newVar);
-            neon_fail(66, NO_ARGS);
-            return NULL;
-        }
-    
-        return newVar;
+        return neonide_input(text);
     }
 
 
@@ -220,14 +184,14 @@
     
     
     void flush(void) {
-        nio_fflush(&global_env->console);
+        neonide_flush();
     }
     
     
     
     void printString(char* s)
     {
-        nio_fputs(s, &global_env->console);
+        neonide_print_string(s);
     }
     
     
@@ -235,26 +199,26 @@
     void setColor(unsigned char color)
     {
         if (color == BLUE)
-            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_BLUE);
+            neonide_set_color(NEON_PALETTE_BLUE);
         else if (color == GREEN)
-            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_GREEN);
+            neonide_set_color(NEON_PALETTE_GREEN);
         else if (color == RED)
-            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_RED);
+            neonide_set_color(NEON_PALETTE_RED);
         else if (color == PURPLE)
-            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_PURPLE);
+            neonide_set_color(NEON_PALETTE_PURPLE);
         else if (color == DEFAULT)
-            nio_color(&global_env->console, NEON_PALETTE_WHITE, NEON_PALETTE_BLACK);
+            neonide_set_color(NEON_PALETTE_BLACK);
     }
     
     
     void clearConsole(void)
     {
-        nio_clear(&global_env->console);
+        neonide_clear();
     }
 
     
 
-#else //------------------------------------------------- PASSAGE A TI_EZ80 ---------------------------------------------
+#else //---------------------------- PASSAGE A TI_EZ80 ----------------------------
 
     NeStream NeStream_open(char* name, char* mode) {
         FILE* stream = fopen(name, mode);
