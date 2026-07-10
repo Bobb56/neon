@@ -9,6 +9,10 @@
 
 /*
 TODO:
+- Fix RAM reset when launching a big program
+- Handle archived scripts
+- Add the ability of running a program directly from the editor
+- Add the ability to edit a program from the console that runs it
 - KEY_CLEAR -> KEY_STO
 - Update is_control
 - Make an inventory of all key bindings and keep/change some
