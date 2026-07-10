@@ -14,6 +14,7 @@ TODO:
 
 #include "headers/neonide.h"
 #include "headers/home.h"
+#include "headers/libmalloc.h"
 #include "headers/state.h"
 #include "headers/console.h"
 #include <stdlib.h>
@@ -76,8 +77,8 @@ static bool initialize(struct estate *state)
 void initialize_editor(struct estate* state) {
 	state->max_buffer_size = 16384;
 	state->max_lines = 10000;
-	state->text = malloc(state->max_buffer_size);
-	state->lines = malloc(state->max_lines * sizeof(int24_t));
+	state->text = malloc_noheap(state->max_buffer_size);
+	state->lines = malloc_noheap(state->max_lines * sizeof(int16_t));
 	initialize(state);
 }
 
@@ -86,7 +87,7 @@ void initialize_console(struct estate* state) {
 	state->max_buffer_size = NUM_LINES * NUM_COLS * 2;
 	state->max_lines = NUM_LINES * 2;
 	state->text = malloc(state->max_buffer_size);
-	state->lines = malloc(state->max_lines * sizeof(int24_t));
+	state->lines = malloc(state->max_lines * sizeof(int16_t));
 	initialize(state);
 }
 
@@ -98,7 +99,11 @@ void initialize_void(struct estate* state) {
 	initialize(state);
 }
 
-void deinit_state(struct estate* state) {
+void deinit_console(struct estate* state) {
 	free(state->lines);
 	free(state->text);
+}
+
+void deinit_editor(struct estate* state) {
+	free_all_noheap();
 }

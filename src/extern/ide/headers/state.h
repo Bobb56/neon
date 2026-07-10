@@ -114,7 +114,7 @@ struct estate {
 	//Gonna make it 64Kb.
 	char* text;
 	//Line len buffer
-	int24_t* lines;
+	int16_t* lines;
 
 	// left position of history content
 	int24_t history_left[NUM_LINES * 2];

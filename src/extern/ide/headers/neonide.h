@@ -35,7 +35,8 @@
 void initialize_void(struct estate *state);
 void initialize_editor(struct estate* state);
 void initialize_console(struct estate* state);
-void deinit_state(struct estate* state);
+void deinit_console(struct estate* state);
+void deinit_editor(struct estate* state);
 
 /*
  * Parse the NEIDERC file, if it exists, and do stuff.

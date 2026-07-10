@@ -1258,16 +1258,11 @@ beginning:
 			fontlib_SetTransparency(true);
 		}
 
-		if (state->text[i] == 0x1b) {
-			if (i < state->max_buffer_size - 1)
-				text_color = state->text[i+1];
-			i+=2;
-		}
-		else {
-			fontlib_DrawGlyph(state->text[i]);
-			i+=1;
-			col++;
-		}
+
+		fontlib_DrawGlyph(state->text[i]);
+		i+=1;
+		col++;
+
 		if (col >= NUM_COLS) {
 			col = 0;
 			row++;
@@ -1454,7 +1449,7 @@ bool show_open_dialog(struct estate *state)
 			if (state->saved || show_unsaved_dialog(state))
 			{
 				strncpy(state->filename, (char *)arr + 24 * index, 8);
-				deinit_state(state);
+				deinit_editor(state);
 				initialize_editor(state);
 				parseRC(state);
 				load_text(state);

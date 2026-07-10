@@ -688,6 +688,6 @@ void start_using_console(char* name)
 	run_interactive();
 	neonExit();
 
-	deinit_state(&state);
+	deinit_console(&state);
 	global_console_state = NULL;
 }

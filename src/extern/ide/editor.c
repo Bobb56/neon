@@ -628,7 +628,7 @@ void launch_editor(char* filename) {
 	load_text(&state);
 	editor_mainloop(&state);
 
-	deinit_state(&state);
+	deinit_editor(&state);
 }
 
 void editor_mainloop(struct estate *state)

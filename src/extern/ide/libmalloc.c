@@ -13,19 +13,26 @@
 #include <fontlibc.h>
 
 #include "headers/libmalloc.h"
+
+static int24_t currentsize;
+static int24_t maxsize;
+static void* mem = NULL;
+
 void* malloc_noheap(size_t size){
-	static int24_t currentsize;
-	static int24_t maxsize;
-	static void* mem = 0;
-	if(mem==0){
-		maxsize=os_MemChk(&mem);
-		currentsize=0;
+	if (mem == NULL){
+		maxsize = os_MemChk(&mem);
+		currentsize = 0;
 	}
-	if(currentsize >= maxsize){
+
+	if (currentsize >= maxsize) {
 		return NULL;
 	}
-	void* ret = (char*)mem + currentsize;
-	currentsize+=size;
-	return ret;
 
+	void* ret = (char*)mem + currentsize;
+	currentsize += size;
+	return ret;
+}
+
+void free_all_noheap(void) {
+	mem = NULL;
 }

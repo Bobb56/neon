@@ -1,3 +1,6 @@
 [submodule "app_tools"]
 	path = app_tools
 	url = https://github.com/CE-Programming/app_tools.git
+[submodule "build/ti_ez80/app_tools"]
+	path = build/ti_ez80/app_tools
+	url = https://github.com/CE-Programming/app_tools.git
