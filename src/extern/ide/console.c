@@ -202,6 +202,7 @@ beginning:
 
 void draw_console(struct estate *state)
 {
+	gfx_SetDrawBuffer();
 	// Moves scr_offset on the beginning of the line of the cursor
 	// Works in the use cases but could not work in all situations
 	/*if (state->scr_offset >= state->c1 && state->scr_offset <= state->c2) {
@@ -275,8 +276,33 @@ void draw_console(struct estate *state)
 	fontlib_SetForegroundColor(state->text_color);
 	fontlib_SetBackgroundColor(state->text_highlight_color);
 	fontlib_SetTransparency(true);
-	//fontlib_DrawInt(state->selection_anchor, 5);
+	gfx_SwapDraw();
 }
+
+
+
+void initialize_console(struct estate* state, char* name) {
+	state->max_buffer_size = NUM_LINES * NUM_COLS * 2;
+	state->max_lines = NUM_LINES * 2;
+	state->text = malloc(state->max_buffer_size);
+	state->lines = malloc(state->max_lines * sizeof(int16_t));
+	initialize(state);
+
+	if (name != NULL) {
+		state->running_program = true;
+		strcpy(state->running_program_name, name);
+	}
+
+	draw_console(state);
+}
+
+
+void deinit_console(struct estate* state) {
+	free(state->lines);
+	free(state->text);
+}
+
+
 
 // Removes `nb_lines` lines of text on top of the console buffer
 // This operation is invisible to the screen
@@ -402,15 +428,12 @@ void history_navigate(struct estate* state, int prompt_start) {
 		}
 
 		draw_console(state);
-		gfx_SwapDraw();
-
 		k = ngetchx();
 	}
 }
 
 void neonide_flush(void) {
 	draw_console(global_console_state);
-	gfx_SwapDraw();
 }
 
 
@@ -539,7 +562,6 @@ char* neonide_input(char* prompt) {
 
     while (true) {
 		draw_console(state);
-		gfx_SwapDraw();
 
         k = ngetchx_xy(state, state->cx, state->cy);
 
@@ -650,17 +672,13 @@ char* neonide_input(char* prompt) {
                     break;
                 case KEY_F2:
 					draw_console(state);
-					gfx_SwapDraw();
 					show_chars_dialog(state, draw_console);
 					draw_console(state);
-					gfx_SwapDraw();
                     break;
                 case KEY_F3:
 					draw_console(state);
-					gfx_SwapDraw();
 					show_console_tools_dialog(state);
 					draw_console(state);
-					gfx_SwapDraw();
                     break;
                 case KEY_F5:
                     break;
@@ -675,42 +693,37 @@ char* neonide_input(char* prompt) {
 
 
 
-void start_console(void)
+void start_console(struct estate* state)
 {
-	struct estate state;
-	// Initialize the global console
-	global_console_state = &state;
-	initialize_console(&state);
+	global_console_state = state;
+	initialize_console(state, NULL);
 
     neonInit();
 	run_interactive();
 	neonExit();
 
-	deinit_console(&state);
+	gfx_SetDrawBuffer();
+	deinit_console(state);
 	global_console_state = NULL;
 }
 
 
-void run_neon_program(char* name) {
-	struct estate state;
+void run_neon_program(struct estate* state, char* name) {
 	// Initialize the global console
-	global_console_state = &state;
-	initialize_console(&state);
-
-	state.running_program = true;
-	strcpy(state.running_program_name, name);
+	global_console_state = state;
+	initialize_console(state, name);
 
     neonInit();
-
 	NeObj l = neo_list_create(0);
 	variable_append(global_env, "__args__", l);
-	
+
 	execFile(name);
 
 	terminal();
 
 	neonExit();
 
-	deinit_console(&state);
+	gfx_SetDrawBuffer();
+	deinit_console(state);
 	global_console_state = NULL;
 }

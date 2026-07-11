@@ -26,7 +26,7 @@ int cmp(const void *a, const void *b)
     return strcmp(*sa, *sb);
 }
 
-int get_files(char* files[]) {
+int get_files(char** files) {
     int nb_files = 0;
 
     char* var_name;
@@ -145,12 +145,10 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
 void home_menu(void) {
     gfx_BlitScreen(); // copy the screen to the buffer
     gfx_SetDrawBuffer(); // and then draw on the buffer
+    static struct estate state;
+    initialize_void(&state);
 
-    struct estate state_struct;
-    struct estate* state = &state_struct;
-    initialize_void(state);
-
-    char* files[128];
+    static char* files[128];
     int nb_files;
 
 
@@ -176,15 +174,15 @@ void home_menu(void) {
             }
         }
 
-        draw_home_menu(state, files, nb_files, cursor_position, start_disp_index);
+        draw_home_menu(&state, files, nb_files, cursor_position, start_disp_index);
         gfx_SwapDraw();
 
         key = ngetchx();
 
         if (key == KEY_F1) {
-            draw_home_menu(state, files, nb_files, cursor_position, start_disp_index);
+            draw_home_menu(&state, files, nb_files, cursor_position, start_disp_index);
             gfx_SwapDraw();
-            char* name = show_create_dialog(state);
+            char* name = show_create_dialog(&state);
             if (name != NULL) {
                 ti_var_t var = ti_Open(name, "w");
                 if (var != 0) {
@@ -195,9 +193,9 @@ void home_menu(void) {
             }
         }
         else if (key == KEY_F3) {
-            draw_home_menu(state, files, nb_files, cursor_position, start_disp_index);
+            draw_home_menu(&state, files, nb_files, cursor_position, start_disp_index);
             gfx_SwapDraw();
-            start_console();
+            start_console(&state);
         }
         else if (nb_files > 0) {
             if (key == KEY_DOWN || key == KEY_RIGHT) { // next item
@@ -231,16 +229,16 @@ void home_menu(void) {
                 }
             }
             else if (key == KEY_F2 || key == '\n') {
-                run_neon_program(files[start_disp_index + cursor_position]);
+                run_neon_program(&state, files[start_disp_index + cursor_position]);
                 reload_files = true;
             }
             else if (key == KEY_F4) {
-                launch_editor(files[start_disp_index + cursor_position]);
+                launch_editor(&state, files[start_disp_index + cursor_position]);
             }
             else if (key == KEY_F5) {
-                draw_home_menu(state, files, nb_files, cursor_position, start_disp_index);
+                draw_home_menu(&state, files, nb_files, cursor_position, start_disp_index);
                 gfx_SwapDraw();
-                show_file_menu_dialog(state, files[start_disp_index + cursor_position]);
+                show_file_menu_dialog(&state, files[start_disp_index + cursor_position]);
                 reload_files = true;
             }
         }

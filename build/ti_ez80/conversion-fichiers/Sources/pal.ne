@@ -1,5 +1,4 @@
-#NEON
-initGraphics()
+init(Graphics)
 
 for (y, 0, 16) do
     for (x, 0, 16) do

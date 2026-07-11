@@ -550,6 +550,24 @@ void cursor_to_right_word_select(struct estate *state)
 }
 
 
+void initialize_editor(struct estate* state) {
+	state->max_buffer_size = 16384;
+	state->max_lines = 10000;
+	//state->text = malloc_noheap(state->max_buffer_size);
+	//state->lines = malloc_noheap(state->max_lines * sizeof(int16_t));
+	state->text = malloc(state->max_buffer_size);
+	state->lines = malloc(state->max_lines * sizeof(int16_t));
+	initialize(state);
+}
+
+
+void deinit_editor(struct estate* state) {
+	//free_all_noheap();
+	free(state->lines);
+	free(state->text);
+}
+
+
 void draw_editor(struct estate *state)
 {
 	draw_text_area(state);
@@ -612,17 +630,16 @@ void draw_editor(struct estate *state)
 	fontlib_SetTransparency(true);
 }
 
-void launch_editor(char* filename) {
-	struct estate state;
-	initialize_editor(&state);
+void launch_editor(struct estate* state, char* filename) {
+	initialize_editor(state);
 	
-	strcpy(state.filename, filename);
-	state.named = true;
+	strcpy(state->filename, filename);
+	state->named = true;
 
-	load_text(&state);
-	editor_mainloop(&state);
+	load_text(state);
+	editor_mainloop(state);
 
-	deinit_editor(&state);
+	deinit_editor(state);
 }
 
 void editor_mainloop(struct estate *state)

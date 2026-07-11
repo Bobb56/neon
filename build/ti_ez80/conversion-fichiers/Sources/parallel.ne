@@ -1,4 +1,3 @@
-#NEON
 setAtomicTime(1)
 
 l = []

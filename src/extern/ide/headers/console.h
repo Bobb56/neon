@@ -4,8 +4,8 @@
 #include "state.h"
 
 int console_handle_key(struct estate *state, short k);
-void start_console(void);
-void run_neon_program(char* name);
+void start_console(struct estate*);
+void run_neon_program(struct estate*, char* name);
 
 void neonide_print_string(char* string);
 char* neonide_input(char* prompt);

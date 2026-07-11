@@ -1,6 +1,5 @@
-#NEON
-# This script draws a Mandelbrot fractal set
-initGraphics()
+#This script draws a Mandelbrot fractal set
+init(Graphics)
 
 function cmplx_mult(z1, z2) do
   return (Cmplx(re: z1>>re*z2>>re - z1>>im*z2>>im, im: z1>>re*z2>>im + z1>>im*z2>>re))
@@ -15,10 +14,11 @@ function cmplx_abs(z) do
 end
 
 
-function mandelbrot(N_iteration := 15, res := 2) do
+function mandelbrot(N_iteration := 15, res := 2, x1, y1, x2, y2) do
+  local(pixel, z, c, i)
   pixel = Rect(x:0, y:0, width:res, height:res, color:0, filled:True)
-  for (x, 0, 320, res) do
-    for (y, 0, 240, res) do
+  for (x, x1, x2, res) do
+    for (y, y1, y2, res) do
       z = Cmplx(re:0, im:0)
       c = Cmplx(re:3.5*x/319-2.5, im:-2.5*y/239+1.25)
       i = 0
@@ -33,11 +33,13 @@ function mandelbrot(N_iteration := 15, res := 2) do
       pixel>>y = y
       draw(pixel)
       
-      if (getKey() == 15) then exit() end
     end
   end
 end
 
-mandelbrot(20, 1)
+parallel mandelbrot(20, 4, 0, 0, 160, 120)
+parallel mandelbrot(20, 4, 160, 0, 320, 120)
+parallel mandelbrot(20, 4, 0, 120, 160, 240)
+parallel mandelbrot(20, 4, 160, 120, 320, 240)
 
 await(getKey() == 15)

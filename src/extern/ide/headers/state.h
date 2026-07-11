@@ -108,10 +108,7 @@ struct estate {
 	//0: inactive, 1: lower case, 2: uppercase
 	uint8_t alpha_state;
 
-	//These are best put at the end of the struct
 	//Text buffer
-	//char text[16385];
-	//Gonna make it 64Kb.
 	char* text;
 	//Line len buffer
 	int16_t* lines;
@@ -121,8 +118,6 @@ struct estate {
 	int24_t history_right[NUM_LINES * 2];
 	uint8_t history_length;
 
-	//Data in the clipboard
-	//char clipboard_data[10000];
 	///////////////////////////Random Editor Settings///////////////////////////
 	//Default is false, if true, files will be archived after writes. Does nothing on BOS.
 	bool autoarchive;

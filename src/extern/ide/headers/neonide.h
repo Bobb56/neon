@@ -36,11 +36,9 @@
 #define NEON_DEFAULT_FILE_HEADER        "NEON\x00"
 #define NEON_DEFAULT_FILE_HEADER_SIZE   5
 
+bool initialize(struct estate *state);
 void initialize_void(struct estate *state);
-void initialize_editor(struct estate* state);
-void initialize_console(struct estate* state);
-void deinit_console(struct estate* state);
-void deinit_editor(struct estate* state);
+
 
 /*
  * Parse the NEIDERC file, if it exists, and do stuff.

@@ -14,7 +14,6 @@
 #include "headers/strings.h"
 #include "headers/errors.h"
 
-
 #if defined(TI_EZ80)
 #include <ti/vars.h>
 #include <fileioc.h>

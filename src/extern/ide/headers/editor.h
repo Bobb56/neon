@@ -31,7 +31,7 @@ void cursor_down_select(struct estate *);
 void cursor_left_select(struct estate *);
 void cursor_right_select(struct estate *);
 
-void launch_editor(char* filename);
+void launch_editor(struct estate* state, char* filename);
 
 /*
  * Event loop

@@ -9,7 +9,9 @@
 
 /*
 TODO:
-- Fix RAM reset when launching a big program
+- Stack overflow avec les programmes un peu gros sur TI_EZ80 (apples.ne)
+- relaunch.ne sur TI_EZ80: boucle infinie ou crash
+- RAM reset quand on lance launcher dans LAUNCHER dans l'application
 - Handle archived scripts
 - Add the ability of running a program directly from the editor
 - Add the ability to edit a program from the console that runs it
@@ -26,7 +28,7 @@ TODO:
 #include <stdlib.h>
 
 
-static bool initialize(struct estate *state)
+bool initialize(struct estate *state)
 {
     memset(state->search_buffer,0,255);
 	//Default is false, if true, files will be archived after writes. Does nothing on BOS.
@@ -81,24 +83,6 @@ static bool initialize(struct estate *state)
 	return 0;
 }
 
-void initialize_editor(struct estate* state) {
-	state->max_buffer_size = 16384;
-	state->max_lines = 10000;
-	//state->text = malloc_noheap(state->max_buffer_size);
-	//state->lines = malloc_noheap(state->max_lines * sizeof(int16_t));
-	state->text = malloc(state->max_buffer_size);
-	state->lines = malloc(state->max_lines * sizeof(int16_t));
-	initialize(state);
-}
-
-
-void initialize_console(struct estate* state) {
-	state->max_buffer_size = NUM_LINES * NUM_COLS * 2;
-	state->max_lines = NUM_LINES * 2;
-	state->text = malloc(state->max_buffer_size);
-	state->lines = malloc(state->max_lines * sizeof(int16_t));
-	initialize(state);
-}
 
 void initialize_void(struct estate* state) {
 	state->lines = NULL;
@@ -106,15 +90,4 @@ void initialize_void(struct estate* state) {
 	state->max_lines = 0;
 	state->max_buffer_size = 0;
 	initialize(state);
-}
-
-void deinit_console(struct estate* state) {
-	free(state->lines);
-	free(state->text);
-}
-
-void deinit_editor(struct estate* state) {
-	//free_all_noheap();
-	free(state->lines);
-	free(state->text);
 }

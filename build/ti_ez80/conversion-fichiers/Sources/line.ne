@@ -1,5 +1,4 @@
-#NEON
-initGraphics()
+init(Graphics)
 
 ori=0
 

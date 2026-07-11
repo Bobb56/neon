@@ -465,12 +465,12 @@ void execFile(char* filename) {
     global_env->FILENAME = strdup(filename);
 
     TreeBuffer tb = createSyntaxTree(program, true);
-    
+
     if_error {
         neon_free(program);
         goto handle_error;
     }
-
+    
     tb_exec(&tb);
     
     if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {

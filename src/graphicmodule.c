@@ -427,11 +427,14 @@ void set_neon_palette(void) {
     }
 }
 
+
 /*
 Affiche un menu pour laisser à l'utilisateur choisir un des éléments de la liste
 Renvoie l'élément dans la liste ou None si l'utilisateur a quitté
 */
 NeObj menu(NeList* args) {
+    gfx_SetDrawBuffer();
+
     gfx_SetTextTransparentColor(1);
     gfx_SetTextScale(1, 1);
 
@@ -510,9 +513,7 @@ NeObj menu(NeList* args) {
 
             // affichage du menu
             if (refresh) {
-                gfx_BlitScreen(); // copy the screen to the buffer
-                gfx_SetDrawBuffer(); // and then draw on the buffer
-
+                gfx_SetDrawBuffer();
                 refresh = false;
                 int last_index;
                 if (elements->len < vertical_limit)
@@ -552,6 +553,7 @@ NeObj menu(NeList* args) {
     gfx_SetTextTransparentColor(global_env->text_transparent_color);
     return neo_none_create();
 }
+
 
 
 

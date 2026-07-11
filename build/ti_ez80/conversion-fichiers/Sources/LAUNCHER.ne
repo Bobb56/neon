@@ -1,5 +1,4 @@
-#NEON Neon launcher 1.0
-init("graphics")
+init(Graphics)
 
 prefixes = [
     "#NEON",

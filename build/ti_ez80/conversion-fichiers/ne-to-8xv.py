@@ -35,14 +35,14 @@ fichier.close()
 
 txt = enlever(txt)
 
-fichier = open("out.ne", 'w')
+fichier = open(".out.ne", 'w')
 fichier.write(txt)
 fichier.close()
 
 
 
 # les 0D
-fichier = open("out.ne", "rb")
+fichier = open(".out.ne", "rb")
 data = list(fichier.read())
 data = bytearray(data)
 while data.count(ord('\r')) > 0:
@@ -51,7 +51,9 @@ fichier.close()
 
 
 
-fichier = open("out.ne", "wb+")
+fichier = open(".out.ne", "wb+")
+# Écrit le header NEON\x00
+fichier.write(bytes("NEON\x00", "ascii"))
 fichier.write(data)
 fichier.close()
 
@@ -63,7 +65,7 @@ else:
     exec_file = "\\.convbin.exe"
 
 # Commande à exécuter
-commande = [exec_file, "-i", "out.ne", "-o", sortie + ".8xv", "-j", "bin", "-p", "zx7", "-k", "8xv", "-n", sortie]
+commande = [exec_file, "-i", ".out.ne", "-o", sortie + ".8xv", "-j", "bin", "-p", "zx7", "-k", "8xv", "-n", sortie]
 
 try:
     # Exécute la commande
@@ -75,4 +77,4 @@ except FileNotFoundError:
     print("Le programme 'convbin' n'a pas été trouvé. Assurez-vous qu'il est installé et que son chemin d'accès est correct.")
 
 
-os.remove("out.ne")
+os.remove(".out.ne")
