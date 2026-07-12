@@ -23,6 +23,20 @@ files = [
     "contexts.c",
     "serialization.c",
     "nativefunctions.c",
+    "exec.c",
+    "eval.c",
+    "extern/deadline.c",
+    "extern/ide/clipboard.c",
+    "extern/ide/console.c",
+    "extern/ide/dialogs.c",
+    "extern/ide/editor.c",
+    "extern/ide/find.c",
+    "extern/ide/font.c",
+    "extern/ide/home.c",
+    "extern/ide/libmalloc.c",
+    "extern/ide/neonide.c",
+    "extern/ide/primitives.c",
+    "extern/ide/tigcclib.c",
     
     "headers/errors.h",
     "headers/standardmodule.h",
@@ -43,13 +57,26 @@ files = [
     "headers/sidememory.h",
     "headers/contexts.h",
     "headers/serialization.h",
-    "headers/nativefunctions.h"
+    "headers/nativefunctions.h",
+    "headers/exec.h",
+    "headers/eval.h",
+    "extern/deadline.h",
+    "extern/ide/headers/clipboard.h",
+    "extern/ide/headers/console.h",
+    "extern/ide/headers/dialogs.h",
+    "extern/ide/headers/editor.h",
+    "extern/ide/headers/find.h",
+    "extern/ide/headers/font.h",
+    "extern/ide/headers/gfx.h",
+    "extern/ide/headers/home.h",
+    "extern/ide/headers/libmalloc.h",
+    "extern/ide/headers/neonide.h",
+    "extern/ide/headers/primitives.h",
+    "extern/ide/headers/state.h",
+    "extern/ide/headers/tigcclib.h"
 ]
 
-other_files = [
-    "extern/deadline.c",
-    "extern/deadline.h"
-]
+
 
 function print_number(n) do
     n = str(n)
@@ -81,4 +108,4 @@ end
 
 
 
-print("Le projet Neon compte <> lignes de code sans deadline, mais <> lignes en tout.".format(print_number(nbLines(files)), print_number(nbLines(files + other_files))))
+print("Le projet Neon compte <> lignes de code en tout.".format(print_number(nbLines(files))))

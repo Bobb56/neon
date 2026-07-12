@@ -467,7 +467,6 @@ void execFile(char* filename) {
     TreeBuffer tb = createSyntaxTree(program, true);
 
     if_error {
-        neon_free(program);
         goto handle_error;
     }
     
