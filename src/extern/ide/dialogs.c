@@ -278,7 +278,7 @@ uint8_t show_color_selection_dialog(struct estate *state, uint8_t current_value)
 		gfx_Rectangle_NoClip(32 + 8 * (index % 32), 72 + 8 * (index >> 5), 8, 8);
 		gfx_Rectangle_NoClip(31 + 8 * (index % 32), 71 + 8 * (index >> 5), 10, 10);
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 		if (k == KEY_CLEAR)
 		{
 			return current_value;
@@ -354,7 +354,7 @@ void show_editor_settings_dialog(struct estate *state)
 		fontlib_DrawString("by editing NEIDERC");
 		//~~//~~//~~//~~//~~//~~//~~//~~//~~//~~//
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 		if (k == KEY_DOWN)
 		{
 			index++;
@@ -414,7 +414,7 @@ void show_keybind_dialog(struct estate *state)
 	fontlib_SetCursorPosition(51, 86);
 	fontlib_DrawString("See docs for more info.");
 	gfx_BlitBuffer();
-	ngetchx();
+	ngetchx(state);
 }
 
 void show_appearance_settings_dialog(struct estate *state)
@@ -519,7 +519,7 @@ void show_appearance_settings_dialog(struct estate *state)
 		fontlib_DrawString("permanent.");
 
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 		if (k == KEY_RIGHT || k == '\n')
 		{
 			switch (index)
@@ -531,7 +531,7 @@ void show_appearance_settings_dialog(struct estate *state)
 				fontlib_SetCursorPosition(0,0);
 				fontlib_DrawUInt(state->text_color,1);
 				gfx_BlitBuffer();
-				ngetchx();*/
+				ngetchx(state);*/
 				break;
 			case 1:
 				state->text_highlight_color = show_color_selection_dialog(state, state->text_highlight_color);
@@ -684,7 +684,7 @@ void show_appearance_settings_dialog_nocolor(struct estate *state)
 		fontlib_DrawString("permanent.");
 
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 		if (k == KEY_RIGHT || k == '\n')
 		{
 			show_color_selection_dialog(state, 1);
@@ -807,7 +807,7 @@ void show_persistence_dialog(struct estate *state)
 	fontlib_SetCursorPosition(31, 66);
 	fontlib_DrawString("Please edit NEIDERC instead.");
 	gfx_BlitBuffer();
-	ngetchx();
+	ngetchx(state);
 }
 
 const int n_chars = 14;
@@ -913,7 +913,7 @@ void show_chars_dialog(struct estate* state, void (*draw_background)(struct esta
 		draw_background(state);
 		chars_backend_draw(state, line, col, n_lines, n_columns);
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 	}
 }
 
@@ -1040,7 +1040,7 @@ int show_options_dialog(struct estate *state)
 		options_backend_draw(state, index);
 
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 	}
 	return 0;
 }
@@ -1088,7 +1088,7 @@ void show_console_tools_dialog(struct estate *state)
 		console_tools_backend_draw(state, index);
 
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 	}
 }
 
@@ -1142,7 +1142,7 @@ void show_editor_tools_dialog(struct estate *state)
 		editor_tools_backend_draw(state, index);
 
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 	}
 }
 
@@ -1399,7 +1399,7 @@ bool show_open_dialog(struct estate *state)
 			fontlib_DrawStringL(arr + 24 * (i + scrstart) + 8, 16);
 		}
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 		if (k == KEY_UP)
 		{
 			index--;
@@ -1635,7 +1635,7 @@ void show_about_dialog(struct estate *state)
 	fontlib_SetCursorPosition(80, 120);
 	fontlib_DrawString(NEONIDE_VERSION_STRING);
 	gfx_BlitBuffer();
-	ngetchx();
+	ngetchx(state);
 }
 
 
@@ -1659,7 +1659,7 @@ void show_unimplemented_dialog(struct estate *state)
 	fontlib_SetCursorPosition(65, 141);
 	fontlib_DrawString("NeonIDE and the Neon app");
 	gfx_BlitBuffer();
-	ngetchx();
+	ngetchx(state);
 }
 
 
@@ -1675,7 +1675,7 @@ void alert(struct estate *state, char* title, char* text)
 	fontlib_SetCursorPosition(65, 120);
 	fontlib_DrawString(text);
 	gfx_BlitBuffer();
-	ngetchx();
+	ngetchx(state);
 }
 
 
@@ -1740,7 +1740,7 @@ bool show_confirm_dialog(struct estate *state)
 		confirm_backend_draw(state, index);
 
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 	}
 	return false;
 }
@@ -1749,35 +1749,48 @@ bool show_confirm_dialog(struct estate *state)
 /*
  * Draws the Tools menu given the state parameters and the selection index
  */
-void file_menu_backend_draw(struct estate *state, int index)
+void file_menu_backend_draw(struct estate *state, int index, char* filename)
 {
 	//x+135, y+80
-	draw_dialog(state, 195, 140, 110, 75);
+	draw_dialog(state, 195, 125, 110, 90);
 	gfx_SetColor(state->border_color);
-	gfx_HorizLine_NoClip(195, 160, 110);
-	fontlib_SetCursorPosition(200, 145);
+	gfx_HorizLine_NoClip(195, 145, 110);
+	fontlib_SetCursorPosition(200, 130);
 	fontlib_DrawString("File:");
 
-	fontlib_SetCursorPosition(199, 165);
+	fontlib_SetCursorPosition(199, 150);
 	if (index == 0)
 	{
 		fontlib_SetForegroundColor(state->focus_color);
 	}
 	fontlib_DrawString("1) Duplicate");
 	fontlib_SetForegroundColor(state->text_color);
-	fontlib_SetCursorPosition(199, 180);
+	fontlib_SetCursorPosition(199, 165);
 	if (index == 1)
 	{
 		fontlib_SetForegroundColor(state->focus_color);
 	}
 	fontlib_DrawString("2) Rename");
 	fontlib_SetForegroundColor(state->text_color);
-	fontlib_SetCursorPosition(199, 195);
+	fontlib_SetCursorPosition(199, 180);
 	if (index == 2)
 	{
 		fontlib_SetForegroundColor(state->focus_color);
 	}
 	fontlib_DrawString("3) Delete");
+	fontlib_SetForegroundColor(state->text_color);
+
+	fontlib_SetCursorPosition(199, 195);
+	if (index == 3)
+	{
+		fontlib_SetForegroundColor(state->focus_color);
+	}
+	uint8_t handle = ti_Open(filename, "r");
+	if (ti_IsArchived(handle))
+		fontlib_DrawString("4) Unarchive");
+	else
+		fontlib_DrawString("4) Archive");
+	ti_Close(handle);
 	fontlib_SetForegroundColor(state->text_color);
 }
 
@@ -1787,9 +1800,9 @@ void show_file_menu_dialog(struct estate *state, char* filename)
 	int index = 0;
 	while (k != KEY_CLEAR && k != KEY_F5)
 	{
-		if (k == '\n' || k == KEY_RIGHT || (k >= '1' && k <= '3'))
+		if (k == '\n' || k == KEY_RIGHT || (k >= '1' && k <= '4'))
 		{
-			if (k >= '1' && k <= '3')
+			if (k >= '1' && k <= '4')
 				index = k - '1';
 
 			switch (index)
@@ -1823,6 +1836,17 @@ void show_file_menu_dialog(struct estate *state, char* filename)
 						return;
 					}
 					break;
+				
+				case 3:
+				{
+					uint8_t handle = ti_Open(filename, "r");
+					if (ti_IsArchived(handle))
+						ti_SetArchiveStatus(false, handle);
+					else
+						ti_SetArchiveStatus(true, handle);
+					ti_Close(handle);
+					return;
+				}
 			}
 		}
 		if (k == KEY_UP)
@@ -1839,10 +1863,10 @@ void show_file_menu_dialog(struct estate *state, char* filename)
 				index++;
 			}
 		}
-		file_menu_backend_draw(state, index);
+		file_menu_backend_draw(state, index, filename);
 
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 	}
 }
 
@@ -1851,7 +1875,7 @@ void show_file_menu_dialog(struct estate *state, char* filename)
 
 void unsaved_backend_draw(struct estate *state, int index)
 {
-	draw_dialog(state, 60, 60, 200, 120);
+	draw_dialog(state, 60, 60, 200, 75);
 	gfx_SetColor(state->border_color);
 	gfx_HorizLine_NoClip(60, 80, 200);
 	fontlib_SetCursorPosition(65, 65);
@@ -1919,7 +1943,7 @@ bool show_unsaved_dialog(struct estate *state)
 		unsaved_backend_draw(state, index);
 
 		gfx_BlitBuffer();
-		k = ngetchx();
+		k = ngetchx(state);
 	}
 	return false;
 }

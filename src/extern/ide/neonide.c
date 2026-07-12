@@ -7,22 +7,9 @@
  */
 
 /*
-Résolution du stack overflow
-
-Possibles responsables:
-- appels à neon_fail
-- containers + userfunc agrandis ?
-
-
-
-*/
-
-/*
 TODO:
-- Enlever l'alignement de 8 octets sur toutes les plateformes sauf MINIMAL_LIBC_RISCV64
-- Stack overflow avec les programmes un peu gros sur TI_EZ80 (apples.ne)
-- RAM reset quand on lance launcher dans LAUNCHER dans l'application
-- Handle archived scripts
+- neon_fail augmente la taille du contexte des fonctions, cause des stack overflows sur TI_EZ80
+- RAM reset quand on lance l'éditeur de temps en temps
 - Add the ability of running a program directly from the editor
 - Add the ability to edit a program from the console that runs it
 - KEY_CLEAR -> KEY_STO

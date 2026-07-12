@@ -13,7 +13,7 @@ void cb_copy(struct estate *state) {
 	int24_t len;
 	//gfx_SetDrawScreen();
 	//fontlib_DrawInt(state->selection_anchor, 5);
-	//ngetchx();
+	//ngetchx(state);
 	if (state->c2 < state->selection_anchor) {
 		start = state->c2+1;
 		len = state->selection_anchor - state->c2;

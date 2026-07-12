@@ -428,7 +428,7 @@ void history_navigate(struct estate* state, int prompt_start) {
 		}
 
 		draw_console(state);
-		k = ngetchx();
+		k = ngetchx(state);
 	}
 }
 

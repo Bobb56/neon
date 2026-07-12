@@ -98,6 +98,14 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
     fontlib_SetCursorPosition(0, 0);
     fontlib_DrawString("Neon");
 
+    fontlib_SetCursorPosition(280, 0);
+	if (state->alpha_state == 1) {
+		fontlib_DrawString("alpha");
+	}
+	else if (state->alpha_state == 2) {
+		fontlib_DrawString("ALPHA");
+	}
+
     fontlib_SetForegroundColor(state->text_color);
     fontlib_SetBackgroundColor(state->text_highlight_color);
     fontlib_SetTransparency(true);
@@ -131,6 +139,21 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
             fontlib_SetCursorPosition(3, TEXT_Y(i));
             fontlib_DrawString(files[start_disp_index + i]);
 
+            // Print archived status
+            uint8_t handle = ti_Open(files[start_disp_index + i], "r");
+            fontlib_SetCursorPosition(279, TEXT_Y(i));
+            if (i != cursor_position) {
+                fontlib_SetForegroundColor(30);
+            }
+            if (ti_IsArchived(handle)) {
+                fontlib_DrawString("Flash");
+            }
+            else {
+                fontlib_DrawString("RAM");
+            }
+            ti_Close(handle);
+
+
         }
         fontlib_SetForegroundColor(state->text_color);
     }
@@ -138,7 +161,38 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
 
 
 
+void list_next_item(int* cursor_position, int* start_disp_index, int nb_files) {
+    if (*cursor_position + *start_disp_index + 1 >= nb_files) {
+        *cursor_position = 0;
+        *start_disp_index = 0;
+    }
+    else if (*cursor_position < NUM_LINES) {
+        (*cursor_position)++;
+    }
+    else {
+        (*start_disp_index)++;
+    }
+}
 
+
+void list_prev_item(int* cursor_position, int* start_disp_index, int nb_files) {
+    if (*cursor_position > 0) {
+        (*cursor_position)--;
+    }
+    else if (*start_disp_index != 0) {
+        (*start_disp_index)--;
+    }
+    else {
+        if (nb_files <= NUM_LINES) {
+            *cursor_position = nb_files - 1;
+            *start_disp_index = 0;
+        }
+        else {
+            *cursor_position = NUM_LINES;
+            *start_disp_index = nb_files - NUM_LINES - 1;
+        }
+    }
+}
 
 
 
@@ -177,7 +231,7 @@ void home_menu(void) {
         draw_home_menu(&state, files, nb_files, cursor_position, start_disp_index);
         gfx_SwapDraw();
 
-        key = ngetchx();
+        key = ngetchx(&state);
 
         if (key == KEY_F1) {
             draw_home_menu(&state, files, nb_files, cursor_position, start_disp_index);
@@ -199,34 +253,10 @@ void home_menu(void) {
         }
         else if (nb_files > 0) {
             if (key == KEY_DOWN || key == KEY_RIGHT) { // next item
-                if (cursor_position + start_disp_index + 1 >= nb_files) {
-                    cursor_position = 0;
-                    start_disp_index = 0;
-                }
-                else if (cursor_position < NUM_LINES) {
-                    cursor_position++;
-                }
-                else {
-                    start_disp_index++;
-                }
+                list_next_item(&cursor_position, &start_disp_index, nb_files);
             }
             else if (key == KEY_UP || key == KEY_LEFT) { // previous item
-                if (cursor_position > 0) {
-                    cursor_position--;
-                }
-                else if (start_disp_index != 0) {
-                    start_disp_index--;
-                }
-                else {
-                    if (nb_files <= NUM_LINES) {
-                        cursor_position = nb_files - 1;
-                        start_disp_index = 0;
-                    }
-                    else {
-                        cursor_position = NUM_LINES;
-                        start_disp_index = nb_files - NUM_LINES - 1;
-                    }
-                }
+                list_prev_item(&cursor_position, &start_disp_index, nb_files);
             }
             else if (key == KEY_F2 || key == '\n') {
                 run_neon_program(&state, files[start_disp_index + cursor_position]);
@@ -240,6 +270,13 @@ void home_menu(void) {
                 gfx_SwapDraw();
                 show_file_menu_dialog(&state, files[start_disp_index + cursor_position]);
                 reload_files = true;
+            }
+            else if ((key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z')) {
+                cursor_position = 0;
+                start_disp_index = 0;
+                do {
+                    list_next_item(&cursor_position, &start_disp_index, nb_files);
+                } while (files[cursor_position + start_disp_index][0] != key && !(cursor_position == 0 && start_disp_index == 0));
             }
         }
     }

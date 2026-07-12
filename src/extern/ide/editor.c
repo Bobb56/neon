@@ -890,7 +890,15 @@ void write_file(struct estate *state)
 
 	bool current_archive_status = false;
 
-	ti_var_t var = ti_Open(state->filename, "w");
+	// Check if we will archive the saved file
+	bool archive = false;
+	ti_var_t var = ti_Open(state->filename, "r");
+	if (var != 0) {
+		archive = ti_IsArchived(var);
+		ti_Close(var);
+	}
+
+	var = ti_Open(state->filename, "w");
 	//makes saving a lot faster due to only needing to resize the variable once
 	ti_Resize(fullsize, var);
 
@@ -901,13 +909,8 @@ void write_file(struct estate *state)
 	ti_Write(state->text, state->c1, 1, var);
 	ti_Write(state->text + state->c2 + 1, state->max_buffer_size - (state->c2 + 1), 1, var);
 
-	//Do TIOS autoarchive, if needed.
-	if (state->autoarchive) {
-		ti_SetArchiveStatus(true, var);
-	}
-	else {
-		ti_SetArchiveStatus(current_archive_status, var);
-	}
+	// Archive file if needed
+	ti_SetArchiveStatus(archive, var);
 
 	ti_Close(var);
 	state->saved = true;

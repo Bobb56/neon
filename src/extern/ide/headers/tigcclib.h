@@ -101,7 +101,7 @@ uint8_t ngetchx_backend(void);
  * Then, return the character typed,
  * or a control code.
  */
-short ngetchx(void);
+short ngetchx(struct estate* state);
 
 /*
  * ngetchx and animate cursor

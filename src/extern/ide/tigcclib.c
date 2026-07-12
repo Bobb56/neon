@@ -140,11 +140,16 @@ uint8_t ngetchx_backend(void) {
     return only_key;
 }
 
-short ngetchx(void) {
+short ngetchx(struct estate* state) {
     uint8_t k = 0;
     while (!(k = ngetchx_backend())) {
         continue;
     }
+
+    if (kb_IsDown(kb_KeyAlpha)) {
+        state->alpha_state = (state->alpha_state + 1)%3;
+    }
+
     if (kb_IsDown(kb_Key2nd) && kb_IsDown(kb_KeyGraphVar)) {
         return ksecshift[k];
     } else if (kb_IsDown(kb_KeyMode) && kb_IsDown(kb_KeyAlpha)) {
@@ -155,7 +160,7 @@ short ngetchx(void) {
         return ksec[k];
     } else if (kb_IsDown(kb_KeyGraphVar)) {
         return kshift[k];
-    } else if (kb_IsDown(kb_KeyAlpha)) {
+    } else if (state->alpha_state == 1) {
         return kalpha[k];
     } else {
         return kmain[k];
