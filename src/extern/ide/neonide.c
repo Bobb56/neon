@@ -6,11 +6,21 @@
  *      Edited for BOS by Beck
  */
 
+/*
+Résolution du stack overflow
+
+Possibles responsables:
+- appels à neon_fail
+- containers + userfunc agrandis ?
+
+
+
+*/
 
 /*
 TODO:
+- Enlever l'alignement de 8 octets sur toutes les plateformes sauf MINIMAL_LIBC_RISCV64
 - Stack overflow avec les programmes un peu gros sur TI_EZ80 (apples.ne)
-- relaunch.ne sur TI_EZ80: boucle infinie ou crash
 - RAM reset quand on lance launcher dans LAUNCHER dans l'application
 - Handle archived scripts
 - Add the ability of running a program directly from the editor

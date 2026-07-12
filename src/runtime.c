@@ -1873,7 +1873,7 @@ NO_OPT void exitRuntime(void) {
     #elif defined(WINDOWS_AMD64)
     ADD_STACK_SIZE(32);
     #elif defined(TI_EZ80)
-    ADD_STACK_SIZE(14);
+    ADD_STACK_SIZE(28);
     #endif
 
     global_env->PROCESS_FINISH.tab[global_env->process_cycle->process->id] = 1; // on a fini le processus, on libère la place
