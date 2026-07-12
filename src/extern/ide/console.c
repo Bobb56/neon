@@ -254,7 +254,7 @@ void draw_console(struct estate *state)
 	gfx_HorizLine_NoClip(0, 12, 320);
 
 	//Draw top text
-	fontlib_SetCursorPosition(0, 0);
+	fontlib_SetCursorPosition(1, 0);
 	fontlib_DrawString("Neon");
 	
 

@@ -95,7 +95,7 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
     gfx_HorizLine_NoClip(0, 12, 320);
 
     //Draw top text
-    fontlib_SetCursorPosition(0, 0);
+    fontlib_SetCursorPosition(1, 0);
     fontlib_DrawString("Neon");
 
     fontlib_SetCursorPosition(280, 0);
@@ -272,11 +272,12 @@ void home_menu(void) {
                 reload_files = true;
             }
             else if ((key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z')) {
-                cursor_position = 0;
-                start_disp_index = 0;
+                int initial_cursor_position = cursor_position;
+                int initial_start_disp_index = start_disp_index;
+
                 do {
                     list_next_item(&cursor_position, &start_disp_index, nb_files);
-                } while (files[cursor_position + start_disp_index][0] != key && !(cursor_position == 0 && start_disp_index == 0));
+                } while (files[cursor_position + start_disp_index][0] != key && !(cursor_position == initial_cursor_position && start_disp_index == initial_start_disp_index));
             }
         }
     }
