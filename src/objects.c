@@ -1,4 +1,3 @@
-#include <stddef.h>
 #define NEON_SOURCE_ID 13
 
 // bibliothèque générale de structures des données Neon
