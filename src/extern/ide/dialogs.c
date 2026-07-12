@@ -1917,13 +1917,13 @@ bool show_unsaved_dialog(struct estate *state)
 
 			switch (index)
 			{
-			case 0:
-				write_file(state);
-				return true;
-			case 1:
-				return true;
-			case 2:
-				return false;
+				case 0:
+					write_file(state);
+					return true;
+				case 1:
+					return true;
+				case 2:
+					return false;
 			}
 		}
 		if (k == KEY_UP)

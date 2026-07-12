@@ -158,7 +158,7 @@ short ngetchx(struct estate* state) {
         return kmeta[k];
     } else if (kb_IsDown(kb_Key2nd)) {
         return ksec[k];
-    } else if (kb_IsDown(kb_KeyGraphVar)) {
+    } else if (kb_IsDown(kb_KeyGraphVar) || state->alpha_state == 2) {
         return kshift[k];
     } else if (state->alpha_state == 1) {
         return kalpha[k];
