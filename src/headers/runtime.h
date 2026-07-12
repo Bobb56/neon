@@ -20,6 +20,8 @@
 #define tb_exec(tb)         exec(tb, (tb)->entry_point)
 #define tb_exec_aux(tb)     exec_aux(tb, (tb)->entry_point)
 
+void neon_interp_yield(void);
+void treeToList(NeList* l, TreeBuffer* tb, TreeBufferIndex tree_list);
 void stop_execution(void);
 bool neoIsTrue(NeObj neo);
 bool isTrue(TreeBuffer* tb, TreeBufferIndex tree);
