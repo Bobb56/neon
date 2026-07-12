@@ -23,7 +23,12 @@
 #define neon_realloc                            realloc
 #define neon_free                               free
 
+#ifdef MINIMAL_LIBC_RISCV64
 #define align8(size)                            align(8, size)
+#else
+#define align8(size)                            size
+#endif
+
 
 /*
 void* neon_malloc(size_t size);
