@@ -269,7 +269,6 @@ void draw_console(struct estate *state)
 	fontlib_SetForegroundColor(state->text_color);
 	fontlib_SetBackgroundColor(state->text_highlight_color);
 	fontlib_SetTransparency(true);
-	gfx_SwapDraw();
 }
 
 
@@ -290,6 +289,7 @@ void initialize_console(struct estate* state, char* name) {
 	}
 
 	draw_console(state);
+	gfx_SwapDraw();
 }
 
 
@@ -425,12 +425,14 @@ void history_navigate(struct estate* state, int prompt_start) {
 		}
 
 		draw_console(state);
+		gfx_SwapDraw();
 		k = ngetchx(state);
 	}
 }
 
 void neonide_flush(void) {
 	draw_console(global_console_state);
+	gfx_SwapDraw();
 }
 
 
@@ -558,6 +560,7 @@ char* neonide_input(char* prompt) {
 
     while (true) {
 		draw_console(state);
+		gfx_SwapDraw();
 
         k = ngetchx_xy(state, state->cx, state->cy);
 
@@ -668,13 +671,17 @@ char* neonide_input(char* prompt) {
                     break;
                 case KEY_F2:
 					draw_console(state);
+					gfx_SwapDraw();
 					show_chars_dialog(state, draw_console);
 					draw_console(state);
+					gfx_SwapDraw();
                     break;
                 case KEY_F3:
 					draw_console(state);
+					gfx_SwapDraw();
 					show_console_tools_dialog(state);
 					draw_console(state);
+					gfx_SwapDraw();
                     break;
                 case KEY_F5:
                     break;
