@@ -42,21 +42,34 @@
 
 #define NUM_COLS 39
 
+typedef enum {
+	AlphaState_NoALpha	=	0,
+	AlphaState_alpha		=	1,
+	AlphaState_ALPHA		=	2,
+} AlphaState;
+
+typedef enum {
+	IDEState_Editor,
+	IDEState_Console,
+	IDEState_RunningProgram,
+	IDEState_Other,
+} IDEState;
+
 /*
  * The state of the editor.
  */
+
+
 struct estate {
 	int24_t max_lines;
 	int24_t max_buffer_size;
 
 	//Number of lines multi movements move by
 	int24_t multi_lines;
-	//The file name
+	//The name of the file in the editor or the running program
 	char filename[10];
-	//true if we are running a program from a Neon file
-	bool running_program;
-	//The currently running program
-	char running_program_name[10];
+	//State of the IDE
+	IDEState ide_state;
 	//Whether the file name is user defined
 	bool named;
 	//A pointer within the line array. Same line as cursor.
@@ -65,8 +78,6 @@ struct estate {
 	int24_t lc2;
 	//distance of cursor from line start
 	int24_t lc_offset;
-	//Distance of screen from line start
-	int24_t ls_offset;
 	//pointer to left of cursor
 	int24_t c1;
 	//pointer to right of cursor
@@ -105,8 +116,8 @@ struct estate {
 	//True if the selection is active, otherwise false.
 	bool selection_active;
 
-	//0: inactive, 1: lower case, 2: uppercase
-	uint8_t alpha_state;
+	//State of the Alpha modifier
+	AlphaState alpha_state;
 
 	//Text buffer
 	char* text;

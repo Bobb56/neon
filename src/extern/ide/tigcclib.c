@@ -158,9 +158,9 @@ short ngetchx(struct estate* state) {
         return kmeta[k];
     } else if (kb_IsDown(kb_Key2nd)) {
         return ksec[k];
-    } else if (kb_IsDown(kb_KeyGraphVar) || state->alpha_state == 2) {
+    } else if (kb_IsDown(kb_KeyGraphVar) || state->alpha_state == AlphaState_ALPHA) {
         return kshift[k];
-    } else if (state->alpha_state == 1) {
+    } else if (state->alpha_state == AlphaState_alpha) {
         return kalpha[k];
     } else {
         return kmain[k];
@@ -205,9 +205,9 @@ short ngetchx_xy(struct estate *state, int cx, int cy) {
         return kmeta[k];
     } else if (kb_IsDown(kb_Key2nd)) {
         return ksec[k];
-    } else if (kb_IsDown(kb_KeyGraphVar) || state->alpha_state == 2) {
+    } else if (kb_IsDown(kb_KeyGraphVar) || state->alpha_state == AlphaState_ALPHA) {
         return kshift[k];
-    } else if (state->alpha_state == 1) {
+    } else if (state->alpha_state == AlphaState_alpha) {
         return kalpha[k];
     } else {
         return kmain[k];

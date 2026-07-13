@@ -99,10 +99,10 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
     fontlib_DrawString("Neon");
 
     fontlib_SetCursorPosition(280, 0);
-	if (state->alpha_state == 1) {
+	if (state->alpha_state == AlphaState_alpha) {
 		fontlib_DrawString("alpha");
 	}
-	else if (state->alpha_state == 2) {
+	else if (state->alpha_state == AlphaState_ALPHA) {
 		fontlib_DrawString("ALPHA");
 	}
 

@@ -39,12 +39,11 @@ bool initialize(struct estate *state)
 	state->blinkcursor = true;
 	//Default is true, if enabled, write files under a different filename, then remove the existing and rename the new file.
 	state->backupfiles = true;
-	state->multi_lines = 5;
+	state->multi_lines = NUM_LINES;
 	state->named = false;
 	state->lc1 = 0;
 	state->lc2 = state->max_buffer_size - 1;
 	state->lc_offset = 0;
-	state->ls_offset = 0;
 	state->c1 = 0;
 	state->c2 = state->max_buffer_size - 1;
 	state->scr_offset = 0;
@@ -62,10 +61,10 @@ bool initialize(struct estate *state)
 	state->dropshadow_color = 13;
 	state->focus_color = 12;
 	state->saved = true;
-	state->running_program = false;
+	state->ide_state = IDEState_Other;
 
 	state->selection_active = false;
-	state->alpha_state = 0;
+	state->alpha_state = AlphaState_NoALpha;
 
 	state->clipboard_size = 0;
 	state->corner_radius = 10;

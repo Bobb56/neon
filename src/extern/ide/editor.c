@@ -95,7 +95,7 @@ void cursor_left(struct estate *state)
 		state->text[state->c2] = state->text[state->c1];
 		state->c2--;
 
-		if (state->c1 > 0 && state->text[state->c1 - 1] == 0x1b) {
+		if (state->ide_state != IDEState_Editor && state->c1 > 0 && state->text[state->c1 - 1] == 0x1b) {
 			cursor_left(state);
 		}
 	}
@@ -153,7 +153,7 @@ void cursor_right(struct estate *state)
 		state->text[state->c1] = state->text[state->c2];
 		state->c1++;
 
-		if (state->c2 < state->max_buffer_size - 1 && state->text[state->c2 + 1] == 0x1b) {
+		if (state->ide_state != IDEState_Editor && state->c2 < state->max_buffer_size - 1 && state->text[state->c2 + 1] == 0x1b) {
 			cursor_right(state);
 		}
 	}
@@ -217,15 +217,21 @@ void cursor_up(struct estate *state)
 		//return if the end is what you want
 		if (state->lc_offset % NUM_COLS < old)
 			return;
-		int c = state->lc_offset - state->lc_offset % NUM_COLS;
-		c += old; //Offset to move to from start of line
-		int to_move = state->lc_offset - c;
-		for (int i = 0; i < to_move; i++)
+
+		
+		int last_physical_line_length = state->lc_offset % NUM_COLS;
+		if (last_physical_line_length == 0 && state->lc_offset != 0)
+			last_physical_line_length = NUM_COLS;
+		
+		for (int i = 0; i < last_physical_line_length - old; i++)
 		{
 			cursor_left(state);
 		}
 	}
+	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)
+		cursor_right(state);
 }
+
 
 void cursor_up_select(struct estate *state)
 {
@@ -254,14 +260,19 @@ void cursor_up_select(struct estate *state)
 		//return if the end is what you want
 		if (state->lc_offset % NUM_COLS < old)
 			return;
-		int c = state->lc_offset - state->lc_offset % NUM_COLS;
-		c += old; //Offset to move to from start of line
-		int to_move = state->lc_offset - c;
-		for (int i = 0; i < to_move; i++)
+
+		
+		int last_physical_line_length = state->lc_offset % NUM_COLS;
+		if (last_physical_line_length == 0 && state->lc_offset != 0)
+			last_physical_line_length = NUM_COLS;
+		
+		for (int i = 0; i < last_physical_line_length - old; i++)
 		{
 			cursor_left_select(state);
 		}
 	}
+	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)
+		cursor_right_select(state);
 }
 
 void cursor_down(struct estate *state)
@@ -558,6 +569,8 @@ void initialize_editor(struct estate* state) {
 	state->text = malloc(state->max_buffer_size);
 	state->lines = malloc(state->max_lines * sizeof(int16_t));
 	initialize(state);
+
+	state->ide_state = IDEState_Editor;
 }
 
 
@@ -565,6 +578,7 @@ void deinit_editor(struct estate* state) {
 	//free_all_noheap();
 	free(state->lines);
 	free(state->text);
+	state->ide_state = IDEState_Other;
 }
 
 
@@ -618,10 +632,10 @@ void draw_editor(struct estate *state)
 	fontlib_DrawString(state->named ? state->filename : "New script");
 
 	fontlib_SetCursorPosition(280, 0);
-	if (state->alpha_state == 1) {
+	if (state->alpha_state == AlphaState_alpha) {
 		fontlib_DrawString("alpha");
 	}
-	else if (state->alpha_state == 2) {
+	else if (state->alpha_state == AlphaState_ALPHA) {
 		fontlib_DrawString("ALPHA");
 	}
 

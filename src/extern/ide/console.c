@@ -124,16 +124,9 @@ beginning:
 		fontlib_SetTransparency(true);
 		if (i == state->c1)
 		{
-			if (col > NUM_COLS)
-			{
-				gfx_VertLine_NoClip(319, LINE_SPACING * row + LINE_SPACING, LINE_SPACING);
-				state->cx = 319, state->cy = LINE_SPACING * row + LINE_SPACING;
-			}
-			else
-			{
-				gfx_VertLine_NoClip(left_offset + FONT_WIDTH * col, LINE_SPACING * row + LINE_SPACING, LINE_SPACING);
-				state->cx = left_offset + FONT_WIDTH * col, state->cy = LINE_SPACING * row + LINE_SPACING;
-			}
+			gfx_VertLine_NoClip(left_offset + FONT_WIDTH * col, LINE_SPACING * row + LINE_SPACING, LINE_SPACING);
+			state->cx = left_offset + FONT_WIDTH * col;
+			state->cy = LINE_SPACING * row + LINE_SPACING;
 
 			i = state->c2 + 1;
 			drawn = true;
@@ -259,17 +252,17 @@ void draw_console(struct estate *state)
 	
 
 	fontlib_SetCursorPosition(121, 0);
-	if (!state->running_program)
+	if (state->ide_state == IDEState_Console)
 		fontlib_DrawString("Console");
-	else
-	 	fontlib_DrawString(state->running_program_name);
+	else if (state->ide_state == IDEState_RunningProgram)
+	 	fontlib_DrawString(state->filename);
 
 
 	fontlib_SetCursorPosition(280, 0);
-	if (state->alpha_state == 1) {
+	if (state->alpha_state == AlphaState_alpha) {
 		fontlib_DrawString("alpha");
 	}
-	else if (state->alpha_state == 2) {
+	else if (state->alpha_state == AlphaState_ALPHA) {
 		fontlib_DrawString("ALPHA");
 	}
 
@@ -289,8 +282,11 @@ void initialize_console(struct estate* state, char* name) {
 	initialize(state);
 
 	if (name != NULL) {
-		state->running_program = true;
-		strcpy(state->running_program_name, name);
+		state->ide_state = IDEState_RunningProgram;
+		strcpy(state->filename, name);
+	}
+	else {
+		state->ide_state = IDEState_Console;
 	}
 
 	draw_console(state);
@@ -300,6 +296,7 @@ void initialize_console(struct estate* state, char* name) {
 void deinit_console(struct estate* state) {
 	free(state->lines);
 	free(state->text);
+	state->ide_state = IDEState_Other;
 }
 
 
@@ -441,7 +438,6 @@ void neonide_clear(void) {
 	global_console_state->lc1 = 0;
 	global_console_state->lc2 = global_console_state->max_buffer_size - 1;
 	global_console_state->lc_offset = 0;
-	global_console_state->ls_offset = 0;
 	global_console_state->c1 = 0;
 	global_console_state->c2 = global_console_state->max_buffer_size - 1;
 	global_console_state->scr_offset = 0;

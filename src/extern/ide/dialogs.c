@@ -95,10 +95,10 @@ void show_search_dialog(struct estate *state)
 		fontlib_DrawString("Search");
 
 		fontlib_SetCursorPosition(250, 65);
-		if (state->alpha_state == 1) {
+		if (state->alpha_state == AlphaState_alpha) {
 			fontlib_DrawString("alpha");
 		}
-		else if (state->alpha_state == 2) {
+		else if (state->alpha_state == AlphaState_ALPHA) {
 			fontlib_DrawString("ALPHA");
 		}
 
@@ -171,7 +171,7 @@ void goto_line(struct estate* state, int24_t line_number) {
 void show_goto_dialog(struct estate *state)
 {
 	uint8_t previous_alpha_state = state->alpha_state;
-	state->alpha_state = 0;
+	state->alpha_state = AlphaState_NoALpha;
 
 	short k = 0;
 	int numchars = 0;
@@ -187,10 +187,10 @@ void show_goto_dialog(struct estate *state)
 		fontlib_DrawString("Goto line");
 
 		fontlib_SetCursorPosition(250, 65);
-		if (state->alpha_state == 1) {
+		if (state->alpha_state == AlphaState_alpha) {
 			fontlib_DrawString("alpha");
 		}
-		else if (state->alpha_state == 2) {
+		else if (state->alpha_state == AlphaState_ALPHA) {
 			fontlib_DrawString("ALPHA");
 		}
 
@@ -1219,16 +1219,9 @@ beginning:
 		fontlib_SetTransparency(true);
 		if (i == state->c1)
 		{
-			if (col > NUM_COLS)
-			{
-				gfx_VertLine_NoClip(319, LINE_SPACING * row + LINE_SPACING, LINE_SPACING);
-				state->cx = 319, state->cy = LINE_SPACING * row + LINE_SPACING;
-			}
-			else
-			{
-				gfx_VertLine_NoClip(left_offset + FONT_WIDTH * col, LINE_SPACING * row + LINE_SPACING, LINE_SPACING);
-				state->cx = left_offset + FONT_WIDTH * col, state->cy = LINE_SPACING * row + LINE_SPACING;
-			}
+			gfx_VertLine_NoClip(left_offset + FONT_WIDTH * col, LINE_SPACING * row + LINE_SPACING, LINE_SPACING);
+			state->cx = left_offset + FONT_WIDTH * col;
+			state->cy = LINE_SPACING * row + LINE_SPACING;
 
 			i = state->c2 + 1;
 			drawn = true;
@@ -1258,16 +1251,16 @@ beginning:
 			fontlib_SetTransparency(true);
 		}
 
-
-		fontlib_DrawGlyph(state->text[i]);
-		i+=1;
-		col++;
-
+		// We create a new line only if we truly need to display characters so
+		// that if the last character of a line is \n there will be only one new line
 		if (col >= NUM_COLS) {
 			col = 0;
 			row++;
 			fontlib_SetCursorPosition(left_offset, LINE_SPACING * row + LINE_SPACING);
 		}
+		fontlib_DrawGlyph(state->text[i]);
+		i++;
+		col++;
 		cp++;
 	}
 
@@ -1467,7 +1460,7 @@ bool show_open_dialog(struct estate *state)
 char* show_create_dialog(struct estate *state)
 {
 	uint8_t previous_alpha_state = state->alpha_state;
-	state->alpha_state = 1;
+	state->alpha_state = AlphaState_alpha;
 
 	short k = 0;
 	int numchars = 0;
@@ -1485,10 +1478,10 @@ char* show_create_dialog(struct estate *state)
 		fontlib_DrawString("Choose a file name");
 
 		fontlib_SetCursorPosition(250, 65);
-		if (state->alpha_state == 1) {
+		if (state->alpha_state == AlphaState_alpha) {
 			fontlib_DrawString("alpha");
 		}
-		else if (state->alpha_state == 2) {
+		else if (state->alpha_state == AlphaState_ALPHA) {
 			fontlib_DrawString("ALPHA");
 		}
 
@@ -1547,7 +1540,7 @@ char* show_create_dialog(struct estate *state)
 bool show_save_dialog(struct estate *state)
 {
 	uint8_t previous_alpha_state = state->alpha_state;
-	state->alpha_state = true;
+	state->alpha_state = AlphaState_alpha;
 
 	bool ret_value;
 	short k = 0;
@@ -1566,10 +1559,10 @@ bool show_save_dialog(struct estate *state)
 		fontlib_DrawString("Save File");
 
 		fontlib_SetCursorPosition(250, 65);
-		if (state->alpha_state == 1) {
+		if (state->alpha_state == AlphaState_alpha) {
 			fontlib_DrawString("alpha");
 		}
-		else if (state->alpha_state == 2) {
+		else if (state->alpha_state == AlphaState_ALPHA) {
 			fontlib_DrawString("ALPHA");
 		}
 
