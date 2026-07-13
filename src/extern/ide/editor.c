@@ -188,11 +188,16 @@ void cursor_right_select(struct estate *state)
 
 void cursor_up(struct estate *state)
 {
-	//if the current line is long enough
 	if (state->selection_active)
 	{
 		cursor_left(state);
 	}
+
+	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0) {
+		cursor_left(state);
+	}
+
+	//if the current line is long enough
 	if (state->lc_offset >= NUM_COLS)
 	{
 		for (int i = 0; i < NUM_COLS; i++)
@@ -235,6 +240,10 @@ void cursor_up(struct estate *state)
 
 void cursor_up_select(struct estate *state)
 {
+	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0) {
+		cursor_left_select(state);
+	}
+
 	//if the current line is long enough
 	if (state->lc_offset >= NUM_COLS)
 	{
@@ -282,6 +291,11 @@ void cursor_down(struct estate *state)
 		state->selection_active = 0;
 		cursor_down(state);
 	}
+
+	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0) {
+		cursor_left(state);
+	}
+
 	if (state->lines[state->lc1] - state->lc_offset > NUM_COLS)
 	{
 		for (int i = 0; i < NUM_COLS; i++)
@@ -313,10 +327,16 @@ void cursor_down(struct estate *state)
 			}
 		}
 	}
+	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)
+		cursor_right(state);
 }
 
 void cursor_down_select(struct estate *state)
 {
+	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0) {
+		cursor_left_select(state);
+	}
+
 	if (state->lines[state->lc1] - state->lc_offset > NUM_COLS)
 	{
 		for (int i = 0; i < NUM_COLS; i++)
@@ -348,6 +368,8 @@ void cursor_down_select(struct estate *state)
 			}
 		}
 	}
+	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)
+		cursor_right_select(state);
 }
 
 int handle_key(struct estate *state, short k)
