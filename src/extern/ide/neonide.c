@@ -8,6 +8,7 @@
 
 /*
 TODO:
+- rgb: infinite loop when trying to go at the end of the file on a normal way (using the cursor)
 - neon_fail augmente la taille du contexte des fonctions, cause des stack overflows sur TI_EZ80
 - RAM reset quand on lance l'éditeur de temps en temps
 - Add the ability of running a program directly from the editor
