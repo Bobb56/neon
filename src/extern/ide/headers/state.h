@@ -124,8 +124,9 @@ struct estate {
 	//State of the Alpha modifier
 	AlphaState alpha_state;
 
-	//Text buffer
+	//File descriptor of the text buffer
 	uint8_t text_buffer_handle;
+	//Text buffer
 	char* text;
 	//Line len buffer
 	int16_t* lines;

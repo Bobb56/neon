@@ -44,6 +44,8 @@ void editor_mainloop(struct estate *);
 void initialize_editor(struct estate *);
 void deinit_editor(struct estate* state);
 
+void editor_update_text_ptr(struct estate* state);
+
 /*
  * Returns true if the character passed is a control character,
  * or false if it isn't.
@@ -172,11 +174,6 @@ void cursor_to_l_end_select(struct estate *);
  * Loads text from filename into the editor.
  */
 void load_text(struct estate *);
-
-/*
- * Writes the file to disk.
- */
-void write_file(struct estate *);
 
 //Load data from RC file
 void parseRC(struct estate *);

@@ -16,6 +16,7 @@
 #include "headers/editor.h"
 #include "headers/state.h"
 #include "headers/tigcclib.h"
+#include "headers/secureio.h"
 
 #define TEXT_Y(i)                   (17 + 15*i)
 #define FILES_LIST_SIZE             13
@@ -27,7 +28,7 @@ int cmp(const void *a, const void *b)
     return strcmp(*sa, *sb);
 }
 
-int get_files(char** files) {
+int get_files(struct estate* state, char** files) {
     int nb_files = 0;
 
     char* var_name;
@@ -37,15 +38,15 @@ int get_files(char** files) {
     while ((var_name = ti_Detect(&vat_ptr, NEON_DEFAULT_FILE_HEADER)))
     {
         // Check the header again
-        ti_var_t var = ti_Open(var_name, "r");
+        ti_var_t var = secureio_Open(state, var_name, "r");
         char buffer[NEON_DEFAULT_FILE_HEADER_SIZE];
-	    ti_Read(buffer, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
+	    secureio_Read(state, buffer, NEON_DEFAULT_FILE_HEADER_SIZE, var);
 
 	    if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) == 0) {
             files[nb_files++] = strdup(var_name);
         }
         
-        ti_Close(var);
+        secureio_Close(state, var);
     }
 
     vat_ptr = NULL;
@@ -145,7 +146,7 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
             fontlib_DrawString(files[start_disp_index + i]);
 
             // Print archived status
-            uint8_t handle = ti_Open(files[start_disp_index + i], "r");
+            uint8_t handle = secureio_Open(state, files[start_disp_index + i], "r");
             fontlib_SetCursorPosition(270, TEXT_Y(i));
             if (i != cursor_position) {
                 fontlib_SetForegroundColor(state->dropshadow_color);
@@ -156,7 +157,7 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
             else {
                 fontlib_DrawString("RAM");
             }
-            ti_Close(handle);
+            secureio_Close(state, handle);
 
         }
         fontlib_SetForegroundColor(state->text_color);
@@ -218,7 +219,7 @@ void home_menu(void) {
     while (key != KEY_CLEAR) {
 
         if (reload_files) {
-            nb_files = get_files(files);
+            nb_files = get_files(&state, files);
             // If the cursor was on the last file and a file was deleted, we need to reajust its position
             if (cursor_position + start_disp_index + 1 >= nb_files) {
                 if (nb_files <= FILES_LIST_SIZE) {
@@ -242,10 +243,10 @@ void home_menu(void) {
             gfx_SwapDraw();
             char* name = show_create_dialog(&state);
             if (name != NULL) {
-                ti_var_t var = ti_Open(name, "w");
+                ti_var_t var = secureio_Open(&state, name, "w");
                 if (var != 0) {
-                    ti_Write(NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
-                    ti_Close(var);
+                    secureio_Write(&state, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE, var);
+                    secureio_Close(&state, var);
                     reload_files = true;
                 }
             }

@@ -11,6 +11,7 @@
 #include "headers/state.h"
 #include "headers/tigcclib.h"
 #include "headers/find.h"
+#include "headers/secureio.h"
 
 bool is_control(short k)
 {
@@ -425,7 +426,7 @@ int handle_key(struct estate *state, short k)
 			draw_editor(state);
 			gfx_SwapDraw();
 			if (!show_save_dialog(state))
-				write_file(state);
+				secureio_WriteFile(state);
 			break;
 		case KEY_SAVE: //save
 			insert_char(state, '=');
@@ -598,11 +599,15 @@ void cursor_to_right_word_select(struct estate *state)
 }
 
 
+void editor_update_text_ptr(struct estate* state) {
+	state->text = ti_GetVATPtr(state->text_buffer_handle);
+}
+
 void initialize_editor(struct estate* state) {
 	state->max_buffer_size = 16384;
 	state->max_lines = 10000;
-	//state->text = malloc(state->max_buffer_size);
-	state->
+	//state->text_buffer_handle = create_buffer(state->max_buffer_size);
+	state->text = malloc(state->max_buffer_size);
 	state->lines = malloc(state->max_lines * sizeof(int16_t));
 	initialize(state);
 
@@ -902,13 +907,13 @@ void cursor_to_l_end(struct estate *state)
 
 void load_text(struct estate *state)
 {
-	ti_var_t var = ti_Open(state->filename, "r");
+	ti_var_t var = secureio_Open(state, state->filename, "r");
 	if (var == 0) {
 		return; //no error out
 	}
 
 	char buffer[NEON_DEFAULT_FILE_HEADER_SIZE];
-	ti_Read(buffer, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
+	secureio_Read(state, buffer, NEON_DEFAULT_FILE_HEADER_SIZE, var);
 	if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) != 0) {
 		for (int i=0 ; i < NEON_DEFAULT_FILE_HEADER_SIZE ; i++) {
 			insert_char(state, buffer[i]);
@@ -923,48 +928,11 @@ void load_text(struct estate *state)
 
 	cursor_to_start(state);
 
-	ti_Close(var);
+	secureio_Close(state, var);
 	state->saved = true;
 }
 
-void write_file(struct estate *state)
-{
-	// We always write a header, except if the file starts with #NEON
-	bool need_neon_header = !string_equal(state, 0, NEON_PLAIN_TEXT_HEADER);
 
-	// Compute the size of the resulting file
-	int24_t fullsize = state->c1 + (state->max_buffer_size - (state->c2 + 1));
-
-	if (need_neon_header)
-		fullsize += 5;
-
-	bool current_archive_status = false;
-
-	// Check if we will archive the saved file
-	bool archive = false;
-	ti_var_t var = ti_Open(state->filename, "r");
-	if (var != 0) {
-		archive = ti_IsArchived(var);
-		ti_Close(var);
-	}
-
-	var = ti_Open(state->filename, "w");
-	//makes saving a lot faster due to only needing to resize the variable once
-	ti_Resize(fullsize, var);
-
-	if (need_neon_header) {
-		ti_Write(NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
-	}
-
-	ti_Write(state->text, state->c1, 1, var);
-	ti_Write(state->text + state->c2 + 1, state->max_buffer_size - (state->c2 + 1), 1, var);
-
-	// Archive file if needed
-	ti_SetArchiveStatus(archive, var);
-
-	ti_Close(var);
-	state->saved = true;
-}
 
 
 

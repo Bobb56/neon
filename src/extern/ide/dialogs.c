@@ -21,6 +21,7 @@ You may use version 2.1 or later only.
 #include "headers/dialogs.h"
 #include "headers/clipboard.h"
 #include "headers/primitives.h"
+#include "headers/secureio.h"
 #include "headers/state.h"
 #include "headers/neonide.h"
 #include "headers/editor.h"
@@ -992,13 +993,13 @@ int show_options_dialog(struct estate *state)
 			switch (index)
 			{
 			case 0:
-				write_file(state);
+				secureio_WriteFile(state);
 				return 0;
 			case 1:
 				draw_editor(state);
 				gfx_SwapDraw();
 				if (!show_save_dialog(state)) {
-					write_file(state);
+					secureio_WriteFile(state);
 					return 0;
 				}
 				break;
@@ -1341,7 +1342,7 @@ bool show_open_dialog(struct estate *state)
 				continue;
 		}
 		strncpy((char *)arr + 24 * i, var_name, 8);
-		ti_var_t slot1 = ti_Open(var_name, "r");
+		ti_var_t slot1 = secureio_Open(state, var_name, "r");
 		for (int j = 0; j < 16; j++)
 		{
 			char c = ti_GetC(slot1);
@@ -1354,7 +1355,7 @@ bool show_open_dialog(struct estate *state)
 			//Save the char
 			*((char *)arr + 24 * i + 8 + j) = c;
 		}
-		ti_Close(slot1);
+		secureio_Close(state, slot1);
 		i++;
 	}
 	int numfiles = i;
@@ -1511,12 +1512,12 @@ char* show_create_dialog(struct estate *state)
 		if (numchars && k == '\n')
 		{
 			// Check if the file already exists
-			uint8_t test = ti_Open(buffer, "r");
+			uint8_t test = secureio_Open(state, buffer, "r");
 			if (test == 0) {
 				state->alpha_state = previous_alpha_state;
 				return buffer;
 			}
-			ti_Close(test);
+			secureio_Close(state, test);
 			alert(state, "Error", "This file already exists");
 		}
 		else if (!is_control(k))
@@ -1781,12 +1782,12 @@ void file_menu_backend_draw(struct estate *state, int index, char* filename)
 	{
 		fontlib_SetForegroundColor(state->focus_color);
 	}
-	uint8_t handle = ti_Open(filename, "r");
+	uint8_t handle = secureio_Open(state, filename, "r");
 	if (ti_IsArchived(handle))
 		fontlib_DrawString("4) Unarchive");
 	else
 		fontlib_DrawString("4) Archive");
-	ti_Close(handle);
+	secureio_Close(state, handle);
 	fontlib_SetForegroundColor(state->text_color);
 }
 
@@ -1806,14 +1807,14 @@ void show_file_menu_dialog(struct estate *state, char* filename)
 				case 0: {
 					char* new_name = show_create_dialog(state);
 					if (new_name != NULL) {
-						uint8_t source = ti_Open(filename, "r");
-						uint8_t dest = ti_Open(new_name, "w");
+						uint8_t source = secureio_Open(state, filename, "r");
+						uint8_t dest = secureio_Open(state, new_name, "w");
 						char c;
 						while ((c = ti_GetC(source)) != EOF) {
-							ti_Write(&c, 1, 1, dest);
+							secureio_Write(state, &c, 1, dest);
 						}
-						ti_Close(source);
-						ti_Close(dest);
+						secureio_Close(state, source);
+						secureio_Close(state, dest);
 						free(new_name);
 					}
 					return;
@@ -1828,19 +1829,19 @@ void show_file_menu_dialog(struct estate *state, char* filename)
 				}
 				case 2:
 					if (show_confirm_dialog(state)) {
-						ti_Delete(filename);
+						secureio_Delete(state, filename);
 						return;
 					}
 					break;
 				
 				case 3:
 				{
-					uint8_t handle = ti_Open(filename, "r");
+					uint8_t handle = secureio_Open(state, filename, "r");
 					if (ti_IsArchived(handle))
 						ti_SetArchiveStatus(false, handle);
 					else
 						ti_SetArchiveStatus(true, handle);
-					ti_Close(handle);
+					secureio_Close(state, handle);
 					return;
 				}
 			}
@@ -1914,7 +1915,7 @@ bool show_unsaved_dialog(struct estate *state)
 			switch (index)
 			{
 				case 0:
-					write_file(state);
+					secureio_WriteFile(state);
 					return true;
 				case 1:
 					return true;
