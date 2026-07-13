@@ -24,6 +24,8 @@ TODO:
 #include "headers/state.h"
 #include "headers/console.h"
 #include <stdlib.h>
+#include <fileioc.h>
+#include <string.h>
 
 
 bool initialize(struct estate *state)
@@ -62,6 +64,8 @@ bool initialize(struct estate *state)
 	state->focus_color = 12;
 	state->saved = true;
 	state->ide_state = IDEState_Other;
+	state->ide_goto = IDEState_Other;
+	state->ide_go_back = IDEState_Other;
 
 	state->selection_active = false;
 	state->alpha_state = AlphaState_NoALpha;
@@ -88,3 +92,25 @@ void initialize_void(struct estate* state) {
 	state->max_buffer_size = 0;
 	initialize(state);
 }
+
+
+uint8_t create_buffer(size_t size) {
+	static uint8_t counter = 0;
+
+	char name[9] = {0};
+	strcpy(name, "NIDEBF");
+	name[7] = counter%26 + 'a';
+	name[6] = counter/26 + 'a';
+
+	uint8_t slot = ti_Open(name, "w");
+	ti_Resize(size, slot);
+	return slot;
+}
+
+void delete_buffer(uint8_t slot) {
+	char buffer[10];
+	ti_GetName(buffer, slot);
+	ti_Close(slot);
+	ti_Delete(buffer);
+}
+

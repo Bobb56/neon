@@ -17,7 +17,8 @@
 #include "headers/state.h"
 #include "headers/tigcclib.h"
 
-#define TEXT_Y(i)                   (14 + LINE_SPACING*i)
+#define TEXT_Y(i)                   (17 + 15*i)
+#define FILES_LIST_SIZE             13
 
 int cmp(const void *a, const void *b)
 {
@@ -121,29 +122,33 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
     }
     else {
         int last_index;
-        if (nb_files <= NUM_LINES)
+        if (nb_files <= FILES_LIST_SIZE)
             last_index = nb_files;
         else {
-            last_index = NUM_LINES + 1;
+            last_index = FILES_LIST_SIZE + 1;
         }
 
         for (int i=0 ; i < last_index ; i++) {
             // display cursor
             if (i == cursor_position) {
-                fontlib_SetForegroundColor(state->focus_color);
+                gfx_SetColor(state->statusbar_color);
+                gfx_FillRectangle_NoClip(2, TEXT_Y(i)-1, 316, 15);
+                gfx_SetColor(state->dropshadow_color);
+                gfx_HorizLine_NoClip(3, TEXT_Y(i)-1, 314);
+                fontlib_SetForegroundColor(state->text_color);
             }
             else {
                 fontlib_SetForegroundColor(state->text_color);
             }
 
-            fontlib_SetCursorPosition(3, TEXT_Y(i));
+            fontlib_SetCursorPosition(10, TEXT_Y(i));
             fontlib_DrawString(files[start_disp_index + i]);
 
             // Print archived status
             uint8_t handle = ti_Open(files[start_disp_index + i], "r");
-            fontlib_SetCursorPosition(279, TEXT_Y(i));
+            fontlib_SetCursorPosition(270, TEXT_Y(i));
             if (i != cursor_position) {
-                fontlib_SetForegroundColor(30);
+                fontlib_SetForegroundColor(state->dropshadow_color);
             }
             if (ti_IsArchived(handle)) {
                 fontlib_DrawString("Flash");
@@ -152,7 +157,6 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
                 fontlib_DrawString("RAM");
             }
             ti_Close(handle);
-
 
         }
         fontlib_SetForegroundColor(state->text_color);
@@ -166,7 +170,7 @@ void list_next_item(int* cursor_position, int* start_disp_index, int nb_files) {
         *cursor_position = 0;
         *start_disp_index = 0;
     }
-    else if (*cursor_position < NUM_LINES) {
+    else if (*cursor_position < FILES_LIST_SIZE) {
         (*cursor_position)++;
     }
     else {
@@ -183,13 +187,13 @@ void list_prev_item(int* cursor_position, int* start_disp_index, int nb_files) {
         (*start_disp_index)--;
     }
     else {
-        if (nb_files <= NUM_LINES) {
+        if (nb_files <= FILES_LIST_SIZE) {
             *cursor_position = nb_files - 1;
             *start_disp_index = 0;
         }
         else {
-            *cursor_position = NUM_LINES;
-            *start_disp_index = nb_files - NUM_LINES - 1;
+            *cursor_position = FILES_LIST_SIZE;
+            *start_disp_index = nb_files - FILES_LIST_SIZE - 1;
         }
     }
 }
@@ -217,13 +221,13 @@ void home_menu(void) {
             nb_files = get_files(files);
             // If the cursor was on the last file and a file was deleted, we need to reajust its position
             if (cursor_position + start_disp_index + 1 >= nb_files) {
-                if (nb_files <= NUM_LINES) {
+                if (nb_files <= FILES_LIST_SIZE) {
                     cursor_position = nb_files - 1;
                     start_disp_index = 0;
                 }
                 else {
-                    cursor_position = NUM_LINES;
-                    start_disp_index = nb_files - NUM_LINES - 1;
+                    cursor_position = FILES_LIST_SIZE;
+                    start_disp_index = nb_files - FILES_LIST_SIZE - 1;
                 }
             }
         }
@@ -279,6 +283,18 @@ void home_menu(void) {
                     list_next_item(&cursor_position, &start_disp_index, nb_files);
                 } while (files[cursor_position + start_disp_index][0] != key && !(cursor_position == initial_cursor_position && start_disp_index == initial_start_disp_index));
             }
+        }
+
+        // Go in the right IDE section if needed
+        if (state.ide_goto == IDEState_Editor) {
+            state.ide_goto = state.ide_go_back;
+            state.ide_go_back = IDEState_Other;
+            launch_editor(&state, state.filename);
+        }
+        else if (state.ide_goto == IDEState_RunningProgram) {
+            state.ide_goto = state.ide_go_back;
+            state.ide_go_back = IDEState_Other;
+            run_neon_program(&state, state.filename);
         }
     }
 }

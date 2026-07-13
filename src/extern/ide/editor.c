@@ -219,8 +219,9 @@ void cursor_up(struct estate *state)
 		//on last char of next line
 		//now need to move until old
 
-		//return if the end is what you want
-		if (state->lc_offset % NUM_COLS < old)
+		// return if the end is what you want
+		// avoid the case where we end up after the last character of a full physical line
+		if (state->lc_offset % NUM_COLS < old && !(state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0))
 			return;
 
 		
@@ -267,7 +268,7 @@ void cursor_up_select(struct estate *state)
 		//now need to move until old
 
 		//return if the end is what you want
-		if (state->lc_offset % NUM_COLS < old)
+		if (state->lc_offset % NUM_COLS < old && !(state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0))
 			return;
 
 		
@@ -296,9 +297,13 @@ void cursor_down(struct estate *state)
 		cursor_left(state);
 	}
 
-	if (state->lines[state->lc1] - state->lc_offset > NUM_COLS)
+	if (state->lines[state->lc1] - state->lc_offset >= NUM_COLS)
 	{
-		for (int i = 0; i < NUM_COLS; i++)
+		int move = NUM_COLS;
+		if (state->lc_offset == 0)
+			move++;
+
+		for (int i = 0; i < move; i++)
 		{
 			cursor_right(state);
 		}
@@ -326,9 +331,9 @@ void cursor_down(struct estate *state)
 				cursor_right(state);
 			}
 		}
+		if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)
+			cursor_right(state);
 	}
-	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)
-		cursor_right(state);
 }
 
 void cursor_down_select(struct estate *state)
@@ -337,9 +342,13 @@ void cursor_down_select(struct estate *state)
 		cursor_left_select(state);
 	}
 
-	if (state->lines[state->lc1] - state->lc_offset > NUM_COLS)
+	if (state->lines[state->lc1] - state->lc_offset >= NUM_COLS)
 	{
-		for (int i = 0; i < NUM_COLS; i++)
+		int move = NUM_COLS;
+		if (state->lc_offset == 0)
+			move++;
+
+		for (int i = 0; i < move; i++)
 		{
 			cursor_right_select(state);
 		}
@@ -367,9 +376,9 @@ void cursor_down_select(struct estate *state)
 				cursor_right_select(state);
 			}
 		}
+		if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)
+			cursor_right_select(state);
 	}
-	if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)
-		cursor_right_select(state);
 }
 
 int handle_key(struct estate *state, short k)
@@ -504,8 +513,14 @@ int handle_key(struct estate *state, short k)
 		case KEY_F5:
 			draw_editor(state);
             gfx_SwapDraw();
-            show_unimplemented_dialog(state);
+			result = state->saved || show_unsaved_dialog(state);
+			draw_editor(state);
             gfx_SwapDraw();
+			if (result) {
+				state->ide_goto = IDEState_RunningProgram;
+				state->ide_go_back = IDEState_Editor;
+            	return -1;
+			}
 			break;
 		case KEY_OPEN:
 			draw_editor(state);
@@ -586,9 +601,8 @@ void cursor_to_right_word_select(struct estate *state)
 void initialize_editor(struct estate* state) {
 	state->max_buffer_size = 16384;
 	state->max_lines = 10000;
-	//state->text = malloc_noheap(state->max_buffer_size);
-	//state->lines = malloc_noheap(state->max_lines * sizeof(int16_t));
-	state->text = malloc(state->max_buffer_size);
+	//state->text = malloc(state->max_buffer_size);
+	state->
 	state->lines = malloc(state->max_lines * sizeof(int16_t));
 	initialize(state);
 

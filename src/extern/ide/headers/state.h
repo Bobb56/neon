@@ -70,6 +70,11 @@ struct estate {
 	char filename[10];
 	//State of the IDE
 	IDEState ide_state;
+
+	//At each home menu loop, this variable is checked and the right menu is opened
+	IDEState ide_goto;
+	IDEState ide_go_back;
+
 	//Whether the file name is user defined
 	bool named;
 	//A pointer within the line array. Same line as cursor.
@@ -120,6 +125,7 @@ struct estate {
 	AlphaState alpha_state;
 
 	//Text buffer
+	uint8_t text_buffer_handle;
 	char* text;
 	//Line len buffer
 	int16_t* lines;

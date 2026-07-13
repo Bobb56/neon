@@ -39,6 +39,8 @@
 bool initialize(struct estate *state);
 void initialize_void(struct estate *state);
 
+uint8_t create_buffer(size_t size);
+void delete_buffer(uint8_t slot);
 
 /*
  * Parse the NEIDERC file, if it exists, and do stuff.

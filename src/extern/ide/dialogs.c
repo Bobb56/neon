@@ -1254,6 +1254,9 @@ beginning:
 		// We create a new line only if we truly need to display characters so
 		// that if the last character of a line is \n there will be only one new line
 		if (col >= NUM_COLS) {
+			if (row == NUM_LINES)
+				break;
+
 			col = 0;
 			row++;
 			fontlib_SetCursorPosition(left_offset, LINE_SPACING * row + LINE_SPACING);

@@ -25,7 +25,6 @@ static struct estate* global_console_state = NULL;
 #define INPUT_MAX_LINES		2
 
 
-
 void console_scroll_down(struct estate* state) {
 	int col = 0;
 	while (state->text[state->scr_offset] != '\n' && col < NUM_COLS) {
@@ -226,16 +225,21 @@ void draw_console(struct estate *state)
 	gfx_FillRectangle_NoClip(193, 228, 62, 12);
 	gfx_FillRectangle_NoClip(257, 228, 62, 12);
 	//Draw text on segs
-	//fontlib_SetCursorPosition(4, 228);
-	//fontlib_DrawString("Options");
-	fontlib_SetCursorPosition(76, 228);
+	fontlib_SetCursorPosition(12, 228);
 	fontlib_DrawString("# $ %");
-	fontlib_SetCursorPosition(140, 228);
+	fontlib_SetCursorPosition(76, 228);
 	fontlib_DrawString("Tools");
-	fontlib_SetCursorPosition(209, 228);
+	fontlib_SetCursorPosition(140, 228);
 	fontlib_DrawString("Home");
+
+	if (state->ide_state == IDEState_RunningProgram) {
+		fontlib_SetCursorPosition(209, 228);
+		fontlib_DrawString("Edit");
+	}
+
 	//fontlib_SetCursorPosition(276, 228);
 	//fontlib_DrawString("Run");
+
 	//Draw drop shadows
 	gfx_SetColor(state->dropshadow_color);
 	gfx_VertLine_NoClip(63, 229, 11);
@@ -592,7 +596,7 @@ char* neonide_input(char* prompt) {
         else
         {
             switch (k) {
-				case KEY_F4:
+				case KEY_F3:
                 case KEY_CLEAR:
 					neon_fail(1, NO_ARGS);
                     return NULL;
@@ -668,22 +672,25 @@ char* neonide_input(char* prompt) {
                     cursor_to_end(state);
                     break;
                 case KEY_F1:
-                    break;
-                case KEY_F2:
-					draw_console(state);
+                    draw_console(state);
 					gfx_SwapDraw();
 					show_chars_dialog(state, draw_console);
 					draw_console(state);
 					gfx_SwapDraw();
                     break;
-                case KEY_F3:
+                case KEY_F2:
 					draw_console(state);
 					gfx_SwapDraw();
 					show_console_tools_dialog(state);
 					draw_console(state);
 					gfx_SwapDraw();
                     break;
-                case KEY_F5:
+                case KEY_F4:
+					if (state->ide_state == IDEState_RunningProgram) {
+						state->ide_goto = IDEState_Editor;
+						neon_fail(1, NO_ARGS);
+                    	return NULL;
+					}
                     break;
                 case KEY_OPEN:
                     break;

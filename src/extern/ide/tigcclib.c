@@ -128,14 +128,14 @@ uint8_t ngetchx_backend(void) {
     counter--;
     //if repeating
     if (only_key == last_key) {
-        if(counter==0){
-            counter=30;
+        if (counter == 0) {
+            counter = 15;
             return only_key;
         }
         return 0;
     }
     //if new key
-    counter=400;
+    counter = 250;
     last_key = only_key;
     return only_key;
 }
