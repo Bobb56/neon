@@ -108,6 +108,41 @@ short kmetashift[] = { KEY_NO_EXIST, KEY_LSDOWN, KEY_LSLEFT, KEY_LSRIGHT,
 
 
 
+uint8_t ngetchx_backend(void) {
+    static uint8_t last_key;
+    static uint16_t counter;
+    uint8_t only_key = 0;
+    kb_Scan();
+    for (uint8_t key = 1, group = 7; group; --group) {
+        for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
+            if (kb_Data[group] & mask) {
+                if (key == 40 || key == 54 || key == 55)
+                    continue;
+                if (only_key) {
+                    last_key = 0;
+                    return 0;
+                } else {
+                    only_key = key;
+                }
+            }
+        }
+    }
+    counter--;
+    //if repeating
+    if (only_key == last_key) {
+        if (counter == 0) {
+            counter = 10;
+            return only_key;
+        }
+        return 0;
+    }
+    //if new key
+    counter = 200;
+    last_key = only_key;
+    return only_key;
+}
+
+
 short ngetchx(struct estate* state) {
     uint8_t k = 0;
     while (!(k = neon_getKey())) {
@@ -159,6 +194,7 @@ short ngetchx_xy(struct estate *state, int cx, int cy) {
                 }
             }
     }
+
     gfx_SetDrawBuffer();
 
     if (kb_IsDown(kb_KeyAlpha)) {

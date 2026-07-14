@@ -68,9 +68,6 @@ bool initialize(struct estate *state)
     state->ide_goto = IDEState_Other;
     state->ide_go_back = IDEState_Other;
 
-    state->text_buffer_handle = 0;
-    state->lines_array_handle = 0;
-
     state->selection_active = false;
     state->alpha_state = AlphaState_NoALpha;
 
@@ -106,15 +103,15 @@ uint8_t create_buffer(struct estate* state, size_t size) {
     name[7] = counter%26 + 'a';
     name[6] = counter/26 + 'a';
 
-    uint8_t slot = secureio_Open(state, name, "w");
+    uint8_t slot = ti_Open(name, "w");
     ti_Resize(size, slot);
     return slot;
 }
 
-void delete_buffer(struct estate* state, uint8_t slot) {
+void delete_buffer(uint8_t slot) {
     char buffer[10];
     ti_GetName(buffer, slot);
-    secureio_Close(state, slot);
-    secureio_Delete(state, buffer);
+    ti_Close(slot);
+    ti_Delete(buffer);
 }
 

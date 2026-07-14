@@ -232,10 +232,12 @@ void draw_console(struct estate *state)
     fontlib_SetCursorPosition(140, 228);
     fontlib_DrawString("Tools");
 
-    if (state->ide_state == IDEState_RunningProgram) {
-        fontlib_SetCursorPosition(209, 228);
-        fontlib_DrawString("Edit");
+    if (state->ide_state != IDEState_RunningProgram) {
+        fontlib_SetForegroundColor(state->dropshadow_color);
     }
+    fontlib_SetCursorPosition(209, 228);
+    fontlib_DrawString("Edit");
+    fontlib_SetForegroundColor(state->text_color);
 
     fontlib_SetCursorPosition(276, 228);
     fontlib_DrawString("Home");

@@ -385,103 +385,103 @@ void cursor_down_select(struct estate *state)
 
 int handle_key(struct estate *state, short k)
 {
-    if (!is_control(k))
-    {
-        insert_char(state, k);
-    }
-    else
-    {
-        switch (k)
-        {
-        case KEY_SUP:
-            cursor_up_select(state);
-            break;
-        case KEY_SDOWN:
-            cursor_down_select(state);
-            break;
-        case KEY_SLEFT:
-            cursor_left_select(state);
-            break;
-        case KEY_SRIGHT:
-            cursor_right_select(state);
-            break;
-        case KEY_LEFT: //left
-            cursor_left(state);
-            break;
-        case KEY_RIGHT: //right
-            cursor_right(state);
-            break;
-        case KEY_DOWN: //down
-            cursor_down(state);
-            break;
-        case KEY_UP: //up
-            cursor_up(state);
-            break;
-        case KEY_BS: //backspace
-            bs(state);
-            break;
-        case KEY_DEL: //delete
-            del(state);
-            break;
-        case KEY_SAVE_AS:
-            draw_editor(state);
-            gfx_SwapDraw();
-            if (!show_save_dialog(state))
-                secureio_WriteFile(state);
-            break;
-        case KEY_SAVE: //save
-            insert_char(state, '=');
-            break;
-        case KEY_WSLEFT:
-            cursor_to_left_word_select(state);
-            break;
-        case KEY_WSRIGHT:
-            cursor_to_right_word_select(state);
-            break;
-        case KEY_WSDOWN:
-            cursor_multi_down_select(state);
-            break;
-        case KEY_WSUP:
-            cursor_multi_up_select(state);
-            break;
-        case KEY_WLEFT: //2nd-left
-            cursor_to_left_word(state);
-            break;
-        case KEY_WRIGHT: //2nd-right
-            cursor_to_right_word(state);
-            break;
-        case KEY_WUP: //2nd-up
-            cursor_multi_up(state);
-            break;
-        case KEY_WDOWN: //2nd-down
-            cursor_multi_down(state);
-            break;
-        case KEY_LSLEFT:
-            cursor_to_l_start_select(state);
-            break;
-        case KEY_LSRIGHT:
-            cursor_to_l_end_select(state);
-            break;
-        case KEY_LSUP:
-            cursor_to_start_select(state);
-            break;
-        case KEY_LSDOWN:
-            cursor_to_end_select(state);
-            break;
-        case KEY_LLEFT: //meta-left
-            cursor_to_l_start(state);
-            break;
-        case KEY_LRIGHT: //meta-right
-            cursor_to_l_end(state);
-            break;
-        case KEY_LUP: //meta-up
-            cursor_to_start(state);
-            break;
-        case KEY_LDOWN: //meta-down
-            cursor_to_end(state);
-            break;
-        case KEY_F1:
-            draw_editor(state);
+	if (!is_control(k))
+	{
+		insert_char(state, k);
+	}
+	else
+	{
+		switch (k)
+		{
+		case KEY_SUP:
+			cursor_up_select(state);
+			break;
+		case KEY_SDOWN:
+			cursor_down_select(state);
+			break;
+		case KEY_SLEFT:
+			cursor_left_select(state);
+			break;
+		case KEY_SRIGHT:
+			cursor_right_select(state);
+			break;
+		case KEY_LEFT: //left
+			cursor_left(state);
+			break;
+		case KEY_RIGHT: //right
+			cursor_right(state);
+			break;
+		case KEY_DOWN: //down
+			cursor_down(state);
+			break;
+		case KEY_UP: //up
+			cursor_up(state);
+			break;
+		case KEY_BS: //backspace
+			bs(state);
+			break;
+		case KEY_DEL: //delete
+			del(state);
+			break;
+		case KEY_SAVE_AS:
+			draw_editor(state);
+			gfx_SwapDraw();
+			if (!show_save_dialog(state))
+				write_file(state);
+			break;
+		case KEY_SAVE: //save
+			insert_char(state, '=');
+			break;
+		case KEY_WSLEFT:
+			cursor_to_left_word_select(state);
+			break;
+		case KEY_WSRIGHT:
+			cursor_to_right_word_select(state);
+			break;
+		case KEY_WSDOWN:
+			cursor_multi_down_select(state);
+			break;
+		case KEY_WSUP:
+			cursor_multi_up_select(state);
+			break;
+		case KEY_WLEFT: //2nd-left
+			cursor_to_left_word(state);
+			break;
+		case KEY_WRIGHT: //2nd-right
+			cursor_to_right_word(state);
+			break;
+		case KEY_WUP: //2nd-up
+			cursor_multi_up(state);
+			break;
+		case KEY_WDOWN: //2nd-down
+			cursor_multi_down(state);
+			break;
+		case KEY_LSLEFT:
+			cursor_to_l_start_select(state);
+			break;
+		case KEY_LSRIGHT:
+			cursor_to_l_end_select(state);
+			break;
+		case KEY_LSUP:
+			cursor_to_start_select(state);
+			break;
+		case KEY_LSDOWN:
+			cursor_to_end_select(state);
+			break;
+		case KEY_LLEFT: //meta-left
+			cursor_to_l_start(state);
+			break;
+		case KEY_LRIGHT: //meta-right
+			cursor_to_l_end(state);
+			break;
+		case KEY_LUP: //meta-up
+			cursor_to_start(state);
+			break;
+		case KEY_LDOWN: //meta-down
+			cursor_to_end(state);
+			break;
+		case KEY_F1:
+			draw_editor(state);
             gfx_SwapDraw();
             int res = show_options_dialog(state);
             draw_editor(state);
@@ -606,26 +606,22 @@ void editor_update_ptrs(struct estate* state) {
 }
 
 void initialize_editor(struct estate* state) {
-    state->max_buffer_size = 16384;
-    state->max_lines = 10000;
-    //state->text = malloc(state->max_buffer_size);
-    //state->lines = malloc(state->max_lines * sizeof(int16_t));
-    state->text_buffer_handle = create_buffer(state, state->max_buffer_size);
-    state->lines_array_handle = create_buffer(state, state->max_lines * sizeof(int16_t));
-    editor_update_ptrs(state);
-    initialize(state);
+	state->max_buffer_size = 16384;
+	state->max_lines = 10000;
+	//state->text = malloc(state->max_buffer_size);
+	state->
+	state->lines = malloc(state->max_lines * sizeof(int16_t));
+	initialize(state);
 
     state->ide_state = IDEState_Editor;
 }
 
 
 void deinit_editor(struct estate* state) {
-    //free_all_noheap();
-    //free(state->lines);
-    //free(state->text);
-    delete_buffer(state, state->text_buffer_handle);
-    delete_buffer(state, state->lines_array_handle);
-    state->ide_state = IDEState_Other;
+	//free_all_noheap();
+	free(state->lines);
+	free(state->text);
+	state->ide_state = IDEState_Other;
 }
 
 
@@ -913,18 +909,18 @@ void cursor_to_l_end(struct estate *state)
 
 void load_text(struct estate *state)
 {
-    ti_var_t var = secureio_Open(state, state->filename, "r");
-    if (var == 0) {
-        return; //no error out
-    }
+	ti_var_t var = ti_Open(state->filename, "r");
+	if (var == 0) {
+		return; //no error out
+	}
 
-    char buffer[NEON_DEFAULT_FILE_HEADER_SIZE];
-    secureio_Read(state, buffer, NEON_DEFAULT_FILE_HEADER_SIZE, var);
-    if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) != 0) {
-        for (int i=0 ; i < NEON_DEFAULT_FILE_HEADER_SIZE ; i++) {
-            insert_char(state, buffer[i]);
-        }
-    }
+	char buffer[NEON_DEFAULT_FILE_HEADER_SIZE];
+	ti_Read(buffer, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
+	if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) != 0) {
+		for (int i=0 ; i < NEON_DEFAULT_FILE_HEADER_SIZE ; i++) {
+			insert_char(state, buffer[i]);
+		}
+	}
 
     char c;
     while ((c = ti_GetC(var)) != EOF)
@@ -934,11 +930,48 @@ void load_text(struct estate *state)
 
     cursor_to_start(state);
 
-    secureio_Close(state, var);
-    state->saved = true;
+	ti_Close(var);
+	state->saved = true;
 }
 
+void write_file(struct estate *state)
+{
+	// We always write a header, except if the file starts with #NEON
+	bool need_neon_header = !string_equal(state, 0, NEON_PLAIN_TEXT_HEADER);
 
+	// Compute the size of the resulting file
+	int24_t fullsize = state->c1 + (state->max_buffer_size - (state->c2 + 1));
+
+	if (need_neon_header)
+		fullsize += 5;
+
+	bool current_archive_status = false;
+
+	// Check if we will archive the saved file
+	bool archive = false;
+	ti_var_t var = ti_Open(state->filename, "r");
+	if (var != 0) {
+		archive = ti_IsArchived(var);
+		ti_Close(var);
+	}
+
+	var = ti_Open(state->filename, "w");
+	//makes saving a lot faster due to only needing to resize the variable once
+	ti_Resize(fullsize, var);
+
+	if (need_neon_header) {
+		ti_Write(NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
+	}
+
+	ti_Write(state->text, state->c1, 1, var);
+	ti_Write(state->text + state->c2 + 1, state->max_buffer_size - (state->c2 + 1), 1, var);
+
+	// Archive file if needed
+	ti_SetArchiveStatus(archive, var);
+
+	ti_Close(var);
+	state->saved = true;
+}
 
 
 

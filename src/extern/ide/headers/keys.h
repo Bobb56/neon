@@ -91,6 +91,10 @@ enum ControlKeys {
 };
 
 
+/*
+ * Key scanning backend, ignores modifier keys
+ */
+uint8_t ngetchx_backend(void);
 
 /*
  * Block and wait for a keypress.

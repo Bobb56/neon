@@ -51,7 +51,7 @@ void cb_paste(struct estate *state) {
     while ((c = ti_GetC(state->clipboard_file)) != EOF) {
         insert_char(state, c);
     }
-    secureio_Close(state, state->clipboard_file);
+    ti_Close(state->clipboard_file);
     #else
     for (int i = 0; i < state->clipboard_size; i++) {
         insert_char(state, state->clipboard_data[i]);
