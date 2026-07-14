@@ -5,8 +5,9 @@
  *      Author: michael
  */
 
-#include "headers/tigcclib.h"
+#include "headers/keys.h"
 #include "headers/state.h"
+#include "../../headers/graphicmodule.h"
 
 /*
  * Bindings for no modifier keys held
@@ -106,43 +107,11 @@ short kmetashift[] = { KEY_NO_EXIST, KEY_LSDOWN, KEY_LSLEFT, KEY_LSRIGHT,
                      };
 
 
-uint8_t ngetchx_backend(void) {
-    static uint8_t last_key;
-    static uint16_t counter;
-    uint8_t only_key = 0;
-    kb_Scan();
-    for (uint8_t key = 1, group = 7; group; --group) {
-        for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
-            if (kb_Data[group] & mask) {
-                if (key == 40 || key == 54 || key == 55)
-                    continue;
-                if (only_key) {
-                    last_key = 0;
-                    return 0;
-                } else {
-                    only_key = key;
-                }
-            }
-        }
-    }
-    counter--;
-    //if repeating
-    if (only_key == last_key) {
-        if (counter == 0) {
-            counter = 15;
-            return only_key;
-        }
-        return 0;
-    }
-    //if new key
-    counter = 250;
-    last_key = only_key;
-    return only_key;
-}
+
 
 short ngetchx(struct estate* state) {
     uint8_t k = 0;
-    while (!(k = ngetchx_backend())) {
+    while (!(k = neon_getKey())) {
         continue;
     }
 
@@ -175,7 +144,7 @@ short ngetchx_xy(struct estate *state, int cx, int cy) {
     gfx_SetColor(state->text_color);
     gfx_VertLine_NoClip(cx,cy,12);
 
-    while (!(k = ngetchx_backend())) {
+    while (!(k = neon_getKey())) {
         frame++;
         if(state->blinkcursor)
             if(frame>400) {
@@ -191,6 +160,7 @@ short ngetchx_xy(struct estate *state, int cx, int cy) {
                 }
             }
     }
+
     gfx_SetDrawBuffer();
 
     if (kb_IsDown(kb_KeyAlpha)) {

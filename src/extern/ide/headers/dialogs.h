@@ -26,7 +26,7 @@
 #include "editor.h"
 #include "state.h"
 #include "gfx.h"
-#include "tigcclib.h"
+#include "keys.h"
 
 bool string_equal(struct estate *state, int24_t pointer, char* str);
 

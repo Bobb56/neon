@@ -23,7 +23,7 @@
 #include <fontlibc.h>
 
 #include "state.h"
-#include "tigcclib.h"
+#include "keys.h"
 #include "editor.h"
 #include "dialogs.h"
 #include "gfx.h"

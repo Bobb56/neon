@@ -15,7 +15,7 @@
 #include "headers/dialogs.h"
 #include "headers/editor.h"
 #include "headers/state.h"
-#include "headers/tigcclib.h"
+#include "headers/keys.h"
 
 #define TEXT_Y(i)                   (17 + 15*i)
 #define FILES_LIST_SIZE             13
@@ -39,9 +39,9 @@ int get_files(char** files) {
         // Check the header again
         ti_var_t var = ti_Open(var_name, "r");
         char buffer[NEON_DEFAULT_FILE_HEADER_SIZE];
-	    ti_Read(buffer, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
+        ti_Read(buffer, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
 
-	    if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) == 0) {
+        if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) == 0) {
             files[nb_files++] = strdup(var_name);
         }
         
@@ -100,12 +100,12 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
     fontlib_DrawString("Neon");
 
     fontlib_SetCursorPosition(280, 0);
-	if (state->alpha_state == AlphaState_alpha) {
-		fontlib_DrawString("alpha");
-	}
-	else if (state->alpha_state == AlphaState_ALPHA) {
-		fontlib_DrawString("ALPHA");
-	}
+    if (state->alpha_state == AlphaState_alpha) {
+        fontlib_DrawString("alpha");
+    }
+    else if (state->alpha_state == AlphaState_ALPHA) {
+        fontlib_DrawString("ALPHA");
+    }
 
     fontlib_SetForegroundColor(state->text_color);
     fontlib_SetBackgroundColor(state->text_highlight_color);
@@ -131,11 +131,11 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
         for (int i=0 ; i < last_index ; i++) {
             // display cursor
             if (i == cursor_position) {
-                gfx_SetColor(state->statusbar_color);
-                gfx_FillRectangle_NoClip(2, TEXT_Y(i)-1, 316, 15);
+                gfx_SetColor(state->focus_color);
+                gfx_Rectangle_NoClip(2, TEXT_Y(i)-1, 316, 15);
                 gfx_SetColor(state->dropshadow_color);
                 gfx_HorizLine_NoClip(3, TEXT_Y(i)-1, 314);
-                fontlib_SetForegroundColor(state->text_color);
+                fontlib_SetForegroundColor(state->focus_color);
             }
             else {
                 fontlib_SetForegroundColor(state->text_color);
@@ -217,6 +217,20 @@ void home_menu(void) {
     short key = 0;
     while (key != KEY_CLEAR) {
 
+        // Go in the right IDE section if needed
+        if (state.ide_goto == IDEState_Editor) {
+            state.ide_goto = state.ide_go_back;
+            state.ide_go_back = IDEState_Other;
+            launch_editor(&state, state.filename);
+            continue;
+        }
+        else if (state.ide_goto == IDEState_RunningProgram) {
+            state.ide_goto = state.ide_go_back;
+            state.ide_go_back = IDEState_Other;
+            run_neon_program(&state, state.filename);
+            continue;
+        }
+
         if (reload_files) {
             nb_files = get_files(files);
             // If the cursor was on the last file and a file was deleted, we need to reajust its position
@@ -283,18 +297,6 @@ void home_menu(void) {
                     list_next_item(&cursor_position, &start_disp_index, nb_files);
                 } while (files[cursor_position + start_disp_index][0] != key && !(cursor_position == initial_cursor_position && start_disp_index == initial_start_disp_index));
             }
-        }
-
-        // Go in the right IDE section if needed
-        if (state.ide_goto == IDEState_Editor) {
-            state.ide_goto = state.ide_go_back;
-            state.ide_go_back = IDEState_Other;
-            launch_editor(&state, state.filename);
-        }
-        else if (state.ide_goto == IDEState_RunningProgram) {
-            state.ide_goto = state.ide_go_back;
-            state.ide_go_back = IDEState_Other;
-            run_neon_program(&state, state.filename);
         }
     }
 }

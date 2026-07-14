@@ -26,6 +26,8 @@
 #include "gfx.h"
 #include "clipboard.h"
 
+#define EDITOR_RAW_RAM          ((void*)0xD09466)
+
 void cursor_up_select(struct estate *);
 void cursor_down_select(struct estate *);
 void cursor_left_select(struct estate *);
