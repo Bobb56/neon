@@ -2,16 +2,16 @@
  * main.c
  *
  *  Created on: Jul 25, 2021
- *      Author: michael
- *      Edited for BOS by Beck
+ *      Author: Raphaël Le Puillandre
  */
 
 /*
 TODO:
 - Syntax highlighting
-- KEY_CLEAR -> KEY_STO
+- KEY_CLEAR -> KEY_STO && KEY_STO insert an '='
 - Update is_control
 - Make an inventory of all key bindings and keep/change some
+- Intentation support ?
 */
 
 #include "headers/neonide.h"
@@ -97,5 +97,5 @@ void launch_neonide(void) {
 	fontlib_SetFont(font, 0);
 	home_menu();
 
-	editor_clean_memory();
+	clean_memory();
 }

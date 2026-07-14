@@ -14,25 +14,24 @@
 
 #include "headers/libmalloc.h"
 
-static int24_t currentsize;
-static int24_t maxsize;
-static void* mem = NULL;
+static int24_t current_size = 0;
 
-void* malloc_noheap(size_t size){
-    if (mem == NULL){
-        maxsize = os_MemChk(&mem);
-        currentsize = 0;
-    }
+void* malloc_noheap(size_t size) {
+    void* ptr = RAW_RAM_PTR + current_size;
+    current_size += size;
+    return ptr;
+}
 
-    if (currentsize >= maxsize) {
-        return NULL;
-    }
-
-    void* ret = (char*)mem + currentsize;
-    currentsize += size;
-    return ret;
+void free_noheap(void *ptr) {
+    current_size = (intptr_t)ptr - (intptr_t)RAW_RAM_PTR;
 }
 
 void free_all_noheap(void) {
-    mem = NULL;
+    current_size = 0;
+}
+
+
+// Cleans up the memory used for the editor's buffers
+void clean_memory(void) {
+	memset(RAW_RAM_PTR, 0xff, RAW_RAM_SIZE);
 }

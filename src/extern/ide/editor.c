@@ -5,6 +5,7 @@
  *      Author: michael
  */
 
+#include "headers/libmalloc.h"
 #include "headers/neonide.h"
 #include "headers/dialogs.h"
 #include "headers/editor.h"
@@ -604,20 +605,16 @@ void cursor_to_right_word_select(struct estate *state)
 void initialize_editor(struct estate* state) {
 	state->max_buffer_size = 16384;
 	state->max_lines = 10000;
-	state->text = EDITOR_RAW_RAM;
-	state->lines = EDITOR_RAW_RAM + state->max_buffer_size;
+	state->text = malloc_noheap(state->max_buffer_size);
+	state->lines = malloc_noheap(state->max_lines * sizeof(int16_t));
 	initialize(state);
 
     state->ide_state = IDEState_Editor;
 }
 
-// Cleans up the memory used for the editor's buffers
-void editor_clean_memory(void) {
-	memset(EDITOR_RAW_RAM, 0xff, EDITOR_RAW_RAM_SIZE);
-}
-
 
 void deinit_editor(struct estate* state) {
+    free_all_noheap();
 	state->ide_state = IDEState_Other;
 }
 

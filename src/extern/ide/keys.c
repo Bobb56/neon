@@ -138,7 +138,7 @@ uint8_t ngetchx_backend(void) {
     //if repeating
     if (only_key == last_key) {
         if (counter == 0) {
-            counter = 10;
+            counter = 20;
             return only_key;
         }
         return 0;

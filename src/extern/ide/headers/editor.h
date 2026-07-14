@@ -25,10 +25,6 @@
 #include "state.h"
 #include "clipboard.h"
 
-#define EDITOR_RAW_RAM          ((void*)0xD09466)
-#define EDITOR_RAW_RAM_SIZE     ((size_t)21945*2)
-
-void editor_clean_memory(void);
 
 void cursor_up_select(struct estate *);
 void cursor_down_select(struct estate *);

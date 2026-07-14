@@ -1,3 +1,4 @@
+#include "headers/libmalloc.h"
 #define NEON_SOURCE_ID 100
 #include "headers/console.h"
 #include "headers/neonide.h"
@@ -239,7 +240,7 @@ void draw_console(struct estate *state)
     fontlib_DrawString("Edit");
     fontlib_SetForegroundColor(state->text_color);
 
-    fontlib_SetCursorPosition(276, 228);
+    fontlib_SetCursorPosition(272, 228);
     fontlib_DrawString("Home");
 
     //Draw drop shadows
@@ -282,8 +283,8 @@ void draw_console(struct estate *state)
 void initialize_console(struct estate* state, char* name) {
     state->max_buffer_size = NUM_LINES * NUM_COLS * 2;
     state->max_lines = NUM_LINES * 2;
-    state->text = malloc(state->max_buffer_size);
-    state->lines = malloc(state->max_lines * sizeof(int16_t));
+    state->text = malloc_noheap(state->max_buffer_size);
+    state->lines = malloc_noheap(state->max_lines * sizeof(int16_t));
     initialize(state);
 
     if (name != NULL) {
@@ -300,8 +301,7 @@ void initialize_console(struct estate* state, char* name) {
 
 
 void deinit_console(struct estate* state) {
-    free(state->lines);
-    free(state->text);
+    free_all_noheap();
     state->ide_state = IDEState_Other;
 }
 
