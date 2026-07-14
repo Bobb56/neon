@@ -11,8 +11,8 @@
 #include "headers/state.h"
 #include "headers/keys.h"
 #include "headers/find.h"
-#include "headers/secureio.h"
 #include <stdint.h>
+#include <string.h>
 
 bool is_control(short k)
 {
@@ -600,27 +600,24 @@ void cursor_to_right_word_select(struct estate *state)
 }
 
 
-void editor_update_ptrs(struct estate* state) {
-    state->text = ti_GetVATPtr(state->text_buffer_handle);
-    state->lines = ti_GetVATPtr(state->lines_array_handle);
-}
 
 void initialize_editor(struct estate* state) {
 	state->max_buffer_size = 16384;
 	state->max_lines = 10000;
-	//state->text = malloc(state->max_buffer_size);
-	state->
-	state->lines = malloc(state->max_lines * sizeof(int16_t));
+	state->text = EDITOR_RAW_RAM;
+	state->lines = EDITOR_RAW_RAM + state->max_buffer_size;
 	initialize(state);
 
     state->ide_state = IDEState_Editor;
 }
 
+// Cleans up the memory used for the editor's buffers
+void editor_clean_memory(void) {
+	memset(EDITOR_RAW_RAM, 0xff, EDITOR_RAW_RAM_SIZE);
+}
+
 
 void deinit_editor(struct estate* state) {
-	//free_all_noheap();
-	free(state->lines);
-	free(state->text);
 	state->ide_state = IDEState_Other;
 }
 

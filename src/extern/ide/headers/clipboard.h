@@ -26,13 +26,11 @@
 #include "editor.h"
 
 #define USE_PERSISTENT_CLIPBOARD
+#define CLIPBOARD_FILE_NAME             "NIDECPBD"
 
 void cb_copy(struct estate*);
-
 void cb_cut(struct estate*);
-
 void cb_paste(struct estate*);
-
 
 
 #endif /* SRC_CLIPBOARD_H_ */

@@ -37,7 +37,7 @@ int get_files(struct estate* state, char** files) {
     while ((var_name = ti_Detect(&vat_ptr, NEON_DEFAULT_FILE_HEADER)))
     {
         // Check the header again
-        ti_var_t var = secureio_Open(state, var_name, "r");
+        ti_var_t var = ti_Open(var_name, "r");
         char buffer[NEON_DEFAULT_FILE_HEADER_SIZE];
         ti_Read(buffer, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
 
@@ -45,7 +45,7 @@ int get_files(struct estate* state, char** files) {
             files[nb_files++] = strdup(var_name);
         }
         
-        secureio_Close(state, var);
+        ti_Close(var);
     }
 
     vat_ptr = NULL;
@@ -145,7 +145,7 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
             fontlib_DrawString(files[start_disp_index + i]);
 
             // Print archived status
-            uint8_t handle = secureio_Open(state, files[start_disp_index + i], "r");
+            uint8_t handle = ti_Open(files[start_disp_index + i], "r");
             fontlib_SetCursorPosition(270, TEXT_Y(i));
             if (i != cursor_position) {
                 fontlib_SetForegroundColor(state->dropshadow_color);
@@ -156,7 +156,7 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
             else {
                 fontlib_DrawString("RAM");
             }
-            secureio_Close(state, handle);
+            ti_Close(handle);
 
         }
         fontlib_SetForegroundColor(state->text_color);
@@ -271,10 +271,10 @@ void home_menu(void) {
             gfx_SwapDraw();
             char* name = show_create_dialog(&state);
             if (name != NULL) {
-                ti_var_t var = secureio_Open(&state, name, "w");
+                ti_var_t var = ti_Open(name, "w");
                 if (var != 0) {
-                    secureio_Write(&state, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE, var);
-                    secureio_Close(&state, var);
+                    ti_Write(NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
+                    ti_Close(var);
                     reload_files = true;
                 }
             }

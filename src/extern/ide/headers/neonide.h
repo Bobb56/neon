@@ -35,6 +35,8 @@
 #define NEON_DEFAULT_FILE_HEADER        "NEON\x00"
 #define NEON_DEFAULT_FILE_HEADER_SIZE   5
 
+void launch_neonide(void);
+
 bool initialize(struct estate *state);
 void initialize_void(struct estate *state);
 

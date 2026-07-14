@@ -8,10 +8,7 @@
 
 /*
 TODO:
-- Fix consistency of Tools/Chars menus in console
-- Fix problems when editing a program from the console, running programs from the editor
-- neon_fail augmente la taille du contexte des fonctions, cause des stack overflows sur TI_EZ80
-- RAM reset quand on lance l'éditeur de temps en temps
+- Syntax highlighting
 - KEY_CLEAR -> KEY_STO
 - Update is_control
 - Make an inventory of all key bindings and keep/change some
@@ -19,13 +16,14 @@ TODO:
 
 #include "headers/neonide.h"
 #include "headers/editor.h"
+#include "headers/font.h"
 #include "headers/home.h"
 #include "headers/libmalloc.h"
 #include "headers/state.h"
 #include "headers/console.h"
-#include "headers/secureio.h"
 #include <stdlib.h>
 #include <fileioc.h>
+#include <fontlibc.h>
 #include <string.h>
 
 
@@ -95,23 +93,9 @@ void initialize_void(struct estate* state) {
 }
 
 
-uint8_t create_buffer(struct estate* state, size_t size) {
-    static uint8_t counter = 0;
+void launch_neonide(void) {
+	fontlib_SetFont(font, 0);
+	home_menu();
 
-    char name[9] = {0};
-    strcpy(name, "NIDEBF");
-    name[7] = counter%26 + 'a';
-    name[6] = counter/26 + 'a';
-
-    uint8_t slot = ti_Open(name, "w");
-    ti_Resize(size, slot);
-    return slot;
+	editor_clean_memory();
 }
-
-void delete_buffer(uint8_t slot) {
-    char buffer[10];
-    ti_GetName(buffer, slot);
-    ti_Close(slot);
-    ti_Delete(buffer);
-}
-

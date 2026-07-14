@@ -13,6 +13,7 @@
 #include "headers/runtime.h"
 #include "headers/errors.h"
 #include "headers/lowlevel.h"
+#include "extern/ide/headers/keys.h"
 
 #ifdef TI_EZ80
 #include <graphx.h>
@@ -40,50 +41,8 @@ NeObj rgb(NeList* args) {
 
 
 
-
-int neon_getKey(void) {
-    static uint8_t last_key;
-    static clock_t local_clock;
-
-    uint8_t only_key = 0;
-
-    kb_Scan();
-    for (uint8_t key = 1, group = 7; group; --group) {
-        for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
-            if (kb_Data[group] & mask) {
-                if (only_key) {
-                    last_key = 0;
-                    return 0;
-                }
-                else {
-                    only_key = key;
-                }
-            }
-        }
-    }
-
-    // processing of the key code
-
-    if (only_key == last_key) {
-        if (clock() - local_clock > 10000) {
-            return only_key;
-        }
-        else {
-            return 0;
-        }
-    }
-    else {
-
-        // resets the clock since it's a new key
-        local_clock = clock();
-
-        last_key = only_key;
-        return only_key;
-    }
-}
-
 NeObj getKey(NeList* args) {
-    return neo_integer_create(neon_getKey());
+    return neo_integer_create(ngetchx_backend());
 }
 
 
@@ -464,7 +423,7 @@ NeObj menu(NeList* args) {
         gfx_SetTextBGColor(background_color);
         gfx_SetTextFGColor(foreground_color);
         gfx_PrintStringXY(empty_text, 90, 120);
-        while (neon_getKey() != 15);
+        while (ngetchx_backend() != 15);
     }
     else {
         int start_disp_index = 0; // indice dans la liste d'éléments de l'élément affiché le plus haut
@@ -473,7 +432,7 @@ NeObj menu(NeList* args) {
 
         bool refresh = true;
         uint8_t key = 0;
-        while ((key = neon_getKey()) != 15) {
+        while ((key = ngetchx_backend()) != 15) {
             if (key == 1 || key == 3) { // next item
                 if (cursor_position + start_disp_index + 1 >= elements->len) {
                     cursor_position = 0;

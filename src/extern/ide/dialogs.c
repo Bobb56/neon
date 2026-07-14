@@ -20,10 +20,6 @@ You may use version 2.1 or later only.
 
 #include "headers/dialogs.h"
 #include "headers/clipboard.h"
-<<<<<<< HEAD
-#include "headers/secureio.h"
-=======
->>>>>>> blinking-screen
 #include "headers/state.h"
 #include "headers/neonide.h"
 #include "headers/editor.h"

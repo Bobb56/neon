@@ -26,6 +26,9 @@
 #include "clipboard.h"
 
 #define EDITOR_RAW_RAM          ((void*)0xD09466)
+#define EDITOR_RAW_RAM_SIZE     ((size_t)21945*2)
+
+void editor_clean_memory(void);
 
 void cursor_up_select(struct estate *);
 void cursor_down_select(struct estate *);
@@ -45,7 +48,6 @@ void editor_mainloop(struct estate *);
 void initialize_editor(struct estate *);
 void deinit_editor(struct estate* state);
 
-void editor_update_ptrs(struct estate* state);
 
 /*
  * Returns true if the character passed is a control character,
@@ -175,6 +177,8 @@ void cursor_to_l_end_select(struct estate *);
  * Loads text from filename into the editor.
  */
 void load_text(struct estate *);
+
+void write_file(struct estate *state);
 
 //Load data from RC file
 void parseRC(struct estate *);

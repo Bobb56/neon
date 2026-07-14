@@ -36,7 +36,6 @@ struct ContainerType {
 #define NEON_PALETTE_PURPLE             NEON_PALETTE_COLOR(7,0,3)
 
 
-int neon_getKey(void);
 void draw_nelist(NeList* list);
 void draw_obj(NeObj obj);
 void set_neon_palette(void);
