@@ -10,35 +10,35 @@
 #include "headers/secureio.h"
 
 void cb_copy(struct estate *state) {
-	int24_t start;
-	int24_t len;
-	//gfx_SetDrawScreen();
-	//fontlib_DrawInt(state->selection_anchor, 5);
-	//ngetchx(state);
-	if (state->c2 < state->selection_anchor) {
-		start = state->c2+1;
-		len = state->selection_anchor - state->c2;
-		//left selection
-	} else if (state->c1 > state->selection_anchor) {
-		start = state->selection_anchor;
-		len = state->c1 - state->selection_anchor;
-		//right selection
-	} else {
-		return; //no selection
-	}
+    int24_t start;
+    int24_t len;
+    //gfx_SetDrawScreen();
+    //fontlib_DrawInt(state->selection_anchor, 5);
+    //ngetchx(state);
+    if (state->c2 < state->selection_anchor) {
+        start = state->c2+1;
+        len = state->selection_anchor - state->c2;
+        //left selection
+    } else if (state->c1 > state->selection_anchor) {
+        start = state->selection_anchor;
+        len = state->c1 - state->selection_anchor;
+        //right selection
+    } else {
+        return; //no selection
+    }
     #ifdef USE_PERSISTENT_CLIPBOARD
         state->clipboard_file=secureio_Open(state, "CLIPDATA","w");
         secureio_Write(state, state->text+start,len,state->clipboard_file);
         secureio_Close(state, state->clipboard_file);
     #else
-	memcpy(state->clipboard_data, state->text + start, len);
+    memcpy(state->clipboard_data, state->text + start, len);
     #endif
-	state->clipboard_size = len;
+    state->clipboard_size = len;
 }
 
 void cb_cut(struct estate *state) {
-	cb_copy(state);
-	bs(state);
+    cb_copy(state);
+    bs(state);
 }
 
 void cb_paste(struct estate *state) {
@@ -48,14 +48,14 @@ void cb_paste(struct estate *state) {
         return;
     }
     char c;
-	while ((c = ti_GetC(state->clipboard_file)) != EOF) {
-		insert_char(state, c);
-	}
+    while ((c = ti_GetC(state->clipboard_file)) != EOF) {
+        insert_char(state, c);
+    }
     secureio_Close(state, state->clipboard_file);
     #else
-	for (int i = 0; i < state->clipboard_size; i++) {
-		insert_char(state, state->clipboard_data[i]);
-	}
+    for (int i = 0; i < state->clipboard_size; i++) {
+        insert_char(state, state->clipboard_data[i]);
+    }
     #endif
 }
 

@@ -15,7 +15,7 @@
 #include "headers/dialogs.h"
 #include "headers/editor.h"
 #include "headers/state.h"
-#include "headers/tigcclib.h"
+#include "headers/keys.h"
 #include "headers/secureio.h"
 
 #define TEXT_Y(i)                   (17 + 15*i)
@@ -40,9 +40,9 @@ int get_files(struct estate* state, char** files) {
         // Check the header again
         ti_var_t var = secureio_Open(state, var_name, "r");
         char buffer[NEON_DEFAULT_FILE_HEADER_SIZE];
-	    secureio_Read(state, buffer, NEON_DEFAULT_FILE_HEADER_SIZE, var);
+        secureio_Read(state, buffer, NEON_DEFAULT_FILE_HEADER_SIZE, var);
 
-	    if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) == 0) {
+        if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) == 0) {
             files[nb_files++] = strdup(var_name);
         }
         
@@ -101,12 +101,12 @@ void draw_home_menu(struct estate* state, char* files[], int nb_files, int curso
     fontlib_DrawString("Neon");
 
     fontlib_SetCursorPosition(280, 0);
-	if (state->alpha_state == AlphaState_alpha) {
-		fontlib_DrawString("alpha");
-	}
-	else if (state->alpha_state == AlphaState_ALPHA) {
-		fontlib_DrawString("ALPHA");
-	}
+    if (state->alpha_state == AlphaState_alpha) {
+        fontlib_DrawString("alpha");
+    }
+    else if (state->alpha_state == AlphaState_ALPHA) {
+        fontlib_DrawString("ALPHA");
+    }
 
     fontlib_SetForegroundColor(state->text_color);
     fontlib_SetBackgroundColor(state->text_highlight_color);
@@ -236,6 +236,21 @@ void home_menu(void) {
         draw_home_menu(&state, files, nb_files, cursor_position, start_disp_index);
         gfx_SwapDraw();
 
+        // Go in the right IDE section if needed
+        if (state.ide_goto == IDEState_Editor) {
+            state.ide_goto = state.ide_go_back;
+            state.ide_go_back = IDEState_Other;
+            launch_editor(&state, state.filename);
+            continue;
+        }
+        else if (state.ide_goto == IDEState_RunningProgram) {
+            state.ide_goto = state.ide_go_back;
+            state.ide_go_back = IDEState_Other;
+            run_neon_program(&state, state.filename);
+            continue;
+        }
+
+        // Otherwise wait for a key
         key = ngetchx(&state);
 
         if (key == KEY_F1) {
@@ -284,18 +299,6 @@ void home_menu(void) {
                     list_next_item(&cursor_position, &start_disp_index, nb_files);
                 } while (files[cursor_position + start_disp_index][0] != key && !(cursor_position == initial_cursor_position && start_disp_index == initial_start_disp_index));
             }
-        }
-
-        // Go in the right IDE section if needed
-        if (state.ide_goto == IDEState_Editor) {
-            state.ide_goto = state.ide_go_back;
-            state.ide_go_back = IDEState_Other;
-            launch_editor(&state, state.filename);
-        }
-        else if (state.ide_goto == IDEState_RunningProgram) {
-            state.ide_goto = state.ide_go_back;
-            state.ide_go_back = IDEState_Other;
-            run_neon_program(&state, state.filename);
         }
     }
 }

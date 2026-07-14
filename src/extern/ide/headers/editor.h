@@ -23,7 +23,6 @@
 #include <fontlibc.h>
 
 #include "state.h"
-#include "gfx.h"
 #include "clipboard.h"
 
 void cursor_up_select(struct estate *);
@@ -44,7 +43,7 @@ void editor_mainloop(struct estate *);
 void initialize_editor(struct estate *);
 void deinit_editor(struct estate* state);
 
-void editor_update_text_ptr(struct estate* state);
+void editor_update_ptrs(struct estate* state);
 
 /*
  * Returns true if the character passed is a control character,
