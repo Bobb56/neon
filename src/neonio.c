@@ -682,3 +682,10 @@ int get_option(char* title, char* prompt, strlist* choices) {
     }
 
 }
+
+void enable_syntax_hightlighting(void) {
+    global_env->syntax_highlighting_on = true;
+}
+void disable_syntax_highlithting(void) {
+    global_env->syntax_highlighting_on = false;
+}

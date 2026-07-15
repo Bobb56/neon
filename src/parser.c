@@ -513,6 +513,14 @@ bool isFull(char* string)
 
     cut(&tokens, &types, string, true, &lines, false);
 
+    if (global_env->CODE_ERROR == 26)
+    {
+        neon_reset_error();
+        side_memory_end();
+        return false;
+    }
+
+
     copy_intlist_to_side_memory(&lines);
     if_error {
         toklist_destroy(&tokens);

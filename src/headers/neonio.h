@@ -32,6 +32,8 @@ void NeStream_close(NeStream stream);
 void NeStream_write(NeStream stream, void* data, size_t size);
 bool NeStream_read(NeStream stream, void* data, size_t size);
 
+void enable_syntax_hightlighting(void);
+void disable_syntax_highlithting(void);
 void removeZeros(char* string);
 bool is_integer(char* string);
 intptr_t str_to_int(char* string);

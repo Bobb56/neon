@@ -114,6 +114,12 @@ typedef struct NeonEnv {
     // dans ce cycle
     ProcessCycle* process_cycle;
 
+    // This flag is used by neonio for knowing
+    // when to print text with syntax highlighting
+    // As for setColor, the input/output functions
+    // can choose not to follow this indiacator
+    bool syntax_highlighting_on;
+
     #ifdef TI_EZ80
     uint8_t text_transparent_color;
 

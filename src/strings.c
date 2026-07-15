@@ -254,6 +254,8 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non complÃ©tÃ
 
 char* inputCode()
 {
+    enable_syntax_hightlighting();
+    
     char* str = input(SEQUENCE_ENTREE);
 
     if (global_env->CODE_ERROR != 0 || str == NULL)
@@ -279,7 +281,8 @@ char* inputCode()
 
         if (global_env->CODE_ERROR != 0 || newStr == NULL) {
             neon_free(str);
-            return NULL;
+            str = NULL;
+            goto function_end;
         }
             
         char* temp = addStr("\n", newStr);
@@ -289,6 +292,8 @@ char* inputCode()
         str = temp2;
         neon_free(temp);
     }
+function_end:
+    disable_syntax_highlithting();
     return str;
 }
 

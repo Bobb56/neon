@@ -228,17 +228,15 @@ static void init_deadline(void)
     tcsetattr(STDIN_FILENO, TCSADRAIN, &new_set);
 }
 
-static bool print_prompt(const char* prompt) {
+static void print_prompt(const char* prompt) {
     // Rewrite the prompt, with blue coloring if it is SEQUENCE_ENTREE
     if (strcmp(prompt, SEQUENCE_ENTREE) == 0) {
         setColor(BLUE);
         fputs(prompt, stdout);
         setColor(DEFAULT);
-        return true;
     }
     else {
         fputs(prompt, stdout);
-        return false;
     }
 }
 
@@ -247,9 +245,9 @@ static void write_line(const char *prompt, char *buffer, size_t size)
     restore_cursor_state();
     clear_cursor_down();
 
-    bool highlight = print_prompt(prompt);
+    print_prompt(prompt);
 
-    if (highlight)
+    if (global_env->syntax_highlighting_on)
         print_highlighted(buffer, size);
     else
         fwrite(buffer, 1, size, stdout);

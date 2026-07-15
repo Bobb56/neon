@@ -151,6 +151,7 @@ NeonEnv* NeonEnv_init(void) {
     env->OBJECTS_LIST = NEO_VOID;
     env->NOMS = strlist_create(0);
     env->TREEBUFFERS = ptrlist_create();
+    env->syntax_highlighting_on = false;
     env->ERROR_MESSAGE_ARGUMENTS = NULL;
     env->PROMISES = nelist_create(0);
     env->ADRESSES = nelist_create(0);
