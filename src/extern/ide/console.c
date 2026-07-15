@@ -362,7 +362,7 @@ void console_scroll(struct estate* state, int nb_lines) {
 
 void scroll_if_needed(struct estate* state) {
     if (state->c2 - state->c1 < NUM_COLS * INPUT_MAX_LINES || state->lc1 > state->max_lines - INPUT_MAX_LINES) {
-        console_scroll(state, NUM_LINES - INPUT_MAX_LINES);
+        console_scroll(state, state->max_lines - NUM_LINES - INPUT_MAX_LINES);
     }
 }
 

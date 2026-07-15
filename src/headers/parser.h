@@ -14,6 +14,7 @@ typedef struct Ast
     struct Ast* suiv;
 } Ast;
 
+bool is_sousop(char car); // Exported function for syntax highlighting
 char* get_infinity(void);
 char* get_nan(void);
 char* get_pi(void);

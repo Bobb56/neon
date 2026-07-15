@@ -7,6 +7,7 @@
 
 /*
 TODO:
+- Try to increase a bit the size of the console history
 - Syntax highlighting
 - KEY_CLEAR -> KEY_STO && KEY_STO insert an '='
 - Update is_control
