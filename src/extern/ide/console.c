@@ -452,11 +452,31 @@ void neonide_clear(void) {
     global_console_state->scr_line_offset = 0;
 }
 
+
+uint8_t translate_color(uint8_t neon_color_constant) {
+    switch (neon_color_constant) {
+        case BLUE:
+            return NEON_PALETTE_BLUE;
+        case GREEN:
+            return NEON_PALETTE_GREEN;
+        case RED:
+            return NEON_PALETTE_RED;
+        case PURPLE:
+            return NEON_PALETTE_PURPLE;
+        case GREY:
+            return NEON_PALETTE_GREY;
+        case ORANGE:
+            return NEON_PALETTE_ORANGE;
+        default:
+            return NEON_PALETTE_BLACK;
+    }
+}
+
 void neonide_set_color(uint8_t color) {
     scroll_if_needed(global_console_state);
     cursor_to_end(global_console_state);
     insert_char(global_console_state, 0x1b);
-    insert_char(global_console_state, color);
+    insert_char(global_console_state, translate_color(color));
 }
 
 void console_cursor_left(struct estate *state, int last_prompt_start)

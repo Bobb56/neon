@@ -7,8 +7,9 @@
 
 /*
 TODO:
+- Syntax highlighting: find a way to take in account the state of the syntax before
+the current page
 - Try to increase a bit the size of the console history
-- Syntax highlighting
 - KEY_CLEAR -> KEY_STO && KEY_STO insert an '='
 - Update is_control
 - Make an inventory of all key bindings and keep/change some

@@ -20,11 +20,15 @@ You may use version 2.1 or later only.
 
 #include "headers/dialogs.h"
 #include "headers/clipboard.h"
+#include "headers/console.h"
+#include "headers/libmalloc.h"
 #include "headers/state.h"
 #include "headers/neonide.h"
 #include "headers/editor.h"
 #include <stdint.h>
 #include <math.h>
+
+#include "../../headers/syntaxhighlighting.h"
 
 bool string_equal(struct estate *state, int24_t pointer, char* str) {
     while (*str && pointer < state->max_buffer_size - 1) {
@@ -1211,8 +1215,61 @@ void draw_dialog(struct estate *state, int x, int y, int w, int h)
 }
 
 
+
+
+uint8_t* editor_highlight(struct estate* state) {
+    init_sh_process(NUM_LINES * NUM_COLS);
+
+    // Loop over the characters
+    int24_t i = state->scr_offset;
+    int8_t row = 0;
+    int8_t col = 0;
+    int24_t cp = 0;
+
+    //Iterate buffer
+    while (i < state->max_buffer_size && (cp < state->max_buffer_size - state->c2 + state->c1) && row < NUM_LINES + 1)
+    {
+        if (i == state->c1)
+        {
+            i = state->c2 + 1;
+            if (i >= state->max_buffer_size)
+                break;
+        }
+
+        if (state->text[i] == '\n')
+        {
+            update_state(sh_get_state_ptr(), '\n');
+            row++;
+            col = 0;
+            i++;
+            cp++;
+            continue;
+        }
+
+        // We create a new line only if we truly need to display characters so
+        // that if the last character of a line is \n there will be only one new line
+        if (col >= NUM_COLS) {
+            if (row == NUM_LINES)
+                break;
+
+            col = 0;
+            row++;
+        }
+        update_state(sh_get_state_ptr(), state->text[i]);
+        i++;
+        col++;
+        cp++;
+    }
+    close_state(sh_get_state_ptr());
+    return sh_get_state_ptr()->colors;
+}
+
+
 void draw_text_area(struct estate* state) {
+    uint8_t* colors;
 beginning:
+
+    colors = editor_highlight(state);
     gfx_FillScreen(state->background_color);
 
     // Number of pixels between the left border and the first character of a line 
@@ -1225,6 +1282,7 @@ beginning:
     int8_t col = 0;
     int24_t cp = 0;
     bool drawn = false;
+    uint8_t current_text_color = state->text_color;
 
     //Start drawing
     fontlib_SetForegroundColor(text_color);
@@ -1233,9 +1291,11 @@ beginning:
     //Iterate buffer
     while (i < state->max_buffer_size && (cp < state->max_buffer_size - state->c2 + state->c1) && row < NUM_LINES + 1)
     {
-        fontlib_SetForegroundColor(text_color);
-        fontlib_SetBackgroundColor(state->text_highlight_color);
-        fontlib_SetTransparency(true);
+
+        if (colors[cp] != NO_COLOR) {
+            current_text_color = translate_color(colors[cp]);
+        }
+
         if (i == state->c1)
         {
             gfx_VertLine_NoClip(left_offset + FONT_WIDTH * col, LINE_SPACING * row + LINE_SPACING, LINE_SPACING);
@@ -1265,7 +1325,7 @@ beginning:
         }
         else
         {
-            fontlib_SetForegroundColor(text_color);
+            fontlib_SetForegroundColor(current_text_color);
             fontlib_SetBackgroundColor(state->text_highlight_color);
             fontlib_SetTransparency(true);
         }
@@ -1298,6 +1358,7 @@ beginning:
         }
         goto beginning;
     }
+    free_noheap(colors);
 }
 
 

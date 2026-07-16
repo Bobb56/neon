@@ -7,6 +7,10 @@
 #include "headers/wordautomaton.h"
 #include "headers/syntaxhighlighting.h"
 
+#ifdef TI_EZ80
+#include "extern/ide/headers/libmalloc.h"
+#endif
+
 /*
 TODO:
 - Add new colors in neonio and use those colors
@@ -156,8 +160,12 @@ void close_state(SHState* state) {
 // while keeping the last parameters
 void init_sh_process(size_t text_length) {
     sh_state = sh_initial_state;
+    #ifdef TI_EZ80
+        sh_state.colors = malloc_noheap(text_length + 1);
+    #else
+        sh_state.colors = malloc(text_length + 1);
+    #endif
 
-    sh_state.colors = malloc(text_length + 1);
     memset(sh_state.colors, 0, text_length);
 
     sh_state.index = 0;
@@ -192,6 +200,10 @@ void sh_reset_initial_state(void) {
         .index = 0,
         .colors = NULL
     };
+}
+
+SHState* sh_get_state_ptr(void) {
+    return &sh_state;
 }
 
 void sh_update_initial_state(void) {

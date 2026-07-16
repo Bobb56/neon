@@ -199,20 +199,7 @@
     
     void setColor(unsigned char color)
     {
-        if (color == BLUE)
-            neonide_set_color(NEON_PALETTE_BLUE);
-        else if (color == GREEN)
-            neonide_set_color(NEON_PALETTE_GREEN);
-        else if (color == RED)
-            neonide_set_color(NEON_PALETTE_RED);
-        else if (color == PURPLE)
-            neonide_set_color(NEON_PALETTE_PURPLE);
-        else if (color == GREY)
-            neonide_set_color(NEON_PALETTE_GREY);
-        else if (color == ORANGE)
-            neonide_set_color(NEON_PALETTE_ORANGE);
-        else if (color == DEFAULT)
-            neonide_set_color(NEON_PALETTE_BLACK);
+        neonide_set_color(color);
     }
     
     
