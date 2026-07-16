@@ -261,14 +261,17 @@ char* inputCode()
     char* str = input(SEQUENCE_ENTREE);
     sh_update_initial_state();
 
-    if (global_env->CODE_ERROR != 0 || str == NULL)
-        return NULL;
+    if (global_env->CODE_ERROR != 0 || str == NULL) {
+        str = NULL;
+        goto function_end;
+    }
     
     while (!isFull(str)) {
 
         if (global_env->CODE_ERROR != 0) {
             neon_free(str);
-            return NULL;
+            str = NULL;
+            goto function_end;
         }
 
         char* text = strdup(SEQUENCE_SUITE);

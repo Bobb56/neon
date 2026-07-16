@@ -4,1299 +4,2125 @@
 #include "headers/wordautomaton.h"
 
 static const uint8_t final_states[] = {
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    WA_KEYWORD,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    0,
-    0,
-    WA_KEYWORD,
-    0,
-    WA_OPERATOR,
-    0,
-    WA_OPERATOR,
-    0,
-    0,
-    WA_OPERATOR,
-    0,
-    0,
-    WA_OPERATOR,
-    WA_OPERATOR,
-    0,
-    WA_OPERATOR,
-    0,
-    0,
-    0,
-    0,
-    0,
-    WA_OPERATOR,
-    WA_OPERATOR
-};
+    0,           0,           0,           WA_KEYWORD,  0,
+    0,           0,           0,           WA_KEYWORD,  0,
+    0,           WA_KEYWORD,  0,           0,           0,
+    WA_KEYWORD,  0,           0,           0,           0,
+    0,           WA_KEYWORD,  0,           0,           0,
+    0,           WA_KEYWORD,  0,           0,           0,
+    0,           WA_KEYWORD,  0,           0,           0,
+    0,           WA_KEYWORD,  0,           0,           0,
+    0,           0,           WA_KEYWORD,  0,           0,
+    WA_KEYWORD,  0,           0,           0,           0,
+    0,           0,           WA_KEYWORD,  0,           0,
+    0,           0,           0,           WA_KEYWORD,  0,
+    0,           0,           0,           0,           0,
+    0,           WA_KEYWORD,  0,           0,           0,
+    0,           WA_KEYWORD,  0,           0,           0,
+    WA_KEYWORD,  WA_KEYWORD,  0,           0,           WA_KEYWORD,
+    0,           0,           0,           WA_KEYWORD,  0,
+    WA_OPERATOR, 0,           WA_OPERATOR, 0,           0,
+    WA_OPERATOR, 0,           0,           WA_OPERATOR, WA_OPERATOR,
+    0,           WA_OPERATOR, 0,           0,           0,
+    0,           0,           WA_OPERATOR, WA_OPERATOR, 0,
+    0,           0,           WA_CONSTANT, 0,           0,
+    0,           0,           WA_CONSTANT, 0,           0,
+    0,           WA_CONSTANT, 0,           0,           0,
+    0,           0,           0,           0,           WA_CONSTANT,
+    0,           WA_CONSTANT, 0,           WA_CONSTANT, 0,
+    0,           0,           WA_CONSTANT, 0,           0,
+    0,           0,           0,           WA_CONSTANT, 0,
+    0,           0,           0,           WA_CONSTANT, 0,
+    0,           0,           0,           WA_CONSTANT, 0,
+    0,           0,           WA_CONSTANT, 0,           0,
+    0,           0,           0,           0,           0,
+    0,           0,           0,           0,           0,
+    0,           WA_CONSTANT, 0,           0,           0,
+    WA_CONSTANT, 0,           0,           0,           0,
+    0,           WA_CONSTANT, 0,           0,           0,
+    0,           0,           0,           WA_CONSTANT, 0,
+    0,           0,           0,           0,           0,
+    0,           WA_CONSTANT, 0,           0,           0,
+    0,           0,           WA_CONSTANT, WA_CONSTANT, 0,
+    0,           WA_CONSTANT, 0,           0,           0,
+    0,           WA_CONSTANT, 0,           0,           0,
+    0,           WA_CONSTANT, 0,           0,           0,
+    0,           0,           WA_CONSTANT, WA_CONSTANT, 0,
+    0,           0,           0,           0,           0,
+    WA_CONSTANT};
 
 static uint8_t (*states_functions[])(char) = {
-    jump_start,
-    jump_none,
-    jump_s1,
-    jump_s2,
-    jump_s3,
-    jump_s4,
-    jump_s5,
-    jump_s6,
-    jump_s7,
-    jump_s8,
-    jump_s9,
-    jump_s10,
-    jump_s11,
-    jump_s12,
-    jump_s13,
-    jump_s14,
-    jump_s15,
-    jump_s16,
-    jump_s17,
-    jump_s18,
-    jump_s19,
-    jump_s20,
-    jump_s21,
-    jump_s22,
-    jump_s23,
-    jump_s24,
-    jump_s25,
-    jump_s26,
-    jump_s27,
-    jump_s28,
-    jump_s29,
-    jump_s30,
-    jump_s31,
-    jump_s32,
-    jump_s33,
-    jump_s34,
-    jump_s35,
-    jump_s36,
-    jump_s37,
-    jump_s38,
-    jump_s39,
-    jump_s40,
-    jump_s41,
-    jump_s42,
-    jump_s43,
-    jump_s44,
-    jump_s45,
-    jump_s46,
-    jump_s47,
-    jump_s48,
-    jump_s49,
-    jump_s50,
-    jump_s51,
-    jump_s52,
-    jump_s53,
-    jump_s54,
-    jump_s55,
-    jump_s56,
-    jump_s57,
-    jump_s58,
-    jump_s59,
-    jump_s60,
-    jump_s61,
-    jump_s62,
-    jump_s63,
-    jump_s64,
-    jump_s65,
-    jump_s66,
-    jump_s67,
-    jump_s68,
-    jump_s69,
-    jump_s70,
-    jump_s71,
-    jump_s72,
-    jump_s73,
-    jump_s74,
-    jump_s75,
-    jump_s76,
-    jump_s77,
-    jump_s78,
-    jump_s79,
-    jump_s80,
-    jump_s81,
-    jump_s82,
-    jump_s83,
-    jump_s84,
-    jump_s85,
-    jump_s86,
-    jump_s87,
-    jump_s88,
-    jump_s89,
-    jump_s90,
-    jump_s91,
-    jump_s92,
-    jump_s93,
-    jump_s94,
-    jump_s95,
-    jump_s96,
-    jump_s97,
-    jump_s98,
-    jump_s99,
-    jump_s100,
-    jump_s101,
-    jump_s102,
-    jump_s103,
-    jump_s104,
-    jump_s105,
-    jump_s106,
-    jump_s107,
-    jump_s108,
-    jump_s109,
-    jump_s110,
-    jump_s111,
-    jump_s112,
-    jump_s113,
-    jump_s114,
-    jump_s115
-};
+    jump_start, jump_none, jump_s1,   jump_s2,   jump_s3,   jump_s4,
+    jump_s5,    jump_s6,   jump_s7,   jump_s8,   jump_s9,   jump_s10,
+    jump_s11,   jump_s12,  jump_s13,  jump_s14,  jump_s15,  jump_s16,
+    jump_s17,   jump_s18,  jump_s19,  jump_s20,  jump_s21,  jump_s22,
+    jump_s23,   jump_s24,  jump_s25,  jump_s26,  jump_s27,  jump_s28,
+    jump_s29,   jump_s30,  jump_s31,  jump_s32,  jump_s33,  jump_s34,
+    jump_s35,   jump_s36,  jump_s37,  jump_s38,  jump_s39,  jump_s40,
+    jump_s41,   jump_s42,  jump_s43,  jump_s44,  jump_s45,  jump_s46,
+    jump_s47,   jump_s48,  jump_s49,  jump_s50,  jump_s51,  jump_s52,
+    jump_s53,   jump_s54,  jump_s55,  jump_s56,  jump_s57,  jump_s58,
+    jump_s59,   jump_s60,  jump_s61,  jump_s62,  jump_s63,  jump_s64,
+    jump_s65,   jump_s66,  jump_s67,  jump_s68,  jump_s69,  jump_s70,
+    jump_s71,   jump_s72,  jump_s73,  jump_s74,  jump_s75,  jump_s76,
+    jump_s77,   jump_s78,  jump_s79,  jump_s80,  jump_s81,  jump_s82,
+    jump_s83,   jump_s84,  jump_s85,  jump_s86,  jump_s87,  jump_s88,
+    jump_s89,   jump_s90,  jump_s91,  jump_s92,  jump_s93,  jump_s94,
+    jump_s95,   jump_s96,  jump_s97,  jump_s98,  jump_s99,  jump_s100,
+    jump_s101,  jump_s102, jump_s103, jump_s104, jump_s105, jump_s106,
+    jump_s107,  jump_s108, jump_s109, jump_s110, jump_s111, jump_s112,
+    jump_s113,  jump_s114, jump_s115, jump_s116, jump_s117, jump_s118,
+    jump_s119,  jump_s120, jump_s121, jump_s122, jump_s123, jump_s124,
+    jump_s125,  jump_s126, jump_s127, jump_s128, jump_s129, jump_s130,
+    jump_s131,  jump_s132, jump_s133, jump_s134, jump_s135, jump_s136,
+    jump_s137,  jump_s138, jump_s139, jump_s140, jump_s141, jump_s142,
+    jump_s143,  jump_s144, jump_s145, jump_s146, jump_s147, jump_s148,
+    jump_s149,  jump_s150, jump_s151, jump_s152, jump_s153, jump_s154,
+    jump_s155,  jump_s156, jump_s157, jump_s158, jump_s159, jump_s160,
+    jump_s161,  jump_s162, jump_s163, jump_s164, jump_s165, jump_s166,
+    jump_s167,  jump_s168, jump_s169, jump_s170, jump_s171, jump_s172,
+    jump_s173,  jump_s174, jump_s175, jump_s176, jump_s177, jump_s178,
+    jump_s179,  jump_s180, jump_s181, jump_s182, jump_s183, jump_s184,
+    jump_s185,  jump_s186, jump_s187, jump_s188, jump_s189, jump_s190,
+    jump_s191,  jump_s192, jump_s193, jump_s194, jump_s195, jump_s196,
+    jump_s197,  jump_s198, jump_s199, jump_s200, jump_s201, jump_s202,
+    jump_s203,  jump_s204, jump_s205, jump_s206, jump_s207, jump_s208,
+    jump_s209,  jump_s210, jump_s211, jump_s212, jump_s213, jump_s214,
+    jump_s215,  jump_s216, jump_s217, jump_s218, jump_s219, jump_s220,
+    jump_s221,  jump_s222, jump_s223, jump_s224};
 
 uint8_t jump_start(char c) {
-    switch (c) {
-        case 'i':
-            return WA_S1;
-        case 'w':
-            return WA_S3;
-        case 'f':
-            return WA_S8;
-        case 'r':
-            return WA_S15;
-        case 'l':
-            return WA_S26;
-        case 'a':
-            return WA_S31;
-        case 'd':
-            return WA_S36;
-        case 'm':
-            return WA_S52;
-        case 'c':
-            return WA_S58;
-        case 'b':
-            return WA_S66;
-        case 'p':
-            return WA_S71;
-        case 'T':
-            return WA_S75;
-        case 'F':
-            return WA_S79;
-        case 'N':
-            return WA_S84;
-        case 'e':
-            return WA_S89;
-        case 't':
-            return WA_S92;
-        case 'o':
-            return WA_S98;
-        case 'x':
-            return WA_S100;
-        case 'n':
-            return WA_S103;
-        case 'E':
-            return WA_S107;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'i':
+    return WA_S1;
+  case 'w':
+    return WA_S3;
+  case 'f':
+    return WA_S8;
+  case 'r':
+    return WA_S15;
+  case 'l':
+    return WA_S26;
+  case 'a':
+    return WA_S31;
+  case 'd':
+    return WA_S36;
+  case 'm':
+    return WA_S52;
+  case 'c':
+    return WA_S58;
+  case 'b':
+    return WA_S66;
+  case 'p':
+    return WA_S71;
+  case 'e':
+    return WA_S76;
+  case 't':
+    return WA_S79;
+  case 'o':
+    return WA_S85;
+  case 'x':
+    return WA_S87;
+  case 'n':
+    return WA_S90;
+  case 'E':
+    return WA_S94;
+  case 'T':
+    return WA_S103;
+  case 'F':
+    return WA_S107;
+  case 'N':
+    return WA_S112;
+  case 'I':
+    return WA_S116;
+  case 'P':
+    return WA_S126;
+  case 'B':
+    return WA_S128;
+  case 'S':
+    return WA_S132;
+  case 'C':
+    return WA_S138;
+  case 'R':
+    return WA_S148;
+  case 'L':
+    return WA_S166;
+  case 'M':
+    return WA_S170;
+  case 'G':
+    return WA_S201;
+  case 'O':
+    return WA_S211;
+  case 'D':
+    return WA_S218;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_none(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s1(char c) {
-    switch (c) {
-        case 'f':
-            return WA_S2;
-        case 'm':
-            return WA_S21;
-        case 'n':
-            return WA_S42;
-        case 's':
-            return WA_S115;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'f':
+    return WA_S2;
+  case 'm':
+    return WA_S21;
+  case 'n':
+    return WA_S42;
+  case 's':
+    return WA_S102;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s2(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s3(char c) {
-    switch (c) {
-        case 'h':
-            return WA_S4;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'h':
+    return WA_S4;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s4(char c) {
-    switch (c) {
-        case 'i':
-            return WA_S5;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'i':
+    return WA_S5;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s5(char c) {
-    switch (c) {
-        case 'l':
-            return WA_S6;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'l':
+    return WA_S6;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s6(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S7;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S7;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s7(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s8(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S9;
-        case 'u':
-            return WA_S45;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S9;
+  case 'u':
+    return WA_S45;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s9(char c) {
-    switch (c) {
-        case 'r':
-            return WA_S10;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'r':
+    return WA_S10;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s10(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S11;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S11;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s11(char c) {
-    switch (c) {
-        case 'a':
-            return WA_S12;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'a':
+    return WA_S12;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s12(char c) {
-    switch (c) {
-        case 'c':
-            return WA_S13;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'c':
+    return WA_S13;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s13(char c) {
-    switch (c) {
-        case 'h':
-            return WA_S14;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'h':
+    return WA_S14;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s14(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s15(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S16;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S16;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s16(char c) {
-    switch (c) {
-        case 't':
-            return WA_S17;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 't':
+    return WA_S17;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s17(char c) {
-    switch (c) {
-        case 'u':
-            return WA_S18;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'u':
+    return WA_S18;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s18(char c) {
-    switch (c) {
-        case 'r':
-            return WA_S19;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'r':
+    return WA_S19;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s19(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S20;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S20;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s20(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s21(char c) {
-    switch (c) {
-        case 'p':
-            return WA_S22;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'p':
+    return WA_S22;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s22(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S23;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S23;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s23(char c) {
-    switch (c) {
-        case 'r':
-            return WA_S24;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'r':
+    return WA_S24;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s24(char c) {
-    switch (c) {
-        case 't':
-            return WA_S25;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 't':
+    return WA_S25;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s25(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s26(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S27;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S27;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s27(char c) {
-    switch (c) {
-        case 'c':
-            return WA_S28;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'c':
+    return WA_S28;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s28(char c) {
-    switch (c) {
-        case 'a':
-            return WA_S29;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'a':
+    return WA_S29;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s29(char c) {
-    switch (c) {
-        case 'l':
-            return WA_S30;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'l':
+    return WA_S30;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s30(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s31(char c) {
-    switch (c) {
-        case 'w':
-            return WA_S32;
-        case 'n':
-            return WA_S96;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'w':
+    return WA_S32;
+  case 'n':
+    return WA_S83;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s32(char c) {
-    switch (c) {
-        case 'a':
-            return WA_S33;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'a':
+    return WA_S33;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s33(char c) {
-    switch (c) {
-        case 'i':
-            return WA_S34;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'i':
+    return WA_S34;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s34(char c) {
-    switch (c) {
-        case 't':
-            return WA_S35;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 't':
+    return WA_S35;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s35(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s36(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S37;
-        case 'o':
-            return WA_S88;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S37;
+  case 'o':
+    return WA_S75;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s37(char c) {
-    switch (c) {
-        case 'f':
-            return WA_S38;
-        case 'l':
-            return WA_S106;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'f':
+    return WA_S38;
+  case 'l':
+    return WA_S93;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s38(char c) {
-    switch (c) {
-        case 'i':
-            return WA_S39;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'i':
+    return WA_S39;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s39(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S40;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S40;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s40(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S41;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S41;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s41(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s42(char c) {
-    switch (c) {
-        case 'i':
-            return WA_S43;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'i':
+    return WA_S43;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s43(char c) {
-    switch (c) {
-        case 't':
-            return WA_S44;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 't':
+    return WA_S44;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s44(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s45(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S46;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S46;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s46(char c) {
-    switch (c) {
-        case 'c':
-            return WA_S47;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'c':
+    return WA_S47;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s47(char c) {
-    switch (c) {
-        case 't':
-            return WA_S48;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 't':
+    return WA_S48;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s48(char c) {
-    switch (c) {
-        case 'i':
-            return WA_S49;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'i':
+    return WA_S49;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s49(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S50;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S50;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s50(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S51;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S51;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s51(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s52(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S53;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S53;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s53(char c) {
-    switch (c) {
-        case 't':
-            return WA_S54;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 't':
+    return WA_S54;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s54(char c) {
-    switch (c) {
-        case 'h':
-            return WA_S55;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'h':
+    return WA_S55;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s55(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S56;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S56;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s56(char c) {
-    switch (c) {
-        case 'd':
-            return WA_S57;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'd':
+    return WA_S57;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s57(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s58(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S59;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S59;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s59(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S60;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S60;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s60(char c) {
-    switch (c) {
-        case 't':
-            return WA_S61;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 't':
+    return WA_S61;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s61(char c) {
-    switch (c) {
-        case 'i':
-            return WA_S62;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'i':
+    return WA_S62;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s62(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S63;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S63;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s63(char c) {
-    switch (c) {
-        case 'u':
-            return WA_S64;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'u':
+    return WA_S64;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s64(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S65;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S65;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s65(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s66(char c) {
-    switch (c) {
-        case 'r':
-            return WA_S67;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'r':
+    return WA_S67;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s67(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S68;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S68;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s68(char c) {
-    switch (c) {
-        case 'a':
-            return WA_S69;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'a':
+    return WA_S69;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s69(char c) {
-    switch (c) {
-        case 'k':
-            return WA_S70;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'k':
+    return WA_S70;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s70(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s71(char c) {
-    switch (c) {
-        case 'a':
-            return WA_S72;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'a':
+    return WA_S72;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s72(char c) {
-    switch (c) {
-        case 's':
-            return WA_S73;
-        case 'r':
-            return WA_S109;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 's':
+    return WA_S73;
+  case 'r':
+    return WA_S96;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s73(char c) {
-    switch (c) {
-        case 's':
-            return WA_S74;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 's':
+    return WA_S74;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s74(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s75(char c) {
-    switch (c) {
-        case 'r':
-            return WA_S76;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s76(char c) {
-    switch (c) {
-        case 'u':
-            return WA_S77;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S77;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s77(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S78;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'd':
+    return WA_S78;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s78(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s79(char c) {
-    switch (c) {
-        case 'a':
-            return WA_S80;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'h':
+    return WA_S80;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s80(char c) {
-    switch (c) {
-        case 'l':
-            return WA_S81;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S81;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s81(char c) {
-    switch (c) {
-        case 's':
-            return WA_S82;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S82;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s82(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S83;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s83(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'd':
+    return WA_S84;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s84(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S85;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s85(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S86;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'r':
+    return WA_S86;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s86(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S87;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s87(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S88;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s88(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'r':
+    return WA_S89;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s89(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S90;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s90(char c) {
-    switch (c) {
-        case 'd':
-            return WA_S91;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S91;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s91(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 't':
+    return WA_S92;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s92(char c) {
-    switch (c) {
-        case 'h':
-            return WA_S93;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s93(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S94;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s94(char c) {
-    switch (c) {
-        case 'n':
-            return WA_S95;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'E':
+    return WA_S95;
+  case 'x':
+    return WA_S183;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s95(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s96(char c) {
-    switch (c) {
-        case 'd':
-            return WA_S97;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'a':
+    return WA_S97;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s97(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'l':
+    return WA_S98;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s98(char c) {
-    switch (c) {
-        case 'r':
-            return WA_S99;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'l':
+    return WA_S99;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s99(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S100;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s100(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S101;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'l':
+    return WA_S101;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s101(char c) {
-    switch (c) {
-        case 'r':
-            return WA_S102;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s102(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s103(char c) {
-    switch (c) {
-        case 'o':
-            return WA_S104;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'r':
+    return WA_S104;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s104(char c) {
-    switch (c) {
-        case 't':
-            return WA_S105;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'u':
+    return WA_S105;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s105(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S106;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s106(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s107(char c) {
-    switch (c) {
-        case 'E':
-            return WA_S108;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'a':
+    return WA_S108;
+  case 'u':
+    return WA_S176;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s108(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'l':
+    return WA_S109;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s109(char c) {
-    switch (c) {
-        case 'a':
-            return WA_S110;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 's':
+    return WA_S110;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s110(char c) {
-    switch (c) {
-        case 'l':
-            return WA_S111;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S111;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s111(char c) {
-    switch (c) {
-        case 'l':
-            return WA_S112;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s112(char c) {
-    switch (c) {
-        case 'e':
-            return WA_S113;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'o':
+    return WA_S113;
+  case 'a':
+    return WA_S124;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s113(char c) {
-    switch (c) {
-        case 'l':
-            return WA_S114;
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'n':
+    return WA_S114;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s114(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  case 'e':
+    return WA_S115;
+  default:
+    return WA_NONE;
+  }
 }
 
 uint8_t jump_s115(char c) {
-    switch (c) {
-        default:
-            return WA_NONE;
-    }
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
 }
 
-uint8_t wa_get_final(uint8_t state) {
-    return final_states[state];
+uint8_t jump_s116(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S117;
+  default:
+    return WA_NONE;
+  }
 }
+
+uint8_t jump_s117(char c) {
+  switch (c) {
+  case 'f':
+    return WA_S118;
+  case 't':
+    return WA_S143;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s118(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S119;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s119(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S120;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s120(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S121;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s121(char c) {
+  switch (c) {
+  case 't':
+    return WA_S122;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s122(char c) {
+  switch (c) {
+  case 'y':
+    return WA_S123;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s123(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s124(char c) {
+  switch (c) {
+  case 'N':
+    return WA_S125;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s125(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s126(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S127;
+  case 'r':
+    return WA_S191;
+  case 'u':
+    return WA_S206;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s127(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s128(char c) {
+  switch (c) {
+  case 'o':
+    return WA_S129;
+  case 'u':
+    return WA_S152;
+  case 'l':
+    return WA_S198;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s129(char c) {
+  switch (c) {
+  case 'o':
+    return WA_S130;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s130(char c) {
+  switch (c) {
+  case 'l':
+    return WA_S131;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s131(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s132(char c) {
+  switch (c) {
+  case 't':
+    return WA_S133;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s133(char c) {
+  switch (c) {
+  case 'r':
+    return WA_S134;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s134(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S135;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s135(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S136;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s136(char c) {
+  switch (c) {
+  case 'g':
+    return WA_S137;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s137(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s138(char c) {
+  switch (c) {
+  case 'o':
+    return WA_S139;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s139(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S140;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s140(char c) {
+  switch (c) {
+  case 's':
+    return WA_S141;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s141(char c) {
+  switch (c) {
+  case 't':
+    return WA_S142;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s142(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s143(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S144;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s144(char c) {
+  switch (c) {
+  case 'g':
+    return WA_S145;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s145(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S146;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s146(char c) {
+  switch (c) {
+  case 'r':
+    return WA_S147;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s147(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s148(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S149;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s149(char c) {
+  switch (c) {
+  case 'a':
+    return WA_S150;
+  case 'd':
+    return WA_S197;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s150(char c) {
+  switch (c) {
+  case 'l':
+    return WA_S151;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s151(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s152(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S153;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s153(char c) {
+  switch (c) {
+  case 'l':
+    return WA_S154;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s154(char c) {
+  switch (c) {
+  case 't':
+    return WA_S155;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s155(char c) {
+  switch (c) {
+  case 'I':
+    return WA_S156;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s156(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S157;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s157(char c) {
+  switch (c) {
+  case 'F':
+    return WA_S158;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s158(char c) {
+  switch (c) {
+  case 'u':
+    return WA_S159;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s159(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S160;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s160(char c) {
+  switch (c) {
+  case 'c':
+    return WA_S161;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s161(char c) {
+  switch (c) {
+  case 't':
+    return WA_S162;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s162(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S163;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s163(char c) {
+  switch (c) {
+  case 'o':
+    return WA_S164;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s164(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S165;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s165(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s166(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S167;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s167(char c) {
+  switch (c) {
+  case 's':
+    return WA_S168;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s168(char c) {
+  switch (c) {
+  case 't':
+    return WA_S169;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s169(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s170(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S171;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s171(char c) {
+  switch (c) {
+  case 't':
+    return WA_S172;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s172(char c) {
+  switch (c) {
+  case 'h':
+    return WA_S173;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s173(char c) {
+  switch (c) {
+  case 'o':
+    return WA_S174;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s174(char c) {
+  switch (c) {
+  case 'd':
+    return WA_S175;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s175(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s176(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S177;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s177(char c) {
+  switch (c) {
+  case 'c':
+    return WA_S178;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s178(char c) {
+  switch (c) {
+  case 't':
+    return WA_S179;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s179(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S180;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s180(char c) {
+  switch (c) {
+  case 'o':
+    return WA_S181;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s181(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S182;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s182(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s183(char c) {
+  switch (c) {
+  case 'c':
+    return WA_S184;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s184(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S185;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s185(char c) {
+  switch (c) {
+  case 'p':
+    return WA_S186;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s186(char c) {
+  switch (c) {
+  case 't':
+    return WA_S187;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s187(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S188;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s188(char c) {
+  switch (c) {
+  case 'o':
+    return WA_S189;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s189(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S190;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s190(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s191(char c) {
+  switch (c) {
+  case 'o':
+    return WA_S192;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s192(char c) {
+  switch (c) {
+  case 'm':
+    return WA_S193;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s193(char c) {
+  switch (c) {
+  case 'i':
+    return WA_S194;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s194(char c) {
+  switch (c) {
+  case 's':
+    return WA_S195;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s195(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S196;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s196(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s197(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s198(char c) {
+  switch (c) {
+  case 'u':
+    return WA_S199;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s199(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S200;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s200(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s201(char c) {
+  switch (c) {
+  case 'r':
+    return WA_S202;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s202(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S203;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s203(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S204;
+  case 'y':
+    return WA_S217;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s204(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S205;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s205(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s206(char c) {
+  switch (c) {
+  case 'r':
+    return WA_S207;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s207(char c) {
+  switch (c) {
+  case 'p':
+    return WA_S208;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s208(char c) {
+  switch (c) {
+  case 'l':
+    return WA_S209;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s209(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S210;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s210(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s211(char c) {
+  switch (c) {
+  case 'r':
+    return WA_S212;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s212(char c) {
+  switch (c) {
+  case 'a':
+    return WA_S213;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s213(char c) {
+  switch (c) {
+  case 'n':
+    return WA_S214;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s214(char c) {
+  switch (c) {
+  case 'g':
+    return WA_S215;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s215(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S216;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s216(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s217(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s218(char c) {
+  switch (c) {
+  case 'e':
+    return WA_S219;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s219(char c) {
+  switch (c) {
+  case 'f':
+    return WA_S220;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s220(char c) {
+  switch (c) {
+  case 'a':
+    return WA_S221;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s221(char c) {
+  switch (c) {
+  case 'u':
+    return WA_S222;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s222(char c) {
+  switch (c) {
+  case 'l':
+    return WA_S223;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s223(char c) {
+  switch (c) {
+  case 't':
+    return WA_S224;
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t jump_s224(char c) {
+  switch (c) {
+  default:
+    return WA_NONE;
+  }
+}
+
+uint8_t wa_get_final(uint8_t state) { return final_states[state]; }
 
 uint8_t wa_next_state(uint8_t state, char c) {
-    return states_functions[state](c);
+  return states_functions[state](c);
 }
-

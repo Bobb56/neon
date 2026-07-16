@@ -281,13 +281,16 @@ void printRes(NeObj res)
     if (NEO_TYPE(res) != TYPE_NONE)
     {
         printString(" (");
-        setColor(GREEN);
+        enable_syntax_hightlighting();
         printString(type(res));
-        setColor(DEFAULT);
+        disable_syntax_highlithting();
         printString(") = ");
         
         // on a besoin d'un runtime pour exécuter neobject_aff car il pourrait lancer une fonction utilisateur si surchargé
+        
+        enable_syntax_hightlighting();
         neobject_aff(res);
+        disable_syntax_highlithting();
         
         newLine();
     }
@@ -302,7 +305,7 @@ void startMessage(void)
 {
     setColor(BLUE);
     printString("            Welcome to Neon");
-
+    setColor(DEFAULT);
     newLine();
 
     setColor(GREEN);    

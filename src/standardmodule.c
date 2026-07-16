@@ -1205,6 +1205,12 @@ NeObj _setColor_(NeList* args) {
     else if (strcmp(color, "Purple") == 0) {
         setColor(PURPLE);
     }
+    else if (strcmp(color, "Orange") == 0) {
+        setColor(ORANGE);
+    }
+    else if (strcmp(color, "Grey") == 0) {
+        setColor(GREY);
+    }
     else {
         neon_fail(63, neo_new_str_create(color));
     }

@@ -152,11 +152,15 @@ Ajout d'un type de données NeObject : +0.0.1
 
 
 /*constantes de couleur*/
-#define DEFAULT 0
-#define BLUE    1
-#define RED     2
-#define GREEN   3
-#define PURPLE  4
+// 0 est réservé pour pas de couleur
+#define NO_COLOR    0
+#define DEFAULT     1
+#define BLUE        2
+#define RED         3
+#define GREEN       4
+#define PURPLE      5
+#define GREY        6
+#define ORANGE      7
 
 #define PI 3.14159265358979323
 

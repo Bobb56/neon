@@ -88,6 +88,10 @@ beginning:
             state->colors[state->word_start] = OPERATOR_COLOR;
             state->colors[state->index] = RESET_COLOR;
         }
+        else if (final_state == WA_CONSTANT) {
+            state->colors[state->word_start] = CONSTANT_COLOR;
+            state->colors[state->index] = RESET_COLOR;
+        }
         // We authorize to process the character again
         goto beginning;
     }
@@ -139,6 +143,10 @@ void close_state(SHState* state) {
         }
         else if (final_state == WA_OPERATOR) {
             state->colors[state->word_start] = OPERATOR_COLOR;
+            state->colors[state->index] = RESET_COLOR;
+        }
+        else if (final_state == WA_CONSTANT) {
+            state->colors[state->word_start] = CONSTANT_COLOR;
             state->colors[state->index] = RESET_COLOR;
         }
     }

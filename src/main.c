@@ -113,6 +113,7 @@ Choses en plus à ajouter dans la doc :
 - Ajout de l'opérateur is, fonctionnement un peu bizarre, fonctionne par mot et non par objet, modification de la fonction type qui renvoie une constante, création de Container qui crée une constante si la variable n'est pas déjà définie, le type de None c'est lui-même
 - Les nouveaux mots-clé réservés (couleurs, types)
 - Incompatibilité des fichiers sérialisés
+- Ajout de nouvelles couleurs
 */
 
 

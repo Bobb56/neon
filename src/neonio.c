@@ -1,3 +1,4 @@
+#include "headers/constants.h"
 #define NEON_SOURCE_ID 12
 
 #include <stdlib.h>
@@ -206,6 +207,10 @@
             neonide_set_color(NEON_PALETTE_RED);
         else if (color == PURPLE)
             neonide_set_color(NEON_PALETTE_PURPLE);
+        else if (color == GREY)
+            neonide_set_color(NEON_PALETTE_GREY);
+        else if (color == ORANGE)
+            neonide_set_color(NEON_PALETTE_ORANGE);
         else if (color == DEFAULT)
             neonide_set_color(NEON_PALETTE_BLACK);
     }
@@ -392,36 +397,25 @@
         uint8_t* colors = highlight(text, length);
 
         for (size_t i=0 ; i < length ; i++) {
-            switch (colors[i]) {
-                case OPERATOR_COLOR:
-                case KEYWORD_COLOR:
-                    printf("\033[1;34m");
-                    break;
-                case STRING_COLOR:
-                case COMMENT_COLOR:
-                    printf("\033[0;32m");
-                    break;
-                case SPECIAL_CHAR_COLOR:
-                    printf("\033[0;35m");
-                    break;
-                case DIGIT_COLOR:
-                    printf("\033[0;31m");
-                    break;
-                case RESET_COLOR:
-                    printf("\033[0;00m");
-                    break;
-            }
+            if (colors[i] != NO_COLOR)
+                setColor(colors[i]);
 
             putchar(text[i]);
         }
-        printf("\033[0;00m");
+        setColor(DEFAULT);
         free(colors);
     }
     
     
     void printString(char* s)
     {
-        printf("%s", s);
+        if (global_env->syntax_highlighting_on) {
+            print_highlighted(s, strlen(s));
+            sh_update_initial_state();
+        }
+        else {
+            printf("%s", s);
+        }
     }
     
     
@@ -436,6 +430,10 @@
                 printf("\033[1;31m"); // met en rouge et gras
             else if (color == PURPLE)
                 printf("\033[1;35m"); // met en violet et gras
+            else if (color == GREY)
+                printf("\033[38;5;240m"); // met en gris
+            else if (color == ORANGE)
+                printf("\033[38;5;172m"); // met en orange
             else if (color == DEFAULT)
                 printf("\033[0;00m");
         #else
@@ -715,6 +713,7 @@ int get_option(char* title, char* prompt, strlist* choices) {
 
 void enable_syntax_hightlighting(void) {
     global_env->syntax_highlighting_on = true;
+    sh_reset_initial_state();
 }
 void disable_syntax_highlithting(void) {
     global_env->syntax_highlighting_on = false;

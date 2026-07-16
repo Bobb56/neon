@@ -233,9 +233,11 @@ static strlist constant = (strlist) {
         "Blue",
         "Green",
         "Purple",
+        "Orange",
+        "Grey",
         "Default"
     },
-    .len = 20,
+    .len = 22,
     .capacity = 5
 };
 

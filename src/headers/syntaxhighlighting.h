@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "constants.h"
 
 typedef struct SHState {
     uint8_t wa_state;
@@ -20,13 +21,14 @@ typedef struct SHState {
 } SHState;
 
 
-#define KEYWORD_COLOR       1
-#define OPERATOR_COLOR      2
-#define COMMENT_COLOR       3
-#define STRING_COLOR        4
-#define DIGIT_COLOR         5
-#define SPECIAL_CHAR_COLOR  6
-#define RESET_COLOR         7
+#define KEYWORD_COLOR       BLUE
+#define OPERATOR_COLOR      BLUE
+#define CONSTANT_COLOR      PURPLE
+#define COMMENT_COLOR       GREY
+#define STRING_COLOR        GREEN
+#define DIGIT_COLOR         ORANGE
+#define SPECIAL_CHAR_COLOR  PURPLE
+#define RESET_COLOR         DEFAULT
 
 
 void print_highlighted(char* text, size_t length);

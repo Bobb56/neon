@@ -1612,9 +1612,7 @@ void neobject_aff(NeObj neo)
     // si au moment d'afficher un objet il est marqué, alors on ne l'affiche pas
 
     if (ismarked(neo)) { // c'est le deuxième fois qu'on nous demande d'afficher cet objet
-        setColor(RED);
         printString("*");
-        setColor(DEFAULT);
     }
     else {
         mark(neo);
@@ -1645,9 +1643,7 @@ void neobject_aff(NeObj neo)
         }
         else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC) {
             Function* f = neo_to_function(neo);
-            printString("<built-in function ");
             printString((char*)get_function_name(f->id, f->module));
-            printString(">");
         }
 
         else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
@@ -1904,7 +1900,7 @@ char* type(NeObj neo)
         return "Real";
 
     if (NEO_TYPE(neo) == TYPE_BUILTINFUNC)
-        return "Built-in function";
+        return "BuiltInFunction";
 
     if (NEO_TYPE(neo) == TYPE_LIST)
         return "List";

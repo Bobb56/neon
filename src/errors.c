@@ -342,7 +342,7 @@ size_t align(uint8_t bytes, size_t size) {
 
 
 void printErrorString(char* format, NeList* error_message_arguments) {
-    setColor(RED);
+    //setColor(RED);
     size_t format_length = strlen(format);
     size_t specifier_length = strlen(FORMAT_ARGUMENT_SPECIFIER);
 
@@ -353,8 +353,11 @@ void printErrorString(char* format, NeList* error_message_arguments) {
             char* short_repr = neobject_short_repr(error_message_arguments->tab[argument_index], SHORT_REPR_ERR_SIZE, false);
             return_on_error();
 
-            setColor(BLUE); printString(short_repr); setColor(RED);
+            enable_syntax_hightlighting();
+            printString(short_repr);
+            disable_syntax_highlithting();
             neon_free(short_repr);
+            //setColor(RED);
 
             // On a consommé un argument
             argument_index += 1;
@@ -366,7 +369,7 @@ void printErrorString(char* format, NeList* error_message_arguments) {
             newLine();
             setColor(PURPLE);
             printString(" # ");
-            setColor(RED);
+            setColor(DEFAULT);
         }
         else {
             const char current_character[2] = {format[i], 0};
@@ -420,7 +423,7 @@ void printError(void) {
         
         setColor(PURPLE);
         printString(" # ");
-        
+        setColor(DEFAULT);
         printErrorString((char*)error_messages[code], error_message_arguments);
 
         // # Exact error reference code#sourceid#lineno
@@ -432,7 +435,6 @@ void printError(void) {
         printString("Exact error reference ");
 
         // Affichage de la référence exacte de l'erreur
-        setColor(GREEN);
         printInt(code);
         
         if (source_id != 0) {
