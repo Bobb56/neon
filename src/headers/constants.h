@@ -13,7 +13,7 @@ Ajout d'un type de données NeObject : +0.0.1
 */
 
 
-#define VERSION "4.3.15.2"
+#define VERSION "4.4.15.3"
 
 // si la version actuelle n'est pas stable mais est en distribution
 // #define EXPERIMENTAL

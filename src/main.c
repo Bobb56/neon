@@ -103,8 +103,11 @@ NOUVEAUTéS après la mise à jour 4.1 :
 +0.0.1      Remplacement de la fonction init par une instruction init, et fonctionnement avec des identifiers plutôt que des chaînes de caractères
 +0.0.1      Modification des paramètres de la fonction setColor (constantes au lieu de chaînes de caractères)
 +0.0.1      Obfuscation des données écrites par saveObj
++0.0.0.1    Ajout des couleurs GREY et ORANGE
++0.1        Coloration syntaxique dans le terminal
+
 ----------- TOTAL
-+0.2.15.2
++0.3.15.3
 
 Choses en plus à ajouter dans la doc :
 --------------------------------------
