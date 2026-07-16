@@ -59,7 +59,7 @@
 #include "../headers/neonio.h"
 #include "../headers/neon.h"
 
-#include "syntaxhighlighting.h"
+#include "../headers/syntaxhighlighting.h"
 
 //VT100 escape sequences
 #define CTRL_D                  4

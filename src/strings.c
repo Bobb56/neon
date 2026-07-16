@@ -12,6 +12,7 @@
 #include "headers/neon.h"
 #include "headers/parser.h"
 #include "headers/errors.h"
+#include "headers/syntaxhighlighting.h"
 
 #ifdef WINDOWS
 #include <stdio.h>
@@ -255,8 +256,10 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non complÃ©tÃ
 char* inputCode()
 {
     enable_syntax_hightlighting();
+    sh_reset_initial_state();
     
     char* str = input(SEQUENCE_ENTREE);
+    sh_update_initial_state();
 
     if (global_env->CODE_ERROR != 0 || str == NULL)
         return NULL;
@@ -276,6 +279,7 @@ char* inputCode()
             text = addStr2(text, "  ");
         
         char* newStr = input(text);
+        sh_update_initial_state();
 
         neon_free(text);
 
@@ -294,6 +298,7 @@ char* inputCode()
     }
 function_end:
     disable_syntax_highlithting();
+    sh_reset_initial_state();
     return str;
 }
 

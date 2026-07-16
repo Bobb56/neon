@@ -516,6 +516,9 @@ bool isFull(char* string)
     if (global_env->CODE_ERROR == 26)
     {
         neon_reset_error();
+        toklist_destroy(&tokens);
+        neon_free(types.tab);
+        neon_free(lines.tab);
         side_memory_end();
         return false;
     }

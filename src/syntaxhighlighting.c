@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "wordautomaton.h"
-#include "../headers/parser.h"
+#include "headers/parser.h"
+#include "headers/wordautomaton.h"
+#include "headers/syntaxhighlighting.h"
 
 /*
 TODO:
@@ -13,7 +14,20 @@ TODO:
 */
 
 
-#include "syntaxhighlighting.h"
+static SHState sh_state = (SHState) {
+    .wa_state = WA_START,
+    .word_start = 0,
+    .in_word = false,
+    .in_long_comment = false,
+    .in_short_comment = false,
+    .in_string1 = false,
+    .in_string2 = false,
+    .in_number = false,
+    .index = 0,
+    .colors = NULL
+};
+
+static SHState sh_initial_state;
 
 
 // Some characters are processes 2 times
@@ -130,9 +144,35 @@ void close_state(SHState* state) {
     }
 }
 
+// We initialize a new syntax highlighting process
+// while keeping the last parameters
+void init_sh_process(size_t text_length) {
+    sh_state = sh_initial_state;
 
-SHState init_sh_process(size_t text_length) {
-    SHState state = (SHState) {
+    sh_state.colors = malloc(text_length + 1);
+    memset(sh_state.colors, 0, text_length);
+
+    sh_state.index = 0;
+
+    if (sh_state.in_word) {
+        sh_state.word_start = 0;
+    }
+    else if (sh_state.in_string1 || sh_state.in_string2) {
+        sh_state.colors[0] = STRING_COLOR;
+    }
+    else if (sh_state.in_long_comment || sh_state.in_short_comment) {
+        sh_state.colors[0] = COMMENT_COLOR;
+    }
+    else if (sh_state.in_number) {
+        sh_state.colors[0] = DIGIT_COLOR;
+    }
+    else if (sh_state.in_operator) {
+        sh_state.colors[0] = SPECIAL_CHAR_COLOR;
+    }
+}
+
+void sh_reset_initial_state(void) {
+    sh_initial_state = (SHState) {
         .wa_state = WA_START,
         .word_start = 0,
         .in_word = false,
@@ -142,50 +182,21 @@ SHState init_sh_process(size_t text_length) {
         .in_string2 = false,
         .in_number = false,
         .index = 0,
-        .colors = malloc(text_length+2)
+        .colors = NULL
     };
-    memset(state.colors, 0, text_length);
-    return state;
+}
+
+void sh_update_initial_state(void) {
+    sh_initial_state = sh_state;
 }
 
 
+
 uint8_t* highlight(char* text, size_t length) {
-    SHState sh_state = init_sh_process(length);
+    init_sh_process(length);
     for (size_t i=0 ; i < length ; i++) {
         update_state(&sh_state, text[i]);
     }
     close_state(&sh_state);
     return sh_state.colors;
 }
-
-
-void print_highlighted(char* text, size_t length) {
-    uint8_t* colors = highlight(text, length);
-
-    for (size_t i=0 ; i < length ; i++) {
-        switch (colors[i]) {
-            case OPERATOR_COLOR:
-            case KEYWORD_COLOR:
-                printf("\033[1;34m");
-                break;
-            case STRING_COLOR:
-            case COMMENT_COLOR:
-                printf("\033[0;32m");
-                break;
-            case SPECIAL_CHAR_COLOR:
-                printf("\033[0;35m");
-                break;
-            case DIGIT_COLOR:
-                printf("\033[0;31m");
-                break;
-            case RESET_COLOR:
-                printf("\033[0;00m");
-                break;
-        }
-
-        putchar(text[i]);
-    }
-    printf("\033[0;00m");
-    free(colors);
-}
-

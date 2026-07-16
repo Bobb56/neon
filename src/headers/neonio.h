@@ -32,6 +32,7 @@ void NeStream_close(NeStream stream);
 void NeStream_write(NeStream stream, void* data, size_t size);
 bool NeStream_read(NeStream stream, void* data, size_t size);
 
+void print_highlighted(char* text, size_t length);
 void enable_syntax_hightlighting(void);
 void disable_syntax_highlithting(void);
 void removeZeros(char* string);

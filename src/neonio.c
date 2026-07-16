@@ -13,6 +13,7 @@
 #include "headers/parser.h"
 #include "headers/strings.h"
 #include "headers/errors.h"
+#include "headers/syntaxhighlighting.h"
 
 #if defined(TI_EZ80)
 #include <ti/vars.h>
@@ -214,7 +215,6 @@
     {
         neonide_clear();
     }
-
     
 
 #else //---------------------------- PASSAGE A TI_EZ80 ----------------------------
@@ -386,6 +386,36 @@
     
     void flush(void) {
         fflush(stdout);
+    }
+
+    void print_highlighted(char* text, size_t length) {
+        uint8_t* colors = highlight(text, length);
+
+        for (size_t i=0 ; i < length ; i++) {
+            switch (colors[i]) {
+                case OPERATOR_COLOR:
+                case KEYWORD_COLOR:
+                    printf("\033[1;34m");
+                    break;
+                case STRING_COLOR:
+                case COMMENT_COLOR:
+                    printf("\033[0;32m");
+                    break;
+                case SPECIAL_CHAR_COLOR:
+                    printf("\033[0;35m");
+                    break;
+                case DIGIT_COLOR:
+                    printf("\033[0;31m");
+                    break;
+                case RESET_COLOR:
+                    printf("\033[0;00m");
+                    break;
+            }
+
+            putchar(text[i]);
+        }
+        printf("\033[0;00m");
+        free(colors);
     }
     
     

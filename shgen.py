@@ -1,7 +1,5 @@
-# This python script generates a C finite state automaton for simple syntax highlighting
-# (strings, operators, numbers and keywords)
+# This python script generates a C finite state automaton for determining if 
 
-from enum import Enum
 
 operators = ["and","or","xor","not", "del", "EE", "in", "parallel", "is"]
 
@@ -10,11 +8,9 @@ keywords = ["if","while","for", "foreach", "return", "import", "local", "await",
 
 # ------
 
-accepted_chars = ["\"", "'", "+","*","-","/","<",">","=","%","&","@","!", ",", ";", "\n", "#", "$", "[", "]", "(", ")", "{", "}", "\\", "_", " ", "\t", ".", ":", "~"]
-
 class WordAutomaton:
     def __init__(self):
-        self.table = {'start': {}}
+        self.table = {'start': {}, 'none': {}}
         self.finals = {}
         self.state_counter = 0
     
@@ -53,7 +49,7 @@ class WordAutomaton:
             file.write(f"        case '{char}':\n")
             file.write(f'            return WA_{state.upper()};\n')
         file.write(f'        default:\n')
-        file.write(f'            return 0;\n')
+        file.write(f'            return WA_NONE;\n')
         file.write('    }\n')
         file.write('}\n\n')
     
@@ -92,8 +88,8 @@ class WordAutomaton:
         file.write(f'    return states_functions[state](c);\n')
         file.write('}\n\n')
     
-    def generate_h(self, name):
-        file = open(f'{name}.h', 'w')
+    def generate_h(self, dir, name):
+        file = open(f'{dir}/{name}.h', 'w')
         self.write_header(file)
         # Write constants header of the file
         file.write(f"#ifndef {name.upper()}_H_\n")
@@ -132,11 +128,11 @@ class WordAutomaton:
         file.write(f"#endif\n")
         file.close()
 
-    def generate_c(self, name = 'wordautomaton'):
-        self.generate_h(name)
-        file = open(f'{name}.c', 'w')
+    def generate_c(self, dir = 'src', name = 'wordautomaton'):
+        self.generate_h(f'{dir}/headers', name)
+        file = open(f'{dir}/{name}.c', 'w')
         self.write_header(file)
-        file.write(f'#include "{name}.h"\n')
+        file.write(f'#include "headers/{name}.h"\n')
         file.write('\n')
 
         self.generate_final_states_array(file)

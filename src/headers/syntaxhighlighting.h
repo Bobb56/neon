@@ -30,5 +30,8 @@ typedef struct SHState {
 
 
 void print_highlighted(char* text, size_t length);
+void sh_reset_initial_state(void);
+void sh_update_initial_state(void);
+uint8_t* highlight(char* text, size_t length);
 
 #endif
