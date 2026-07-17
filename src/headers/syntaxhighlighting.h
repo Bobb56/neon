@@ -30,6 +30,8 @@ typedef struct SHState {
 #define SPECIAL_CHAR_COLOR  PURPLE
 #define RESET_COLOR         DEFAULT
 
+
+void sh_set_to_initial(void);
 void preprocessing_update_state(SHState* state, char c);
 void print_highlighted(char* text, size_t length);
 void sh_reset_initial_state(void);

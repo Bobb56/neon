@@ -1224,7 +1224,9 @@ void update_state_from_beginning(struct estate* state) {
     
     if (last_scr_offset != state->scr_offset) {
         // We process the entire beginning of the buffer
-        sh_reset_initial_state();
+        sh_reset_initial_state(); // Set initial state to nothing
+        sh_set_to_initial(); // Set actual state to nothing
+
         int i=0;
         while (i < state->scr_offset) {
             if (i == state->c1) {
@@ -1234,6 +1236,9 @@ void update_state_from_beginning(struct estate* state) {
             i++;
         }
         last_scr_offset = state->scr_offset;
+
+        // Set initial state to current state
+        sh_update_initial_state();
     }
 }
 
@@ -1291,10 +1296,10 @@ uint8_t* editor_highlight(struct estate* state) {
 
 
 void draw_text_area(struct estate* state) {
-    //uint8_t* colors;
+    uint8_t* colors;
 beginning:
 
-    //colors = editor_highlight(state);
+    colors = editor_highlight(state);
     gfx_FillScreen(state->background_color);
 
     // Number of pixels between the left border and the first character of a line 
@@ -1317,9 +1322,9 @@ beginning:
     while (i < state->max_buffer_size && (cp < state->max_buffer_size - state->c2 + state->c1) && row < NUM_LINES + 1)
     {
 
-        //if (colors[cp] != NO_COLOR) {
-        //    current_text_color = translate_color(colors[cp]);
-        //}
+        if (colors[cp] != NO_COLOR) {
+            current_text_color = translate_color(colors[cp]);
+        }
 
         if (i == state->c1)
         {
@@ -1370,6 +1375,7 @@ beginning:
         col++;
         cp++;
     }
+    free_noheap(colors);
 
     if (!drawn)
     {
@@ -1383,7 +1389,6 @@ beginning:
         }
         goto beginning;
     }
-    //free_noheap(colors);
 }
 
 

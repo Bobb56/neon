@@ -291,6 +291,9 @@ void sh_update_initial_state(void) {
     sh_initial_state = sh_state;
 }
 
+void sh_set_to_initial(void) {
+    sh_state = sh_initial_state;
+}
 
 
 uint8_t* highlight(char* text, size_t length) {
