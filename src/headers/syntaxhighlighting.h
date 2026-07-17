@@ -15,7 +15,7 @@ typedef struct SHState {
     bool in_word;
     bool in_number;
     bool in_operator;
-    uint8_t word_start;
+    size_t word_start;
     size_t index;
     uint8_t* colors;
 } SHState;
@@ -30,7 +30,7 @@ typedef struct SHState {
 #define SPECIAL_CHAR_COLOR  PURPLE
 #define RESET_COLOR         DEFAULT
 
-
+void preprocessing_update_state(SHState* state, char c);
 void print_highlighted(char* text, size_t length);
 void sh_reset_initial_state(void);
 void sh_update_initial_state(void);

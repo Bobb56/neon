@@ -319,19 +319,23 @@ void cursor_down(struct estate *state)
         {
             cursor_right(state);
         }
-        cursor_right(state);
-        if (state->lines[state->lc1] < old % NUM_COLS)
-        {
-            for (int i = 0; i < state->lines[state->lc1]; i++)
+
+        // If going at the end of the line led us to the next physical line, we skip this
+        if (!(state->lc_offset % NUM_COLS < old % NUM_COLS)) {
+            cursor_right(state);
+            if (state->lines[state->lc1] < old % NUM_COLS)
             {
-                cursor_right(state);
+                for (int i = 0; i < state->lines[state->lc1]; i++)
+                {
+                    cursor_right(state);
+                }
             }
-        }
-        else
-        {
-            for (int i = 0; i < old % NUM_COLS; i++)
+            else
             {
-                cursor_right(state);
+                for (int i = 0; i < old % NUM_COLS; i++)
+                {
+                    cursor_right(state);
+                }
             }
         }
         if (state->lc_offset > 0 && state->lc_offset % NUM_COLS == 0)

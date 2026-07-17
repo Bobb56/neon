@@ -1215,9 +1215,34 @@ void draw_dialog(struct estate *state, int x, int y, int w, int h)
 }
 
 
+/*
+Makes the state consistent for coloring a string inside a bigger string by
+processing the previous part of the string
+*/
+void update_state_from_beginning(struct estate* state) {
+    static int last_scr_offset = -1;
+    
+    if (last_scr_offset != state->scr_offset) {
+        // We process the entire beginning of the buffer
+        sh_reset_initial_state();
+        int i=0;
+        while (i < state->scr_offset) {
+            if (i == state->c1) {
+                i = state->c2 + 1;
+            }
+            preprocessing_update_state(sh_get_state_ptr(), state->text[i]);
+            i++;
+        }
+        last_scr_offset = state->scr_offset;
+    }
+}
+
 
 
 uint8_t* editor_highlight(struct estate* state) {
+    // Make the state consistent with the text currently on the screen
+    update_state_from_beginning(state);
+    // Initialize a highlighting process for highlighting from the current state
     init_sh_process(NUM_LINES * NUM_COLS);
 
     // Loop over the characters
@@ -1266,10 +1291,10 @@ uint8_t* editor_highlight(struct estate* state) {
 
 
 void draw_text_area(struct estate* state) {
-    uint8_t* colors;
+    //uint8_t* colors;
 beginning:
 
-    colors = editor_highlight(state);
+    //colors = editor_highlight(state);
     gfx_FillScreen(state->background_color);
 
     // Number of pixels between the left border and the first character of a line 
@@ -1292,9 +1317,9 @@ beginning:
     while (i < state->max_buffer_size && (cp < state->max_buffer_size - state->c2 + state->c1) && row < NUM_LINES + 1)
     {
 
-        if (colors[cp] != NO_COLOR) {
-            current_text_color = translate_color(colors[cp]);
-        }
+        //if (colors[cp] != NO_COLOR) {
+        //    current_text_color = translate_color(colors[cp]);
+        //}
 
         if (i == state->c1)
         {
@@ -1358,7 +1383,7 @@ beginning:
         }
         goto beginning;
     }
-    free_noheap(colors);
+    //free_noheap(colors);
 }
 
 

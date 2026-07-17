@@ -7,8 +7,10 @@
 
 /*
 TODO:
-- Syntax highlighting: find a way to take in account the state of the syntax before
-the current page
+- Fix cursor problems
+- Fix syntax highlighting consistency at the beginning of the screen
+- Fix syntax highlighting in the terminal
+- Fix problems with alpha locking keys like digits sometimes
 - Try to increase a bit the size of the console history
 - KEY_CLEAR -> KEY_STO && KEY_STO insert an '='
 - Update is_control

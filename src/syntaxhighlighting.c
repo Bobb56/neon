@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include "headers/constants.h"
 #include "headers/parser.h"
 #include "headers/wordautomaton.h"
 #include "headers/syntaxhighlighting.h"
@@ -138,6 +139,86 @@ beginning:
 }
 
 
+
+/*
+This function does the same job than update_state but in order to preprocess
+the beginning of a string before coloring the next characters it
+*/
+void preprocessing_update_state(SHState* state, char c) {
+beginning:
+    if (state->in_operator) {
+        if (!is_sousop(c)) {
+            state->in_operator = false;
+            // We authorize to process the character again
+            goto beginning;
+        }
+    }
+    else if (state->in_number) {
+        if (!isdigit(c) && c != 'x' && c != 'b' && c != '.') {
+            state->in_number = false;
+            // We authorize to process the character again
+            goto beginning;
+        }
+    }
+    else if (state->in_short_comment) {
+        if (c == '\n') {
+            state->in_short_comment = false;
+        }
+    }
+    else if (state->in_long_comment) {
+        if (c == '$') {
+            state->in_long_comment = false;
+        }
+    }
+    else if (state->in_string1) {
+        if (c == '\'') {
+            state->in_string1 = false;
+        }
+    }
+    else if (state->in_string2) {
+        if (c == '"') {
+            state->in_string2 = false;
+        }
+    }
+    else if (state->in_word && c != '\'' && c != '_' && !isalnum(c)) {
+        state->in_word = false;
+        
+        uint8_t final_state = wa_get_final(state->wa_state);
+        // We authorize to process the character again
+        goto beginning;
+    }
+    else {
+        if (c == '$') {
+            state->in_long_comment = true;
+        }
+        else if (c == '#') {
+            state->in_short_comment = true;
+        }
+        else if (c == '"') {
+            state->in_string2 = true;
+        }
+        else if (c == '\'' && !state->in_word) {
+            state->in_string1 = true;
+        }
+        else if (c == '_' || isalpha(c)) {
+            if (!state->in_word) {
+                state->in_word = true;
+                state->wa_state = WA_START;
+            }
+
+            state->wa_state = wa_next_state(state->wa_state, c);
+        }
+        else if (isdigit(c)) {
+            state->in_number = true;
+        }
+        else if (is_sousop(c)) {
+            state->in_operator = true;
+        }
+    }
+}
+
+
+
 void close_state(SHState* state) {
     if (state->in_word) {
         uint8_t final_state = wa_get_final(state->wa_state);
@@ -166,7 +247,7 @@ void init_sh_process(size_t text_length) {
         sh_state.colors = malloc(text_length + 1);
     #endif
 
-    memset(sh_state.colors, 0, text_length);
+    memset(sh_state.colors, NO_COLOR, text_length);
 
     sh_state.index = 0;
 
