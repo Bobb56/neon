@@ -387,7 +387,7 @@ void neonide_print_string(char* text) {
 }
 
 
-void history_navigate(struct estate* state, int prompt_start) {
+void history_navigate(struct estate* state) {
     if (state->history_length == 0)
         return;
 
@@ -417,7 +417,7 @@ void history_navigate(struct estate* state, int prompt_start) {
         }
         else if (k == '\n') {
             cursor_to_end(state);
-            while (state->c1 > prompt_start)
+            while (state->c1 > state->last_prompt_start)
                 bs(state);
 
             for (int i=state->history_left[index] ; i < state->history_right[index] ; i++) {
@@ -479,7 +479,7 @@ void neonide_set_color(uint8_t color) {
     insert_char(global_console_state, translate_color(color));
 }
 
-void console_cursor_left(struct estate *state, int last_prompt_start)
+void console_cursor_left(struct estate *state)
 {
     if (state->selection_active)
     {
@@ -489,7 +489,7 @@ void console_cursor_left(struct estate *state, int last_prompt_start)
         while (state->selection_anchor < state->c1 - 2)
             cursor_left(state);
     }
-    if (state->c1 > last_prompt_start)
+    if (state->c1 > state->last_prompt_start)
     {
         if (state->lc_offset == 0)
         {
@@ -504,7 +504,7 @@ void console_cursor_left(struct estate *state, int last_prompt_start)
 
 
 
-void console_cursor_left_select(struct estate *state, int last_prompt_start)
+void console_cursor_left_select(struct estate *state)
 {
     if (!state->selection_active)
     {
@@ -515,7 +515,7 @@ void console_cursor_left_select(struct estate *state, int last_prompt_start)
     {
         state->selection_anchor = state->c2;
     }
-    if (state->c1 > last_prompt_start)
+    if (state->c1 > state->last_prompt_start)
     {
         if (state->lc_offset == 0)
         {
@@ -533,7 +533,7 @@ void console_cursor_left_select(struct estate *state, int last_prompt_start)
 }
 
 
-void console_bs(struct estate *state, int last_prompt_start)
+void console_bs(struct estate *state)
 {
     state->saved = false;
     if (state->selection_active)
@@ -548,7 +548,7 @@ void console_bs(struct estate *state, int last_prompt_start)
             del(state);
         }
     }
-    else if (state->c1 > last_prompt_start)
+    else if (state->c1 > state->last_prompt_start)
     {
         if (state->lc_offset == 0)
         {
@@ -569,20 +569,19 @@ void console_bs(struct estate *state, int last_prompt_start)
 
 char* neonide_input(char* prompt) {
     if (strcmp(prompt, SEQUENCE_ENTREE) == 0) {
-        neonide_set_color(NEON_PALETTE_BLUE);
+        neonide_set_color(BLUE);
         neonide_print_string(SEQUENCE_ENTREE);
-        neonide_set_color(NEON_PALETTE_BLACK);
+        neonide_set_color(DEFAULT);
     }
     else {
         neonide_print_string(prompt);
     }
 
-
     // We need the cursor to be at the end - this is currently done by neonide_print_string
     struct estate *state = global_console_state;
 
     short k = 0;
-    int prompt_start = state->c1;
+    state->last_prompt_start = state->c1;
 
     while (true) {
         draw_console(state);
@@ -596,17 +595,17 @@ char* neonide_input(char* prompt) {
                 cursor_to_end(state);
 
                 // Add content to history
-                if (state->c1 != prompt_start) {
-                    state->history_left[state->history_length] = prompt_start;
+                if (state->c1 != state->last_prompt_start) {
+                    state->history_left[state->history_length] = state->last_prompt_start;
                     state->history_right[state->history_length] = state->c1;
                     state->history_length++;
                 }
 
-                char* buffer = malloc(state->c1 - prompt_start + 1);
-                for (int i=0 ; i + prompt_start < state->c1 ; i++) {
-                    buffer[i] = state->text[i + prompt_start];
+                char* buffer = malloc(state->c1 - state->last_prompt_start + 1);
+                for (int i=0 ; i + state->last_prompt_start < state->c1 ; i++) {
+                    buffer[i] = state->text[i + state->last_prompt_start];
                 }
-                buffer[state->c1 - prompt_start] = '\0';
+                buffer[state->c1 - state->last_prompt_start] = '\0';
 
                 insert_char(state, '\n');
                 return buffer;
@@ -623,13 +622,13 @@ char* neonide_input(char* prompt) {
                     neon_fail(1, NO_ARGS);
                     return NULL;
                 case KEY_SLEFT:
-                    console_cursor_left_select(state, prompt_start);
+                    console_cursor_left_select(state);
                     break;
                 case KEY_SRIGHT:
                     cursor_right_select(state);
                     break;
                 case KEY_LEFT: //left
-                    console_cursor_left(state, prompt_start);
+                    console_cursor_left(state);
                     break;
                 case KEY_RIGHT: //right
                     cursor_right(state);
@@ -637,10 +636,10 @@ char* neonide_input(char* prompt) {
                 case KEY_DOWN: //down
                     break;
                 case KEY_UP: //up
-                    history_navigate(state, prompt_start);
+                    history_navigate(state);
                     break;
                 case KEY_BS: //backspace
-                    console_bs(state, prompt_start);
+                    console_bs(state);
                     break;
                 case KEY_DEL: //delete
                     del(state);

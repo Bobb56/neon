@@ -385,7 +385,7 @@
 
         for (size_t i=0 ; i < length ; i++) {
             if (colors[i] != NO_COLOR)
-                setColor(colors[i]);
+                setColor(IGNORE_BOLD(colors[i]));
 
             putchar(text[i]);
         }

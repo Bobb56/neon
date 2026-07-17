@@ -43,6 +43,9 @@ void initialize_void(struct estate *state);
 uint8_t create_buffer(struct estate* state, size_t size);
 void delete_buffer(struct estate* state, uint8_t slot);
 
+void set_normal_font(void);
+void set_bold_font(void);
+
 
 /*
  * Parse the NEIDERC file, if it exists, and do stuff.

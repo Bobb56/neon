@@ -20,10 +20,13 @@ typedef struct SHState {
     uint8_t* colors;
 } SHState;
 
+#define BOLD                0b10000000
+#define IGNORE_BOLD(color)  (color & 0b01111111)
+#define IS_BOLD(color)      (color & BOLD)
 
-#define KEYWORD_COLOR       BLUE
-#define OPERATOR_COLOR      BLUE
-#define CONSTANT_COLOR      PURPLE
+#define KEYWORD_COLOR       (BLUE | BOLD)
+#define OPERATOR_COLOR      (BLUE | BOLD)
+#define CONSTANT_COLOR      (PURPLE | BOLD)
 #define COMMENT_COLOR       GREY
 #define STRING_COLOR        GREEN
 #define DIGIT_COLOR         ORANGE

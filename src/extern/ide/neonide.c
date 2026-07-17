@@ -7,9 +7,7 @@
 
 /*
 TODO:
-- Fix cursor problems
-- Fix syntax highlighting consistency at the beginning of the screen
-- Fix syntax highlighting in the terminal
+- Make sure that 0x1b is taken in account everywhere in the terminal
 - Fix problems with alpha locking keys like digits sometimes
 - Try to increase a bit the size of the console history
 - KEY_CLEAR -> KEY_STO && KEY_STO insert an '='
@@ -96,9 +94,18 @@ void initialize_void(struct estate* state) {
     initialize(state);
 }
 
+void set_normal_font(void) {
+    fontlib_SetFont(font, 0);
+}
+
+
+void set_bold_font(void) {
+    fontlib_SetFont(font, 0);
+}
+
 
 void launch_neonide(void) {
-	fontlib_SetFont(font, 0);
+	set_normal_font();
 	home_menu();
 
 	clean_memory();

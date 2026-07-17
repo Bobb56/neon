@@ -182,8 +182,6 @@ beginning:
     }
     else if (state->in_word && c != '\'' && c != '_' && !isalnum(c)) {
         state->in_word = false;
-        
-        uint8_t final_state = wa_get_final(state->wa_state);
         // We authorize to process the character again
         goto beginning;
     }

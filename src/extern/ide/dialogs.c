@@ -18,6 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 You may use version 2.1 or later only.
 */
 
+#include <math.h>
+#include <fontlibc.h>
+#include <stdint.h>
+
 #include "headers/dialogs.h"
 #include "headers/clipboard.h"
 #include "headers/console.h"
@@ -25,8 +29,7 @@ You may use version 2.1 or later only.
 #include "headers/state.h"
 #include "headers/neonide.h"
 #include "headers/editor.h"
-#include <stdint.h>
-#include <math.h>
+#include "headers/font.h"
 
 #include "../../headers/syntaxhighlighting.h"
 
@@ -1220,10 +1223,31 @@ Makes the state consistent for coloring a string inside a bigger string by
 processing the previous part of the string
 */
 void update_state_from_beginning(struct estate* state) {
-    static int last_scr_offset = -1;
-    
-    if (last_scr_offset != state->scr_offset) {
-        // We process the entire beginning of the buffer
+    static size_t last_scr_offset = (size_t)-1;
+
+    if (state->scr_offset == last_scr_offset)
+        return;
+
+    // We can update the initial_state instead of processing
+    // the whole beginning of the buffer
+    if (state->scr_offset > last_scr_offset) {
+        sh_set_to_initial();
+
+        int i=last_scr_offset;
+        while (i < state->scr_offset) {
+            if (i == state->c1) {
+                i = state->c2 + 1;
+            }
+            preprocessing_update_state(sh_get_state_ptr(), state->text[i]);
+            i++;
+        }
+        last_scr_offset = state->scr_offset;
+
+        // Set initial state to current state
+        sh_update_initial_state();
+    }
+    else {
+        // We need to process the whole beginning of the buffer
         sh_reset_initial_state(); // Set initial state to nothing
         sh_set_to_initial(); // Set actual state to nothing
 
@@ -1315,6 +1339,7 @@ beginning:
     uint8_t current_text_color = state->text_color;
 
     //Start drawing
+    set_normal_font();
     fontlib_SetForegroundColor(text_color);
     fontlib_SetCursorPosition(left_offset, LINE_SPACING);
 
@@ -1323,7 +1348,13 @@ beginning:
     {
 
         if (colors[cp] != NO_COLOR) {
-            current_text_color = translate_color(colors[cp]);
+            current_text_color = translate_color(IGNORE_BOLD(colors[cp]));
+            if (IS_BOLD(colors[cp])) {
+                set_bold_font();
+            }
+            else {
+                set_normal_font();
+            }
         }
 
         if (i == state->c1)
@@ -1389,6 +1420,7 @@ beginning:
         }
         goto beginning;
     }
+    set_normal_font();
 }
 
 

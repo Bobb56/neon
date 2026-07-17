@@ -93,6 +93,10 @@ struct estate {
     int24_t scr_line;
     //line offset of scr pos.
     int24_t scr_line_offset;
+
+    //Index in text of the beginning of the last prompt start
+    int24_t last_prompt_start;
+
     //Self explanatory.
     uint8_t text_color;
     uint8_t text_highlight_color;
