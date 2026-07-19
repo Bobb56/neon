@@ -3,7 +3,7 @@
 
 operators = ["and","or","xor","not", "del", "EE", "in", "parallel", "is"]
 
-keywords = ["if","while","for", "foreach", "return", "import", "local", "await", "define", "init", "function", "method", "continue", "break", "pass", "do", "end", "then"]
+keywords = ["if", "elif", "else", "while","for", "foreach", "return", "import", "local", "await", "define", "init", "function", "method", "continue", "break", "pass", "do", "end", "then"]
 
 constants = ["True", "False", "None", "Infinity", "NaN", "Pi", "Bool", "String", "Const", "Integer", "Real", "BuiltInFunction", "List",
 "Method", "Function", "Exception", "Promise", "Red", "Blue", "Green", "Purple", "Orange", "Grey", "Default"]
