@@ -471,7 +471,14 @@ NeObj eval_Attribute(TreeBuffer* tb, TreeBufferIndex tree)
     // si l'indice a été invalidé
     if (tree_attr->index == -1 || tree_attr->last_cont_type != c->type)
     {
-        tree_attr->index = get_field_index(c, tree_attr->name);
+        int index = get_field_index(c, tree_attr->name);
+
+        if_error {
+            neobject_destroy(neo);
+            return NEO_VOID;
+        }
+
+        tree_attr->index = index;
         neon_free(tree_attr->name);
         tree_attr->name = NULL;
         tree_attr->last_cont_type = c->type;

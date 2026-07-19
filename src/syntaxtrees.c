@@ -379,8 +379,10 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
 
                         if (!bo)
                         {
+                            printString(neo_to_string(noms->tab[i]));
+                            newLine();
                             neon_fail(83, neo_new_str_create(global_env->CONTAINERS->tab[index]));
-                            global_env->LINENUMBER = treeContLit(tb, tree) ->line;
+                            global_env->LINENUMBER = treeContLit(tb, tree)->line;
                             TreeListTemp_destroy(tb, &temptreelist);
                             if (attributes.trees != NULL)
                                 neon_free(attributes.trees);

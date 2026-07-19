@@ -323,8 +323,13 @@ char* printable_tree_type(TreeBuffer* tb, TreeBufferIndex tree) {
 
 
 TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line) {
-    TreeBufferIndex tree = TreeBuffer_alloc(tb, type_size(type));
+    size_t tree_size = type_size(type);
+
+    TreeBufferIndex tree = TreeBuffer_alloc(tb, tree_size);
     return_on_error(TREE_VOID);
+
+    // Init the tree to zero, useful for uninitialized TreeList
+    //memset(tb->pointer + tree, 0, tree_size);
 
     TREE_LINE(tb, tree) = line;
     TREE_TYPE(tb,tree) = type;

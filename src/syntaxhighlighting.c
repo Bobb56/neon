@@ -12,12 +12,6 @@
 #include "extern/ide/headers/libmalloc.h"
 #endif
 
-/*
-TODO:
-- Add new colors in neonio and use those colors
-- Highlight syntax when printing result in the console
-*/
-
 
 static SHState sh_state = (SHState) {
     .wa_state = WA_START,

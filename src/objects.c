@@ -179,7 +179,7 @@ int get_field_index(Container* c, char* name) {
     size_t index = 0;
     for (; index < list->len && strcmp(neo_to_string(list->tab[index]), name) != 0 ; index++);
 
-    if (index == list->len - 1 && strcmp(neo_to_string(list->tab[index]), name) != 0)
+    if (index == list->len)
     {
         neon_fail(82, neo_new_str_create(global_env->CONTAINERS->tab[c->type]), neo_new_str_create(name));
         return -1;
