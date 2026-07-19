@@ -5,6 +5,7 @@
  *      Author: michael
  */
 
+ #include <time.h>
 #include "headers/keys.h"
 #include "headers/state.h"
 #include "../../headers/graphicmodule.h"
@@ -114,7 +115,7 @@ short kmetashift[] = {
 };
 
 
-
+/*
 uint8_t ngetchx_backend(void) {
     static uint8_t last_key;
     static uint16_t counter;
@@ -148,6 +149,50 @@ uint8_t ngetchx_backend(void) {
     last_key = only_key;
     return only_key;
 }
+*/
+
+
+uint8_t ngetchx_backend(void) {
+    static uint8_t last_key;
+    static clock_t local_clock;
+
+    uint8_t only_key = 0;
+
+    kb_Scan();
+    for (uint8_t key = 1, group = 7; group; --group) {
+        for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
+            if (kb_Data[group] & mask) {
+                if (only_key) {
+                    last_key = 0;
+                    return 0;
+                }
+                else {
+                    only_key = key;
+                }
+            }
+        }
+    }
+
+    // processing of the key code
+
+    if (only_key == last_key) {
+        if (clock() - local_clock > 10000) {
+            return only_key;
+        }
+        else {
+            return 0;
+        }
+    }
+    else {
+
+        // resets the clock since it's a new key
+        local_clock = clock();
+
+        last_key = only_key;
+        return only_key;
+    }
+}
+
 
 
 short ngetchx(struct estate* state) {
