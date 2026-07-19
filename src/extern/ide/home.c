@@ -264,6 +264,7 @@ void home_menu(void) {
         }
 
         // Otherwise wait for a key
+        state.alpha_state = AlphaState_alpha;
         key = ngetchx(&state);
 
         if (key == KEY_F1) {

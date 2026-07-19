@@ -7,6 +7,8 @@
 
 /*
 TODO:
+- Fix error printing
+- Try to use a clock for the key scanning function
 - Make sure that 0x1b is taken in account everywhere in the terminal
 - Fix problems with alpha locking keys like digits sometimes
 - Try to increase a bit the size of the console history

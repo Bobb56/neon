@@ -93,7 +93,6 @@
         //calcul de la longueur de l'AppVar
     
         uint16_t longueur = ti_GetSize(fichier);
-
         
         char* program = neon_malloc(longueur + 1);// crée le tableau de caractères qui va contenir le programme
     
@@ -105,8 +104,8 @@
         
         ti_Close(fichier);
 
-        // on enlève le préfixe propre aux appvars python s'il y en a un
-        if (memcmp(program, "PYCD\x00", 5)==0 || memcmp(program, "NEON\x00", 5)==0)
+        // on enlève le préfixe propre aux fichiers Neon
+        if (memcmp(program, "NEON\x00", 5)==0)
             memcpy(program, "     ", 5);
 
         return program;

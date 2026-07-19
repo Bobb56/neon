@@ -1,6 +1,3 @@
-a = True
-i = 0
-while (a) do
-  print(i)
-  i++
-end
+a = 5
+b = 12
+    c = 1//0

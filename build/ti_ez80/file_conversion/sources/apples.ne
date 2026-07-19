@@ -1,7 +1,7 @@
 init(Graphics)
 
 function lose() do
-    text = Text(text: "You lose!", x:0, y:100, fgcolor: 192, bgcolor: 255, size:7)
+    text = Text(t: "You lose!", x:0, y:100, fg: 192, bg: 255, s:7)
     text>>x = 160 - text.getTextWidth()/2
     draw(text)
     await(getKey() == 15)
@@ -47,7 +47,7 @@ function eventually_add_apple(apples) do
         end
 
         apple = Apple(
-            figure: Circle(x:randint(5, 235), y:0, radius:5, color: 192, filled:True),
+            figure: Circle(x:randint(5, 235), y:0, r:5, c: 192, f:True),
             speed: m % apple_max_speed + 1
         )
         screen>>apples.append(apple)
@@ -63,20 +63,20 @@ function update_pad(key) do
 end
 
 function update_score() do
-    screen>>score>>text = "Score: " + str(score)
-    screen>>hscore>>text = "High score: " + str(highscore)
+    screen>>score>>t = "Score: " + str(score)
+    screen>>hscore>>t = "High score: " + str(highscore)
 end
 
 function load_highscore() do
     try
-        return(int(readFile(APPLSDAT)))
+        return(loadObj(APPLSDAT))
     except () do
         return(0)
     end
 end
 
 function save_highscore() do
-    writeFile(APPLSDAT, str(highscore))
+    saveObj(APPLSDAT, highscore)
 end
 
 
@@ -90,20 +90,20 @@ function main() do
     highscore = load_highscore()
 
     screen = Screen(
-        bg: Rect(x:0, y:0, width:320, height:240, color:rgb(0, 150, 100), filled:True),
-        pad: Rect(x:145, y:220, width:55, height:5, color:0, filled:True),
+        bg: Rect(x:0, y:0, w:320, h:240, c:rgb(0, 150, 100), f:True),
+        pad: Rect(x:145, y:220, w:55, h:5, c:0, f:True),
         apples: [
             Apple(
-                figure: Circle(x:randint(5, 235), y:0, radius:5, color: rgb(255, 0, 0), filled:True),
+                figure: Circle(x:randint(5, 235), y:0, r:5, c: rgb(255, 0, 0), f:True),
                 speed: 1
             ),
             Apple(
-                figure: Circle(x:randint(5, 235), y:0, radius:5, color: rgb(255, 0, 0), filled:True),
+                figure: Circle(x:randint(5, 235), y:0, r:5, c: rgb(255, 0, 0), f:True),
                 speed: 2
             )
         ],
-        score: Text(text: "Score: " + str(score), x:5, y:5, fgcolor: 0, bgcolor:255, size:1),
-        hscore: Text(text: "High score: " + str(highscore), x:5, y:15, fgcolor: 0, bgcolor:255, size:1)
+        score: Text(t: "Score: " + str(score), x:5, y:5, fg: 0, bg:255, s:1),
+        hscore: Text(t: "High score: " + str(highscore), x:5, y:15, fg: 0, bg:255, s:1)
     )
 
     counter = 0

@@ -2020,7 +2020,6 @@ NeObj get_standardfunction(int id) {
 
 const char* get_standardfunction_name(int id) {
     neon_assert(id >= 0 && id < NBBUILTINFUNC, NULL);
-
     return builtinfunctions_names[id];
 }
 

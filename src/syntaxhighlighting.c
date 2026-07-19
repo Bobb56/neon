@@ -81,24 +81,29 @@ beginning:
             state->colors[state->index+1] = RESET_COLOR;
         }
     }
-    else if (state->in_word && c != '\'' && c != '_' && !isalnum(c)) {
-        state->in_word = false;
-        
-        uint8_t final_state = wa_get_final(state->wa_state);
-        if (final_state == WA_KEYWORD) {
-            state->colors[state->word_start] = KEYWORD_COLOR;
-            state->colors[state->index] = RESET_COLOR;
+    else if (state->in_word) {
+        if (c != '\'' && c != '_' && !isalnum(c)) {
+            state->in_word = false;
+            
+            uint8_t final_state = wa_get_final(state->wa_state);
+            if (final_state == WA_KEYWORD) {
+                state->colors[state->word_start] = KEYWORD_COLOR;
+                state->colors[state->index] = RESET_COLOR;
+            }
+            else if (final_state == WA_OPERATOR) {
+                state->colors[state->word_start] = OPERATOR_COLOR;
+                state->colors[state->index] = RESET_COLOR;
+            }
+            else if (final_state == WA_CONSTANT) {
+                state->colors[state->word_start] = CONSTANT_COLOR;
+                state->colors[state->index] = RESET_COLOR;
+            }
+            // We authorize to process the character again
+            goto beginning;
         }
-        else if (final_state == WA_OPERATOR) {
-            state->colors[state->word_start] = OPERATOR_COLOR;
-            state->colors[state->index] = RESET_COLOR;
+        else {
+            state->wa_state = wa_next_state(state->wa_state, c);
         }
-        else if (final_state == WA_CONSTANT) {
-            state->colors[state->word_start] = CONSTANT_COLOR;
-            state->colors[state->index] = RESET_COLOR;
-        }
-        // We authorize to process the character again
-        goto beginning;
     }
     else {
         if (c == '$') {
@@ -118,12 +123,9 @@ beginning:
             state->colors[state->index] = STRING_COLOR;
         }
         else if (c == '_' || isalpha(c)) {
-            if (!state->in_word) {
-                state->in_word = true;
-                state->wa_state = WA_START;
-                state->word_start = state->index;
-            }
-
+            state->in_word = true;
+            state->wa_state = WA_START;
+            state->word_start = state->index;
             state->wa_state = wa_next_state(state->wa_state, c);
         }
         else if (isdigit(c)) {
@@ -180,10 +182,15 @@ beginning:
             state->in_string2 = false;
         }
     }
-    else if (state->in_word && c != '\'' && c != '_' && !isalnum(c)) {
-        state->in_word = false;
-        // We authorize to process the character again
-        goto beginning;
+    else if (state->in_word) {
+        if (c != '\'' && c != '_' && !isalnum(c)) {
+            state->in_word = false;
+            // We authorize to process the character again
+            goto beginning;
+        }
+        else {
+            state->wa_state = wa_next_state(state->wa_state, c);
+        }
     }
     else {
         if (c == '$') {
@@ -199,11 +206,8 @@ beginning:
             state->in_string1 = true;
         }
         else if (c == '_' || isalpha(c)) {
-            if (!state->in_word) {
-                state->in_word = true;
-                state->wa_state = WA_START;
-            }
-
+            state->in_word = true;
+            state->wa_state = WA_START;
             state->wa_state = wa_next_state(state->wa_state, c);
         }
         else if (isdigit(c)) {

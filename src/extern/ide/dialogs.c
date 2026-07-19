@@ -25,6 +25,7 @@ You may use version 2.1 or later only.
 #include "headers/dialogs.h"
 #include "headers/clipboard.h"
 #include "headers/console.h"
+#include "headers/keys.h"
 #include "headers/libmalloc.h"
 #include "headers/state.h"
 #include "headers/neonide.h"
@@ -284,7 +285,7 @@ uint8_t show_color_selection_dialog(struct estate *state, uint8_t current_value)
         gfx_Rectangle_NoClip(32 + 8 * (index % 32), 72 + 8 * (index >> 5), 8, 8);
         gfx_Rectangle_NoClip(31 + 8 * (index % 32), 71 + 8 * (index >> 5), 10, 10);
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
         if (k == KEY_CLEAR)
         {
             return current_value;
@@ -380,7 +381,7 @@ void show_editor_settings_dialog(struct estate *state)
         fontlib_DrawString("by editing NEIDERC");
         //~~//~~//~~//~~//~~//~~//~~//~~//~~//~~//
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
         if (k == KEY_DOWN)
         {
             index++;
@@ -545,7 +546,7 @@ void show_appearance_settings_dialog(struct estate *state)
         fontlib_DrawString("permanent.");
 
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
         if (k == KEY_RIGHT || k == '\n')
         {
             switch (index)
@@ -939,7 +940,7 @@ void show_chars_dialog(struct estate* state, void (*draw_background)(struct esta
         draw_background(state);
         chars_backend_draw(state, line, col, n_lines, n_columns);
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
     }
 }
 
@@ -1066,7 +1067,7 @@ int show_options_dialog(struct estate *state)
         options_backend_draw(state, index);
 
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
     }
     return 0;
 }
@@ -1114,7 +1115,7 @@ void show_console_tools_dialog(struct estate *state)
         console_tools_backend_draw(state, index);
 
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
     }
 }
 
@@ -1168,7 +1169,7 @@ void show_editor_tools_dialog(struct estate *state)
         editor_tools_backend_draw(state, index);
 
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
     }
 }
 
@@ -1876,7 +1877,7 @@ bool show_confirm_dialog(struct estate *state)
         confirm_backend_draw(state, index);
 
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
     }
     return false;
 }
@@ -2000,7 +2001,7 @@ void show_file_menu_dialog(struct estate *state, char* filename)
         file_menu_backend_draw(state, index, filename);
 
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
     }
 }
 
@@ -2077,7 +2078,7 @@ bool show_unsaved_dialog(struct estate *state)
         unsaved_backend_draw(state, index);
 
         gfx_BlitBuffer();
-        k = ngetchx(state);
+        k = wait_key_menu(state);
     }
     return false;
 }

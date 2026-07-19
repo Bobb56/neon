@@ -9,12 +9,12 @@ speed=1
 r=speed
 
 function anim() do
-  r0=Rect(x:0,y:0,width:320,height:240,color:0,filled:True)
+  r0=Rect(x:0,y:0,w:320,h:240,c:0,f:True)
   draw(r0)
   w = 1
   while (w < 318) do
     h = w/4*3
-    r1=Rect(x:160-w/2, y:120-h/2, width:w, height:h, color:255, filled:True)
+    r1=Rect(x:160-w/2, y:120-h/2, w:w, h:h, c:255, f:True)
     draw(r1)
     w+=(320-w)/50 + 5
   end
@@ -33,7 +33,7 @@ function fill(x,y) do
     i++
   end
   if (x<320 and x>=0 and y<240 and y>=0) then 
-    draw(FloodFill(x:x,y:y,color:c))
+    draw(FloodFill(x:x,y:y,c:c))
   end
 end
 

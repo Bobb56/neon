@@ -117,6 +117,9 @@ Choses en plus à ajouter dans la doc :
 - Les nouveaux mots-clé réservés (couleurs, types)
 - Incompatibilité des fichiers sérialisés
 - Ajout de nouvelles couleurs
+- rgb prend ses intensités entre 0 et 255
+- renommage des champs des containers graphiques
+- Fin de support pour les appvars python
 */
 
 

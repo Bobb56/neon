@@ -108,4 +108,6 @@ short ngetchx(struct estate* state);
  */
 short ngetchx_xy(struct estate*, int, int);
 
+short wait_key_menu(struct estate* state);
+
 #endif /* SRC_TIGCCLIB_H_ */

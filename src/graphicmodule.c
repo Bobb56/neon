@@ -580,7 +580,7 @@ const Function graphicfunctions[NBGRAPHICFUNC] = {
         .typeRetour = TYPE_INTEGER
     },
     (Function) {
-        .help = "Returns a number in range 0-255 corresponding approximatively to the rgb color",
+        .help = "This function takes 3 integers between 0 and 255 and returns a Neon color (number between 0 and 255) corresponding approximately to the RGB color",
         .nbArgs = 3,
         .typeArgs = (int[]) {TYPE_UNSPECIFIED, TYPE_UNSPECIFIED, TYPE_UNSPECIFIED},
         .typeRetour = TYPE_INTEGER
@@ -628,49 +628,49 @@ void init_graphicmodule(NeonEnv* env) {
         },
         (struct ContainerType) {
             .name = "Circle",
-            .fields = (char*[]) {"x", "y", "radius", "color", "filled"},
+            .fields = (char*[]) {"x", "y", "r", "c", "f"},
             .nb_fields = 5,
             .container_assoc_index = &env->graphic_containers.Circle
         },
         (struct ContainerType) {
             .name = "Rect",
-            .fields = (char*[]) {"x", "y", "width", "height", "color", "filled"},
+            .fields = (char*[]) {"x", "y", "w", "h", "c", "f"},
             .nb_fields = 6,
             .container_assoc_index = &env->graphic_containers.Rect
         },
         (struct ContainerType) {
             .name = "Line",
-            .fields = (char*[]) {"x0", "y0", "x1", "y1", "color"},
+            .fields = (char*[]) {"x0", "y0", "x1", "y1", "c"},
             .nb_fields = 5,
             .container_assoc_index = &env->graphic_containers.Line
         },
         (struct ContainerType) {
             .name = "Text",
-            .fields = (char*[]) {"text", "x", "y", "fgcolor", "bgcolor", "size"},
+            .fields = (char*[]) {"t", "x", "y", "fg", "bg", "s"},
             .nb_fields = 6,
             .container_assoc_index = &env->graphic_containers.Text
         },
         (struct ContainerType) {
             .name = "Triangle",
-            .fields = (char*[]) {"x0", "y0", "x1", "y1", "x2", "y2", "color"},
+            .fields = (char*[]) {"x0", "y0", "x1", "y1", "x2", "y2", "c"},
             .nb_fields = 7,
             .container_assoc_index = &env->graphic_containers.Triangle
         },
         (struct ContainerType) {
             .name = "Polygon",
-            .fields = (char*[]) {"points", "color"},
+            .fields = (char*[]) {"pts", "c"},
             .nb_fields = 2,
             .container_assoc_index = &env->graphic_containers.Polygon
         },
         (struct ContainerType) {
             .name = "Ellipse",
-            .fields = (char*[]) {"x", "y", "a", "b", "color", "filled"},
+            .fields = (char*[]) {"x", "y", "a", "b", "c", "f"},
             .nb_fields = 6,
             .container_assoc_index = &env->graphic_containers.Ellipse
         },
         (struct ContainerType) {
             .name = "FloodFill",
-            .fields = (char*[]) {"x", "y", "color"},
+            .fields = (char*[]) {"x", "y", "c"},
             .nb_fields = 3,
             .container_assoc_index = &env->graphic_containers.FloodFill
         }

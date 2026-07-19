@@ -15,7 +15,7 @@ end
 
 
 function mandelbrot(N_iteration := 15, res := 2) do
-  pixel = Rect(x:0, y:0, width:res, height:res, color:0, filled:True)
+  pixel = Rect(x:0, y:0, w:res, h:res, c:0, f:True)
   for (x, 0, 320, res) do
     for (y, 0, 240, res) do
       z = Cmplx(re:0, im:0)
@@ -27,7 +27,7 @@ function mandelbrot(N_iteration := 15, res := 2) do
       end
 
       c = int(255*i/N_iteration)
-      pixel>>color = rgb(c, c*0.75, c*0.25)
+      pixel>>c = rgb(c, c*0.75, c*0.25)
       pixel>>x = x
       pixel>>y = y
       draw(pixel)

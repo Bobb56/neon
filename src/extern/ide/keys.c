@@ -177,6 +177,14 @@ short ngetchx(struct estate* state) {
     }
 }
 
+short wait_key_menu(struct estate* state) {
+    uint8_t k = 0;
+    while (!(k = ngetchx_backend())) {
+        continue;
+    }
+    return kmain[k];
+}
+
 short ngetchx_xy(struct estate *state, int cx, int cy) {
     uint8_t k = 0;
     int frame = 0;

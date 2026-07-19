@@ -1,5 +1,6 @@
 #include "headers/constants.h"
 #include "headers/objects.h"
+#include <stdio.h>
 #define NEON_SOURCE_ID 4
 
 #include <stdlib.h>
@@ -455,21 +456,36 @@ void printError(void) {
 }
 
 
-// renvoie l'indice dans la chaîne de caractères correspondant à la ligne demandée
-int getFileIndex(char* program, int line) {
-    int compt = 1, i = 0;
-    while (compt < line && program[i] != '\0') {
-        if (program[i] == '\n')
+// Affiche la ligne du fichier correspondante
+void printFileLine(char* file, int line) {
+    NeStream stream = NeStream_open(file, "r");
+
+    int compt = 1;
+    char c;
+
+    // Skip prefix (size 5)
+    for (int i=0 ; i < 5 ; i++)
+        NeStream_read(stream, &c, 1);
+    
+    // Goto corresponding line
+    while (compt < line && NeStream_read(stream, &c, 1)) {
+        if (c == '\n')
             compt++;
-        i++;
     }
 
-    if (program[i] == '\0')
-        return -1;
+    // Skip indentation spaces
+    do {
+        NeStream_read(stream, &c, 1);
+    }
+    while (c == ' ');
 
-    // passe tous les espaces du début
-    while (program[i] == ' ') i++;
-    return i;
+    // Print line
+    do {
+        char car[2] = {c, 0};
+        printString(car);
+    } while (NeStream_read(stream, &c, 1) && c != '\n');
+
+    NeStream_close(stream);
 }
 
 
@@ -500,36 +516,24 @@ void printErrSource(char* file, int line) {
         printString("file ");
         setColor(GREEN); printString(file); setColor(DEFAULT);
 
-        char* program = openFile(file);
-        int debut = getFileIndex(program, line);
-        if (debut != -1) {
-            printString(" at line ");
+        printString(" at line ");
 
-            setColor(GREEN); printInt(line); setColor(DEFAULT);
+        setColor(GREEN); printInt(line); setColor(DEFAULT);
 
-            printString(" :");
-            newLine();
+        printString(" :");
+        newLine();
 
-            setColor(PURPLE);
-            printString(" # ");
+        setColor(PURPLE);
+        printString(" # ");
 
-            setColor(GREEN);
-            printString(">> ");
+        setColor(GREEN);
+        printString(">> ");
 
-            // marque la fin de la ligne par '\0'
-            int i = debut;
-            while (program[i] != '\0' && program[i] != '\n') i++;
+        setColor(DEFAULT);
+        printFileLine(file, line);
 
-            program[i] = '\0';
-
-            setColor(DEFAULT);
-            printString(program + debut);
-
-            setColor(GREEN);
-            printString(" <<");
-        }
-
-        free(program);
+        setColor(GREEN);
+        printString(" <<");
     }
     else {
         setColor(GREEN);
