@@ -162,21 +162,22 @@ uint8_t ngetchx_backend(void) {
     for (uint8_t key = 1, group = 7; group; --group) {
         for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
             if (kb_Data[group] & mask) {
+                if (key == 40 || key == 54 || key == 55)
+                    continue;
                 if (only_key) {
                     last_key = 0;
                     return 0;
-                }
-                else {
+                } else {
                     only_key = key;
                 }
             }
         }
     }
 
-    // processing of the key code
+    // processing the key code
 
     if (only_key == last_key) {
-        if (clock() - local_clock > 10000) {
+        if (clock() - local_clock > 15000) {
             return only_key;
         }
         else {

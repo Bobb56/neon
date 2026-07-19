@@ -213,6 +213,7 @@ void home_menu(void) {
     int start_disp_index = 0; // indice dans la liste d'éléments de l'élément affiché le plus haut
     int cursor_position = 0; // indice du curseur sur l'écran en teme de nombre d'items
 
+    state.alpha_state = AlphaState_alpha;
     bool reload_files = true;
     short key = 0;
     while (key != KEY_CLEAR) {
@@ -254,17 +255,18 @@ void home_menu(void) {
             state.ide_goto = state.ide_go_back;
             state.ide_go_back = IDEState_Other;
             launch_editor(&state, state.filename);
+            state.alpha_state = AlphaState_alpha;
             continue;
         }
         else if (state.ide_goto == IDEState_RunningProgram) {
             state.ide_goto = state.ide_go_back;
             state.ide_go_back = IDEState_Other;
             run_neon_program(&state, state.filename);
+            state.alpha_state = AlphaState_alpha;
             continue;
         }
 
         // Otherwise wait for a key
-        state.alpha_state = AlphaState_alpha;
         key = ngetchx(&state);
 
         if (key == KEY_F1) {
