@@ -29,8 +29,8 @@ void variable_append(NeonEnv* env, char* name, NeObj value) {
     strlist_append(env->NOMS, strdup(name));
 }
 
-NeObj* get_absolute_address(Var rel_var_addr) {
-    return nelist_nth_addr(global_env->ADRESSES, (size_t)rel_var_addr);
+NeObjAddr get_absolute_address(Var rel_var_addr) {
+    return NEOBJ_ADDR(global_env->ADRESSES, (size_t)rel_var_addr);
 }
 
 NeObj get_var_value(Var rel_var_addr) {
@@ -93,6 +93,18 @@ void free_var(Var var) {
 }
 
 
+
+//////////////////// MANIPULATION DES ADDRESSES D'OBJETS //////////////////
+
+NeObj* get_unsafe_address(NeObjAddr* addr) {
+    return &addr->list->tab[addr->index];
+}
+
+NeObj neobjaddr_deref(NeObjAddr* addr) {
+    return addr->list->tab[addr->index];
+}
+
+
 //////////////////// MANIPULATION D'OBJETS SECONDAIRES ////////////////////
 
 
@@ -104,8 +116,8 @@ NeObj neobject_create(uint8_t type)
 
 
 
-void var_reset(NeObj* var) {
-    *var = neo_empty_create();
+void var_reset(NeObjAddr* var) {
+    global_env->ADRESSES->tab[var->index] = neo_empty_create();
     return;
 }
 
@@ -188,8 +200,8 @@ int get_field_index(Container* c, char* name) {
 }
 
 
-NeObj* get_container_field_addr(Container* c, size_t index) {
-    return nelist_nth_addr(&c->data, index);
+NeObjAddr get_container_field_addr(Container* c, size_t index) {
+    return NEOBJ_ADDR(&c->data, index);
 }
 
 NeObj get_container_field(Container* c, size_t index) {
@@ -1304,7 +1316,9 @@ void update_if_promise(NeObj* promise) {
             }
             else
             {
-                _affect2(promise, global_env->PROMISES->tab[id]);
+                neobject_destroy(*promise);
+                *promise = neo_copy(global_env->PROMISES->tab[id]);
+
                 *global_env->PROMISES_CNT.tab[id] -= 1;
             }
 

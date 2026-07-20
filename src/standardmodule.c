@@ -671,7 +671,7 @@ NeObj _list_comp_(NeList* args)
     char* nom = neo_to_string(ARG(0));
 
     int index;
-    NeObj* i;
+    NeObjAddr i;
 
     if(!strlist_inList(global_env->NOMS, nom))
     {
@@ -693,7 +693,7 @@ NeObj _list_comp_(NeList* args)
         return NEO_VOID;
     }
     
-    _affect2(i, ARG(1)); // valeur de debut
+    _affect2(&i, ARG(1)); // valeur de debut
 
     // un premier TreeBuffer contenant l'expression de la condition
     TreeBuffer cond = createExpressionTree(neo_to_string(ARG(4)), false);
@@ -718,7 +718,7 @@ NeObj _list_comp_(NeList* args)
     NeObj liste = neo_list_create(0);
     NeObj x = NEO_VOID;
 
-    while (neo_to_integer(*i) < neo_to_integer(ARG(2)))
+    while (neo_to_integer(neobjaddr_deref(&i)) < neo_to_integer(ARG(2)))
     {
         NeObj bo = tb_eval_aux(&cond);
 
@@ -750,10 +750,10 @@ NeObj _list_comp_(NeList* args)
         neobject_destroy(bo);
 
         // incrémentation de la variable d'indice
-        x = _add(*i, ARG(3));
+        x = _add(neobjaddr_deref(&i), ARG(3));
 
-        neobject_destroy(*i);
-        *i = x;
+        neobject_destroy(neobjaddr_deref(&i));
+        *get_unsafe_address(&i) = x;
     }
 
     TreeBuffer_destroy(&cond);
@@ -779,8 +779,8 @@ NeObj _create_exception_(NeList* args)
 
     if (strlist_inList(global_env->NOMS,neo_to_string(ARG(0))))
     {
-        int index = strlist_index(global_env->NOMS,neo_to_string(ARG(0)));
-        _affect2(&global_env->ADRESSES->tab[index], e);
+        NeObjAddr var = get_absolute_address(get_var(neo_to_string(ARG(0))));
+        _affect2(&var, e);
         neobject_destroy(e);
     }
     else
@@ -1167,7 +1167,8 @@ NeObj _load_namespace_(NeList* args) {
             char* without_prefix = remove_prefix(global_env->NOMS->tab[i], prefix);
 
             if (strlist_inList(global_env->NOMS, without_prefix)) {
-                _affect2(&global_env->ADRESSES->tab[strlist_index(global_env->NOMS, without_prefix)], global_env->ADRESSES->tab[i]);
+                NeObjAddr var = get_absolute_address(get_var(without_prefix));
+                _affect2(&var, get_var_value(i));
                 neon_free(without_prefix);
             }
             else {
@@ -1406,7 +1407,10 @@ NeObj _loadObj_(NeList* args) {
     #endif
 
     ObfNeStream stream = NeStream_obf_open(file_name);
-    return_on_error(NEO_VOID);
+    if_error {
+        neon_free(file_name);
+        return NEO_VOID;
+    }
 
     NeObj neo = neobject_deserialize(&stream);
 

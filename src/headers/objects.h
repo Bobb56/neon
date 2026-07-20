@@ -71,9 +71,17 @@ struct UserFunc
     char* doc;
 };
 
+// Object that represents the address of a NeObj
+// This object is more flexible than storing a NeObj
+// because it survives to reallocations of the list in
+// which it is stored
+typedef struct NeObjAddr {
+    NeList* list;
+    size_t index;
+} NeObjAddr;
 
-typedef struct NeonEnv NeonEnv;
-
+#define NEOBJ_ADDR(l, i)             (NeObjAddr) {.list = l, .index = i}
+#define NEOBJ_INV_ADDR                      NEOBJ_ADDR(NULL, 0)
 
 
 #define NEO_TYPE(neo)                       (neo).type
@@ -88,8 +96,11 @@ typedef struct NeonEnv NeonEnv;
 #define nelist_deinit(list)                 general_nelist_deinit(list, false)
 #define gc_extern_nelist_destroy(list)      general_nelist_destroy(list, true)
 
-
 #define INTPTR(n)                           (n%INTPTR_MAX)
+
+
+
+typedef struct NeonEnv NeonEnv;
 
 bool neo_is_void(NeObj neo);
 bool neo_exact_equal(NeObj a, NeObj b);
@@ -98,23 +109,26 @@ void variable_append(NeonEnv* env, char* name, NeObj value);
 void free_var(Var var);
 void replace_var(Var var, NeObj object);
 void set_var(Var var, NeObj object);
-NeObj* get_absolute_address(Var var);
+NeObjAddr get_absolute_address(Var var);
 NeObj get_var_value(Var var);
 Var get_local_args(void);
 Var get_var(char* name);
 Var get_var_from_addr(NeObj* obj);
+NeObj* get_unsafe_address(NeObjAddr* addr);
+NeObj neobjaddr_deref(NeObjAddr* addr);
+
 char* get_name(Var var);
 UserFunc* neo_to_userfunc(NeObj neo);
 Function* neo_to_function(NeObj neo);
 NeObj neo_empty_create(void);
-void var_reset(NeObj* neo);
+void var_reset(NeObjAddr* neo);
 Container* container_create(int type, NeList data);
 NeObj neo_container_create(int type, NeList data);
 Container* neo_to_container(NeObj);
 NeObj gc_extern_neo_container_convert(Container* c);
 NeObj neo_container_convert(Container* c);
 int get_field_index(Container* c, char* name);
-NeObj* get_container_field_addr(Container* c, size_t index);
+NeObjAddr get_container_field_addr(Container* c, size_t index);
 NeObj get_container_field(Container* c, size_t index);
 void container_destroy(Container* c);
 NeObj neo_promise_create(int id);

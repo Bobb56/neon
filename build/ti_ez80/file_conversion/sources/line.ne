@@ -1,6 +1,6 @@
 init(Graphics)
 
-ori=0
+oori=0
 
 x=1
 y=1
@@ -18,7 +18,7 @@ function anim() do
     draw(r1)
     w+=(320-w)/50 + 5
   end
-  r0>>filled = False
+  r0>>f = False
   draw(r0)
 end
 
@@ -32,7 +32,7 @@ function fill(x,y) do
     y++
     i++
   end
-  if (x<320 and x>=0 and y<240 and y>=0) then 
+  if (x<320 and x>=0 and y<240 and y>=0) then
     draw(FloodFill(x:x,y:y,c:c))
   end
 end
@@ -50,7 +50,7 @@ end
 method orienter(angle,target) do
   d1=((angle+360)-target)%360
   d2=((target+360)-angle)%360
-  
+
   if (d1>d2) then
     if (angle<=0) then
       angle=360-3*speed
@@ -76,7 +76,7 @@ while ((getKey()->k) != 9) do
   if (event[1]<=0) then
     event=addEvent()
   end
-  
+
   if (k==1) then
     ori.orienter(270)
   elif (k==2) then
@@ -86,7 +86,7 @@ while ((getKey()->k) != 9) do
   elif (k==4) then
     ori.orienter(90)
   end
-  
+
   x0=x
   y0=y
   x+=r*cos(rad(ori))
@@ -95,7 +95,7 @@ while ((getKey()->k) != 9) do
   if (x<0) then x=319 end
   if (y>239) then y=0 end
   if (y<0) then y=239 end
-  
+
   if ((int(x)!=int(x0) or int(y)!=int(y0)) and getPixel(int(x),int(y))==0) then
     fill(int(x),int(y))
   end

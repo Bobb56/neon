@@ -32,12 +32,12 @@ NeObj eval_UnaryOp(TreeBuffer* tb, TreeBufferIndex tree)
 
         if (operatorIs(tree_un_op->op, VARRIGHT) || operatorIs(tree_un_op->op, VARLEFT))
         {
-            NeObj* op1 = get_address(tb, tree_un_op->expr); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
+            NeObjAddr op1 = get_address(tb, tree_un_op->expr); // si la grammaire stipule que l'opérateur doit recevoir une variable et non une valeur
             
             return_on_error(NEO_VOID);
 
-            NeObj (*func) (NeObj*) = operators_functions[tree_un_op->op];
-            return func(op1);
+            NeObj (*func) (NeObjAddr*) = operators_functions[tree_un_op->op];
+            return func(&op1);
         }
         else
         {
@@ -75,47 +75,41 @@ NeObj eval_BinaryOp(TreeBuffer* tb, TreeBufferIndex tree)
         }
                             
         if (operatorIs(tree_bin_op->op, VAR_RIGHT))
-        {
-            NeObj* op1 = get_address(tb, tree_bin_op->left);
-
-            return_on_error(NEO_VOID);
-            
+        {            
             NeObj op2 = eval_aux(tb, tree_bin_op->right);
-
             return_on_error(NEO_VOID);
 
-            NeObj (*func)(NeObj*, NeObj) = operators_functions[tree_bin_op->op];
-            NeObj result = func(op1, op2);
+            NeObjAddr op1 = get_address(tb, tree_bin_op->left);
+            return_on_error(NEO_VOID);
+
+            NeObj (*func)(NeObjAddr*, NeObj) = operators_functions[tree_bin_op->op];
+            NeObj result = func(&op1, op2);
             neobject_destroy(op2);
             return result;
         }
         else if (operatorIs(tree_bin_op->op, LEFT_VAR))
         {                    
             NeObj op1 = eval_aux(tb, tree_bin_op->left);
-            
             return_on_error(NEO_VOID);
         
-            NeObj* op2 = get_address(tb, tree_bin_op->right);
-
+            NeObjAddr op2 = get_address(tb, tree_bin_op->right);
             return_on_error(NEO_VOID);
 
-            NeObj (*func)(NeObj, NeObj*) = operators_functions[tree_bin_op->op];
-            NeObj result = func(op1, op2);
+            NeObj (*func)(NeObj, NeObjAddr*) = operators_functions[tree_bin_op->op];
+            NeObj result = func(op1, &op2);
             neobject_destroy(op1);
             return result;
         }
         else if (operatorIs(tree_bin_op->op, VAR_VAR))
         {
-            NeObj* op1 = get_address(tb, tree_bin_op->left);
-
+            NeObjAddr op1 = get_address(tb, tree_bin_op->left);
             return_on_error(NEO_VOID);
             
-            NeObj* op2 = get_address(tb, tree_bin_op->right);
-
+            NeObjAddr op2 = get_address(tb, tree_bin_op->right);
             return_on_error(NEO_VOID);
 
-            NeObj (*func)(NeObj*, NeObj*) = operators_functions[tree_bin_op->op];
-            NeObj result = func(op1, op2);
+            NeObj (*func)(NeObjAddr*, NeObjAddr*) = operators_functions[tree_bin_op->op];
+            NeObj result = func(&op1, &op2);
             return result;
         }
         else
@@ -143,7 +137,6 @@ NeObj eval_BinaryOp(TreeBuffer* tb, TreeBufferIndex tree)
             neobject_destroy(op2);
 
             return result;
-
         }
     }
 }
@@ -370,9 +363,10 @@ NeObj eval_FunctionCall(TreeBuffer* tb, TreeBufferIndex tree)
         }
 
         if (fun->isMethod) {
-            NeObj* self_address = get_address(tb, arg_tree[0]);
-            neobject_destroy(*self_address);
-            *self_address = self_final_value;
+            NeObjAddr self_address = get_address(tb, arg_tree[0]);
+            NeObj* self_address_ptr = get_unsafe_address(&self_address);
+            neobject_destroy(*self_address_ptr);
+            *self_address_ptr = self_final_value;
         }
 
         neobject_destroy(function);

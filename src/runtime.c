@@ -420,31 +420,32 @@ NO_INLINE NeObj eval_aux(TreeBuffer* tb, TreeBufferIndex tree) {
 
 
 // cette fonction renvoie l'adresse de l'objet correspondant à une expression permettant d'effectuer une affectation sur l'objet pointé
-NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
+// Les adresses renvoyées par cette fonction ne sont pas fiables, les objets peuvent être déplacés
+// Fonction à utiliser en faisant attention de ne pas déclencher des redimensionnements de NeList
+NeObjAddr get_address(TreeBuffer* tb, TreeBufferIndex tree) {
 
     switch (TREE_TYPE(tb, tree)) {
     
         case TypeVariable:
         {
-            NeObj* addr = get_absolute_address(treeVar(tb, tree)->var);
-            return addr;
+            return get_absolute_address(treeVar(tb, tree)->var);
         }
 
         case TypeListindex:
         {
-            NeObj* obj_ptr = get_address(tb, treeLstIndx(tb, tree)->object);
-            return_on_error(NULL);
-
-            
             NeObj index = eval_aux(tb, treeLstIndx(tb, tree)->index);
-            return_on_error(NULL);
+            return_on_error(NEOBJ_INV_ADDR);
+
+            NeObjAddr obj_ptr = get_address(tb, treeLstIndx(tb, tree)->object);
+            return_on_error(NEOBJ_INV_ADDR);
             
             
-            NeObj obj = *obj_ptr;
+            NeObj obj = neobjaddr_deref(&obj_ptr);
+
             if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
             {
                 neon_fail(15, neo_copy(obj));
-                return NULL;
+                return NEOBJ_INV_ADDR;
             }
 
             
@@ -452,7 +453,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             {
                 neon_fail(16, neo_copy(index));
                 neobject_destroy(index);
-                return NULL;
+                return NEOBJ_INV_ADDR;
             }
             
             intptr_t index2 = neo_to_integer(index);
@@ -463,17 +464,17 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             if (index2 < 0 || index2 >= object_length)
             {
                 neon_fail(18, neo_integer_create(object_length));
-                return NULL;
+                return NEOBJ_INV_ADDR;
             }
             
             
             if (NEO_TYPE(obj) == TYPE_LIST)
             {
-                return nelist_nth_addr(neo_to_list(obj), (size_t)index2);
+                return NEOBJ_ADDR(neo_to_list(obj), (size_t)index2);
             }
             else {
                 neon_fail(105, NO_ARGS);
-                return NULL;
+                return NEOBJ_INV_ADDR;
             }
         }
 
@@ -482,14 +483,14 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
             struct Attribute* tree_attr = treeAttr(tb, tree);
             NeObj neo = eval_aux(tb, tree_attr->object);
 
-            return_on_error(NULL);
+            return_on_error(NEOBJ_INV_ADDR);
 
             if (NEO_TYPE(neo) != TYPE_CONTAINER)
             {
                 // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
                 neon_fail(80, neo_new_const_create(type(neo)));
                 neobject_destroy(neo);
-                return NULL;
+                return NEOBJ_INV_ADDR;
             }
 
             Container* c = neo_to_container(neo);
@@ -502,7 +503,7 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
                 tree_attr->last_cont_type = c->type;
             }
 
-            NeObj* ret = get_container_field_addr(c, (size_t)tree_attr->index);
+            NeObjAddr ret = get_container_field_addr(c, (size_t)tree_attr->index);
             neobject_destroy(neo);
             return ret;
         }
@@ -510,18 +511,147 @@ NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree) {
         default:
         {
             neon_fail(89, neo_new_str_create(printable_tree_type(tb, tree)));
-            return NULL;
+            return NEOBJ_INV_ADDR;
         }
     }
 
     neon_fail(89, neo_new_str_create(printable_tree_type(tb, tree)));
-    return NULL;
+    return NEOBJ_INV_ADDR;
 }
 
 
 
+/*
+void get_addresses(TreeBuffer* tb, size_t nb_addresses, ...) {
+    NeObj obj_aux[nb_addresses];
+
+    va_list args;
+    va_start(args, nb_addresses);
+
+    // First round where we evaluate auxiliary objects
+    for (size_t i=0 ; i < nb_addresses ; i++) {
+        TreeBufferIndex tree = va_arg(args, TreeBufferIndex);
+        NeObj** unused_address = va_arg(args, NeObj**);
+
+        switch (TREE_TYPE(tb, tree)) {
+            case TypeListindex:
+                obj_aux[i] = eval_aux(tb, treeLstIndx(tb, tree)->index);
+                break;
+
+            case TypeAttribute:
+                obj_aux[i] = eval_aux(tb, treeAttr(tb, tree)->object);
+                break;
+
+            default:
+                break;
+        }
+
+        if_error {
+            for (int k=0 ; k < i ; k++) {
+                neobject_destroy(obj_aux[k]);
+            }
+            return;
+        }
+    }
+
+    // Second round where we safely get the objects' addresses
+    for (size_t i=0 ; i < nb_addresses ; i++) {
+        TreeBufferIndex tree = va_arg(args, TreeBufferIndex);
+        NeObj** address = va_arg(args, NeObj**);
+
+        switch (TREE_TYPE(tb, tree)) {
+            case TypeVariable:
+                *address = get_absolute_address(treeVar(tb, tree)->var);
+                break;
+
+            case TypeListindex:
+            {
+                // Evaluated at previous round
+                NeObj index = obj_aux[i];
+
+                NeObj* obj_ptr = get_address(tb, treeLstIndx(tb, tree)->object);
+                return_on_error();
+                
+                NeObj obj = *obj_ptr;
+                if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
+                {
+                    neon_fail(15, neo_copy(obj));
+                    break;
+                }
+
+                
+                if (NEO_TYPE(index) != TYPE_INTEGER)
+                {
+                    neon_fail(16, neo_copy(index));
+                    neobject_destroy(index);
+                    break;
+                }
+                
+                intptr_t index2 = neo_to_integer(index);
+                neobject_destroy(index);
+
+                int object_length = (NEO_TYPE(obj) == TYPE_LIST) ? neo_list_len(obj) : strlen(neo_to_string(obj));
+
+                if (index2 < 0 || index2 >= object_length)
+                {
+                    neon_fail(18, neo_integer_create(object_length));
+                    break;
+                }
+                
+                
+                if (NEO_TYPE(obj) == TYPE_LIST)
+                {
+                    *address = nelist_nth_addr(neo_to_list(obj), (size_t)index2);
+                }
+                else {
+                    neon_fail(105, NO_ARGS);
+                }
+                break;
+            }
+
+            case TypeAttribute:
+            {
+                struct Attribute* tree_attr = treeAttr(tb, tree);
+                NeObj neo = eval_aux(tb, tree_attr->object);
+
+                return_on_error(NULL);
+
+                if (NEO_TYPE(neo) != TYPE_CONTAINER)
+                {
+                    // Erreur : essaie d'accéder à un champ d'une variable qui n'est pas un container
+                    neon_fail(80, neo_new_const_create(type(neo)));
+                    neobject_destroy(neo);
+                    return NULL;
+                }
+
+                Container* c = neo_to_container(neo);
+
+                if (tree_attr->index == -1 || tree_attr->last_cont_type != c->type) // ça veut dire qu'on sait exactement où chercher la valeur
+                {
+                    tree_attr->index = get_field_index(c, tree_attr->name);
+                    neon_free(tree_attr->name);
+                    tree_attr->name = NULL;
+                    tree_attr->last_cont_type = c->type;
+                }
+
+                NeObj* ret = get_container_field_addr(c, (size_t)tree_attr->index);
+                neobject_destroy(neo);
+                return ret;
+            }
+
+            default:
+            {
+                neon_fail(89, neo_new_str_create(printable_tree_type(tb, tree)));
+                return NULL;
+            }
+        }
+    }
 
 
+    neon_fail(89, neo_new_str_create(printable_tree_type(tb, tree)));
+    return NULL;
+}
+*/
 
 
 int exec_aux(TreeBuffer* tb, TreeBufferIndex tree) {

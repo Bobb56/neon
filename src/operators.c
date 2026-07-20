@@ -608,12 +608,13 @@ NeObj _sup(NeObj op1, NeObj op2)
 
 
 
-NeObj _affect(NeObj op2, NeObj* op1)
+NeObj _affect(NeObj op2, NeObjAddr* op1_addr)
 {
     // ici, on affecte à une variable qui existe déjà forcément, mais n'a peut-être pas de valeur
     // op1 est un NeObject, on va modifier directement le NeObject, via son pointeur
     // op1 représente le nom de la variable et op2 la valeur à affecter
     //neobject_destroy(op1);
+    NeObj* op1 = get_unsafe_address(op1_addr);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
         neon_fail(56, NO_ARGS); // unedfined var
@@ -634,12 +635,13 @@ NeObj _affect(NeObj op2, NeObj* op1)
 
 
 
-NeObj _affectNone(NeObj* op1, NeObj op2)
+NeObj _affectNone(NeObjAddr* op1_addr, NeObj op2)
 {
     // ici, on affecte à une variable qui existe déjà forcément, mais n'a peut-être pas de valeur
     // op1 est un NeObject, on va modifier directement le NeObject, via son pointeur
     // op1 représente le nom de la variable et op2 la valeur à affecter
     //neobject_destroy(op1);
+    NeObj* op1 = get_unsafe_address(op1_addr);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
         neon_fail(56, NO_ARGS); // unedfined var
@@ -661,12 +663,13 @@ NeObj _affectNone(NeObj* op1, NeObj op2)
 
 
 
-void _affect2(NeObj* op1, NeObj op2)
+void _affect2(NeObjAddr* op1_addr, NeObj op2)
 {
     // ici, on affecte à une variable qui existe déjà forcément, mais n'a peut-être pas de valeur
     // op1 est un NeObject, on va modifier directement le NeObject, via son pointeur
     // op1 représente le nom de la variable et op2 la valeur à affecter
     //neobject_destroy(op1);
+    NeObj* op1 = get_unsafe_address(op1_addr);
     if (NEO_TYPE(op2) == TYPE_EMPTY)
     {
         neon_fail(56, NO_ARGS);//undefined var
@@ -691,28 +694,26 @@ NeObj _goIn(NeObj op2, NeObj op1)
     {
         char* nomVar=neo_to_string(op2); // attention nomVar peut contenir un index de liste
         
-        NeObj* var = NULL;
+        NeObjAddr var;
         
         if (!strlist_inList(global_env->NOMS,nomVar)) // création d'une nouvelle variable
         {
             strlist_append(global_env->NOMS,strdup(nomVar));
             nelist_append(global_env->ADRESSES, neo_empty_create()); // variable ajoutée
-            var = &global_env->ADRESSES->tab[global_env->ADRESSES->len-1];
+            var = get_absolute_address(global_env->ADRESSES->len-1);
         }
         else
         {
             int index = strlist_index(global_env->NOMS, nomVar);
-            var = &global_env->ADRESSES->tab[index];            
+            var = get_absolute_address(index);            
         }
     
         // global_env->ADRESSES->tab[index] contient donc le NeObject dans lequel on doit mettre la valeur
-        NeObj res = _affect(op1, var);
+        NeObj res = _affect(op1, &var);
         if (global_env->CODE_ERROR != 0)
             return NEO_VOID;
         
         return res;
-    
-    
     }
     else
     {
@@ -728,20 +729,14 @@ NeObj _goIn(NeObj op2, NeObj op1)
 
 
 
-
-
-
-
-
-
-NeObj _addEqual(NeObj* op1, NeObj op2)
+NeObj _addEqual(NeObjAddr* op1, NeObj op2)
 {
-    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+    if (NEO_TYPE((neobjaddr_deref(op1))) == TYPE_EMPTY) {
         neon_fail(43, neo_new_str_create("+="));
         return NEO_VOID;
     }
 
-    NeObj add = _add(*op1,op2);
+    NeObj add = _add(neobjaddr_deref(op1), op2);
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     NeObj res = _affect(add, op1);
@@ -754,14 +749,14 @@ NeObj _addEqual(NeObj* op1, NeObj op2)
 
 
 
-NeObj _subEqual(NeObj* op1, NeObj op2)
+NeObj _subEqual(NeObjAddr* op1, NeObj op2)
 {
-    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+    if (NEO_TYPE((neobjaddr_deref(op1))) == TYPE_EMPTY) {
         neon_fail(43, neo_new_str_create("-="));
         return NEO_VOID;
     }
 
-    NeObj sub = _sub(*op1,op2);
+    NeObj sub = _sub(neobjaddr_deref(op1),op2);
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     NeObj res = _affect(sub, op1);
@@ -773,14 +768,14 @@ NeObj _subEqual(NeObj* op1, NeObj op2)
 
 
 
-NeObj _mulEqual(NeObj* op1, NeObj op2)
+NeObj _mulEqual(NeObjAddr* op1, NeObj op2)
 {
-    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+    if (NEO_TYPE((neobjaddr_deref(op1))) == TYPE_EMPTY) {
         neon_fail(43, neo_new_str_create("*="));
         return NEO_VOID;
     }
 
-    NeObj mul = _mul(*op1,op2);
+    NeObj mul = _mul(neobjaddr_deref(op1), op2);
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     NeObj res = _affect(mul, op1);
@@ -792,14 +787,14 @@ NeObj _mulEqual(NeObj* op1, NeObj op2)
 
 
 
-NeObj _divEqual(NeObj* op1, NeObj op2)
+NeObj _divEqual(NeObjAddr* op1, NeObj op2)
 {
-    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+    if (NEO_TYPE((neobjaddr_deref(op1))) == TYPE_EMPTY) {
         neon_fail(43, neo_new_str_create("/="));
         return NEO_VOID;
     }
 
-    NeObj div = _div(*op1,op2);
+    NeObj div = _div(neobjaddr_deref(op1),op2);
     if (global_env->CODE_ERROR != 0)
         return NEO_VOID;
     NeObj res = _affect(div, op1);
@@ -811,72 +806,72 @@ NeObj _divEqual(NeObj* op1, NeObj op2)
 
 
 
-NeObj _incr(NeObj* op1)
+NeObj _incr(NeObjAddr* op1_addr)
 {
-    NeObj new;
-    if (NEO_TYPE((*op1)) == TYPE_INTEGER) {
-        new = neo_integer_create(neo_to_integer(*op1) + 1);
+    NeObj op1 = neobjaddr_deref(op1_addr), new;
+    if (NEO_TYPE((op1)) == TYPE_INTEGER) {
+        new = neo_integer_create(neo_to_integer(op1) + 1);
     }
-    else if (NEO_TYPE((*op1)) == TYPE_DOUBLE) {
-        new = neo_double_create(neo_to_double(*op1) + (double)1);
+    else if (NEO_TYPE((op1)) == TYPE_DOUBLE) {
+        new = neo_double_create(neo_to_double(op1) + (double)1);
     }
-    else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+    else if (NEO_TYPE((op1)) == TYPE_EMPTY) {
         neon_fail(43, neo_new_str_create("++"));
         return NEO_VOID;
     }
     else {
-        neon_fail(58, neo_new_str_create("++"), neo_copy(*op1));
+        neon_fail(58, neo_new_str_create("++"), neo_copy(op1));
         return NEO_VOID;
     }
 
-    _affect2(op1, new);
+    _affect2(op1_addr, new);
     return new;
 }
 
-void _incr2(NeObj* op1, int incr) {
+void _incr2(NeObjAddr* op1_addr, int incr) {
     UNUSED_PARAMETER(incr);
 
-    NeObj new;
-    if (NEO_TYPE((*op1)) == TYPE_INTEGER) {
-        new = neo_integer_create(neo_to_integer(*op1) + 1);
+    NeObj op1 = neobjaddr_deref(op1_addr), new;
+    if (NEO_TYPE((op1)) == TYPE_INTEGER) {
+        new = neo_integer_create(neo_to_integer(op1) + 1);
     }
-    else if (NEO_TYPE((*op1)) == TYPE_DOUBLE) {
-        new = neo_double_create(neo_to_double(*op1) + (double)1);
+    else if (NEO_TYPE((op1)) == TYPE_DOUBLE) {
+        new = neo_double_create(neo_to_double(op1) + (double)1);
     }
-    else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+    else if (NEO_TYPE((op1)) == TYPE_EMPTY) {
         neon_fail(43, neo_new_str_create("incrementation"));
         return ;
     }
     else {
-        neon_fail(58, neo_new_str_create("incrementation"), neo_copy(*op1));
+        neon_fail(58, neo_new_str_create("incrementation"), neo_copy(op1));
         return ;
     }
 
-    neobject_destroy(*op1);
-    *op1 = new;
+    neobject_destroy(op1);
+    *get_unsafe_address(op1_addr) = new;
     return;
 }
 
 
-NeObj _decr(NeObj* op1)
+NeObj _decr(NeObjAddr* op1_addr)
 {
-    NeObj new;
-    if (NEO_TYPE((*op1)) == TYPE_INTEGER) {
-        new = neo_integer_create(neo_to_integer(*op1) - 1);
+    NeObj op1 = neobjaddr_deref(op1_addr), new;
+    if (NEO_TYPE((op1)) == TYPE_INTEGER) {
+        new = neo_integer_create(neo_to_integer(op1) - 1);
     }
-    else if (NEO_TYPE((*op1)) == TYPE_DOUBLE) {
-        new = neo_double_create(neo_to_double(*op1) - (double)1);
+    else if (NEO_TYPE((op1)) == TYPE_DOUBLE) {
+        new = neo_double_create(neo_to_double(op1) - (double)1);
     }
-    else if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+    else if (NEO_TYPE((op1)) == TYPE_EMPTY) {
         neon_fail(43, neo_new_str_create("-="));
         return NEO_VOID;
     }
     else {
-        neon_fail(58, neo_new_str_create("--"), neo_copy(*op1));
+        neon_fail(58, neo_new_str_create("--"), neo_copy(op1));
         return NEO_VOID;
     }
 
-    _affect2(op1, new);
+    _affect2(op1_addr, new);
     return new;
 }
 
@@ -900,15 +895,15 @@ NeObj _not(NeObj op1)
 
 
 
-NeObj _ref(NeObj* op1)
+NeObj _ref(NeObjAddr* op1)
 {
-    if (NEO_TYPE((*op1)) == TYPE_EMPTY)
+    if (NEO_TYPE(neobjaddr_deref(op1)) == TYPE_EMPTY || op1->list != global_env->ADRESSES)
     {
         neon_fail(43, neo_new_str_create("referencing")); // undefined var
         return NEO_VOID;
     }
     
-    int index = get_var_from_addr(op1);
+    int index = op1->index;
 
     if (index < 0) {
       neon_fail(43, neo_new_str_create("referencing"));
@@ -954,14 +949,14 @@ NeObj _minus(NeObj op1)
 
 }
 
-NeObj _del(NeObj* op1)
+NeObj _del(NeObjAddr* op1)
 {
-    if (NEO_TYPE((*op1)) == TYPE_EMPTY) {
+    if (NEO_TYPE((neobjaddr_deref(op1))) == TYPE_EMPTY) {
         neon_fail(43, neo_new_str_create("del"));
         return NEO_VOID;
     }
-    neobject_destroy(*op1);
-    *op1 = neo_empty_create();
+    neobject_destroy(neobjaddr_deref(op1));
+    *get_unsafe_address(op1) = neo_empty_create();
     return neo_none_create();
 }
 
@@ -1019,11 +1014,13 @@ NeObj _in(NeObj op1, NeObj op2)
     }
 }
 
-NeObj _swap(NeObj* op1, NeObj* op2)
+NeObj _swap(NeObjAddr* op1, NeObjAddr* op2)
 {
-    NeObj temp = *op1;
-    *op1 = *op2;
-    *op2 = temp;
+    NeObj* addr1 = get_unsafe_address(op1);
+    NeObj* addr2 = get_unsafe_address(op2);
+    NeObj temp = *addr1;
+    *addr1 = *addr2;
+    *addr2 = temp;
     return neo_none_create();
 }
 

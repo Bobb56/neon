@@ -68,6 +68,7 @@ ObfNeStream NeStream_obf_open(char* name) {
 
     // Open the file
     stream.fd = NeStream_open(name, "r");
+    return_on_error((ObfNeStream){0});
 
     // Read the obfuscated constant
     NeStream_read(stream.fd, stream.obf_const, OBF_CONST_SIZE);

@@ -1,13 +1,13 @@
 /*
- * main.c
+ * neonide.c
  *
- *  Created on: Jul 25, 2021
  *      Author: Raphaël Le Puillandre
  */
 
 /*
 TODO:
-- Error while deleting TreeBuffers after the program exited because of an error
+- Error while deleting TreeBuffers after the program exited because of an error. Error appears only with programs of a certain size
+- Other errors appear when launching programs, probably big memory leaks and/or bad malloc return pointers verification
 - Make sure that 0x1b is taken in account everywhere in the terminal
 - Fix problems with alpha locking keys like digits sometimes
 - Try to increase a bit the size of the console history
@@ -99,7 +99,7 @@ void set_normal_font(void) {
     fontlib_SetFont(font, 0);
 }
 
-
+// No bold font for now
 void set_bold_font(void) {
     fontlib_SetFont(font, 0);
 }

@@ -26,7 +26,7 @@ void stop_execution(void);
 bool neoIsTrue(NeObj neo);
 bool isTrue(TreeBuffer* tb, TreeBufferIndex tree);
 NeObj eval(TreeBuffer* tb, TreeBufferIndex tree);
-NeObj* get_address(TreeBuffer* tb, TreeBufferIndex tree);
+NeObjAddr get_address(TreeBuffer* tb, TreeBufferIndex tree);
 int exec_aux(TreeBuffer* tb, TreeBufferIndex tree);
 void exec(TreeBuffer* tb, TreeBufferIndex tree);
 bool isTrue(TreeBuffer* tb, TreeBufferIndex tree);

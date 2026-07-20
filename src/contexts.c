@@ -115,7 +115,8 @@ void local(Var var, Process* process)
     NeSave ns = (NeSave) {.object = get_var_value(var), .var = var};
 
     // réinitialisation de la variable
-    var_reset(get_absolute_address(var));
+    NeObjAddr var_addr = get_absolute_address(var);
+    var_reset(&var_addr);
 
     //ajout de la sauvegarde au contexte actuel
     ContextStack_append(&process->var_loc, ns);
