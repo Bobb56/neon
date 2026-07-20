@@ -39,7 +39,7 @@ ObfNeStream NeStream_obf_create(char* name) {
     }
 
     // Open the file
-    stream.fd = NeStream_open(name, "w+");
+    stream.fd = NeStream_open(name, "w");
 
     // Write the obfuscated constant
     NeStream_write(stream.fd, stream.obf_const, OBF_CONST_SIZE);

@@ -93,7 +93,7 @@ void TreeBuffer_destroy(TreeBuffer* tb, TreeBufferIndex entry_point) {
 */
 
 
-int TreeBuffer_init(TreeBuffer* tb) {
+void TreeBuffer_init(TreeBuffer* tb) {
     tb->id = rand();
     tb->side_memory = false;
     tb->entry_point = TREE_VOID;
@@ -101,13 +101,18 @@ int TreeBuffer_init(TreeBuffer* tb) {
     tb->n_blocks = 1;
     tb->block_size = 512;
     tb->pointer = neon_malloc(tb->block_size * tb->n_blocks);
-    memset(tb->pointer, 0xff, tb->block_size * tb->n_blocks);
 
-    if (tb->pointer == NULL)
-        return -1;
+    if (tb->pointer == NULL) {
+        neon_fail(12, NO_ARGS);
+        return;
+    }
+
+    // Init the memory to zero to avoid writing uninitialized bytes
+    // when serializing treebuffers
+    memset(tb->pointer, 0, tb->block_size * tb->n_blocks);
 
     tb->locked = false;
-    return 0;
+    return;
 }
 
 // Cette fonction doit toujours renvoyer des pointeurs alignés
@@ -130,6 +135,10 @@ TreeBufferIndex TreeBuffer_alloc(TreeBuffer* tb, size_t size) {
             neon_fail(12, NO_ARGS);
             return TREE_VOID;
         }
+
+        // Init the memory to zero to avoid writing uninitialized bytes
+        // when serializing treebuffers
+        memset(tmp + tb->size, 0, tb->n_blocks * tb->block_size - tb->size);
 
         tb->pointer = tmp;
     }
@@ -328,9 +337,6 @@ TreeBufferIndex NeTree_create(TreeBuffer* tb, TreeType type, int line) {
     TreeBufferIndex tree = TreeBuffer_alloc(tb, tree_size);
     return_on_error(TREE_VOID);
 
-    // Init the tree to zero, useful for uninitialized TreeList
-    //memset(tb->pointer + tree, 0, tree_size);
-
     TREE_LINE(tb, tree) = line;
     TREE_TYPE(tb,tree) = type;
     return tree;
@@ -388,13 +394,20 @@ void TreeListTemp_append(struct TreeListTemp* tree_list, TreeBufferIndex tree) {
 }
 
 void TreeListTemp_insert(struct TreeListTemp* tree_list, TreeBufferIndex tree, int index) {
+    TreeBufferIndex* ptr;
     if (tree_list->len == 0) {
-        tree_list->trees = neon_malloc(sizeof(TreeBufferIndex));
+        ptr = neon_malloc(sizeof(TreeBufferIndex));
     }
     else {
-        tree_list->trees = neon_realloc(tree_list->trees, (tree_list->len + 1) * sizeof(TreeBufferIndex));
+        ptr = neon_realloc(tree_list->trees, (tree_list->len + 1) * sizeof(TreeBufferIndex));
     }
 
+    if (ptr == NULL) {
+        neon_fail(12, NO_ARGS);
+        return;
+    }
+
+    tree_list->trees = ptr;
     tree_list->len++;
 
     for (int i = tree_list->len - 1 ; i > index ; i--) {

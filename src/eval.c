@@ -152,6 +152,11 @@ NeObj eval_List(TreeBuffer* tb, TreeBufferIndex tree)
 {
     // donc les enfants de tree sont les éléments de la liste
     NeList* l = neon_malloc(sizeof(NeList));
+    if (l == NULL) {
+        neon_fail(12, NO_ARGS);
+        return NEO_VOID;
+    }
+
     treeToList(l, tb, treeSntxTree(tb, tree)->treelist);
     return_on_error(NEO_VOID);
 
@@ -237,6 +242,11 @@ NeObj eval_FunctionCall(TreeBuffer* tb, TreeBufferIndex tree)
 
             // Get the arguments of the call
             NeList* args = neon_malloc(sizeof(NeList));
+            if (args == NULL) {
+                neon_fail(12, NO_ARGS);
+                return NEO_VOID;
+            }
+
             treeToList(args, tb, tree_fun_call->args);
             NeObj neo_args = neo_list_convert(args);
 
@@ -305,6 +315,15 @@ NeObj eval_FunctionCall(TreeBuffer* tb, TreeBufferIndex tree)
         // On va stocker les arguments dans des tableaux avant de les affecter afin de ne pas mélanger les contextes : évaluation dans le contexte extérieur, puis affectation dans le contexte intérieur
         Var* variables = neon_malloc(sizeof(Var) * fun->nbArgs);
         NeObj* values = neon_malloc(sizeof(NeObj) * fun->nbArgs);
+
+        if (values == NULL || variables == NULL) {
+            if (values) neon_free(values);
+            if (variables) neon_free(variables);
+            neon_fail(12, NO_ARGS);
+            return NEO_VOID;
+        }
+
+
         int variable_index = 0;
 
         // Association valeurs/variables

@@ -42,6 +42,10 @@ Ajouter les nouveaux traitements pour les indices de liste et les appels de fonc
 // création d'un TreeBuffer qui sera automatiquement libéré à la suppression de l'environnement
 TreeBuffer* TreeBuffer_persistent_syntaxtree(Ast** ast, toklist* tokens, intlist* lines, size_t offset) {
     TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
+    if (tb == NULL) {
+        neon_fail(12, NO_ARGS);
+        return NULL;
+    }
     ptrlist_append(global_env->TREEBUFFERS, tb);
     TreeBuffer_init(tb);
     tb->entry_point = createSyntaxTreeAux(tb, ast, tokens, lines, offset);
@@ -53,6 +57,10 @@ TreeBuffer* TreeBuffer_persistent_syntaxtree(Ast** ast, toklist* tokens, intlist
 
 TreeBuffer* TreeBuffer_persistent_expr(Ast** ast, toklist* tokens, intlist* lines, size_t offset) {
     TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
+    if (tb == NULL) {
+        neon_fail(12, NO_ARGS);
+        return NULL;
+    }
     ptrlist_append(global_env->TREEBUFFERS, tb);
     TreeBuffer_init(tb);
     tb->entry_point = createExpressionTreeAux(tb, ast, tokens, lines, offset);
@@ -1236,6 +1244,10 @@ TreeBufferIndex createFunctionTree(TreeBuffer* tb, Ast** ast, toklist* tokens, i
     // majorant du nombre d'arguments
     size_t size_liste = toklist_count(&argsTok, ",") + 1;
     Var* liste = neon_malloc(sizeof(Var)*size_liste); // tableau qui va contenir toutes les variables à affecter
+    if (liste == NULL) {
+        neon_fail(12, NO_ARGS);
+        return -1;
+    }
     int liste_index = 0;
 
     int nbOptArgs = 0;

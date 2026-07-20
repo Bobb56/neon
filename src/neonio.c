@@ -95,7 +95,11 @@
         uint16_t longueur = ti_GetSize(fichier);
         
         char* program = neon_malloc(longueur + 1);// crée le tableau de caractères qui va contenir le programme
-    
+        
+        if (program == NULL) {
+            neon_fail(12, NO_ARGS);
+            return NULL;
+        }
 
         // copie du fichier
         ti_Read(program, sizeof(char), longueur, fichier);
@@ -255,7 +259,11 @@
         
         fsetpos(fichier, &pos);//remet la tête de fichier au début
         char* program=neon_malloc(longueur+1);// crée le tableau de caractères qui va contenir le programme
-    
+        
+        if (program == NULL) {
+            neon_fail(12, NO_ARGS);
+            return NULL;
+        }
 
         // copie du fichier
         int car;

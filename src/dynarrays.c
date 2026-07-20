@@ -183,15 +183,6 @@ void toklist_remove(toklist* list, size_t index) {
   
   for (size_t i = index ; i < list->len -1; i++)//décale tous les éléments à partir de celui à supprimer
     list->tab[i]=list->tab[i+1];
-    
-  Token* tmp;
-  
-  if ((size_t)1 << (list->capacity - 1) == list->len-1)
-  {
-    list->capacity--;
-    tmp = neon_realloc(list->tab, (1<<list->capacity)*sizeof(Token));//réalloue un nouveau pointeur de la bonne taille
-    list->tab = tmp;
-  }
   
   list->len--;//décrémentation de la longueur
 }

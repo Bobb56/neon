@@ -56,6 +56,11 @@ void custom_floodfill(intptr_t tempx, intptr_t tempy, intptr_t tempcolor) {
 
     // on alloue une pile toute neuve et suffisamment grande
     buffer = malloc(FLOODFILL_STACK_SIZE);
+    if (buffer == NULL) {
+        neon_fail(12, NO_ARGS);
+        return;
+    }
+
     old_stack = floodfill_switch_stack(buffer + FLOODFILL_STACK_SIZE - 1);
     gfx_FloodFill(x, y, color);
     floodfill_switch_stack(old_stack);
@@ -266,6 +271,10 @@ void draw_obj(NeObj obj) {
             intptr_t color = neo_to_integer(ARG(1));
             
             int* points_arr = neon_malloc(sizeof(int) * points->len * 2);
+            if (points_arr == NULL) {
+                neon_fail(12, NO_ARGS);
+                return;
+            }
 
             for (int i = 0 ; i < points->len ; i++) {
                 if (NEO_TYPE(points->tab[i]) != TYPE_CONTAINER) {

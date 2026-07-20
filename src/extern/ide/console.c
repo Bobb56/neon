@@ -368,6 +368,9 @@ void scroll_if_needed(struct estate* state) {
 
 
 void neonide_print_string(char* text) {
+    if (!global_console_state)
+        return;
+
     // increments each character displayed
     static uint8_t counter = 0;
 
@@ -437,12 +440,18 @@ void history_navigate(struct estate* state) {
 }
 
 void neonide_flush(void) {
+    if (!global_console_state)
+        return;
+
     draw_console(global_console_state);
     gfx_SwapDraw();
 }
 
 
 void neonide_clear(void) {
+    if (!global_console_state)
+        return;
+
     global_console_state->lc1 = 0;
     global_console_state->lc2 = global_console_state->max_buffer_size - 1;
     global_console_state->lc_offset = 0;
@@ -473,6 +482,9 @@ uint8_t translate_color(uint8_t neon_color_constant) {
 }
 
 void neonide_set_color(uint8_t color) {
+    if (!global_console_state)
+        return;
+
     scroll_if_needed(global_console_state);
     cursor_to_end(global_console_state);
     insert_char(global_console_state, 0x1b);
@@ -568,6 +580,9 @@ void console_bs(struct estate *state)
 
 
 char* neonide_input(char* prompt) {
+    if (!global_console_state)
+        return NULL;
+
     if (strcmp(prompt, SEQUENCE_ENTREE) == 0) {
         neonide_set_color(BLUE);
         neonide_print_string(SEQUENCE_ENTREE);
