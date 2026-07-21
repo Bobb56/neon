@@ -6,8 +6,9 @@
 
 /*
 TODO:
-- Error while deleting TreeBuffers after the program exited because of an error. Error appears only with programs of a certain size
-- Other errors appear when launching programs, probably big memory leaks and/or bad malloc return pointers verification
+- But if only scrolling down in the files menu
+- Infinite loop when supposed to exit from environment. Probably free on bad pointers
+--> APPLES2, on free of the string getKey
 - Make sure that 0x1b is taken in account everywhere in the terminal
 - Fix problems with alpha locking keys like digits sometimes
 - Try to increase a bit the size of the console history

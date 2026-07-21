@@ -10,6 +10,8 @@
 
 #include "state.h"
 
+#define APPVAR_NAME_LENGTH 10
+
 void home_menu(void);
 
 #endif

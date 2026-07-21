@@ -22,12 +22,10 @@
 
 int cmp(const void *a, const void *b)
 {
-    const char *const *sa = a;
-    const char *const *sb = b;
-    return strcmp(*sa, *sb);
+    return strcmp(a, b);
 }
 
-int get_files(struct estate* state, char** files) {
+int get_files(struct estate* state, char files[][APPVAR_NAME_LENGTH]) {
     int nb_files = 0;
 
     char* var_name;
@@ -42,7 +40,7 @@ int get_files(struct estate* state, char** files) {
         ti_Read(buffer, NEON_DEFAULT_FILE_HEADER_SIZE, 1, var);
 
         if (strncmp(buffer, NEON_DEFAULT_FILE_HEADER, NEON_DEFAULT_FILE_HEADER_SIZE) == 0) {
-            files[nb_files++] = strdup(var_name);
+            strcpy(files[nb_files++], var_name);
         }
         
         ti_Close(var);
@@ -51,15 +49,15 @@ int get_files(struct estate* state, char** files) {
     vat_ptr = NULL;
     while ((var_name = ti_Detect(&vat_ptr, NEON_PLAIN_TEXT_HEADER)))
     {
-        files[nb_files++] = strdup(var_name);
+        strcpy(files[nb_files++], var_name);
     }
 
-    qsort(files, nb_files, sizeof(char*), cmp);
+    qsort(files, nb_files, APPVAR_NAME_LENGTH, cmp);
     return nb_files;
 }
 
 
-void draw_home_menu(struct estate* state, char* files[], int nb_files, int cursor_position, int start_disp_index) {
+void draw_home_menu(struct estate* state, char files[][APPVAR_NAME_LENGTH], int nb_files, int cursor_position, int start_disp_index) {
     // Draw the background and buttons
     gfx_FillScreen(state->background_color);
 
@@ -206,7 +204,7 @@ void home_menu(void) {
     static struct estate state;
     initialize_void(&state);
 
-    static char* files[128];
+    static char files[64][APPVAR_NAME_LENGTH];
     int nb_files;
 
 

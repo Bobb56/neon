@@ -1,3 +1,4 @@
+#include "headers/neon.h"
 #include <stddef.h>
 #define NEON_SOURCE_ID 3
 
@@ -1016,8 +1017,11 @@ void strlist_append(strlist* list, char *chaine)
 
 void strlist_destroy(strlist* list, bool bo)
 {
-  for (size_t i=0 ; i < list->len;i++)
-  {
+  for (size_t i=0 ; i < list->len;i++) {
+    if (list == global_env->NOMS) {
+      printString(list->tab[i]);
+      newLine();
+    }
     neon_free(list->tab[i]);
   }
   neon_free(list->tab);

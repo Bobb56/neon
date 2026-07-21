@@ -16,9 +16,6 @@
 #include <fontlibc.h>
 
 
-#define RAW_RAM_PTR      ((void*)0xD09466)
-#define RAW_RAM_SIZE     ((size_t)21945*2)
-
 void* malloc_noheap(size_t size);
 void free_noheap(void* ptr);
 void free_all_noheap(void);
