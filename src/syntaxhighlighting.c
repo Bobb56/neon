@@ -7,6 +7,7 @@
 #include "headers/parser.h"
 #include "headers/wordautomaton.h"
 #include "headers/syntaxhighlighting.h"
+#include "headers/errors.h"
 
 #ifdef TI_EZ80
 #include "extern/ide/headers/libmalloc.h"
@@ -240,7 +241,7 @@ void init_sh_process(size_t text_length) {
     #ifdef TI_EZ80
         sh_state.colors = malloc_noheap(text_length + 1);
     #else
-        sh_state.colors = malloc(text_length + 1);
+        sh_state.colors = neon_malloc(text_length + 1);
     #endif
 
     memset(sh_state.colors, NO_COLOR, text_length);

@@ -38,7 +38,7 @@ void unstringize(Token tok, char sov) {
 
   char *neon_strndup(const char *s, size_t n) {
       size_t len = neon_strnlen(s, n);
-      char *p = malloc(len + 1);
+      char *p = neon_malloc(len + 1);
       if (p) {
           memcpy(p, s, len);
           p[len] = '\0';
@@ -1018,10 +1018,6 @@ void strlist_append(strlist* list, char *chaine)
 void strlist_destroy(strlist* list, bool bo)
 {
   for (size_t i=0 ; i < list->len;i++) {
-    if (list == global_env->NOMS) {
-      printString(list->tab[i]);
-      newLine();
-    }
     neon_free(list->tab[i]);
   }
   neon_free(list->tab);

@@ -19,9 +19,16 @@
 #define if_error                                if (global_env->CODE_ERROR != 0)
 #define neon_assert(condition, return_value)    if (!(condition)) {neon_fail(120, NO_ARGS) ; return return_value ;}
 
-#define neon_malloc                             malloc
-#define neon_realloc                            realloc
-#define neon_free                               free
+#ifdef UNDEFINED
+    #include "../extern/ide/headers/libmalloc.h"
+    #define neon_malloc                             custom_malloc
+    #define neon_realloc                            custom_realloc
+    #define neon_free                               custom_free
+#else
+    #define neon_malloc                             malloc
+    #define neon_realloc                            realloc
+    #define neon_free                               free
+#endif
 
 #ifdef MINIMAL_LIBC_RISCV64
 #define align8(size)                            align(8, size)

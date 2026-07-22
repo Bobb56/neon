@@ -271,7 +271,7 @@ static void update_current_line_in_history(char* buffer, size_t size) {
 char *readline(const char *prompt)
 {
     size_t prompt_len = utf8len(prompt);
-    char *buffer = malloc(256);
+    char *buffer = neon_malloc(256);
     if (buffer == NULL) return NULL;
     memset(buffer, 0, 256);
     

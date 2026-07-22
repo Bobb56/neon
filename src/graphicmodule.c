@@ -55,7 +55,7 @@ void custom_floodfill(intptr_t tempx, intptr_t tempy, intptr_t tempcolor) {
     color = tempcolor;
 
     // on alloue une pile toute neuve et suffisamment grande
-    buffer = malloc(FLOODFILL_STACK_SIZE);
+    buffer = neon_malloc(FLOODFILL_STACK_SIZE);
     if (buffer == NULL) {
         neon_fail(12, NO_ARGS);
         return;

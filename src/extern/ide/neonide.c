@@ -6,16 +6,18 @@
 
 /*
 TODO:
-- But if only scrolling down in the files menu
-- Infinite loop when supposed to exit from environment. Probably free on bad pointers
---> APPLES2, on free of the string getKey
+- TODO: Implement a strong allocator, well integrated in Neon and that works well with malloc_noheap and side memory
+- ALPHA, Del does not work
+- RAM reset when launching program after having saved a program in the editor
+- Cursor problem with line \n empty \n line (cursor jumps) from one line to another
 - Make sure that 0x1b is taken in account everywhere in the terminal
 - Fix problems with alpha locking keys like digits sometimes
 - Try to increase a bit the size of the console history
 - KEY_CLEAR -> KEY_STO && KEY_STO insert an '='
 - Update is_control
 - Make an inventory of all key bindings and keep/change some
-- Intentation support ?
+- Improve search with circular search
+- Indentation support ?
 */
 
 #include "headers/neonide.h"

@@ -54,6 +54,7 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > ATOMIC_TIME
 
 Liste des choses qui ne marchent pas
+- Deadline word left/right
 _____________________
 
 Potentielles futures erreurs :

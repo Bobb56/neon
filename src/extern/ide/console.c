@@ -283,8 +283,8 @@ void draw_console(struct estate *state)
 void initialize_console(struct estate* state, char* name) {
     state->max_buffer_size = NUM_LINES * NUM_COLS * 2;
     state->max_lines = NUM_LINES * 2;
-    state->text = malloc(state->max_buffer_size);
-    state->lines = malloc(state->max_lines * sizeof(int16_t));
+    state->text = neon_malloc(state->max_buffer_size);
+    state->lines = neon_malloc(state->max_lines * sizeof(int16_t));
     initialize(state);
 
     if (name != NULL) {
@@ -617,7 +617,7 @@ char* neonide_input(char* prompt) {
                     state->history_length++;
                 }
 
-                char* buffer = malloc(state->c1 - state->last_prompt_start + 1);
+                char* buffer = neon_malloc(state->c1 - state->last_prompt_start + 1);
                 for (int i=0 ; i + state->last_prompt_start < state->c1 ; i++) {
                     buffer[i] = state->text[i + state->last_prompt_start];
                 }

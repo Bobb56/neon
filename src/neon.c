@@ -199,50 +199,33 @@ void NeonEnv_destroy(NeonEnv* env) {
     
     neon_reset_error();
 
-    neon_pause("z0");
-
     neon_free(env->process_cycle);
-    neon_pause("z1");
 
     strlist_destroy(env->EXCEPTIONS, true);
-    neon_pause("z2");
 
     neobject_destroy(env->RETURN_VALUE);
-    neon_pause("z3");
 
     TreeBuffer_delete_all(env->TREEBUFFERS);
-    neon_pause("z4");
     ptrlist_destroy(env->TREEBUFFERS, true, true);
-    neon_pause("z5");
 
     strlist_destroy(env->CONTAINERS, true);
-    neon_pause("z6");
     gc_extern_nelist_destroy(env->ATTRIBUTES);
-    neon_pause("z7");
 
     nelist_destroy(env->ADRESSES);
-    neon_pause("z8");
     strlist_destroy(env->NOMS, true);
-    neon_pause("z9");
 
     // ramassage de miettes (garbage collection)
     gc_final_sweep();
-    neon_pause("z10");
 
     nelist_destroy(env->PROMISES);
-    neon_pause("z11");
     intptrlist_destroy(&env->PROMISES_CNT);
-    neon_pause("z12");
     neon_free(env->PROCESS_FINISH.tab);
-    neon_pause("z12");
 
     if (env->FILENAME != NULL)
         neon_free(env->FILENAME);
-    neon_pause("z13");
 
     #ifdef LINUX
     strlist_destroy(env->history, true);
-    neon_pause("z14");
     #endif
 
     neon_free(env);
@@ -283,7 +266,6 @@ void neonExit(void)
 
     // Nettoyage de l'allocateur secondaire
     side_memory_exit();
-    neon_pause("z100");
     return;
 }
 

@@ -21,4 +21,9 @@ void free_noheap(void* ptr);
 void free_all_noheap(void);
 void clean_memory(void);
 
+void* custom_malloc(size_t size);
+void custom_free(void* ptr);
+void* custom_realloc(void* ptr, size_t size);
+void custom_alloc_reset(void);
+
 #endif /*LIBMALLOC_H*/

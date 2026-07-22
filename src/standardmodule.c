@@ -1407,16 +1407,17 @@ NeObj _loadObj_(NeList* args) {
     #endif
 
     ObfNeStream stream = NeStream_obf_open(file_name);
+
+    #ifndef TI_EZ80
+    neon_free(file_name);
+    #endif
+    
     if_error {
-        neon_free(file_name);
         return NEO_VOID;
     }
 
     NeObj neo = neobject_deserialize(&stream);
 
-    #ifndef TI_EZ80
-    neon_free(file_name);
-    #endif
     
     NeStream_obf_close(&stream);
     return_on_error(NEO_VOID);
