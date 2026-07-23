@@ -46,8 +46,20 @@ function produce_neon_setup_linux {
 
 function produce_ti_ez80_archive {
     local FOLDER_NAME=Neon_${VERSION}_TI_EZ80
+    local FILE_CONVERSION=file_conversion
+    local EXAMPLES=examples
+
+    # Create directories
     mkdir $BUILD_DIR/$FOLDER_NAME
+
+    cd $BUILD_DIR/$FOLDER_NAME
+    mkdir $FILE_CONVERSION
+    mkdir $FILE_CONVERSION/$EXAMPLES
+
+    cp $DEPLOY/sources/how-to-use.md $BUILD_DIR/$FOLDER_NAME/$FILE_CONVERSION/
+    cp $DEPLOY/sources/how-to-install.md $BUILD_DIR/$FOLDER_NAME/
     
+    # Build Neon for TI_EZ80
     cd $ROOT
     make -f Makefile.ez80 clean > /dev/null
     make -f Makefile.ez80 -j 8
@@ -55,10 +67,26 @@ function produce_ti_ez80_archive {
     mv bin/Neon.*.8xv $BUILD_DIR/$FOLDER_NAME/
 
     cd $ROOT/build/ti_ez80/app_tools/installer
+    make clean
     make
     cp bin/NEONINST.8xp $BUILD_DIR/$FOLDER_NAME/
 
-    #TODO: Conversion folder, readme information
+    # Now, handle ne -> 8xv conversion and example files
+    cd $ROOT/build/ti_ez80/file_conversion
+
+    for file in ne-to-8xv.py convbin.elf convbin.exe; do
+        cp $file $BUILD_DIR/$FOLDER_NAME/$FILE_CONVERSION/$file
+    done
+
+    cd sources
+    for file in {apples,LAUNCHER,line,mandbrot,palette,primes,rgb,text}.ne; do
+        cp $file $BUILD_DIR/$FOLDER_NAME/$FILE_CONVERSION/$EXAMPLES/$file
+    done
+
+    # Create an archive for the whole directory
+    cd $BUILD_DIR
+    zip -r ${FOLDER_NAME}.zip $FOLDER_NAME/*
+    rm -r $FOLDER_NAME
 }
 
 function produce_vscode_extension {
@@ -75,3 +103,5 @@ produce_neon_exe_linux
 produce_neon_setup_linux
 produce_ti_ez80_archive
 produce_vscode_extension
+
+echo "Now please restart on windows and run deploy.2.bat"

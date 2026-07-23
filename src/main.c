@@ -5,9 +5,9 @@
 #include "headers/constants.h"
 #include "headers/neon.h"
 #include "headers/neonio.h"
+#include "headers/errors.h"
 
 #ifdef TI_EZ80
-#include "headers/errors.h"
 #include "extern/ide/headers/neonide.h"
 #endif
 
