@@ -35,8 +35,7 @@ files = [
     "extern/ide/home.c",
     "extern/ide/libmalloc.c",
     "extern/ide/neonide.c",
-    "extern/ide/primitives.c",
-    "extern/ide/tigcclib.c",
+    "extern/ide/keys.c",
     
     "headers/errors.h",
     "headers/standardmodule.h",
@@ -60,6 +59,8 @@ files = [
     "headers/nativefunctions.h",
     "headers/exec.h",
     "headers/eval.h",
+    "headers/allocator.h",
+    "headers/constants.h",
     "extern/deadline.h",
     "extern/ide/headers/clipboard.h",
     "extern/ide/headers/console.h",
@@ -67,13 +68,11 @@ files = [
     "extern/ide/headers/editor.h",
     "extern/ide/headers/find.h",
     "extern/ide/headers/font.h",
-    "extern/ide/headers/gfx.h",
     "extern/ide/headers/home.h",
     "extern/ide/headers/libmalloc.h",
     "extern/ide/headers/neonide.h",
-    "extern/ide/headers/primitives.h",
     "extern/ide/headers/state.h",
-    "extern/ide/headers/tigcclib.h"
+    "extern/ide/headers/keys.h"
 ]
 
 
@@ -108,4 +107,4 @@ end
 
 
 
-print("Le projet Neon compte <> lignes de code en tout.".format(print_number(nbLines(files))))
+print("The Neon project contains a total of <> lines of code.".format(print_number(nbLines(files))))

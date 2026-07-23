@@ -271,7 +271,7 @@ Voici la liste des exceptions built-in :\
 *`AssertionFailed`* : Déclenchée lorsque la fonction `assert` échoue\
 *`DefinitionError`* : Déclenchée principalement lorsque la définition d'un container est incorrecte au regard des informations dont dispose l'interpréteur sur ce type de container\
 *`KeyboardInterrupt`* : Déclenchée par un Ctrl-C dans le terminal. Sur plateforme `TI_EZ80`, cette erreur est déclenchée en appuyant sur la touche `ON`\
-*`NotImplemented`* : Déclenchée lors de l'appel à une fonctionnalité non implementée. Peut se produire lors d'appel à des fonctions implémentées seulement pour quelques plateformes comme la fonction `initGraphics` (voir la section sur les graphiques).\
+*`NotImplemented`* : Déclenchée lors de l'appel à une fonctionnalité non implementée. Peut se produire lors de l'importation de modules non disponibles sur certaines plateformes comme le module `Graphics` (voir la section sur les graphiques).\
 
 === 1.2.8 - Le type `Built-in function`
 
@@ -368,7 +368,11 @@ Dans le cas d'une fonction utilisateur (ou d'une méthode utilisateur), affiche 
 Cette fonction prend un entier en argument et renvoie une chaîne de caractères correspondant à sa description en hexadécimal. Comme pour la fonction `bin`, la chaîne de caractères n'est pas précédée du préfixe `'0x'`.
 
 *`index(List, Any)` #sym.arrow.r `Integer`:*\
-Cette fonction prend en argument une liste et un objet de cette liste, et renvoie l'indice de la première apparition de l'objet dans la liste.
+Cette fonction prend en argument une liste ou une chaîne de caractères.
+
+Dans le cas où le premier argument est une liste, le second argument doit être un élément de cette liste. La fonction renvoie l'indice de la première apparition de l'objet dans la liste.
+
+Dans le cas où le premier argument donné à la fonction est une chaîne de caractères, le second argument doit être une sous-chaîne de la première chaîne. La fonction renvoie l'indice de début de la première apparition de la sous-chaine dans la chaine de caractères.
 
 *`int(Any)` #sym.arrow.r `Integer`:*\
 Cette fonction prend en argument un objet et le convertit en entier.
@@ -409,6 +413,11 @@ Calcule le logarithme népérien d'un nombre.
 
 *`loadNamespace(String)` #sym.arrow.r `None`:*\
 Cette fonction charge dans la mémoire une copie des objets du module dont le nom est donné en argument sans préfixe.
+
+*`loadObj(String)` #sym.arrow.r `Any`:*\
+Cette fonction permet de charger un objet sauvegardé à l'aide de `saveObj`. Elle prend en argument le nom du fichier de sauvagarde. Sur les systèmes de fichiers prenant en charge les extensions de fichiers, l'extension `.neobj` est automatiquement ajoutée au nom donné en argument pour rechercher le fichier à ouvrir.
+
+La fonction `loadObj` ne peut pas charger un objet sauvegardé depuis une autre plateforme.
 
 
 *`log(Real)` #sym.arrow.r `Real`:*\*
@@ -457,6 +466,10 @@ Calcule l'arrondi d'un nombre à la précision demandée en deuxième argument.
 
 *`safeExec(String, List)` #sym.arrow.r `None`:*\
 Cette fonction prend en argument un nom de fichier source Neon ainsi qu'une liste d'objets, et lance le programme dans un environnement indépendant en lui donnant la liste d'objets comme arguments.
+
+*`saveObj(String, Any)` #sym.arrow.r `None`:*\
+Cette fonction permet de sauvegarder n'importe quel objet Neon (listes, fonctions, chaînes de caractères, containers, ...) dans un fichier. Ce procédé est souvent appelé sérialisation. Cet objet peut ensuite être rechargé dans n'importe quel environnement Neon et sera restauré à l'identique (voir la fonction `loadObj`).
+Cette fonction prend en argument un nom de fichier (aucune extension n'est nécessaire, Neon ajoute automatiquement l'extension `.neobj` sur les systèmes de fichiers prenant en charge les extensions), et un objet Neon.
 
 *`setAtomicTime(Integer)` #sym.arrow.r `None`:*\
 Cette fonction change la période de changement de processus avec l'entier donné en argument.
@@ -1277,9 +1290,9 @@ En plus du corps du langage contenant tout ce qui est documenté jusqu'ici dans 
 
 Cette extension est mal nommée puisqu'elle n'est pas seulement graphique, mais permet à la fois de dessiner à l'écran, et de gérer les appuis du clavier.
 
-Lors du chargement de l'interpréteur, rien de ce qui est défini dans cette extension n'est accessible, il faut au préalable appeler la fonction `initGraphics` (sans paramètres) pour initialiser l'extension en mémoire.
+Lors du chargement de l'interpréteur, rien de ce qui est défini dans cette extension n'est accessible, il faut au préalable exécuter `init(Graphics)` pour initialiser l'extension en mémoire.
 
-Sur les plateformes qui ne supportant pas l'extension graphique, l'appel à `initGraphics` lèvera l'exception `NotImplemented`.
+Sur les plateformes qui ne supportant pas l'extension graphique, exécuter `init(Graphics)` lèvera l'exception `NotImplemented`.
 
 Cette extension définit un ensemble de fonctions et de types de containers qui permettent de créer des objets graphiques et de les afficher.
 
@@ -1291,7 +1304,7 @@ Le type est défini en fonction du premier objet de ce type rencontré par l'int
 
 Le problème est que certaines fonctions graphiques prennent en argument des objets graphiques (cercles, rectangles, lignes) qui suivent une définition bin précise, avec des champs précis, etc. Pour que les fonctions graphiques puissent reconnaître de manière efficace si un objet est un cercle, un triangle, etc, tous ces objets graphiques sont prédéfinis lors du chargement de l'extension.
 
-Les types de containers définis lors d'un appel à `initGraphics` sont :\
+Les types de containers définis lors de l'initialisation du module `Graphics` sont :\
 
 - `Point(x, y)` : `x` et `y` de type `Integer` ou `Real`
 - `Circle(x, y, radius, color, filled)` : `x`, `y` et `radius` de type `Integer` ou `Real`, `color` de type `Integer` et `filled` de type `Bool`
@@ -1304,9 +1317,9 @@ Les types de containers définis lors d'un appel à `initGraphics` sont :\
 - `FloodFill(x, y, color)` : `x` et `y` de type `Integer` ou `Real` et `color` de type `Integer`
 
 
-Cela signifie qu'après un appel à `initGraphics`, tous les containers dont les noms sont listés au-dessus devront posséder les paramètres données au-dessus. Les types des attributs de sont pas forcés de coincider pour que la définition du container soit correcte, mais les types données ici sont les types attendus dans les champs des containers pris en argument par les fonctions graphiques.
+Cela signifie qu'après avoir initialisé le module graphique, tous les containers dont les noms sont listés au-dessus devront posséder les paramètres données au-dessus. Les types des attributs de sont pas forcés de coincider pour que la définition du container soit correcte, mais les types données ici sont les types attendus dans les champs des containers pris en argument par les fonctions graphiques.
 
-La fonction `initGraphics` peut être appelée alors que certains des types décrits ci-dessus ont déjà été définis, mais si les types déjà définis ont une définition différente de celle attendue ici, une erreur sera levée.
+Le module graphique peut être initialisé alors que certains des types décrits ci-dessus ont déjà été définis, mais si les types déjà définis ont une définition différente de celle attendue ici, une erreur sera levée.
 
 Voici une description un peu plus explicite de l'utilité des différents champs de ces objets.
 

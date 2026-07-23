@@ -269,7 +269,7 @@ Here is the list of built-in exceptions:\
 *`AssertionFailed`*: Triggered when the `assert` function fails\
 *`DefinitionError`*: Triggered mainly when a container definition is incorrect with respect to the information the interpreter has about that container type\
 *`KeyboardInterrupt`*: Triggered by Ctrl-C in the terminal. On the `TI_EZ80` platform, this error is triggered by pressing the `ON` key\
-*`NotImplemented`*: Triggered when calling an unimplemented feature. This can occur when calling functions implemented only for certain platforms, such as `initGraphics` (see the graphics section).\
+*`NotImplemented`*: Triggered when calling an unimplemented feature. This can occur when importing modules not available on certain platforms, such as `Graphics` (see the graphics section).\
 
 === 1.2.8 - The `Built-in function` Type
 
@@ -363,7 +363,11 @@ For a user-defined function (or user-defined method), it displays the function n
 This function takes an integer as an argument and returns a string corresponding to its hexadecimal representation. As with the `bin` function, the string is not preceded by the `'0x'` prefix.
 
 *`index(List, Any)` #sym.arrow.r `Integer`:*\
-This function takes a list and an object from that list as arguments, and returns the index of the first occurrence of the object in the list.
+This function takes a list or a string as an argument.
+
+If the first argument is a list, the second argument must be an element of that list. The function returns the index of the first occurrence of the object in the list.
+
+If the first argument passed to the function is a string, the second argument must be a substring of the first string. The function returns the index of the start of the first occurrence of the substring in the string.
 
 *`int(Any)` #sym.arrow.r `Integer`:*\
 This function takes an object as an argument and converts it to an integer.
@@ -404,6 +408,11 @@ Computes the natural logarithm of a number.
 
 *`loadNamespace(String)` #sym.arrow.r `None`:*\
 This function loads into memory a copy of the objects from the module whose name is given as an argument, without the prefix.
+
+*`loadObj(String)` #sym.arrow.r `Any`:*\
+This function loads an object that was saved using `saveObj`. It takes the name of the save file as an argument. On file systems that support file extensions, the `.neobj` extension is automatically appended to the name provided as an argument to locate the file to be opened.
+
+The `loadObj` function cannot load an object saved from another platform.
 
 *`log(Real)` #sym.arrow.r `Real`:*\
 Computes the base-10 logarithm of a number.
@@ -449,6 +458,10 @@ Computes the rounding of a number to the precision given as the second argument.
 
 *`safeExec(String, List)` #sym.arrow.r `None`:*\
 This function takes a Neon source filename and a list of objects as arguments, and runs the program in an independent environment, passing the list of objects as arguments.
+
+*`saveObj(String, Any)` #sym.arrow.r `None`:*\
+This function allows you to save any Neon object (lists, functions, strings, containers, etc.) to a file. This process is often called serialization, or marshalling. This object can then be reloaded in any Neon environment and will be restored exactly as it was (see the `loadObj` function).
+This function takes a filename as an argument (no extension is required; Neon automatically adds the `.neobj` extension on file systems that support extensions) and a Neon object.
 
 *`setAtomicTime(Integer)` #sym.arrow.r `None`:*\
 This function changes the process-switching period with the given integer.
@@ -1268,9 +1281,9 @@ In addition to the core language containing everything documented so far in this
 
 This extension is somewhat misnamed, since it is not only graphical: it allows both drawing on screen and managing keyboard input.
 
-When the interpreter loads, nothing defined in this extension is accessible; you must first call the function `initGraphics` (with no parameters) to initialize the extension in memory.
+When the interpreter loads, nothing defined in this extension is accessible; you must first execute `init(Graphics)` to initialize the extension in memory.
 
-On platforms that do not support the graphics extension, calling `initGraphics` will raise the `NotImplemented` exception.
+On platforms that do not support the graphics extension, executing `init(Graphics)` will raise the `NotImplemented` exception.
 
 This extension defines a set of functions and container types that allow creating graphical objects and displaying them.
 
@@ -1282,7 +1295,7 @@ The type is defined based on the first object of that type encountered by the in
 
 The problem is that certain graphics functions take graphical objects (circles, rectangles, lines) as arguments which follow a very precise definition, with specific fields, etc. For the graphics functions to efficiently recognize whether an object is a circle, a triangle, etc., all graphical objects are pre-defined when the extension loads.
 
-The container types defined upon a call to `initGraphics` are:\
+The container types defined upon the initialization of the `Graphics` module are:\
 
 - `Point(x, y)`: `x` and `y` of type `Integer` or `Real`
 - `Circle(x, y, radius, color, filled)`: `x`, `y`, and `radius` of type `Integer` or `Real`, `color` of type `Integer`, and `filled` of type `Bool`
@@ -1295,9 +1308,9 @@ The container types defined upon a call to `initGraphics` are:\
 - `FloodFill(x, y, color)`: `x` and `y` of type `Integer` or `Real`, and `color` of type `Integer`
 
 
-This means that after a call to `initGraphics`, all containers whose names are listed above must have the parameters listed above. The attribute types are not enforced for the container definition to be correct, but the types given here are the types expected in the fields of containers passed as arguments to the graphics functions.
+This means that after initializing the graphics module, all containers whose names are listed above must have the parameters listed above. The attribute types are not enforced for the container definition to be correct, but the types given here are the types expected in the fields of containers passed as arguments to the graphics functions.
 
-The `initGraphics` function may be called when some of the types described above have already been defined, but if the already-defined types have a different definition from what is expected here, an error will be raised.
+The graphics module may be initialized when some of the types described above have already been defined, but if the already-defined types have a different definition from what is expected here, an error will be raised.
 
 Here is a more explicit description of the purpose of the various fields of these objects.
 
