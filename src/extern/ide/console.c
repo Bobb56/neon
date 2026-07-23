@@ -243,8 +243,8 @@ void draw_console(struct estate *state)
     if (state->ide_state != IDEState_RunningProgram) {
         fontlib_SetForegroundColor(state->dropshadow_color);
     }
-    fontlib_SetCursorPosition(276, 228);
-    fontlib_DrawString("Run");
+    fontlib_SetCursorPosition(260, 228);
+    fontlib_DrawString("Restart");
 
     //Draw drop shadows
     gfx_SetColor(state->dropshadow_color);
