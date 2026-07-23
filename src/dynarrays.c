@@ -1,15 +1,16 @@
-#include "headers/neon.h"
 #include <stddef.h>
 #define NEON_SOURCE_ID 3
 
 #include <string.h>
 #include <stdint.h>
 
+#include "headers/neon.h"
 #include "headers/neonio.h"
 #include "headers/dynarrays.h"
 #include "headers/errors.h"
 #include "headers/strings.h"
 #include "headers/objects.h"
+#include "headers/allocator.h"
 
 void printToken(Token tok) {
   char sov = stringize(tok);

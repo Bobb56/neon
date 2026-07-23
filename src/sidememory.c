@@ -13,13 +13,14 @@ La zone temporaire s'utilise par sessions : on appelle side_memory_start() pour 
 Entre deux sessions d'utilisation de la mémoire temporaire, on peut écrire dans la mémoire permanente. Ce qui est écrit dans la mémoire permanente ne sera supprimé qu'à la sortie de l'interpréteur Neon. Pour allouer dans la zone permanente si aucune session n'est en cours, on utilise side_memory_hard_alloc()
 */
 
+#include <string.h>
 #include "headers/sidememory.h"
 #include "headers/dynarrays.h"
 #include "headers/errors.h"
 #include "headers/parser.h"
 #include "headers/neon.h"
 #include "headers/trees.h"
-#include <string.h>
+#include "headers/allocator.h"
 
 #ifdef TI_EZ80
 #include <ti/vars.h>

@@ -17,6 +17,7 @@
 #include "headers/trees.h"
 #include "headers/contexts.h"
 #include "headers/nativefunctions.h"
+#include "headers/allocator.h"
 
 
 int execConditionBlock(TreeBuffer* tb, TreeBufferIndex maintree) {

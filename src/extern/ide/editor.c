@@ -5,6 +5,9 @@
  *      Author: michael
  */
 
+#include <stdint.h>
+#include <string.h>
+
 #include "headers/libmalloc.h"
 #include "headers/neonide.h"
 #include "headers/dialogs.h"
@@ -12,8 +15,6 @@
 #include "headers/state.h"
 #include "headers/keys.h"
 #include "headers/find.h"
-#include <stdint.h>
-#include <string.h>
 
 bool is_control(short k)
 {

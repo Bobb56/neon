@@ -13,6 +13,7 @@
 #include "headers/parser.h"
 #include "headers/errors.h"
 #include "headers/syntaxhighlighting.h"
+#include "headers/allocator.h"
 
 #ifdef WINDOWS
 #include <stdio.h>

@@ -1,5 +1,4 @@
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -7,7 +6,7 @@
 #include "headers/parser.h"
 #include "headers/wordautomaton.h"
 #include "headers/syntaxhighlighting.h"
-#include "headers/errors.h"
+#include "headers/allocator.h"
 
 #ifdef TI_EZ80
 #include "extern/ide/headers/libmalloc.h"

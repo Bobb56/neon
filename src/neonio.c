@@ -15,6 +15,7 @@
 #include "headers/strings.h"
 #include "headers/errors.h"
 #include "headers/syntaxhighlighting.h"
+#include "headers/allocator.h"
 
 #if defined(TI_EZ80)
 #include <ti/vars.h>

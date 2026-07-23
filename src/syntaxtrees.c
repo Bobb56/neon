@@ -15,6 +15,7 @@
 #include "headers/syntaxtrees.h"
 #include "headers/trees.h"
 #include "headers/errors.h"
+#include "headers/allocator.h"
 
 
 /*

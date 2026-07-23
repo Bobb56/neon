@@ -1,6 +1,7 @@
 # TODO before next update
+- Finish the automated deploy script
 - Add changes page on the website
-- Add list for downloading each previous version in one package
+- Add list for downloading any previous version in one package
 
 
 # Update checklist
@@ -15,13 +16,15 @@
 
 ## 5. Update changes page on website
 
-## 6. Build package for every platform
+## 6. Run deploy script
 
-### 6.1. Windows amd64: standalone executable, setup
-### 6.2. Linux amd64: standalone executable, setup (LPK)
-### 6.3. TI 84 Plus CE: Neon application (NEONINST + data appvars + conversion tools + examples + readme explaining how this works)
+### 6.1. Linux deploy script
+### 6.2. Windows deploy script
 
 ## 7. Upload everything on the website
+
+### 7.1 Add new entry for previous versions with the current version
+### 7.2 Replace current version by the new version
 
 # TODO after next update
 - Announce for the new Neon app on TI-Planet/Cemetech

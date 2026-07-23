@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <time.h>
+
 #include "headers/graphicmodule.h"
 #include "headers/constants.h"
 #include "headers/neon.h"
@@ -13,6 +14,7 @@
 #include "headers/runtime.h"
 #include "headers/errors.h"
 #include "headers/lowlevel.h"
+#include "headers/allocator.h"
 #include "extern/ide/headers/keys.h"
 
 #ifdef TI_EZ80

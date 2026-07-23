@@ -19,33 +19,9 @@
 #define if_error                                if (global_env->CODE_ERROR != 0)
 #define neon_assert(condition, return_value)    if (!(condition)) {neon_fail(120, NO_ARGS) ; return return_value ;}
 
-#ifdef TI_EZ80
-    #include "../extern/ide/headers/libmalloc.h"
-    #define neon_malloc                             custom_malloc
-    #define neon_realloc                            custom_realloc
-    #define neon_free                               custom_free
-    #define neon_strdup                             custom_strdup
-    #define neon_strndup                            custom_strndup
-#else
-    #define neon_malloc                             malloc
-    #define neon_realloc                            realloc
-    #define neon_free                               free
-    #define neon_strdup                             strdup
-    #define neon_strndup                            strndup
-#endif
-
-#ifdef MINIMAL_LIBC_RISCV64
-#define align8(size)                            align(8, size)
-#else
-#define align8(size)                            size
-#endif
 
 
-/*
-void* neon_malloc(size_t size);
-void* neon_realloc(void* ptr, size_t size);
-void neon_free(void* ptr);
-*/
+
 
 void neon_reset_error(void);
 void get_error_info_and_reset(int* code, int* source_id, int* line_number, NeList** error_message_arguments);

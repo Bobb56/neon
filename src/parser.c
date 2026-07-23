@@ -15,6 +15,7 @@
 #include "headers/parser.h"
 #include "headers/errors.h"
 #include "headers/sidememory.h"
+#include "headers/allocator.h"
 
 
 // définition des élément modifiables de la syntaxe

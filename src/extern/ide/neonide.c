@@ -6,6 +6,7 @@
 
 /*
 TODO:
+- Remove stdio
 - Make sure that 0x1b is taken in account everywhere in the terminal
 - Fix problems with alpha locking keys like digits sometimes
 - Try to increase a bit the size of the console history

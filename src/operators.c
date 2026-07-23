@@ -13,6 +13,7 @@
 #include "headers/neon.h"
 #include "headers/errors.h"
 #include "headers/operators.h"
+#include "headers/allocator.h"
 
 
 void* operators_functions[NBOPERATEURS] = {

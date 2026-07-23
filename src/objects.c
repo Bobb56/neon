@@ -19,6 +19,7 @@
 #include "headers/errors.h"
 #include "headers/trees.h"
 #include "headers/nativefunctions.h"
+#include "headers/allocator.h"
 
 
 

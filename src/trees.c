@@ -1,5 +1,7 @@
 #define NEON_SOURCE_ID 22
 
+#include <string.h>
+
 #include <stdint.h>
 #include <stdlib.h>
 #include "headers/trees.h"
@@ -7,7 +9,7 @@
 #include "headers/errors.h"
 #include "headers/neon.h"
 #include "headers/objects.h"
-#include <string.h>
+#include "headers/allocator.h"
 
 /*
 Comment fonctionnent les structures de données d'arbres ?

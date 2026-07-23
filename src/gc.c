@@ -7,8 +7,8 @@
 #include "headers/objects.h"
 #include "headers/gc.h"
 #include "headers/neon.h"
-#include "headers/errors.h"
 #include "headers/processcycle.h"
+#include "headers/allocator.h"
 
 // Cette fonction implémente une exception lors de la suppression d'objets dans une garbage collection
 // Parfois, certains objets, bien qu'ils soient dans le garbage collector et éligibles à la suppression car rien ne pointe sur eux, le runtime a encore besoin qu'ils vivent pour fonctionner correctement

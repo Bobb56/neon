@@ -19,6 +19,7 @@
 #include "headers/syntaxtrees.h"
 #include "headers/neon.h"
 #include "headers/trees.h"
+#include "headers/allocator.h"
 
 #ifdef TI_EZ80
 #include <sys/rtc.h>

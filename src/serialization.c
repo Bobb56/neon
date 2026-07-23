@@ -1,5 +1,8 @@
 #define NEON_SOURCE_ID 18
 
+#include <stdint.h>
+#include <string.h>
+
 #include "headers/serialization.h"
 #include "headers/constants.h"
 #include "headers/dynarrays.h"
@@ -11,9 +14,7 @@
 #include "headers/trees.h"
 #include "headers/neon.h"
 #include "headers/nativefunctions.h"
-
-#include <stdint.h>
-#include <string.h>
+#include "headers/allocator.h"
 
 
 

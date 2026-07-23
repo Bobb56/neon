@@ -12,6 +12,7 @@
 #include "headers/trees.h"
 #include "headers/contexts.h"
 #include "headers/neonio.h"
+#include "headers/allocator.h"
 
 
 

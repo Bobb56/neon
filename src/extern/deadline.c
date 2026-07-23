@@ -55,6 +55,7 @@
 #include <termios.h>
 #include <sys/ioctl.h>
 
+#include "../headers/allocator.h"
 #include "../headers/errors.h"
 #include "../headers/neonio.h"
 #include "../headers/neon.h"

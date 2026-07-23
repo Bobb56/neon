@@ -20,6 +20,7 @@
 #include "headers/contexts.h"
 #include "headers/nativefunctions.h"
 #include "headers/neonio.h"
+#include "headers/allocator.h"
 
 #ifdef TI_EZ80
 #include <keypadc.h>

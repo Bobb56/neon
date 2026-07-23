@@ -17,6 +17,7 @@
 #include "headers/processcycle.h"
 #include "headers/trees.h"
 #include "headers/nativefunctions.h"
+#include "headers/allocator.h"
 
 
 NeObj eval_UnaryOp(TreeBuffer* tb, TreeBufferIndex tree)

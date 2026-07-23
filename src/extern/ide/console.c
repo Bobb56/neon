@@ -10,6 +10,7 @@
 
 #include "../../headers/neon.h"
 #include "../../headers/errors.h"
+#include "../../headers/allocator.h"
 #include "../../headers/graphicmodule.h"
 
 // Number of chars written between each console flush

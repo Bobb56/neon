@@ -2,14 +2,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <tice.h>
-#include <fileioc.h>
 #include <inttypes.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <graphx.h>
-#include <keypadc.h>
-#include <fontlibc.h>
 
 #include "headers/libmalloc.h"
 

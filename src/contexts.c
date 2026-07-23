@@ -1,12 +1,15 @@
 #define NEON_SOURCE_ID 2
 
+#include <string.h>
+
 #include "headers/contexts.h"
 #include "headers/errors.h"
 #include "headers/objects.h"
 #include "headers/dynarrays.h"
 #include "headers/processcycle.h"
 #include "headers/neonio.h"
-#include <string.h>
+#include "headers/allocator.h"
+
 
 bool isContextMark(NeSave nesave) {
     return neo_is_void(nesave.object) && nesave.var == -1;
