@@ -397,7 +397,7 @@
             putchar(text[i]);
         }
         setColor(DEFAULT);
-        free(colors);
+        neon_free(colors);
     }
     
     

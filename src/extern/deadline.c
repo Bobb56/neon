@@ -261,7 +261,7 @@ static void update_current_line_in_history(char* buffer, size_t size) {
         strlist_append(global_env->history, strndup(buffer, size));
     }
     else if (strcmp(global_env->history->tab[global_env->history->len - 1], buffer) != 0) {
-        free(global_env->history->tab[global_env->history->len - 1]);
+        neon_free(global_env->history->tab[global_env->history->len - 1]);
         global_env->history->tab[global_env->history->len - 1] = strndup(buffer, size);
     }
 }
@@ -352,12 +352,12 @@ char *readline(const char *prompt)
             }
             case CTRL_D: {
                 neon_fail(1, NO_ARGS);
-                free(buffer);
+                neon_free(buffer);
                 buffer = "\0";
                 goto readline_exit;
             }
             case CTRL_C: {
-                free(buffer);
+                neon_free(buffer);
                 buffer = NULL;
                 goto readline_exit;
             }
@@ -440,7 +440,7 @@ char *readline(const char *prompt)
                     while (pos + tab_size >= size) {
                         size <<= 1;
                     }
-                    buffer = realloc(buffer, size);
+                    buffer = neon_realloc(buffer, size);
                         if (buffer == NULL) goto readline_exit;
                 }
 
@@ -485,7 +485,7 @@ char *readline(const char *prompt)
                     if (pos == size)
                     {
                         size <<= 1;
-                        buffer = realloc(buffer, size);
+                        buffer = neon_realloc(buffer, size);
                         if (buffer == NULL) goto readline_exit;
                     }
 

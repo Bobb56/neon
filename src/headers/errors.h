@@ -19,7 +19,7 @@
 #define if_error                                if (global_env->CODE_ERROR != 0)
 #define neon_assert(condition, return_value)    if (!(condition)) {neon_fail(120, NO_ARGS) ; return return_value ;}
 
-#ifdef UNDEFINED
+#ifdef TI_EZ80
     #include "../extern/ide/headers/libmalloc.h"
     #define neon_malloc                             custom_malloc
     #define neon_realloc                            custom_realloc

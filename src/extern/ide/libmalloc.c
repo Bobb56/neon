@@ -156,7 +156,7 @@ void *custom_realloc(void *ptr, size_t size)
     }
 
     memcpy(p, ptr, h->size - sizeof(block_t));
-    free(ptr);
+    custom_free(ptr);
 
     return p;
 }

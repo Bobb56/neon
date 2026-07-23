@@ -605,7 +605,7 @@ void cut(toklist* tokens, intlist* types, char* str, bool traiterStatements, int
         string = side_memory_addStr(str, "\n");
 
     if (free_original_str)
-        free(str);
+        neon_free(str);
 
     if (string == NULL) {
         neon_fail(12, NO_ARGS);

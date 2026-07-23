@@ -64,7 +64,7 @@ void custom_floodfill(intptr_t tempx, intptr_t tempy, intptr_t tempcolor) {
     old_stack = floodfill_switch_stack(buffer + FLOODFILL_STACK_SIZE - 1);
     gfx_FloodFill(x, y, color);
     floodfill_switch_stack(old_stack);
-    free(buffer);
+    neon_free(buffer);
     return;
 }
 

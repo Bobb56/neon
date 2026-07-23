@@ -301,8 +301,8 @@ void initialize_console(struct estate* state, char* name) {
 
 
 void deinit_console(struct estate* state) {
-    free(state->text);
-    free(state->lines);
+    neon_free(state->text);
+    neon_free(state->lines);
     state->ide_state = IDEState_Other;
 }
 
