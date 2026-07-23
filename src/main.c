@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
     NeObj l = neo_list_create(0);
     // ajout des arguments dans le tableau contenant les arguments du programme
     for (int i = 2 ; i < argc ; i++)
-        neo_list_append(l, neo_str_create(strdup(argv[i])));
+        neo_list_append(l, neo_str_create(neon_strdup(argv[i])));
 
     variable_append(global_env, "__args__", l);
 

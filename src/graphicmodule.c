@@ -694,7 +694,7 @@ void init_graphicmodule(NeonEnv* env) {
         }
         else {
             index = env->CONTAINERS->len;
-            strlist_append(env->CONTAINERS, strdup(container_types[i].name));
+            strlist_append(env->CONTAINERS, neon_strdup(container_types[i].name));
             nelist_append(env->ATTRIBUTES, NEO_VOID);
         }
 
@@ -703,7 +703,7 @@ void init_graphicmodule(NeonEnv* env) {
         // crée la NeList des attributs
         NeList* fields = nelist_create(container_types[i].nb_fields);
         for (int j = 0 ; j < container_types[i].nb_fields ; j++) {
-            fields->tab[j] = neo_str_create(strdup(container_types[i].fields[j]));
+            fields->tab[j] = neo_str_create(neon_strdup(container_types[i].fields[j]));
         }
 
         // et on met la liste d'attributs dans le tableau d'attributs global

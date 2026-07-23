@@ -75,7 +75,7 @@ NeObj _input_(NeList* args)
 
     #else
         // à cause du système d'édition de ligne de commande, il faut mettre tout le texte dans une seule chaine de caractères
-        char* chaine = strdup("");
+        char* chaine = neon_strdup("");
 
         for (size_t i=0 ; i < args->len ; i++)
         {
@@ -508,7 +508,7 @@ NeObj _help_(NeList* args) {
                     printString("No help available for this function.");
                 else
                 {
-                    char* temp = strdup(fun->help); // c'est pas beau, c'est juste pour ne pas avoir le warning du compilateur
+                    char* temp = neon_strdup(fun->help); // c'est pas beau, c'est juste pour ne pas avoir le warning du compilateur
                     printString(temp);
                     neon_free(temp);
                     newLine();
@@ -675,7 +675,7 @@ NeObj _list_comp_(NeList* args)
 
     if(!strlist_inList(global_env->NOMS, nom))
     {
-        strlist_append(global_env->NOMS, strdup(nom));
+        strlist_append(global_env->NOMS, neon_strdup(nom));
         nelist_append(global_env->ADRESSES, neo_empty_create());
         index = global_env->ADRESSES->len - 1;
     }
@@ -774,7 +774,7 @@ De cette manière si global_env->CODE_ERROR est négatif, printError sait que c'
 */
 NeObj _create_exception_(NeList* args)
 {
-    strlist_append(global_env->EXCEPTIONS, strdup(neo_to_string(ARG(0))));
+    strlist_append(global_env->EXCEPTIONS, neon_strdup(neo_to_string(ARG(0))));
     NeObj e = neo_exception_create(global_env->EXCEPTIONS->len - 1);
 
     if (strlist_inList(global_env->NOMS,neo_to_string(ARG(0))))
@@ -785,7 +785,7 @@ NeObj _create_exception_(NeList* args)
     }
     else
     {
-        strlist_append(global_env->NOMS,strdup(neo_to_string(ARG(0)))); // on ajoute le nom à la liste des global_env->NOMS
+        strlist_append(global_env->NOMS,neon_strdup(neo_to_string(ARG(0)))); // on ajoute le nom à la liste des global_env->NOMS
         nelist_append(global_env->ADRESSES,e); // on ajoute l'objet à la liste des variables
     }
 
@@ -1137,7 +1137,7 @@ NeObj _setFunctionDoc_(NeList* args) {
     if (fun->doc != NULL)
         neon_free(fun->doc);
 
-    fun->doc = strdup(neo_to_string(ARG(1)));
+    fun->doc = neon_strdup(neo_to_string(ARG(1)));
     return neo_none_create();
 }
 
@@ -1233,7 +1233,7 @@ NeObj _detectFiles_(NeList* args) {
     char* var_name;
 
     while ((var_name = ti_Detect(&vat_ptr, prefix))) {
-        neo_list_append(files, neo_str_create(strdup(var_name)));
+        neo_list_append(files, neo_str_create(neon_strdup(var_name)));
     }
 
     return files;
@@ -1278,7 +1278,7 @@ NeObj _detectFiles_(NeList* args) {
                 fread(buffer, 1, prefix_len, file);
 
                 if (strncmp(buffer, prefix, prefix_len) == 0)
-                    neo_list_append(files, neo_str_create(strdup(entree->d_name)));
+                    neo_list_append(files, neo_str_create(neon_strdup(entree->d_name)));
 
                 fclose(file);
             }
@@ -1328,7 +1328,7 @@ NeObj _detectFiles_(NeList* args) {
             fread(buffer, 1, prefix_len, file);
 
             if (strncmp(buffer, prefix, prefix_len) == 0)
-                neo_list_append(files, neo_str_create(strdup(fichier.cFileName)));
+                neo_list_append(files, neo_str_create(neon_strdup(fichier.cFileName)));
 
             fclose(file);
         }
@@ -1351,7 +1351,7 @@ NeObj _safeExec_(NeList* args) {
     NeonEnv* global_env_sov = NeonEnv_set(NeonEnv_init());
 
     // définition de la liste des arguments
-    update__name__(strdup(neo_to_string(ARG(0)))); // nom du fichier actuel
+    update__name__(neon_strdup(neo_to_string(ARG(0)))); // nom du fichier actuel
     variable_append(global_env, "__args__", neo_copy(ARG(1)));
 
     execFile(neo_to_string(ARG(0)));
@@ -1445,7 +1445,7 @@ NeObj _format_(NeList* args) {
     strlist* arguments = strlist_create(args->len - 1);
     for (size_t i=1 ; i < args->len ; i++) {
         if (NEO_TYPE(ARG(i)) == TYPE_STRING)
-            arguments->tab[i-1] = strdup(neo_to_string(ARG(i)));
+            arguments->tab[i-1] = neon_strdup(neo_to_string(ARG(i)));
         else
             arguments->tab[i-1] = neobject_str(ARG(i), true);
 
@@ -2037,7 +2037,7 @@ NeObj call_standardfunction(int id, NeList* list) {
 
 void init_standardmodule(NeonEnv* env) {
     for (int i = 0 ; i < NBBUILTINFUNC ; i++) {
-        strlist_append(env->NOMS, strdup(get_standardfunction_name(i)));
+        strlist_append(env->NOMS, neon_strdup(get_standardfunction_name(i)));
         nelist_append(env->ADRESSES, get_standardfunction(i));
     }
     return;

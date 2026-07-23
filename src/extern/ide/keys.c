@@ -61,7 +61,7 @@ short kshift[] = {
     KEY_UNBOUND, KEY_NO_EXIST, ';', 'Z', 'U', 'P', 'K', 'F', 'C', KEY_SAVE,
     ' ', 'Y', 'T', 'O', 'J', 'E', 'B', KEY_NO_EXIST, KEY_RESERVED, 'X', 'S',
     'N', 'I', 'D', 'A', KEY_NO_EXIST, KEY_F5, KEY_F4, KEY_F3, KEY_F2,
-    KEY_F1, KEY_NO_EXIST, KEY_NO_EXIST, KEY_BREAK
+    KEY_F1, KEY_NO_EXIST, KEY_NO_EXIST, KEY_BS
 };
 /*
  * Bindings for holding the meta (Mode) key
@@ -155,6 +155,7 @@ uint8_t ngetchx_backend(void) {
 uint8_t ngetchx_backend(void) {
     static uint8_t last_key;
     static clock_t local_clock;
+    static uint24_t waiting_time;
 
     uint8_t only_key = 0;
 
@@ -174,21 +175,18 @@ uint8_t ngetchx_backend(void) {
         }
     }
 
-    // processing the key code
+    // If the key didn't change since last time and we haven't wait enough time
+    if (only_key == last_key && clock() - local_clock <= waiting_time)
+        return 0;
 
+    // processing the key code
+    local_clock = clock();
     if (only_key == last_key) {
-        if (clock() - local_clock > 15000) {
-            return only_key;
-        }
-        else {
-            return 0;
-        }
+        waiting_time = 1000;
+        return only_key;
     }
     else {
-
-        // resets the clock since it's a new key
-        local_clock = clock();
-
+        waiting_time = 15000;
         last_key = only_key;
         return only_key;
     }

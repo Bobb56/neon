@@ -6,10 +6,6 @@
 
 /*
 TODO:
-- TODO: Implement a strong allocator, well integrated in Neon and that works well with malloc_noheap and side memory
-- ALPHA, Del does not work
-- RAM reset when launching program after having saved a program in the editor
-- Cursor problem with line \n empty \n line (cursor jumps) from one line to another
 - Make sure that 0x1b is taken in account everywhere in the terminal
 - Fix problems with alpha locking keys like digits sometimes
 - Try to increase a bit the size of the console history

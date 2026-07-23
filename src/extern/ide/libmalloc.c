@@ -4,7 +4,6 @@
 #include <tice.h>
 #include <fileioc.h>
 #include <inttypes.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -163,5 +162,24 @@ void *custom_realloc(void *ptr, size_t size)
 
 
 void custom_alloc_reset(void) {
+    memset(&_alloc_base, 0, sizeof(block_t));
     heap_ptr = (uintptr_t)__heap_low;
 }
+
+char* custom_strdup(const char* string) {
+    char* ptr = custom_malloc(strlen(string)+1);
+    if (ptr != NULL)
+        strcpy(ptr, string);
+    return ptr;
+}
+
+
+char* custom_strndup(const char *s, size_t n) {
+    size_t len = strnlen(s, n);
+    char* ptr = custom_malloc(len + 1);
+    if (ptr != NULL) {
+        memcpy(ptr, s, len);
+        ptr[len] = '\0';
+    }
+    return ptr;
+  }

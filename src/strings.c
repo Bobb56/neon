@@ -274,7 +274,7 @@ char* inputCode()
             goto function_end;
         }
 
-        char* text = strdup(SEQUENCE_SUITE);
+        char* text = neon_strdup(SEQUENCE_SUITE);
         
         int nbAcc = compteAcc(str);
         
@@ -455,7 +455,7 @@ char* decToBin(intptr_t n) {
         n = n/2;
     }
     buffer[buffer_size] = '\0';
-    return strdup(buffer + index);
+    return neon_strdup(buffer + index);
 }
 
 
@@ -478,7 +478,7 @@ char* decToHex(intptr_t n) {
         n = n/16;
     }
     buffer[buffer_size] = '\0';
-    return strdup(buffer + index);
+    return neon_strdup(buffer + index);
 }
 
 
@@ -514,7 +514,7 @@ char* replace(char* string, char* aRemplacer, char* remplacement) //remplace tou
 
     if (len_aremplacer == 0 || len == 0)
     {
-        return strdup("");
+        return neon_strdup("");
     }
 
     intlist l = intlist_create(0);
@@ -586,7 +586,7 @@ Renvoie un nom de variable nettoyé du préfixe
 On suppose que string commence bel et bien par prefix
 */
 char* remove_prefix(char* string, char* prefix) {
-    return strdup(string + strlen(prefix) + 1);
+    return neon_strdup(string + strlen(prefix) + 1);
 }
 
 // renvoie le préfixe d'un nom de variable s'il existe, NULL sinon
@@ -597,7 +597,7 @@ char* get_prefix(char* string) {
 
     if (string[i] == '~' && string[i+1] != '\0') { // la chaine de caractères correspond à une chaine de module
         string[i] = '\0';
-        char* prefix = strdup(string);
+        char* prefix = neon_strdup(string);
         string[i] = '~';
         return prefix;
     }

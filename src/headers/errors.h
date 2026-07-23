@@ -24,10 +24,14 @@
     #define neon_malloc                             custom_malloc
     #define neon_realloc                            custom_realloc
     #define neon_free                               custom_free
+    #define neon_strdup                             custom_strdup
+    #define neon_strndup                            custom_strndup
 #else
     #define neon_malloc                             malloc
     #define neon_realloc                            realloc
     #define neon_free                               free
+    #define neon_strdup                             strdup
+    #define neon_strndup                            strndup
 #endif
 
 #ifdef MINIMAL_LIBC_RISCV64

@@ -510,7 +510,7 @@ NeObj eval_Variable(TreeBuffer* tb, TreeBufferIndex tree)
     if (NEO_TYPE(value) == TYPE_EMPTY) {
         // CONSTEST {
         // char* name = get_name(treeVar(tb, tree)->var);
-        // NeObj const_value = neo_const_create(strdup(name));
+        // NeObj const_value = neo_const_create(neon_strdup(name));
         // replace_var(treeVar(tb, tree)->var, const_value);
         // return neo_copy(const_value);
         // CONSTEST }

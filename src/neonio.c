@@ -165,13 +165,13 @@
     char* double_to_str(double number)//nombre en chaine de caractère
     {
         if (isnan(number)) {
-            return strdup(get_nan());
+            return neon_strdup(get_nan());
         }
         else if (isinf(number) && number < 0) {
             return addStr("-", get_infinity());
         }
         else if (isinf(number) && number > 0) {
-            return strdup(get_infinity());
+            return neon_strdup(get_infinity());
         }
         else {
             real_t x = os_FloatToReal((float)number);
@@ -357,11 +357,11 @@
     char* double_to_str(double number) //nombre en chaine de caractère
     {
         if (isinf(number) && number > 0)
-                return strdup(get_infinity());
+                return neon_strdup(get_infinity());
         else if (isinf(number) && number < 0)
             return addStr("-", get_infinity());
         else if (isnan(number))
-            return strdup(get_nan());
+            return neon_strdup(get_nan());
         else
         {
             //une fois qu'on a copié le nombre dans la chaine de caracteres, il faut le réallouer de la bonne taille
@@ -607,7 +607,7 @@ intptr_t str_to_int(char* string) {
 char* int_to_str(intptr_t number)//nombre en chaine de caractère
 {
     if (number == 0) {
-        return strdup("0");
+        return neon_strdup("0");
     }
     else {
         // on se souvient de si le nombre est négatif ou pas, et on le met en valeur absolue

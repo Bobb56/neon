@@ -67,13 +67,13 @@ void setNeonEnv(NeonEnv* env) {
 void defineVariables(NeonEnv* env)
 {
     // Définition de la variable de version
-    variable_append(env, "__version__", neo_str_create(strdup(VERSION)));
+    variable_append(env, "__version__", neo_str_create(neon_strdup(VERSION)));
 
     // Définition de la variable de plateforme
-    variable_append(env, "__platform__", neo_str_create(strdup(PLATFORM)));
+    variable_append(env, "__platform__", neo_str_create(neon_strdup(PLATFORM)));
 
     // le nom du fichier
-    variable_append(env, "__name__", neo_str_create(strdup("__main__")));
+    variable_append(env, "__name__", neo_str_create(neon_strdup("__main__")));
 
     // L'adresse de __name__ à modifier
     env->NAME = env->ADRESSES->len - 1;
@@ -111,7 +111,7 @@ void loadExceptions(NeonEnv* env) {
     };
 
     for (int i = 0 ; i < 20 ; i++) {
-        strlist_append(env->EXCEPTIONS, strdup(exceptions[i]));
+        strlist_append(env->EXCEPTIONS, neon_strdup(exceptions[i]));
     }
 }
 
@@ -171,12 +171,9 @@ NeonEnv* NeonEnv_init(void) {
     //     return NULL;
     // }
 
-
     loadFunctions(env);
     loadExceptions(env);
-
     defineVariables(env);
-
     #ifdef TI_EZ80
     env->text_transparent_color = 255;
     #endif
@@ -273,9 +270,6 @@ void neonExit(void)
 
 
 
-
-
-
 void printRes(NeObj res)
 {
     if (NEO_TYPE(res) != TYPE_NONE)
@@ -357,7 +351,7 @@ void storeAns(NeObj res) {
         global_env->ADRESSES->tab[index] = res; // met le nouveau dedans
     }
     else {
-        strlist_append(global_env->NOMS, strdup("Ans"));
+        strlist_append(global_env->NOMS, neon_strdup("Ans"));
         nelist_append(global_env->ADRESSES, res);
     }
 }
@@ -466,7 +460,7 @@ void execFile(char* filename) {
         goto handle_error;
     }
 
-    global_env->FILENAME = strdup(filename);
+    global_env->FILENAME = neon_strdup(filename);
 
     TreeBuffer tb = createSyntaxTree(program, true);
 
@@ -475,13 +469,13 @@ void execFile(char* filename) {
     }
     
     tb_exec(&tb);
-    
-    if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
-        TreeBuffer_destroy(&tb);
-        goto handle_error;
-    }
 
     TreeBuffer_destroy(&tb);
+    
+    if (global_env->CODE_ERROR != 1 && global_env->CODE_ERROR != 0) {
+        goto handle_error;
+    }
+    
     return ;
 
 handle_error:
@@ -506,7 +500,7 @@ void importFile(char* filename)
     }
 
     char* sov = global_env->FILENAME;
-    global_env->FILENAME = strdup(filename);
+    global_env->FILENAME = neon_strdup(filename);
     
     // exécution du fichier
     TreeBuffer tb = createSyntaxTree(program, true);

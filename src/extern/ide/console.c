@@ -226,8 +226,8 @@ void draw_console(struct estate *state)
     gfx_FillRectangle_NoClip(193, 228, 62, 12);
     gfx_FillRectangle_NoClip(257, 228, 62, 12);
     //Draw text on segs
-    //fontlib_SetCursorPosition(12, 228);
-    //fontlib_DrawString("# $ %");
+    fontlib_SetCursorPosition(16, 228);
+    fontlib_DrawString("Home");
     fontlib_SetCursorPosition(76, 228);
     fontlib_DrawString("# $ %");
     fontlib_SetCursorPosition(140, 228);
@@ -240,8 +240,11 @@ void draw_console(struct estate *state)
     fontlib_DrawString("Edit");
     fontlib_SetForegroundColor(state->text_color);
 
-    fontlib_SetCursorPosition(272, 228);
-    fontlib_DrawString("Home");
+    if (state->ide_state != IDEState_RunningProgram) {
+        fontlib_SetForegroundColor(state->dropshadow_color);
+    }
+    fontlib_SetCursorPosition(276, 228);
+    fontlib_DrawString("Run");
 
     //Draw drop shadows
     gfx_SetColor(state->dropshadow_color);
@@ -633,7 +636,7 @@ char* neonide_input(char* prompt) {
         else
         {
             switch (k) {
-                case KEY_F5:
+                case KEY_F1:
                 case KEY_CLEAR:
                     neon_fail(1, NO_ARGS);
                     return NULL;
@@ -729,6 +732,13 @@ char* neonide_input(char* prompt) {
                         return NULL;
                     }
                     break;
+                case KEY_F5:
+                    if (state->ide_state == IDEState_RunningProgram) {
+                        state->ide_goto = IDEState_RunningProgram;
+                        neon_fail(1, NO_ARGS);
+                        return NULL;
+                    }
+                    break;
                 case KEY_OPEN:
                     break;
                 case KEY_STATE:
@@ -744,7 +754,6 @@ void start_console(struct estate* state)
 {
     global_console_state = state;
     initialize_console(state, NULL);
-
     neonInit();
     run_interactive();
     neonExit();
@@ -765,11 +774,15 @@ void run_neon_program(struct estate* state, char* name) {
     variable_append(global_env, "__args__", l);
 
     execFile(name);
+    if_error {
+        neon_reset_error();
+        goto function_end;
+    }
 
     terminal();
 
+function_end:
     neonExit();
-
     gfx_SetDrawBuffer();
     deinit_console(state);
     global_console_state = NULL;

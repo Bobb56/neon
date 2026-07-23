@@ -557,8 +557,8 @@ int exec_KWParam(TreeBuffer* tb, TreeBufferIndex tree)
             NeObj nom = eval_aux(tb, treelistGet(tb, tree_kw_param->params)[ext_index]);
             return_on_error(0);
 
-            char* nomAct = strdup(neo_to_string(nelist_nth(global_env->ADRESSES, (size_t)global_env->NAME))); // pour restaurer le nom de fichier actuel
-            update__name__(strdup(neo_to_string(nom)));
+            char* nomAct = neon_strdup(neo_to_string(nelist_nth(global_env->ADRESSES, (size_t)global_env->NAME))); // pour restaurer le nom de fichier actuel
+            update__name__(neon_strdup(neo_to_string(nom)));
 
             #ifndef TI_EZ80
                 char* nomFichier = addStr(neo_to_string(nom), ".ne");

@@ -24,6 +24,8 @@ void clean_memory(void);
 void* custom_malloc(size_t size);
 void custom_free(void* ptr);
 void* custom_realloc(void* ptr, size_t size);
+char* custom_strdup(const char* string);
+char* custom_strndup(const char *s, size_t n);
 void custom_alloc_reset(void);
 
 #endif /*LIBMALLOC_H*/

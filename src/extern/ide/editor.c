@@ -943,13 +943,11 @@ void write_file(struct estate *state)
 	if (need_neon_header)
 		fullsize += 5;
 
-	bool current_archive_status = false;
-
 	// Check if we will archive the saved file
-	bool archive = false;
+	bool current_archive_status = false;
 	ti_var_t var = ti_Open(state->filename, "r");
 	if (var != 0) {
-		archive = ti_IsArchived(var);
+		current_archive_status = ti_IsArchived(var);
 		ti_Close(var);
 	}
 
@@ -965,7 +963,7 @@ void write_file(struct estate *state)
 	ti_Write(state->text + state->c2 + 1, state->max_buffer_size - (state->c2 + 1), 1, var);
 
 	// Archive file if needed
-	ti_SetArchiveStatus(archive, var);
+	ti_SetArchiveStatus(current_archive_status || state->autoarchive, var);
 
 	ti_Close(var);
 	state->saved = true;

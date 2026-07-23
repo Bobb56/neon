@@ -258,11 +258,11 @@ static void write_line(const char *prompt, char *buffer, size_t size)
 
 static void update_current_line_in_history(char* buffer, size_t size) {
     if (global_env->history->len == 0) {
-        strlist_append(global_env->history, strndup(buffer, size));
+        strlist_append(global_env->history, neon_strndup(buffer, size));
     }
     else if (strcmp(global_env->history->tab[global_env->history->len - 1], buffer) != 0) {
         neon_free(global_env->history->tab[global_env->history->len - 1]);
-        global_env->history->tab[global_env->history->len - 1] = strndup(buffer, size);
+        global_env->history->tab[global_env->history->len - 1] = neon_strndup(buffer, size);
     }
 }
 
@@ -279,7 +279,7 @@ char *readline(const char *prompt)
     size_t pos = 0; // This is the position of the last written byte in buffer
     size_t diff = 0; // This is the offset between the pos and the actual position of the cursor
 
-    strlist_append(global_env->history, strdup(""));
+    strlist_append(global_env->history, neon_strdup(""));
     size_t history_index = 0;
     bool history_navigating = false;
 

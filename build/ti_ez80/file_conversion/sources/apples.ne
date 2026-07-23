@@ -18,7 +18,7 @@ function update_apples(apples) do
 
         # checks if the apple is catched by the pad
         if (apple>>figure>>y > 222) then
-            if (apple>>figure>>x >= screen>>pad>>x and apple>>figure>>x <= screen>>pad>>x + screen>>pad>>width) then # catched
+            if (apple>>figure>>x >= screen>>pad>>x and apple>>figure>>x <= screen>>pad>>x + screen>>pad>>w) then # catched
                 apples.remove(apple_index)
                 score ++
                 if (score > highscore) then

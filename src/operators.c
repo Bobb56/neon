@@ -254,7 +254,7 @@ NeObj _mul(NeObj _op1, NeObj _op2)
     if (NEO_TYPE(_op2) == TYPE_DOUBLE)
       return neo_double_create(0);
     if (NEO_TYPE(_op2) == TYPE_STRING)
-      return neo_str_create(strdup(""));
+      return neo_str_create(neon_strdup(""));
   }
   else if (NEO_TYPE(_op2) == TYPE_BOOL) { // _op2 est un False
     if (NEO_TYPE(_op1) == TYPE_LIST)
@@ -264,7 +264,7 @@ NeObj _mul(NeObj _op1, NeObj _op2)
     if (NEO_TYPE(_op1) == TYPE_DOUBLE)
       return neo_double_create(0);
     if (NEO_TYPE(_op1) == TYPE_STRING)
-      return neo_str_create(strdup(""));
+      return neo_str_create(neon_strdup(""));
   }
 
 
@@ -698,7 +698,7 @@ NeObj _goIn(NeObj op2, NeObj op1)
         
         if (!strlist_inList(global_env->NOMS,nomVar)) // création d'une nouvelle variable
         {
-            strlist_append(global_env->NOMS,strdup(nomVar));
+            strlist_append(global_env->NOMS,neon_strdup(nomVar));
             nelist_append(global_env->ADRESSES, neo_empty_create()); // variable ajoutée
             var = get_absolute_address(global_env->ADRESSES->len-1);
         }
@@ -910,12 +910,8 @@ NeObj _ref(NeObjAddr* op1)
       return NEO_VOID;
     }
 
-    return neo_str_create(strdup(global_env->NOMS->tab[index]));
+    return neo_str_create(neon_strdup(global_env->NOMS->tab[index]));
 }
-
-
-
-
 
 
 

@@ -26,7 +26,7 @@
 
 void variable_append(NeonEnv* env, char* name, NeObj value) {
     nelist_append(env->ADRESSES, value);
-    strlist_append(env->NOMS, strdup(name));
+    strlist_append(env->NOMS, neon_strdup(name));
 }
 
 NeObjAddr get_absolute_address(Var rel_var_addr) {
@@ -66,7 +66,7 @@ Var get_var(char* name) {
     int index = strlist_index(global_env->NOMS,name);
     if (index < 0) { // on crée la variable
         neon_reset_error();
-        strlist_append(global_env->NOMS, strdup(name));
+        strlist_append(global_env->NOMS, neon_strdup(name));
         nelist_append(global_env->ADRESSES, neo_empty_create());
         return global_env->ADRESSES->len - 1;
     }
@@ -351,7 +351,7 @@ char* neo_container_str(NeObj neo, bool overloaded) {
             return NULL;
         }
 
-        char* ret = strdup(neo_to_string(obj));
+        char* ret = neon_strdup(neo_to_string(obj));
         neobject_destroy(obj);
         return ret;
     }
@@ -360,7 +360,7 @@ char* neo_container_str(NeObj neo, bool overloaded) {
 
         NeList* list = global_env->ATTRIBUTES->tab[c->type].nelist;
 
-        char* str1 = strdup(global_env->CONTAINERS->tab[c->type]);
+        char* str1 = neon_strdup(global_env->CONTAINERS->tab[c->type]);
         str1 = addStr2(str1, "(");
         for (size_t i=0 ; i < c->data.len ; i++)
         {
@@ -417,9 +417,9 @@ void neo_bool_aff(NeObj neo) {
 
 char* neo_bool_str(NeObj neo) {
     if (neo_is_true(neo))
-        return strdup("True");
+        return neon_strdup("True");
     else
-        return strdup("False");
+        return neon_strdup("False");
 }
 
 
@@ -668,11 +668,11 @@ void neo_promise_aff(NeObj promise) {
 }
 
 char* neo_promise_str(NeObj neo) {
-    char* s1 = strdup("<promise from process ");
+    char* s1 = neon_strdup("<promise from process ");
     char* s2 = int_to_str(neo_to_integer(neo));
     s1 = addStr2(s1, s2);
     neon_free(s2);
-    s2 = strdup(">");
+    s2 = neon_strdup(">");
     char* ret = addStr2(s1, s2);
     neon_free(s2);
     return ret;
@@ -694,7 +694,7 @@ NeObj neo_str_create(char* string) // attention, la chaine de caractères passé
 }
 
 NeObj neo_new_str_create(const char* string) {
-    return neo_str_create(strdup(string));
+    return neo_str_create(neon_strdup(string));
 }
 
 char* neo_to_string(NeObj neo)
@@ -756,7 +756,7 @@ NeObj neo_const_create(char* string) // attention, la chaine de caractères pass
 }
 
 NeObj neo_new_const_create(const char* string) {
-    return neo_const_create(strdup(string));
+    return neo_const_create(neon_strdup(string));
 }
 
 
@@ -820,11 +820,11 @@ char* nelist_str(NeList* list, bool overloaded)
 {
     if (list->len == 0)
     {
-        return strdup("[]");
+        return neon_strdup("[]");
     }
     else
     {
-        char* str1 = strdup("["), *temp;
+        char* str1 = neon_strdup("["), *temp;
         for (size_t i=0 ; i < list->len - 1 ; i++)
         {
             temp = neobject_str(nelist_nth(list, i), overloaded);
@@ -1504,7 +1504,7 @@ NeObj neo_dup(NeObj neo) {
         UserFunc* copied_func = userfunc_create(args_copy, original_func->tree_buffer, original_func->code, original_func->nbArgs, original_func->unlimited_arguments, original_func->nbOptArgs, opt_args, original_func->isMethod);
 
         if (original_func->doc != NULL)
-            copied_func->doc = strdup(original_func->doc);
+            copied_func->doc = neon_strdup(original_func->doc);
 
         mark_as_already_copied(neo, copied_func);
 
@@ -1735,7 +1735,7 @@ char* neobject_str(NeObj neo, bool overloaded)
     // si au moment d'afficher un objet il est marqué, alors on ne l'affiche pas
 
     if (ismarked(neo)) { // c'est le deuxième fois qu'on nous demande d'afficher cet objet
-        return strdup("*");
+        return neon_strdup("*");
     }
     else {
         mark(neo);
@@ -1764,15 +1764,15 @@ char* neobject_str(NeObj neo, bool overloaded)
         }
         else if (NEO_TYPE(neo) == TYPE_CONST)
         {
-            ret = strdup(neo_to_string(neo));
+            ret = neon_strdup(neo_to_string(neo));
         }
         else if (NEO_TYPE(neo) == TYPE_EXCEPTION)
         {
-            ret = strdup(global_env->EXCEPTIONS->tab[get_exception_code(neo)]);
+            ret = neon_strdup(global_env->EXCEPTIONS->tab[get_exception_code(neo)]);
         }
         else if (NEO_TYPE(neo) == TYPE_NONE)
         {
-            ret = strdup("None");
+            ret = neon_strdup("None");
         }
         else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC)
         {
@@ -1846,10 +1846,10 @@ char* neobject_str(NeObj neo, bool overloaded)
             ret = neo_promise_str(neo);
         }
         else if (NEO_TYPE(neo) == TYPE_EMPTY) {
-            ret = strdup("???");
+            ret = neon_strdup("???");
         }
         else {
-            ret = strdup("???");
+            ret = neon_strdup("???");
         }
         unmark(neo);
 

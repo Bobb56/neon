@@ -335,7 +335,7 @@ TreeBufferIndex createExpressionTreeAux(TreeBuffer* tb, Ast** ast, toklist* toke
                     NeList* attr_names = nelist_create(temptreelist.len); // liste des noms d'attributs
 
                     for (int i = 0 ; i < temptreelist.len ; i++) // création de la liste des attributs
-                        attr_names->tab[i] = neo_str_create(strdup(treeAttrLit(tb, temptreelist.trees[i])->name));
+                        attr_names->tab[i] = neo_str_create(neon_strdup(treeAttrLit(tb, temptreelist.trees[i])->name));
                     
                     // on transforme la liste de noms en NeObj, mais sans l'ajouter dans la liste d'objets du Mark & Sweep
                     // en effet, c'est un objet à part, qui ne fait pas partie du système d'objets de Neon

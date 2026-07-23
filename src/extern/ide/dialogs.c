@@ -358,22 +358,10 @@ void show_editor_settings_dialog(struct estate *state)
         fontlib_SetForegroundColor(index == 1 ? state->focus_color : state->text_color);
         fontlib_SetCursorPosition(24 + 32, 61);
         fontlib_DrawString("Show save prompt on exit");
-        draw_switch(state, 24, 78, state->useregex); //regex
+        draw_switch(state, 24, 78, state->blinkcursor); //blinkcursor
         fontlib_SetForegroundColor(index == 2 ? state->focus_color : state->text_color);
         fontlib_SetCursorPosition(24 + 32, 79);
-        fontlib_DrawString("Use regex in search");
-        draw_switch(state, 24, 96, state->blinkcursor); //blinkcursor
-        fontlib_SetForegroundColor(index == 3 ? state->focus_color : state->text_color);
-        fontlib_SetCursorPosition(24 + 32, 97);
         fontlib_DrawString("Blink cursor");
-        draw_switch(state, 24, 96 + 18, state->backupfiles); //backup
-        fontlib_SetForegroundColor(index == 4 ? state->focus_color : state->text_color);
-        fontlib_SetCursorPosition(24 + 32, 96 + 19);
-        fontlib_DrawString("Copy on write");
-        draw_switch(state, 24, 96 + 54, state->hide_special_files); //extra_buffer
-        fontlib_SetForegroundColor(index == 6 ? state->focus_color : state->text_color);
-        fontlib_SetCursorPosition(24 + 32, 96 + 55);
-        fontlib_DrawString("Hide special files");
         fontlib_SetForegroundColor(state->text_color);
         fontlib_SetCursorPosition(24, 96 + 55 + 18);
         fontlib_DrawString("Permanent changes can be made");
@@ -385,8 +373,8 @@ void show_editor_settings_dialog(struct estate *state)
         if (k == KEY_DOWN)
         {
             index++;
-            if (index >= 7)
-                index = 6;
+            if (index >= 3)
+                index = 2;
         }
         if (k == KEY_UP)
         {
@@ -400,26 +388,15 @@ void show_editor_settings_dialog(struct estate *state)
         {
             switch (index)
             {
-            case 0:
-                state->autoarchive = !(state->autoarchive);
-                break;
-            case 1:
-                state->saveprompt = !(state->saveprompt);
-                break;
-            case 2:
-                state->useregex = !(state->useregex);
-                break;
-            case 3:
-                state->blinkcursor = !(state->blinkcursor);
-                break;
-            case 4:
-                state->backupfiles = !(state->backupfiles);
-                break;
-            case 5:
-                break;
-            case 6:
-                state->hide_special_files = !(state->hide_special_files);
-                break;
+                case 0:
+                    state->autoarchive = !(state->autoarchive);
+                    break;
+                case 1:
+                    state->saveprompt = !(state->saveprompt);
+                    break;
+                case 2:
+                    state->blinkcursor = !(state->blinkcursor);
+                    break;
             }
         }
     }
@@ -2041,6 +2018,9 @@ void unsaved_backend_draw(struct estate *state, int index)
 
 bool show_unsaved_dialog(struct estate *state)
 {
+    if (!state->saveprompt)
+        return true;
+
     short k = 0;
     int index = 0;
     while (k != KEY_CLEAR)
