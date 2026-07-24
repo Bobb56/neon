@@ -445,8 +445,8 @@ This function accepts an indefinite number of parameters and displays the string
 *`rad(Real)` #sym.arrow.r `Real`:*\
 Converts an angle in degrees to radians.
 
-*`raise(Exception, String)` #sym.arrow.r `None`:*\
-This function takes an exception and a string as arguments, and exits the interpreter by raising that exception and displaying the string as an error message.
+*`raise(Exception, String, ...)` #sym.arrow.r `None`:*\
+This function takes as arguments an exception, a string and an unlimited number of objects. When it is calles, it raises the exception given as argument and displays the given string as error message. The string can contain symbols `<>`. In this case, they will be replaced by the representation of the the objects given as arguments. On platforms with syntax highlighting, objects displayed by `<>` will be highlighted. If `raise` is called in a `try` block, it could be catched and do not trigger any error. See section on error handling for more details.
 
 *`randint(Integer, Integer)` #sym.arrow.r `Integer`:*\
 This function takes two integers: a lower bound and an upper bound, and returns a random integer between these two bounds, with the upper bound excluded.

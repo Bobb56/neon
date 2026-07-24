@@ -453,8 +453,8 @@ Cette fonction attend un nombre indéfini de paramètres, et affiche la représe
 Convertit en radians un angle en degrés.
 
 
-*`raise(Exception, String)` #sym.arrow.r `None`:*\
-Cette fonction prend en argument une exception et une chaîne de caractères et quitte l'interpréteur en levant cette exception et en affichant la chaîne de caractères comme message d'erreur.
+*`raise(Exception, String, ...)` #sym.arrow.r `None`:*\
+Cette fonction prend en argument une exception, une chaîne de caractères et un nombre illimité d'arguments. Lorsqu'elle est appelée, elle lève l'exception donnée en argument en affichant la chaîne de caractères comme message d'erreur. La chaîne de caractères peut contenir les symboles `<>`, auquel cas ils seront remplacés par la représentation des objets supplémentaires donnés en arguments. Sur les plateformes supportant la coloration syntaxique, les objets donnés par `<>` seront syntaxiquement colorés. Si la fonction `raise` est appelée dans un bloc `try`, elle peut être interceptée et ne pas déclencher de réelle erreur. Voir la section sur la gestion d'erreurs pour plus de détails.
 
 *`randint(Integer, Integer)` #sym.arrow.r `Integer`:*\
 Cette fonction prend en argument deux entiers : une borne inférieure et une borne supérieure, et renvoie un entier aléatoire compris entre ces deux bornes, borne supérieure exclue.
