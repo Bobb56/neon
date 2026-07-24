@@ -354,6 +354,11 @@ Example: `format("<> + <> = <>", 1,2,3)` returns `"1 + 2 = 3"`
 *`gc()` #sym.arrow.r `None`:*\
 This function calls the Garbage Collector.
 
+*`hash(Any)` #sym.arrow.r `Integer`:*\
+This function takes any object as argument and computes a hash of this object, i.e an integer aimed to represent the identity of the object. Computing the hash of the same object will always give the same result, but computing the hash of any other object will at a very high probability be always different. In other words, the `hash` function can be supposed to be injective.
+
+Because the internal integer representation is not the same on all platforms, the hash of an object may differ following the platform on which it is computed.
+
 *`help(Any)` #sym.arrow.r `None`:*\
 This function displays help related to certain objects or types of objects. Here are the possible arguments to the `help` function:\
 `help("modules")` #sym.arrow.r.long displays all module names present in memory\

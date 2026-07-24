@@ -358,6 +358,12 @@ Exemple: `format("<> + <> = <>", 1,2,3)` renvoie `"1 + 2 = 3"`
 *`gc()` #sym.arrow.r `None`:*\
 Cette fonction appelle le Garbage Collector.
 
+*`hash(Any)` #sym.arrow.r `Integer`:*\
+Cette fonction prend un objet quelconque en argument et en calcule un hash, c'est-à-dire un entier destiné à représenter l'identité de l'objet. Calculer le hash du même objet renvoie toujours le même résultat.
+
+This function takes any object as argument and computes a hash of this object, i.e an integer aimed to represent the identity of the object. Computing the hash of the same object will always give the same result, but computing the hash of any other object will at a very high probability be always different. In other words, the `hash` function can be supposed to be injective.
+
+La représentation interne des entiers étant différente d'une plateforme à l'autre, le calcul du hash d'un objet peut renvoyer des valeurs différentes suivant la plateforme sur laquelle on effectue le calcul.
 
 *`help(Any)` #sym.arrow.r `None`:*\
 Cette fonction affiche de l'aide liée à certains objets ou certains types d'objets. Voici les arguments possibles à la fonction `help` :\
