@@ -1,3 +1,11 @@
+/*
+use #note()
+
+*/
+
+#import "doc_style.typ": doc_style
+#show: doc_style
+
 #set page(numbering: "1")
 
 #align(center + top)[ // Centre le contenu horizontalement et l'aligne en haut de la page

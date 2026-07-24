@@ -1,3 +1,6 @@
+#import "doc_style.typ": doc_style
+#show: doc_style
+
 #set page(numbering: "1")
 
 #align(center + top)[
