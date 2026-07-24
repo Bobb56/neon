@@ -704,6 +704,9 @@ Cet opérateur attend un objet quelconque à gauche et une liste à droite, et r
 *`<->`* :\
 Cet opérateur attend à gauche et à droite des variables/index de liste/attributs de containers, et échange leur valeur.
 
+*`is`* :\
+Cet opérateur attend à gauche un objet quelconque et à droite un identifiant. Cet identifiant doit correspondre à un nom de type (`Integer`, `List`, ...). L'opérateur fonctionne également pour les containers. Pour n'importe quel container, on peut tester son type en évaluant `object is MyContainer`, et ce, même si la variable `MyContainer` existe et ne contient pas la constante `MyContainer`. L'opérateur `is` n'évalue pas l'identifiant donné à droite, il regarde simplement si le nom correspond au type de l'objet à gauche.
+
 === 2.1.2 - Opérateurs unaires
 
 *`-`* : Cet opérateur peut également être utilisé comme opérateur unaire. L'opérande se place à droite. Renvoie l'opposé d'un nombre.

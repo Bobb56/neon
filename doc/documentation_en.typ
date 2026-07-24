@@ -692,6 +692,9 @@ This operator expects any object on the left and a list on the right, and return
 *`<->`* :\
 This operator expects variables/list indices/container attributes on both left and right, and swaps their values.
 
+*`is`* :\
+This operator expects an arbitrary object on the left and an identifier on the right. This identifier must correspond to a type name (`Integer`, `List`, etc.). The operator also works with containers. For any container, one can test its type by evaluating `object is MyContainer`, even if the variable `MyContainer` exists but does not hold the constant `MyContainer`. The `is` operator does not evaluate the identifier provided on the right; it simply checks whether the name matches the type of the object on the left.
+
 === 2.1.2 - Unary Operators
 
 *`-`*: This operator can also be used as a unary operator. The operand is placed on the right. Returns the opposite of a number.
