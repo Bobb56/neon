@@ -288,6 +288,10 @@ Here is the list of built-in exceptions:\
 *`DefinitionError`*: Triggered mainly when a container definition is incorrect with respect to the information the interpreter has about that container type\
 *`KeyboardInterrupt`*: Triggered by Ctrl-C in the terminal. On the `TI_EZ80` platform, this error is triggered by pressing the `ON` key\
 *`NotImplemented`*: Triggered when calling an unimplemented feature. This can occur when importing modules not available on certain platforms, such as `Graphics` (see the graphics section).\
+*`ExitSignal`*: Exception raised by the call to `exit`.\
+*`InternalError`*: Exception raised when Neon encounters an unexpected error. When such an exception is raised, it always indicates a bug in the Neon interpreter itself, never an error in the Neon program. An `InternalError` exception should be reported as a bug. Normal execution must never trigger an `InternalError`.\
+*`DeserializationError`*: Exception raised when object deserialization fails. Raising this exception always indicates that the object's save file is corrupted.\
+*`Error`*: Base exception, useful for raising general-purpose exceptions using `raise`.
 
 === 1.2.8 - The `BuiltInFunction` Type
 
@@ -1074,7 +1078,7 @@ This time, the `...` must literally be written as-is and is not a shorthand nota
 
 When a function can receive an unlimited number of arguments, only the values that could not be assigned to normal arguments are counted as extra arguments.
 
-When calling a function with an unlimited number of arguments, a special local variable is created. This variable is a list containing all values that could not be assigned to normal arguments (i.e., the values counted in `...`), and is accessible under the name `__local_args__`.
+When calling a function with an unlimited number of arguments, a special local variable is created. This variable is a list containing all values that could not be assigned to normal arguments (i.e., the values counted in `...`), and is accessible under the name `__local_args__`. If the variable `__local_args__` existed at the time of the function call, the value is overwritten.
 
 === 4.5.4 - Truly Optional Arguments
 
@@ -1340,32 +1344,31 @@ The type is defined based on the first object of that type encountered by the in
 
 The problem is that certain graphics functions take graphical objects (circles, rectangles, lines) as arguments which follow a very precise definition, with specific fields, etc. For the graphics functions to efficiently recognize whether an object is a circle, a triangle, etc., all graphical objects are pre-defined when the extension loads.
 
-The container types defined upon the initialization of the `Graphics` module are:\
+The container types defined during the initialization of the `Graphics` module are:
 
 - `Point(x, y)`: `x` and `y` of type `Integer` or `Real`
-- `Circle(x, y, radius, color, filled)`: `x`, `y`, and `radius` of type `Integer` or `Real`, `color` of type `Integer`, and `filled` of type `Bool`
-- `Rect(x, y, width, height, color, filled)`: `x`, `y`, `width`, and `height` of type `Integer` or `Real`, `color` of type `Integer`, and `filled` of type `Bool`
-- `Line(x0, y0, x1, y1, color)`: `x0`, `y0`, `x1`, and `y1` of type `Integer` or `Real`, and `color` of type `Integer`
-- `Text(text, x, y, fgcolor, bgcolor, size)`: `text` of type `String`, `x` and `y` of type `Integer` or `Real`, `fgcolor`, `bgcolor`, and `size` of type `Integer`
-- `Triangle(x0, y0, x1, y1, x2, y2, color)`: `x0`, `y0`, `x1`, `y1`, `x2`, and `y2` of type `Integer` or `Real`, and `color` of type `Integer`
-- `Polygon(points, color)`: `points` is a list of containers of type `Point`, and `color` is an integer
-- `Ellipse(x, y, a, b, color, filled)`: `x`, `y`, `a`, `b`, and `color` of type `Integer`, and `filled` of type `Bool`
-- `FloodFill(x, y, color)`: `x` and `y` of type `Integer` or `Real`, and `color` of type `Integer`
+- `Circle(x, y, r, c, f)`: `x`, `y`, and `r` of type `Integer` or `Real`, `c` of type `Integer`, and `f` of type `Bool`
+- `Rect(x, y, w, h, c, f)`: `x`, `y`, `w`, and `h` of type `Integer` or `Real`, `c` of type `Integer`, and `f` of type `Bool`
+- `Line(x0, y0, x1, y1, c)`: `x0`, `y0`, `x1`, and `y1` of type `Integer` or `Real`, and `c` of type `Integer`
+- `Text(t, x, y, fg, bg, s)`: `t` of type `String`, `x` and `y` of type `Integer` or `Real`, `fg`, `bg`, and `s` of type `Integer`
+- `Triangle(x0, y0, x1, y1, x2, y2, c)`: `x0`, `y0`, `x1`, `y1`, `x2`, and `y2` of type `Integer` or `Real`, and `c` of type `Integer`
+- `Polygon(p, c)`: `p` is a list of containers of type `Point`, and `c` is an `Integer`
+- `Ellipse(x, y, a, b, c, f)`: `x`, `y`, `a`, `b`, and `c` of type `Integer`, and `f` of type `Bool`
+- `FloodFill(x, y, c)`: `x` and `y` of type `Integer` or `Real`, and `c` of type `Integer`
 
+This means that after initializing the graphics module, all containers with the names listed above must have the parameters described above. The types of the attributes do not need to match exactly for the container definition to be valid, but the types specified here are the expected types in the fields of the containers passed as arguments to the graphics functions.
 
-This means that after initializing the graphics module, all containers whose names are listed above must have the parameters listed above. The attribute types are not enforced for the container definition to be correct, but the types given here are the types expected in the fields of containers passed as arguments to the graphics functions.
+The graphics module can be initialized even if some of the types described above have already been defined. However, if the already defined types have a different definition from the one expected here, an error will be raised.
 
-The graphics module may be initialized when some of the types described above have already been defined, but if the already-defined types have a different definition from what is expected here, an error will be raised.
+Here is a more explicit description of the purpose of the different fields of these objects:
 
-Here is a more explicit description of the purpose of the various fields of these objects.
-
-- The fields `x`, `y`, `x0`, `y0`, ... represent pixel coordinates
-- The fields `a` and `b` of ellipses correspond respectively to the horizontal radius and the vertical radius of the ellipse
-- The fields `color`, `fgcolor`, and `bgcolor` are colors. `fgcolor` is the color of the letters when drawing text, and `bgcolor` is the background fill color around each letter.
-- The `filled` field indicates whether the shape should be drawn by filling its outline. Note that triangles are automatically filled, and polygons are not.
-- The `width` and `height` fields represent respectively the width and height of objects. For example, to draw a rectangle, `width` and `height` correspond to its width and height. The `x` and `y` fields of a rectangle are the coordinates of the upper-right corner of the rectangle to be drawn.
-- `radius` is the radius of the circle
-- `size` is the size of drawn characters. A `size` parameter of 1 corresponds to basic-size text. For `size` = 2, the height of letters is doubled. For `size` = 3, both the height and width of letters are doubled. For `size` = 4, the height is tripled and the width is doubled. The logic is similar for subsequent values. Odd `size` values correspond to letters uniformly scaled by a ratio, and even values correspond to an intermediate size where only the height of letters has been stretched. You need not understand all of this; just understand that the larger `size` is, the larger the text.
+- The fields `x`, `y`, `x0`, `y0`, etc., represent pixel coordinates.
+- The fields `a` and `b` of ellipses correspond to the horizontal and vertical radii of the ellipse, respectively.
+- The fields `c`, `fg`, and `bg` are colors. `fg` is the color of the letters when drawing text, and `bg` is the fill color around each letter.
+- The field `f` (filled) indicates whether the shape should be drawn by filling its outline or not. Note that triangles are automatically filled, and polygons are not filled.
+- The fields `w` and `h` (width, height) represent the length and width of the objects, respectively. For example, when drawing a rectangle, `width` and `height` correspond to the width and height of the rectangle. The `x` and `y` fields of the rectangle are the coordinates of the top-right corner of the rectangle to be drawn.
+- `r` (radius) is the radius of the circle.
+- `s` (size) is the size of the drawn characters. A parameter `s` of 1 corresponds to basic-sized text. For `s = 2`, the height of the letters is doubled. For `s = 3`, the height and width of the letters are doubled. For `s = 4`, the height of the letters is tripled, and the width is doubled. The logic is similar for subsequent values. Odd values of `s` correspond to letters whose dimensions have been uniformly multiplied by a ratio, and even values correspond to the previous odd size, but with the letters stretched only in height. It is not necessary to understand all of this; it is sufficient to know that the larger `s` is, the larger the text will be.
 
 Now let us look at the purpose of all these objects.
 
@@ -1382,9 +1385,9 @@ Each color is encoded in RGB format in 1 byte (8 bits) as follows:
 - 3 bits for green
 - 2 bits for blue
 
-Thus, there are 8 shades of red and green, and 4 shades of blue, and all combinations give exactly 256 different colors.
+Thus, there are 8 different shades of red and green, and 4 different shades of blue. All combinations yield exactly 256 different colors.
 
-Because it is not practical to calculate `r * 32 + g * 4 + b` every time a color is needed, there is an `rgb` function to convert colors from RGB format to Neon's single-byte format.
+Since calculating `(r/36) << 5 | (g/36) << 2 | (b/85)` every time a color is needed is impractical, an `rgb` function exists to convert colors from the RGB format (intensities between 0 and 255) to Neon's one-byte format.
 
 For drawing text (the `Text` object), color 255 represents the transparent color.
 

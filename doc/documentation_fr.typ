@@ -292,6 +292,10 @@ Voici la liste des exceptions built-in :\
 *`DefinitionError`* : Déclenchée principalement lorsque la définition d'un container est incorrecte au regard des informations dont dispose l'interpréteur sur ce type de container\
 *`KeyboardInterrupt`* : Déclenchée par un Ctrl-C dans le terminal. Sur plateforme `TI_EZ80`, cette erreur est déclenchée en appuyant sur la touche `ON`\
 *`NotImplemented`* : Déclenchée lors de l'appel à une fonctionnalité non implementée. Peut se produire lors de l'importation de modules non disponibles sur certaines plateformes comme le module `Graphics` (voir la section sur les graphiques).\
+*`ExitSignal`* : Exception déclenchée par l'appel à `exit`.\
+*`InternalError`* : Exception déclenchée lorsque Neon rencontre une erreur inattendue. Lorsqu'une telle exception est déclenchée, il s'agit toujours d'un bug dans l'interpréteur Neon lui-même, jamais d'une erreur dans le programme Neon. Lorsqu'une exception `InternalError` est déclenchée, il faut signaler cela comme un bug. Une exécution normale ne doit jamais déclencher d'`InternalError`.\
+*`DeserializationError`* : Exception déclenchée lorsque la désérialisation d'un objet échoue. Un déclenchement de cette exception signifie toujours que le fichier de sauvegarde de l'objet est corrompu.\
+*`Error`* : Exception de base, utile pour déclencher des exceptions généralistes avec `raise`.
 
 === 1.2.8 - Le type `BuiltInFunction`
 
@@ -1088,7 +1092,7 @@ Cette fois-ci, les `...` doivent réellement être écrits tels quels et ne sont
 
 Lorsqu'une fonction peut recevoir un nombre illimité d'arguments, seules les valeurs n'ayant pas pu être affectées à des arguments normaux sont comptées dans les arguments supplémentaires.
 
-Lors de l'appel à une fonction au nombre d'arguments illimité, une variable locale spéciale est créée. Cette variable est une liste contenant toutes les valeurs n'ayant pas pu être affectées à des arguments normaux (donc les valeurs comptabilisées dans le `...`), et est accessible sous le nom `__local_args__`.
+Lors de l'appel à une fonction au nombre d'arguments illimité, une variable locale spéciale est créée. Cette variable est une liste contenant toutes les valeurs n'ayant pas pu être affectées à des arguments normaux (donc les valeurs comptabilisées dans le `...`), et est accessible sous le nom `__local_args__`. Si la variable `__local_args__` existait au moment de l'appel de la fonction, la valeur est écrasée.
 
 === 4.5.4 - Arguments vraiment optionnels
 
@@ -1357,14 +1361,14 @@ Le problème est que certaines fonctions graphiques prennent en argument des obj
 Les types de containers définis lors de l'initialisation du module `Graphics` sont :\
 
 - `Point(x, y)` : `x` et `y` de type `Integer` ou `Real`
-- `Circle(x, y, radius, color, filled)` : `x`, `y` et `radius` de type `Integer` ou `Real`, `color` de type `Integer` et `filled` de type `Bool`
-- `Rect(x, y, width, height, color, filled)` : `x`, `y`, `width` et `height` de type `Integer` ou `Real`, `color` de type `Integer` et `filled` de type `Bool`
-- `Line(x0, y0, x1, y1, color)` : `x0`, `y0`, `x1` et `y1` de type `Integer` ou `Real` et `color` de type `Integer`
-- `Text(text, x, y, fgcolor, bgcolor, size)` : `text` de type `String`, `x` et `y` de type `Integer` ou `Real`, `fgcolor`, `bgcolor` et `size` de type `Integer`
-- `Triangle(x0, y0, x1, y1, x2, y2, color)` : `x0`, `y0`, `x1`, `y1`, `x2` et `y2` de type `Integer` ou `Real`, et `color` de type `Integer`
-- `Polygon(points, color)` : `points` est une liste de containers de type `Point`, et `color` est un entier
-- `Ellipse(x, y, a, b, color, filled)` : `x`, `y`, `a`, `b` et `color` de type `Integer` et `filled` de type `Bool`
-- `FloodFill(x, y, color)` : `x` et `y` de type `Integer` ou `Real` et `color` de type `Integer`
+- `Circle(x, y, r, c, f)` : `x`, `y` et `r` de type `Integer` ou `Real`, `c` de type `Integer` et `f` de type `Bool`
+- `Rect(x, y, w, h, c, f)` : `x`, `y`, `w` et `h` de type `Integer` ou `Real`, `c` de type `Integer` et `f` de type `Bool`
+- `Line(x0, y0, x1, y1, c)` : `x0`, `y0`, `x1` et `y1` de type `Integer` ou `Real` et `c` de type `Integer`
+- `Text(t, x, y, fg, bg, s)` : `t` de type `String`, `x` et `y` de type `Integer` ou `Real`, `fg`, `bg` et `s` de type `Integer`
+- `Triangle(x0, y0, x1, y1, x2, y2, c)` : `x0`, `y0`, `x1`, `y1`, `x2` et `y2` de type `Integer` ou `Real`, et `c` de type `Integer`
+- `Polygon(p, c)` : `p` est une liste de containers de type `Point`, et `c` est un entier
+- `Ellipse(x, y, a, b, c, f)` : `x`, `y`, `a`, `b` et `c` de type `Integer` et `f` de type `Bool`
+- `FloodFill(x, y, c)` : `x` et `y` de type `Integer` ou `Real` et `c` de type `Integer`
 
 
 Cela signifie qu'après avoir initialisé le module graphique, tous les containers dont les noms sont listés au-dessus devront posséder les paramètres données au-dessus. Les types des attributs de sont pas forcés de coincider pour que la définition du container soit correcte, mais les types données ici sont les types attendus dans les champs des containers pris en argument par les fonctions graphiques.
@@ -1375,11 +1379,11 @@ Voici une description un peu plus explicite de l'utilité des différents champs
 
 - Les champs `x`, `y`, `x0`, `y0`, ... représentent des coordonnées de pixels
 - Les champs `a` et `b` des ellipses correspondent respectivement au rayon horizontal et au rayon vertical de l'ellipse
-- Les champs `color`, `fgcolor` et `bgcolor` sont des couleurs. `fgcolor` est la couleur des lettres lorsque l'on dessine du texte, et bgcolor est la couleur de remplissage autour de chaque lettre.
-- Le champ `filled` indique si la figure doit être tracée en remplissant son contour ou non. Il faut noter que les triangles sont automatiquement remplis, et que les polygones ne sont pas remplis.
-- Les champs `width` et `height` représentent respectivement la longueur et la largeur des objets. Par exemple pour dessiner un rectangle, `width` et `height` correspondent à la largeur et la hauteur du triangle. Les champs `x` et `y` du rectangle sont les coordonnées du coin supérieur droit du rectangle à dessiner.
-- `radius` est le rayon du cercle
-- `size` est la taille des caractères dessinés. Un paramètre `size` à 1 correspond à un texte de taille basique. Pour `size` = 2, la hauteur des lettres est doublée. Pour `size` = 3, la hauteur et la largeur des lettres sont doublées. Pour `size` = 4, la hauteur des lettres est triplée et la largeur est doublée. La logique est similaire pour la suite. Les valeurs de `size` impaires correspondent aux lettres dont les dimensions ont été uniformément multipliées par un ratio, et les valeurs paires correspondent à une taille intermédiaire où l'on a uniquement étiré les lettres en hauteur. Il n'est pas nécessaire de comprendre tout cela, il suffit de comprendre que plus `size` est grand, plus le texte l'est aussi.
+- Les champs `c`, `fg` et `bg` sont des couleurs. `fg` est la couleur des lettres lorsque l'on dessine du texte, et `bg` est la couleur de remplissage autour de chaque lettre.
+- Le champ `f` (filled) indique si la figure doit être tracée en remplissant son contour ou non. Il faut noter que les triangles sont automatiquement remplis, et que les polygones ne sont pas remplis.
+- Les champs `w` et `h` (width, height) représentent respectivement la longueur et la largeur des objets. Par exemple pour dessiner un rectangle, `width` et `height` correspondent à la largeur et la hauteur du triangle. Les champs `x` et `y` du rectangle sont les coordonnées du coin supérieur droit du rectangle à dessiner.
+- `r` (radius) est le rayon du cercle
+- `s` (size) est la taille des caractères dessinés. Un paramètre `s` à 1 correspond à un texte de taille basique. Pour `s` = 2, la hauteur des lettres est doublée. Pour `s` = 3, la hauteur et la largeur des lettres sont doublées. Pour `s` = 4, la hauteur des lettres est triplée et la largeur est doublée. La logique est similaire pour la suite. Les valeurs de `s` impaires correspondent aux lettres dont les dimensions ont été uniformément multipliées par un ratio, et les valeurs paires correspondent à la taille impaire précédente, à laquelle on a uniquement étiré les lettres en hauteur. Il n'est pas nécessaire de comprendre tout cela, il suffit de comprendre que plus `s` est grand, plus le texte l'est aussi.
 
 Voyons maintenant à quoi servent tous ces objets.
 
@@ -1396,9 +1400,9 @@ Chaque couleur est codée au format rgb sur 1 octet (8 bits) de la manière suiv
 - 3 bits pour le vert
 - 2 bits pour le bleu
 
-Ainsi, il y a 8 teintes de rouge et de vert différentes et 4 teintes de bleu différentes, et toutes les combinaisons donnent exactement 256 couleurs différentes.
+Ainsi, il y a 8 teintes de rouge et de vert différentes et 4 teintes de bleu différentes. Toutes les combinaisons donnent exactement 256 couleurs différentes.
 
-Parce qu'il n'est pas pratique de calculer `r * 32 + g * 4 + b` à chaque fois que l'on a besoin d'une couleur, il existe une fonction `rgb` pour convertir des couleurs du format RGB au format de Neon sur un octet.
+Parce qu'il n'est pas pratique de calculer `(r/36) << 5 | (g/36) << 2 | (b/85)` à chaque fois que l'on a besoin d'une couleur, il existe une fonction `rgb` pour convertir des couleurs du format RGB (intensités entre 0 et 255) au format de Neon sur un octet.
 
 Pour le dessin de texte (l'objet `Text`), la couleur 255 représente la couleur transparent.
 
