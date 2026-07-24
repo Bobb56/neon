@@ -346,6 +346,11 @@ This function takes a string as an argument and exits the interpreter while disp
 *`floor(Real)` #sym.arrow.r `Real`:*\
 Returns the floor (round down) of a number.
 
+*`format(String, ...)` #sym.arrow.r `String`*\
+This function takes as arguments a string and an illimited number of objects. It returns a new string, where all `<>` has been replaced by the string representation of the objects given as arguments.
+
+Example: `format("<> + <> = <>", 1,2,3)` returns `"1 + 2 = 3"`
+
 *`gc()` #sym.arrow.r `None`:*\
 This function calls the Garbage Collector.
 

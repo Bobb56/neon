@@ -350,6 +350,11 @@ Cette fonction prend en argument une chaîne de caractères, et quitte l'interpr
 *`floor(Real)` #sym.arrow.r `Real`:*\
 Renvoie l'arrondi par valeur inférieure d'un nombre.
 
+*`format(String, ...)` #sym.arrow.r `String`*\
+Cette fonction prend en argument une chaîne de caractères ainsi qu'un nombre illimité d'objets. Elle renvoie une nouvelle chaîne de caractères, ayant remplacé tous les `<>` par la représentation de chaque objet donné en argument par la suite.
+
+Exemple: `format("<> + <> = <>", 1,2,3)` renvoie `"1 + 2 = 3"`
+
 *`gc()` #sym.arrow.r `None`:*\
 Cette fonction appelle le Garbage Collector.
 
