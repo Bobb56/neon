@@ -9,10 +9,10 @@
   #v(1em) // Un petit espace après le titre pour un sous-titre si besoin
   #text(1.5em, "Documentation") // Un sous-titre optionnel
   
-  #text(1em, "v1.1") // Un sous-titre optionnel
+  #text(1em, "v1.2.fr") // Un sous-titre optionnel
 ]
 
-#emph("Cette documentation s'applique à la version 4.1 de Neon.")
+#emph("Cette documentation s'applique à la version 4.5 de Neon.")
 
 = Introduction
 
@@ -20,48 +20,68 @@ Neon est un langage de script généraliste nativement concurrent destiné entre
 
 Neon est designé pour être facile à comprendre et facile à utiliser. Cette documentation n'a pas de vocation pédagogique mais sert à recenser de manière exhaustive l'entièreté des fonctionnalités de Neon. Ce document n'est pas non plus destiné à être lu dans l'ordre, mais à ranger les informations dans des catégories.
 
-Par Neon, on désigne à la fois le langage dans ses spécificités et à la fois son seul et unique interpréteur.
+Par Neon, on désigne à la fois le langage dans ses spécificités et toutes les déclinaisons du logiciel permettant de l'exécuter.
 
-== Environnement de programmation
+== Le logiciel
+
+=== Plateformes classiques
+
+Cette section décrit l'utilisation du logiciel Neon sur les plateformes classiques (Linux, Windows)
 
 L'interpréteur Neon dispose de deux modes : un mode console, permettant d'entrer du code et des expressions, et un mode exécution permettant d'exécuter directement des fichiers.
 
-=== Le mode exécution directe
+==== Le mode exécution directe
 
 L'extension de fichiers officiellement supportée pour les programmes Neon est l'extension `.ne`. Il est recommandé de nommer tous les programmes Neon avec cette extension. Pour lancer un programme avec le mode exécution, il suffit d'envoyer le nom du fichier en argument à l'interpréteur Neon. Le nom du fichier peut être suivi d'arguments à envoyer au programme Neon.
 
-Sur la plateforme `TI_EZ80`, les fichier Neon sont des AppVars contenant directement le code Neon en texte. Les noms de ces AppVars sont sans extensions. Pour lancer un fichier en mode exécution, il faut mettre le nom de ce fichier dans la variable `Ans` ou `Rép`. Pour cela, écrivez le nom du fichier entre guillemets dans l'écran principal de la calculatrice, et appuyez sur ENTRÉE. Lors de son lancement, le programme NEON va détecter le nom de fichier dans cette variable et va l'exécuter.
+Concrètement, il faut ouvrir un terminal et taper la commande suivante : `neon fichier.ne arg1 arg2 ... argn`
 
-Afin de faciliter le développement en Neon, l'interpréteur est compatible avec les AppVars Python.
+==== Le mode console interactive
 
-Pour que l'application Python puisse reconnaître les AppVars python par rapport à un appvar normal, ceux-ci commencent toujours par les 4 lettres `PYCD` suivies de l'octet `00` (noté `PYCD\x00`).
-Quand un appvar commençant par `PYCD\x00` est lancé avec l'interpréteur Neon, ce dernier va simplement ignorer les 5 premiers octets.
+Pour lancer le mode console interactive, il faut lancer l'interpréteur Neon sans aucun argument.
 
-Afin de pouvoir identifier spécifiquement des programmes Neon par rapport à des programmes Python ou simplement des AppVars quelconques, il est également possible de faire commencer un AppVar Neon par les 4 lettres `NEON` suivies de l'octet `00`. 
+Pour en savoir plus sur la console, voir la section Plus sur la console
 
-Exactement dans le cas de `PYCD\x00`, l'interpréteur lance le fichier en ignorant les cinq premiers octets correspondant à `NEON\x00`.
+=== La plateforme `TI_EZ80` (TI-83 Premium CE / TI-84 Plus CE)
 
-Cette extension spécifique à Neon pourrait notamment permettre d'implémenter un IDE à Neon qui encoderait automatiquement `NEON\x00` au début des fichiers, exactement comme le fait l'application Python avec `PYCD\x00`.
+Cette plateforme est particulière car le matériel et le système d'exploitation fournis sont très minimalistes. Ainsi certaines choses diffèrent entre cette plateforme et les plateformes classiques. Néanmoins cette plateforme bénéficie d'un support logiciel bien plus important que les autres puisqu'un IDE complet est directement intégré à Neon. Cet IDE dispose d'un éditeur, d'une console, d'un explorateur de programmes et de fonctions de gestion des programmes.
 
-=== Le mode launcher
+== Plus sur la console
 
-Ce mode permet notamment d'implémenter en Neon des shells et des launchers en interface graphique pour lancer des programmes Neon sur plateforme `TI_EZ80`. Cette fonctionnalité est présente sur toutes les plateformes, mais est surtout utile sur la plateforme `TI_EZ80`.
+=== Vue globale
 
-Sur plateforme `TI_EZ80` :\
-Si la calculatrice contient un AppVar nommé `LAUNCHER` et commençant par les caractères `#NEON` ou `NEON\x00`, l'interpréteur lancera automatiquement l'exécution de ce programme en tant que programme Neon.
-
-Sur les autres plateformes :\
-Si le dossier courant contient un fichier nommé `__launcher__.ne`, celui-ci sera automatiquement exécuté au lancement de l'interpréteur.
-
-À noter que si `Ans` (ou `Rép`) contient un nom de fichier, Neon préférera toujours lancer ce fichier directement plutôt que de lancer le launcher.
-
-=== Le mode console
+Lors de l'ouverture de la console, un message de bienvenue sera affiché. Ce message indique la version exacte de Neon, la date exacte de compilation, le site web officiel ainsi qu'une invitation sur le serveur Discord officiel de Neon.
 
 Lorsque la console est prête à recevoir une expression à évaluer, le curseur est sur une nouvelle ligne débutée par deux chevrons `>>`. Si l'on entre une expression, celle-ci sera évaluée, et son résultat ainsi que son type seront affichés sur une nouvelle ligne.
 
-Pour entrer des bloc de code, il faut garder en tête que l'appui sur ENTRÉE entraînera l'envoi du texte écrit à l'interpréteur. Il faut donc soit utiliser le retour à la ligne délimité par `;`, soit s'assurer que la ligne début par `..` indiquant que le retour à la ligne ne causera pas un envoi du texte à l'interpréteur.
+La console permet d'entrer du code sur plusieurs lignes, mais il faut pour cela que l'interpréteur détecte que le code entré n'est pas encore terminé (parenthèse non fermée, mot-clé `do` sans `end` correspondant, ...)
 
-Sur la plateforme `TI_EZ80`, pour entrer en mode console, il faut que la variable `Ans` ou `Rép` contienne une chaîne de caractères vide, ou bien un autre type de données.
+La console fournit toutes les fonctionnalités de base d'une console comme par exemple un historique, la possibilité d'éditer la ligne courante.
+
+De plus sur certaines plateformes (comme Linux), le texte tapé dans la console ainsi que les résultats d'expressions sont automatiquement coloré syntaxiquement. Cela améliore la lisibilité et permet de plus facilement détecter les erreurs de syntaxe.
+
+=== Les erreurs
+
+Lorsqu'une erreur est déclenchée, la console affiche, dans l'ordre:
+- Le type d'erreur (l'objet `Exception` ayant déclenché l'erreur)
+- Le fichier en cours d'exécution au moment du déclenchement de l'erreur
+- Un message d'erreur détaillant les raisons de l'erreur
+- Une référence exacte sur le message d'erreur
+
+Cette référence prend la forme de trois nombres séparés par `#`: `ERRCODE#SOURCEID#LINENO`.
+- `ERRCODE` correspond au numéro d'identifiant de l'erreur déclenchée. À chaque numéro d'identifiant d'erreur correspond un message d'erreur paramétrique. Par exemple le code d'erreur 15 correspond au message paramétrique `"Trying to index <> whereas it is not indexable."` que l'on peut par exemple déclencher en évaluant `print[42]`
+- `SOURCEID` correspond à l'identifiant de fichier source de Neon dans lequel l'erreur a été déclenchée. L'identifiant de chaque fichier peut être trouvé à la première ligne de chaque fichier `.c` du code source dans la définition de `NEON_SOURCE_ID`. Le fichier `main.c` du code source contient également un table de correspondance des fichiers sources et de leur identifiant.
+- `LINENO` correspond à la ligne du code source à laquelle a été déclenchée l'erreur. Ensemble, `SOURCEID` et `LINENO` permettent d'identifier très précisément la cause d'une erreur déclenchée par l'interpréteur Neon.
+
+=== Interruption d'un programme en cours d'exécution
+
+Lorsqu'un programme Neon est en cours d'exécution, il est toujours possible de l'interrompre. Pour cela il faut appuyer sur `CTRL+C` (plateformes classiques), et sur la touche `[ON]` (TI-83 Premium CE/TI 84 Plus CE)
+
+Lorsque l'on déclenche l'interruption d'un programme Neon, un invite demande d'effectuer un choix entre deux options :
+- Stop currently running program (arrêter le programme en cours d'exécution)
+- Open interactive console on current environment (Ouvrir une console interactive dans l'environnement actuel)
+
+La première option va définitivement arrêter le programme et afficher une erreur `KeyboardInterrupt`. La deuxième option va démarrer une console interactive dans laquelle il est possible d'exécuter du code, évaluer des expressions, modifier les variables, etc. Lors de la sortie de cette console, le programme mis en pause va continuer là où il s'était arrêté, mais en intégrant toutes les modifications effectuées dans la console.
 
 #outline(title : "Sommaire")
 
@@ -1132,9 +1152,9 @@ La fonction `loadNamespace` prend en argument une chaîne de caractères corresp
 
 Cependant il est important de comprendre que `loadNamespace` n'agit que sur les éléments déjà définis au moment où elle est appelée.
 
-== 4.6.3 - Surcharge d'opérateurs et de l'affichage
+== 4.6.3 - Surcharge de fonctionnalités
 
-Neon fournit la possibilité de surcharger certains opérateurs ainsi que les fonctions d'affichage sur certains types de containers. Il est possible de configurer Neon pour que l'utilisation de certains opérateurs sur certains types de containers exécute une fonction Neon définie par l'utilisateur plutôt que l'opérateur original.
+Neon fournit la possibilité de surcharger certains opérateurs, l'appel de fonctions ainsi que les fonctions d'affichage sur certains types de containers. Il est possible de configurer Neon pour que l'utilisation de certains opérateurs sur certains types de containers exécute une fonction Neon définie par l'utilisateur plutôt que l'opérateur original.
 
 Les opérateurs surchargeables sont :\
 ```
@@ -1152,6 +1172,8 @@ in : in
 Pour surcharger un opérateur sur un certain type de containers `MonContainer`, il suffit de regarder le nom que porte l'opérateur dans la liste ci-dessus, et définir la fonction `MonContainer~nom`, avec `nom` le nom de l'opérateur à surcharger dans la liste ci-dessus. C'est cette fonction qui définira l'action effectuée par l'opérateur sur ces objets.
 
 En plus des opérateurs, on peut surcharger la fonction `str` en définissant `MonContainer~str` et l'affichage (`print`, `output` et l'affichage dans la console) en définissant `MonContainer~repr`.
+
+Il est également possible de surcharger l'appel de fonctions pour des containers. Pour cela il faut définir la fonction `MonContainer~call` qui doit prendre deux arguments : l'objet que l'on appelle, et la liste d'arguments de l'appel. Pour les containers implémentant la surcharge de l'appel de fonction, ils pourront être appelés comme n'importe quelle fonction, si ce n'est que tous les arguments sont des arguments positionnels (pas de possibilité de spécifier des arguments par leur nom).
 
 Si au moins l'un des arguments d'un opérateur est un container d'un type pour lequel cet opérateur est surchargé, la fonction de surcharge sera appelée.
 

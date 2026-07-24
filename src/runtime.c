@@ -109,8 +109,8 @@ NO_OPT void neon_interp_next_process(void) {
 void stop_execution(void) {
     strlist options = (strlist) {
         .tab = (char*[]) {
-            "Stop current running program",
-            "Open interactive console on current environment"
+            "Stop currently running program",
+            "Open interactive console in current environment"
         },
         .len = 2,
         .capacity = 1

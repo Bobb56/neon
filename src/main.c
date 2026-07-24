@@ -54,7 +54,6 @@ CHOSES SPÉCIFIQUES À L'ARCHITECTURE :
 > ATOMIC_TIME
 
 Liste des choses qui ne marchent pas
-- Deadline word left/right
 _____________________
 
 Potentielles futures erreurs :
@@ -70,6 +69,7 @@ Si il y a un bug bizarre sur TI_EZ80, penser aux optimisations du compilateurs
 
 Avancement et choses à faire :
 ------------------------------
+--> Remove launcher features
 --> Ajouter un type de donnée bitmap/nombres scalaires à Neon
 --> Ajouter un objet graphique Sprite qui est un tableau de nombres à deux dimensions. Chaque nombre n'est pas forcément un pixel mais est un rectangle, et les dimensions de chaque unité sont également précisées dans l'objet
 --> Ajouter des tables de hachage à Neon

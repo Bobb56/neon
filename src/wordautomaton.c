@@ -94,6 +94,13 @@ static const uint8_t final_states[] = {
     0,
     WA_KEYWORD,
     0,
+    WA_KEYWORD,
+    0,
+    0,
+    0,
+    0,
+    WA_KEYWORD,
+    0,
     WA_OPERATOR,
     0,
     WA_OPERATOR,
@@ -468,7 +475,14 @@ static uint8_t (*states_functions[])(char) = {
     jump_s226,
     jump_s227,
     jump_s228,
-    jump_s229
+    jump_s229,
+    jump_s230,
+    jump_s231,
+    jump_s232,
+    jump_s233,
+    jump_s234,
+    jump_s235,
+    jump_s236
 };
 
 uint8_t jump_start(char c) {
@@ -500,41 +514,41 @@ uint8_t jump_start(char c) {
         case 't':
             return WA_S84;
         case 'o':
-            return WA_S90;
+            return WA_S97;
         case 'x':
-            return WA_S92;
-        case 'n':
-            return WA_S95;
-        case 'E':
             return WA_S99;
+        case 'n':
+            return WA_S102;
+        case 'E':
+            return WA_S106;
         case 'T':
-            return WA_S108;
+            return WA_S115;
         case 'F':
-            return WA_S112;
+            return WA_S119;
         case 'N':
-            return WA_S117;
+            return WA_S124;
         case 'I':
-            return WA_S121;
+            return WA_S128;
         case 'P':
-            return WA_S131;
+            return WA_S138;
         case 'B':
-            return WA_S133;
+            return WA_S140;
         case 'S':
-            return WA_S137;
+            return WA_S144;
         case 'C':
-            return WA_S143;
+            return WA_S150;
         case 'R':
-            return WA_S153;
+            return WA_S160;
         case 'L':
-            return WA_S171;
+            return WA_S178;
         case 'M':
-            return WA_S175;
+            return WA_S182;
         case 'G':
-            return WA_S206;
+            return WA_S213;
         case 'O':
-            return WA_S216;
-        case 'D':
             return WA_S223;
+        case 'D':
+            return WA_S230;
         default:
             return WA_NONE;
     }
@@ -556,7 +570,7 @@ uint8_t jump_s1(char c) {
         case 'n':
             return WA_S48;
         case 's':
-            return WA_S107;
+            return WA_S114;
         default:
             return WA_NONE;
     }
@@ -575,6 +589,8 @@ uint8_t jump_s3(char c) {
             return WA_S4;
         case 'n':
             return WA_S82;
+        case 'x':
+            return WA_S90;
         default:
             return WA_NONE;
     }
@@ -872,7 +888,7 @@ uint8_t jump_s37(char c) {
         case 'w':
             return WA_S38;
         case 'n':
-            return WA_S88;
+            return WA_S95;
         default:
             return WA_NONE;
     }
@@ -928,7 +944,7 @@ uint8_t jump_s43(char c) {
         case 'f':
             return WA_S44;
         case 'l':
-            return WA_S98;
+            return WA_S105;
         default:
             return WA_NONE;
     }
@@ -1233,7 +1249,7 @@ uint8_t jump_s78(char c) {
         case 's':
             return WA_S79;
         case 'r':
-            return WA_S101;
+            return WA_S108;
         default:
             return WA_NONE;
     }
@@ -1282,6 +1298,8 @@ uint8_t jump_s84(char c) {
     switch (c) {
         case 'h':
             return WA_S85;
+        case 'r':
+            return WA_S88;
         default:
             return WA_NONE;
     }
@@ -1314,7 +1332,7 @@ uint8_t jump_s87(char c) {
 
 uint8_t jump_s88(char c) {
     switch (c) {
-        case 'd':
+        case 'y':
             return WA_S89;
         default:
             return WA_NONE;
@@ -1330,7 +1348,7 @@ uint8_t jump_s89(char c) {
 
 uint8_t jump_s90(char c) {
     switch (c) {
-        case 'r':
+        case 'c':
             return WA_S91;
         default:
             return WA_NONE;
@@ -1339,6 +1357,8 @@ uint8_t jump_s90(char c) {
 
 uint8_t jump_s91(char c) {
     switch (c) {
+        case 'e':
+            return WA_S92;
         default:
             return WA_NONE;
     }
@@ -1346,7 +1366,7 @@ uint8_t jump_s91(char c) {
 
 uint8_t jump_s92(char c) {
     switch (c) {
-        case 'o':
+        case 'p':
             return WA_S93;
         default:
             return WA_NONE;
@@ -1355,7 +1375,7 @@ uint8_t jump_s92(char c) {
 
 uint8_t jump_s93(char c) {
     switch (c) {
-        case 'r':
+        case 't':
             return WA_S94;
         default:
             return WA_NONE;
@@ -1371,7 +1391,7 @@ uint8_t jump_s94(char c) {
 
 uint8_t jump_s95(char c) {
     switch (c) {
-        case 'o':
+        case 'd':
             return WA_S96;
         default:
             return WA_NONE;
@@ -1380,8 +1400,6 @@ uint8_t jump_s95(char c) {
 
 uint8_t jump_s96(char c) {
     switch (c) {
-        case 't':
-            return WA_S97;
         default:
             return WA_NONE;
     }
@@ -1389,6 +1407,8 @@ uint8_t jump_s96(char c) {
 
 uint8_t jump_s97(char c) {
     switch (c) {
+        case 'r':
+            return WA_S98;
         default:
             return WA_NONE;
     }
@@ -1403,10 +1423,8 @@ uint8_t jump_s98(char c) {
 
 uint8_t jump_s99(char c) {
     switch (c) {
-        case 'E':
+        case 'o':
             return WA_S100;
-        case 'x':
-            return WA_S188;
         default:
             return WA_NONE;
     }
@@ -1414,6 +1432,8 @@ uint8_t jump_s99(char c) {
 
 uint8_t jump_s100(char c) {
     switch (c) {
+        case 'r':
+            return WA_S101;
         default:
             return WA_NONE;
     }
@@ -1421,8 +1441,6 @@ uint8_t jump_s100(char c) {
 
 uint8_t jump_s101(char c) {
     switch (c) {
-        case 'a':
-            return WA_S102;
         default:
             return WA_NONE;
     }
@@ -1430,7 +1448,7 @@ uint8_t jump_s101(char c) {
 
 uint8_t jump_s102(char c) {
     switch (c) {
-        case 'l':
+        case 'o':
             return WA_S103;
         default:
             return WA_NONE;
@@ -1439,7 +1457,7 @@ uint8_t jump_s102(char c) {
 
 uint8_t jump_s103(char c) {
     switch (c) {
-        case 'l':
+        case 't':
             return WA_S104;
         default:
             return WA_NONE;
@@ -1448,8 +1466,6 @@ uint8_t jump_s103(char c) {
 
 uint8_t jump_s104(char c) {
     switch (c) {
-        case 'e':
-            return WA_S105;
         default:
             return WA_NONE;
     }
@@ -1457,8 +1473,6 @@ uint8_t jump_s104(char c) {
 
 uint8_t jump_s105(char c) {
     switch (c) {
-        case 'l':
-            return WA_S106;
         default:
             return WA_NONE;
     }
@@ -1466,6 +1480,10 @@ uint8_t jump_s105(char c) {
 
 uint8_t jump_s106(char c) {
     switch (c) {
+        case 'E':
+            return WA_S107;
+        case 'x':
+            return WA_S195;
         default:
             return WA_NONE;
     }
@@ -1480,7 +1498,7 @@ uint8_t jump_s107(char c) {
 
 uint8_t jump_s108(char c) {
     switch (c) {
-        case 'r':
+        case 'a':
             return WA_S109;
         default:
             return WA_NONE;
@@ -1489,7 +1507,7 @@ uint8_t jump_s108(char c) {
 
 uint8_t jump_s109(char c) {
     switch (c) {
-        case 'u':
+        case 'l':
             return WA_S110;
         default:
             return WA_NONE;
@@ -1498,7 +1516,7 @@ uint8_t jump_s109(char c) {
 
 uint8_t jump_s110(char c) {
     switch (c) {
-        case 'e':
+        case 'l':
             return WA_S111;
         default:
             return WA_NONE;
@@ -1507,6 +1525,8 @@ uint8_t jump_s110(char c) {
 
 uint8_t jump_s111(char c) {
     switch (c) {
+        case 'e':
+            return WA_S112;
         default:
             return WA_NONE;
     }
@@ -1514,10 +1534,8 @@ uint8_t jump_s111(char c) {
 
 uint8_t jump_s112(char c) {
     switch (c) {
-        case 'a':
+        case 'l':
             return WA_S113;
-        case 'u':
-            return WA_S181;
         default:
             return WA_NONE;
     }
@@ -1525,8 +1543,6 @@ uint8_t jump_s112(char c) {
 
 uint8_t jump_s113(char c) {
     switch (c) {
-        case 'l':
-            return WA_S114;
         default:
             return WA_NONE;
     }
@@ -1534,8 +1550,6 @@ uint8_t jump_s113(char c) {
 
 uint8_t jump_s114(char c) {
     switch (c) {
-        case 's':
-            return WA_S115;
         default:
             return WA_NONE;
     }
@@ -1543,7 +1557,7 @@ uint8_t jump_s114(char c) {
 
 uint8_t jump_s115(char c) {
     switch (c) {
-        case 'e':
+        case 'r':
             return WA_S116;
         default:
             return WA_NONE;
@@ -1552,6 +1566,8 @@ uint8_t jump_s115(char c) {
 
 uint8_t jump_s116(char c) {
     switch (c) {
+        case 'u':
+            return WA_S117;
         default:
             return WA_NONE;
     }
@@ -1559,10 +1575,8 @@ uint8_t jump_s116(char c) {
 
 uint8_t jump_s117(char c) {
     switch (c) {
-        case 'o':
+        case 'e':
             return WA_S118;
-        case 'a':
-            return WA_S129;
         default:
             return WA_NONE;
     }
@@ -1570,8 +1584,6 @@ uint8_t jump_s117(char c) {
 
 uint8_t jump_s118(char c) {
     switch (c) {
-        case 'n':
-            return WA_S119;
         default:
             return WA_NONE;
     }
@@ -1579,8 +1591,10 @@ uint8_t jump_s118(char c) {
 
 uint8_t jump_s119(char c) {
     switch (c) {
-        case 'e':
+        case 'a':
             return WA_S120;
+        case 'u':
+            return WA_S188;
         default:
             return WA_NONE;
     }
@@ -1588,6 +1602,8 @@ uint8_t jump_s119(char c) {
 
 uint8_t jump_s120(char c) {
     switch (c) {
+        case 'l':
+            return WA_S121;
         default:
             return WA_NONE;
     }
@@ -1595,7 +1611,7 @@ uint8_t jump_s120(char c) {
 
 uint8_t jump_s121(char c) {
     switch (c) {
-        case 'n':
+        case 's':
             return WA_S122;
         default:
             return WA_NONE;
@@ -1604,10 +1620,8 @@ uint8_t jump_s121(char c) {
 
 uint8_t jump_s122(char c) {
     switch (c) {
-        case 'f':
+        case 'e':
             return WA_S123;
-        case 't':
-            return WA_S148;
         default:
             return WA_NONE;
     }
@@ -1615,8 +1629,6 @@ uint8_t jump_s122(char c) {
 
 uint8_t jump_s123(char c) {
     switch (c) {
-        case 'i':
-            return WA_S124;
         default:
             return WA_NONE;
     }
@@ -1624,8 +1636,10 @@ uint8_t jump_s123(char c) {
 
 uint8_t jump_s124(char c) {
     switch (c) {
-        case 'n':
+        case 'o':
             return WA_S125;
+        case 'a':
+            return WA_S136;
         default:
             return WA_NONE;
     }
@@ -1633,7 +1647,7 @@ uint8_t jump_s124(char c) {
 
 uint8_t jump_s125(char c) {
     switch (c) {
-        case 'i':
+        case 'n':
             return WA_S126;
         default:
             return WA_NONE;
@@ -1642,7 +1656,7 @@ uint8_t jump_s125(char c) {
 
 uint8_t jump_s126(char c) {
     switch (c) {
-        case 't':
+        case 'e':
             return WA_S127;
         default:
             return WA_NONE;
@@ -1651,8 +1665,6 @@ uint8_t jump_s126(char c) {
 
 uint8_t jump_s127(char c) {
     switch (c) {
-        case 'y':
-            return WA_S128;
         default:
             return WA_NONE;
     }
@@ -1660,6 +1672,8 @@ uint8_t jump_s127(char c) {
 
 uint8_t jump_s128(char c) {
     switch (c) {
+        case 'n':
+            return WA_S129;
         default:
             return WA_NONE;
     }
@@ -1667,8 +1681,10 @@ uint8_t jump_s128(char c) {
 
 uint8_t jump_s129(char c) {
     switch (c) {
-        case 'N':
+        case 'f':
             return WA_S130;
+        case 't':
+            return WA_S155;
         default:
             return WA_NONE;
     }
@@ -1676,6 +1692,8 @@ uint8_t jump_s129(char c) {
 
 uint8_t jump_s130(char c) {
     switch (c) {
+        case 'i':
+            return WA_S131;
         default:
             return WA_NONE;
     }
@@ -1683,12 +1701,8 @@ uint8_t jump_s130(char c) {
 
 uint8_t jump_s131(char c) {
     switch (c) {
-        case 'i':
+        case 'n':
             return WA_S132;
-        case 'r':
-            return WA_S196;
-        case 'u':
-            return WA_S211;
         default:
             return WA_NONE;
     }
@@ -1696,6 +1710,8 @@ uint8_t jump_s131(char c) {
 
 uint8_t jump_s132(char c) {
     switch (c) {
+        case 'i':
+            return WA_S133;
         default:
             return WA_NONE;
     }
@@ -1703,12 +1719,8 @@ uint8_t jump_s132(char c) {
 
 uint8_t jump_s133(char c) {
     switch (c) {
-        case 'o':
+        case 't':
             return WA_S134;
-        case 'u':
-            return WA_S157;
-        case 'l':
-            return WA_S203;
         default:
             return WA_NONE;
     }
@@ -1716,7 +1728,7 @@ uint8_t jump_s133(char c) {
 
 uint8_t jump_s134(char c) {
     switch (c) {
-        case 'o':
+        case 'y':
             return WA_S135;
         default:
             return WA_NONE;
@@ -1725,8 +1737,6 @@ uint8_t jump_s134(char c) {
 
 uint8_t jump_s135(char c) {
     switch (c) {
-        case 'l':
-            return WA_S136;
         default:
             return WA_NONE;
     }
@@ -1734,6 +1744,8 @@ uint8_t jump_s135(char c) {
 
 uint8_t jump_s136(char c) {
     switch (c) {
+        case 'N':
+            return WA_S137;
         default:
             return WA_NONE;
     }
@@ -1741,8 +1753,6 @@ uint8_t jump_s136(char c) {
 
 uint8_t jump_s137(char c) {
     switch (c) {
-        case 't':
-            return WA_S138;
         default:
             return WA_NONE;
     }
@@ -1750,8 +1760,12 @@ uint8_t jump_s137(char c) {
 
 uint8_t jump_s138(char c) {
     switch (c) {
-        case 'r':
+        case 'i':
             return WA_S139;
+        case 'r':
+            return WA_S203;
+        case 'u':
+            return WA_S218;
         default:
             return WA_NONE;
     }
@@ -1759,8 +1773,6 @@ uint8_t jump_s138(char c) {
 
 uint8_t jump_s139(char c) {
     switch (c) {
-        case 'i':
-            return WA_S140;
         default:
             return WA_NONE;
     }
@@ -1768,8 +1780,12 @@ uint8_t jump_s139(char c) {
 
 uint8_t jump_s140(char c) {
     switch (c) {
-        case 'n':
+        case 'o':
             return WA_S141;
+        case 'u':
+            return WA_S164;
+        case 'l':
+            return WA_S210;
         default:
             return WA_NONE;
     }
@@ -1777,7 +1793,7 @@ uint8_t jump_s140(char c) {
 
 uint8_t jump_s141(char c) {
     switch (c) {
-        case 'g':
+        case 'o':
             return WA_S142;
         default:
             return WA_NONE;
@@ -1786,6 +1802,8 @@ uint8_t jump_s141(char c) {
 
 uint8_t jump_s142(char c) {
     switch (c) {
+        case 'l':
+            return WA_S143;
         default:
             return WA_NONE;
     }
@@ -1793,8 +1811,6 @@ uint8_t jump_s142(char c) {
 
 uint8_t jump_s143(char c) {
     switch (c) {
-        case 'o':
-            return WA_S144;
         default:
             return WA_NONE;
     }
@@ -1802,7 +1818,7 @@ uint8_t jump_s143(char c) {
 
 uint8_t jump_s144(char c) {
     switch (c) {
-        case 'n':
+        case 't':
             return WA_S145;
         default:
             return WA_NONE;
@@ -1811,7 +1827,7 @@ uint8_t jump_s144(char c) {
 
 uint8_t jump_s145(char c) {
     switch (c) {
-        case 's':
+        case 'r':
             return WA_S146;
         default:
             return WA_NONE;
@@ -1820,7 +1836,7 @@ uint8_t jump_s145(char c) {
 
 uint8_t jump_s146(char c) {
     switch (c) {
-        case 't':
+        case 'i':
             return WA_S147;
         default:
             return WA_NONE;
@@ -1829,6 +1845,8 @@ uint8_t jump_s146(char c) {
 
 uint8_t jump_s147(char c) {
     switch (c) {
+        case 'n':
+            return WA_S148;
         default:
             return WA_NONE;
     }
@@ -1836,7 +1854,7 @@ uint8_t jump_s147(char c) {
 
 uint8_t jump_s148(char c) {
     switch (c) {
-        case 'e':
+        case 'g':
             return WA_S149;
         default:
             return WA_NONE;
@@ -1845,8 +1863,6 @@ uint8_t jump_s148(char c) {
 
 uint8_t jump_s149(char c) {
     switch (c) {
-        case 'g':
-            return WA_S150;
         default:
             return WA_NONE;
     }
@@ -1854,7 +1870,7 @@ uint8_t jump_s149(char c) {
 
 uint8_t jump_s150(char c) {
     switch (c) {
-        case 'e':
+        case 'o':
             return WA_S151;
         default:
             return WA_NONE;
@@ -1863,7 +1879,7 @@ uint8_t jump_s150(char c) {
 
 uint8_t jump_s151(char c) {
     switch (c) {
-        case 'r':
+        case 'n':
             return WA_S152;
         default:
             return WA_NONE;
@@ -1872,6 +1888,8 @@ uint8_t jump_s151(char c) {
 
 uint8_t jump_s152(char c) {
     switch (c) {
+        case 's':
+            return WA_S153;
         default:
             return WA_NONE;
     }
@@ -1879,7 +1897,7 @@ uint8_t jump_s152(char c) {
 
 uint8_t jump_s153(char c) {
     switch (c) {
-        case 'e':
+        case 't':
             return WA_S154;
         default:
             return WA_NONE;
@@ -1888,10 +1906,6 @@ uint8_t jump_s153(char c) {
 
 uint8_t jump_s154(char c) {
     switch (c) {
-        case 'a':
-            return WA_S155;
-        case 'd':
-            return WA_S202;
         default:
             return WA_NONE;
     }
@@ -1899,7 +1913,7 @@ uint8_t jump_s154(char c) {
 
 uint8_t jump_s155(char c) {
     switch (c) {
-        case 'l':
+        case 'e':
             return WA_S156;
         default:
             return WA_NONE;
@@ -1908,6 +1922,8 @@ uint8_t jump_s155(char c) {
 
 uint8_t jump_s156(char c) {
     switch (c) {
+        case 'g':
+            return WA_S157;
         default:
             return WA_NONE;
     }
@@ -1915,7 +1931,7 @@ uint8_t jump_s156(char c) {
 
 uint8_t jump_s157(char c) {
     switch (c) {
-        case 'i':
+        case 'e':
             return WA_S158;
         default:
             return WA_NONE;
@@ -1924,7 +1940,7 @@ uint8_t jump_s157(char c) {
 
 uint8_t jump_s158(char c) {
     switch (c) {
-        case 'l':
+        case 'r':
             return WA_S159;
         default:
             return WA_NONE;
@@ -1933,8 +1949,6 @@ uint8_t jump_s158(char c) {
 
 uint8_t jump_s159(char c) {
     switch (c) {
-        case 't':
-            return WA_S160;
         default:
             return WA_NONE;
     }
@@ -1942,7 +1956,7 @@ uint8_t jump_s159(char c) {
 
 uint8_t jump_s160(char c) {
     switch (c) {
-        case 'I':
+        case 'e':
             return WA_S161;
         default:
             return WA_NONE;
@@ -1951,8 +1965,10 @@ uint8_t jump_s160(char c) {
 
 uint8_t jump_s161(char c) {
     switch (c) {
-        case 'n':
+        case 'a':
             return WA_S162;
+        case 'd':
+            return WA_S209;
         default:
             return WA_NONE;
     }
@@ -1960,7 +1976,7 @@ uint8_t jump_s161(char c) {
 
 uint8_t jump_s162(char c) {
     switch (c) {
-        case 'F':
+        case 'l':
             return WA_S163;
         default:
             return WA_NONE;
@@ -1969,8 +1985,6 @@ uint8_t jump_s162(char c) {
 
 uint8_t jump_s163(char c) {
     switch (c) {
-        case 'u':
-            return WA_S164;
         default:
             return WA_NONE;
     }
@@ -1978,7 +1992,7 @@ uint8_t jump_s163(char c) {
 
 uint8_t jump_s164(char c) {
     switch (c) {
-        case 'n':
+        case 'i':
             return WA_S165;
         default:
             return WA_NONE;
@@ -1987,7 +2001,7 @@ uint8_t jump_s164(char c) {
 
 uint8_t jump_s165(char c) {
     switch (c) {
-        case 'c':
+        case 'l':
             return WA_S166;
         default:
             return WA_NONE;
@@ -2005,7 +2019,7 @@ uint8_t jump_s166(char c) {
 
 uint8_t jump_s167(char c) {
     switch (c) {
-        case 'i':
+        case 'I':
             return WA_S168;
         default:
             return WA_NONE;
@@ -2014,7 +2028,7 @@ uint8_t jump_s167(char c) {
 
 uint8_t jump_s168(char c) {
     switch (c) {
-        case 'o':
+        case 'n':
             return WA_S169;
         default:
             return WA_NONE;
@@ -2023,7 +2037,7 @@ uint8_t jump_s168(char c) {
 
 uint8_t jump_s169(char c) {
     switch (c) {
-        case 'n':
+        case 'F':
             return WA_S170;
         default:
             return WA_NONE;
@@ -2032,6 +2046,8 @@ uint8_t jump_s169(char c) {
 
 uint8_t jump_s170(char c) {
     switch (c) {
+        case 'u':
+            return WA_S171;
         default:
             return WA_NONE;
     }
@@ -2039,7 +2055,7 @@ uint8_t jump_s170(char c) {
 
 uint8_t jump_s171(char c) {
     switch (c) {
-        case 'i':
+        case 'n':
             return WA_S172;
         default:
             return WA_NONE;
@@ -2048,7 +2064,7 @@ uint8_t jump_s171(char c) {
 
 uint8_t jump_s172(char c) {
     switch (c) {
-        case 's':
+        case 'c':
             return WA_S173;
         default:
             return WA_NONE;
@@ -2066,6 +2082,8 @@ uint8_t jump_s173(char c) {
 
 uint8_t jump_s174(char c) {
     switch (c) {
+        case 'i':
+            return WA_S175;
         default:
             return WA_NONE;
     }
@@ -2073,7 +2091,7 @@ uint8_t jump_s174(char c) {
 
 uint8_t jump_s175(char c) {
     switch (c) {
-        case 'e':
+        case 'o':
             return WA_S176;
         default:
             return WA_NONE;
@@ -2082,7 +2100,7 @@ uint8_t jump_s175(char c) {
 
 uint8_t jump_s176(char c) {
     switch (c) {
-        case 't':
+        case 'n':
             return WA_S177;
         default:
             return WA_NONE;
@@ -2091,8 +2109,6 @@ uint8_t jump_s176(char c) {
 
 uint8_t jump_s177(char c) {
     switch (c) {
-        case 'h':
-            return WA_S178;
         default:
             return WA_NONE;
     }
@@ -2100,7 +2116,7 @@ uint8_t jump_s177(char c) {
 
 uint8_t jump_s178(char c) {
     switch (c) {
-        case 'o':
+        case 'i':
             return WA_S179;
         default:
             return WA_NONE;
@@ -2109,7 +2125,7 @@ uint8_t jump_s178(char c) {
 
 uint8_t jump_s179(char c) {
     switch (c) {
-        case 'd':
+        case 's':
             return WA_S180;
         default:
             return WA_NONE;
@@ -2118,6 +2134,8 @@ uint8_t jump_s179(char c) {
 
 uint8_t jump_s180(char c) {
     switch (c) {
+        case 't':
+            return WA_S181;
         default:
             return WA_NONE;
     }
@@ -2125,8 +2143,6 @@ uint8_t jump_s180(char c) {
 
 uint8_t jump_s181(char c) {
     switch (c) {
-        case 'n':
-            return WA_S182;
         default:
             return WA_NONE;
     }
@@ -2134,7 +2150,7 @@ uint8_t jump_s181(char c) {
 
 uint8_t jump_s182(char c) {
     switch (c) {
-        case 'c':
+        case 'e':
             return WA_S183;
         default:
             return WA_NONE;
@@ -2152,7 +2168,7 @@ uint8_t jump_s183(char c) {
 
 uint8_t jump_s184(char c) {
     switch (c) {
-        case 'i':
+        case 'h':
             return WA_S185;
         default:
             return WA_NONE;
@@ -2170,7 +2186,7 @@ uint8_t jump_s185(char c) {
 
 uint8_t jump_s186(char c) {
     switch (c) {
-        case 'n':
+        case 'd':
             return WA_S187;
         default:
             return WA_NONE;
@@ -2186,7 +2202,7 @@ uint8_t jump_s187(char c) {
 
 uint8_t jump_s188(char c) {
     switch (c) {
-        case 'c':
+        case 'n':
             return WA_S189;
         default:
             return WA_NONE;
@@ -2195,7 +2211,7 @@ uint8_t jump_s188(char c) {
 
 uint8_t jump_s189(char c) {
     switch (c) {
-        case 'e':
+        case 'c':
             return WA_S190;
         default:
             return WA_NONE;
@@ -2204,7 +2220,7 @@ uint8_t jump_s189(char c) {
 
 uint8_t jump_s190(char c) {
     switch (c) {
-        case 'p':
+        case 't':
             return WA_S191;
         default:
             return WA_NONE;
@@ -2213,7 +2229,7 @@ uint8_t jump_s190(char c) {
 
 uint8_t jump_s191(char c) {
     switch (c) {
-        case 't':
+        case 'i':
             return WA_S192;
         default:
             return WA_NONE;
@@ -2222,7 +2238,7 @@ uint8_t jump_s191(char c) {
 
 uint8_t jump_s192(char c) {
     switch (c) {
-        case 'i':
+        case 'o':
             return WA_S193;
         default:
             return WA_NONE;
@@ -2231,7 +2247,7 @@ uint8_t jump_s192(char c) {
 
 uint8_t jump_s193(char c) {
     switch (c) {
-        case 'o':
+        case 'n':
             return WA_S194;
         default:
             return WA_NONE;
@@ -2240,8 +2256,6 @@ uint8_t jump_s193(char c) {
 
 uint8_t jump_s194(char c) {
     switch (c) {
-        case 'n':
-            return WA_S195;
         default:
             return WA_NONE;
     }
@@ -2249,6 +2263,8 @@ uint8_t jump_s194(char c) {
 
 uint8_t jump_s195(char c) {
     switch (c) {
+        case 'c':
+            return WA_S196;
         default:
             return WA_NONE;
     }
@@ -2256,7 +2272,7 @@ uint8_t jump_s195(char c) {
 
 uint8_t jump_s196(char c) {
     switch (c) {
-        case 'o':
+        case 'e':
             return WA_S197;
         default:
             return WA_NONE;
@@ -2265,7 +2281,7 @@ uint8_t jump_s196(char c) {
 
 uint8_t jump_s197(char c) {
     switch (c) {
-        case 'm':
+        case 'p':
             return WA_S198;
         default:
             return WA_NONE;
@@ -2274,7 +2290,7 @@ uint8_t jump_s197(char c) {
 
 uint8_t jump_s198(char c) {
     switch (c) {
-        case 'i':
+        case 't':
             return WA_S199;
         default:
             return WA_NONE;
@@ -2283,7 +2299,7 @@ uint8_t jump_s198(char c) {
 
 uint8_t jump_s199(char c) {
     switch (c) {
-        case 's':
+        case 'i':
             return WA_S200;
         default:
             return WA_NONE;
@@ -2292,7 +2308,7 @@ uint8_t jump_s199(char c) {
 
 uint8_t jump_s200(char c) {
     switch (c) {
-        case 'e':
+        case 'o':
             return WA_S201;
         default:
             return WA_NONE;
@@ -2301,6 +2317,8 @@ uint8_t jump_s200(char c) {
 
 uint8_t jump_s201(char c) {
     switch (c) {
+        case 'n':
+            return WA_S202;
         default:
             return WA_NONE;
     }
@@ -2315,7 +2333,7 @@ uint8_t jump_s202(char c) {
 
 uint8_t jump_s203(char c) {
     switch (c) {
-        case 'u':
+        case 'o':
             return WA_S204;
         default:
             return WA_NONE;
@@ -2324,7 +2342,7 @@ uint8_t jump_s203(char c) {
 
 uint8_t jump_s204(char c) {
     switch (c) {
-        case 'e':
+        case 'm':
             return WA_S205;
         default:
             return WA_NONE;
@@ -2333,6 +2351,8 @@ uint8_t jump_s204(char c) {
 
 uint8_t jump_s205(char c) {
     switch (c) {
+        case 'i':
+            return WA_S206;
         default:
             return WA_NONE;
     }
@@ -2340,7 +2360,7 @@ uint8_t jump_s205(char c) {
 
 uint8_t jump_s206(char c) {
     switch (c) {
-        case 'r':
+        case 's':
             return WA_S207;
         default:
             return WA_NONE;
@@ -2358,10 +2378,6 @@ uint8_t jump_s207(char c) {
 
 uint8_t jump_s208(char c) {
     switch (c) {
-        case 'e':
-            return WA_S209;
-        case 'y':
-            return WA_S222;
         default:
             return WA_NONE;
     }
@@ -2369,8 +2385,6 @@ uint8_t jump_s208(char c) {
 
 uint8_t jump_s209(char c) {
     switch (c) {
-        case 'n':
-            return WA_S210;
         default:
             return WA_NONE;
     }
@@ -2378,6 +2392,8 @@ uint8_t jump_s209(char c) {
 
 uint8_t jump_s210(char c) {
     switch (c) {
+        case 'u':
+            return WA_S211;
         default:
             return WA_NONE;
     }
@@ -2385,7 +2401,7 @@ uint8_t jump_s210(char c) {
 
 uint8_t jump_s211(char c) {
     switch (c) {
-        case 'r':
+        case 'e':
             return WA_S212;
         default:
             return WA_NONE;
@@ -2394,8 +2410,6 @@ uint8_t jump_s211(char c) {
 
 uint8_t jump_s212(char c) {
     switch (c) {
-        case 'p':
-            return WA_S213;
         default:
             return WA_NONE;
     }
@@ -2403,7 +2417,7 @@ uint8_t jump_s212(char c) {
 
 uint8_t jump_s213(char c) {
     switch (c) {
-        case 'l':
+        case 'r':
             return WA_S214;
         default:
             return WA_NONE;
@@ -2421,6 +2435,10 @@ uint8_t jump_s214(char c) {
 
 uint8_t jump_s215(char c) {
     switch (c) {
+        case 'e':
+            return WA_S216;
+        case 'y':
+            return WA_S229;
         default:
             return WA_NONE;
     }
@@ -2428,7 +2446,7 @@ uint8_t jump_s215(char c) {
 
 uint8_t jump_s216(char c) {
     switch (c) {
-        case 'r':
+        case 'n':
             return WA_S217;
         default:
             return WA_NONE;
@@ -2437,8 +2455,6 @@ uint8_t jump_s216(char c) {
 
 uint8_t jump_s217(char c) {
     switch (c) {
-        case 'a':
-            return WA_S218;
         default:
             return WA_NONE;
     }
@@ -2446,7 +2462,7 @@ uint8_t jump_s217(char c) {
 
 uint8_t jump_s218(char c) {
     switch (c) {
-        case 'n':
+        case 'r':
             return WA_S219;
         default:
             return WA_NONE;
@@ -2455,7 +2471,7 @@ uint8_t jump_s218(char c) {
 
 uint8_t jump_s219(char c) {
     switch (c) {
-        case 'g':
+        case 'p':
             return WA_S220;
         default:
             return WA_NONE;
@@ -2464,7 +2480,7 @@ uint8_t jump_s219(char c) {
 
 uint8_t jump_s220(char c) {
     switch (c) {
-        case 'e':
+        case 'l':
             return WA_S221;
         default:
             return WA_NONE;
@@ -2473,6 +2489,8 @@ uint8_t jump_s220(char c) {
 
 uint8_t jump_s221(char c) {
     switch (c) {
+        case 'e':
+            return WA_S222;
         default:
             return WA_NONE;
     }
@@ -2487,7 +2505,7 @@ uint8_t jump_s222(char c) {
 
 uint8_t jump_s223(char c) {
     switch (c) {
-        case 'e':
+        case 'r':
             return WA_S224;
         default:
             return WA_NONE;
@@ -2496,7 +2514,7 @@ uint8_t jump_s223(char c) {
 
 uint8_t jump_s224(char c) {
     switch (c) {
-        case 'f':
+        case 'a':
             return WA_S225;
         default:
             return WA_NONE;
@@ -2505,7 +2523,7 @@ uint8_t jump_s224(char c) {
 
 uint8_t jump_s225(char c) {
     switch (c) {
-        case 'a':
+        case 'n':
             return WA_S226;
         default:
             return WA_NONE;
@@ -2514,7 +2532,7 @@ uint8_t jump_s225(char c) {
 
 uint8_t jump_s226(char c) {
     switch (c) {
-        case 'u':
+        case 'g':
             return WA_S227;
         default:
             return WA_NONE;
@@ -2523,7 +2541,7 @@ uint8_t jump_s226(char c) {
 
 uint8_t jump_s227(char c) {
     switch (c) {
-        case 'l':
+        case 'e':
             return WA_S228;
         default:
             return WA_NONE;
@@ -2532,14 +2550,73 @@ uint8_t jump_s227(char c) {
 
 uint8_t jump_s228(char c) {
     switch (c) {
-        case 't':
-            return WA_S229;
         default:
             return WA_NONE;
     }
 }
 
 uint8_t jump_s229(char c) {
+    switch (c) {
+        default:
+            return WA_NONE;
+    }
+}
+
+uint8_t jump_s230(char c) {
+    switch (c) {
+        case 'e':
+            return WA_S231;
+        default:
+            return WA_NONE;
+    }
+}
+
+uint8_t jump_s231(char c) {
+    switch (c) {
+        case 'f':
+            return WA_S232;
+        default:
+            return WA_NONE;
+    }
+}
+
+uint8_t jump_s232(char c) {
+    switch (c) {
+        case 'a':
+            return WA_S233;
+        default:
+            return WA_NONE;
+    }
+}
+
+uint8_t jump_s233(char c) {
+    switch (c) {
+        case 'u':
+            return WA_S234;
+        default:
+            return WA_NONE;
+    }
+}
+
+uint8_t jump_s234(char c) {
+    switch (c) {
+        case 'l':
+            return WA_S235;
+        default:
+            return WA_NONE;
+    }
+}
+
+uint8_t jump_s235(char c) {
+    switch (c) {
+        case 't':
+            return WA_S236;
+        default:
+            return WA_NONE;
+    }
+}
+
+uint8_t jump_s236(char c) {
     switch (c) {
         default:
             return WA_NONE;

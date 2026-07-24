@@ -9,10 +9,10 @@
   #v(1em)
   #text(1.5em, "Documentation")
   
-  #text(1em, "v1.1")
+  #text(1em, "v1.2.en")
 ]
 
-#emph("This documentation applies to version 4.1 of Neon.")
+#emph("This documentation applies to version 4.5 of Neon.")
 
 = Introduction
 
@@ -20,48 +20,66 @@ Neon is a general-purpose scripting language that is natively concurrent, design
 
 Neon is designed to be easy to understand and easy to use. This documentation is not intended to be pedagogical, but serves as an exhaustive reference for all of Neon's features. This document is also not meant to be read in order, but to organize information into categories.
 
-By "Neon", we refer both to the language in its specifics and to its one and only interpreter.
+"Neon" refers to both the language itself—with its specific characteristics—and the various software implementations used to run it.
 
-== Programming Environment
+== The Software
 
-The Neon interpreter has two modes: a console mode, which allows entering code and expressions, and an execution mode for running files directly.
+=== Standard Platforms
 
-=== Direct Execution Mode
+This section describes using the Neon software on standard platforms (Linux, Windows).
 
-The officially supported file extension for Neon programs is `.ne`. It is recommended to name all Neon programs with this extension. To launch a program in execution mode, simply pass the filename as an argument to the Neon interpreter. The filename may be followed by arguments to be passed to the Neon program.
+The Neon interpreter has two modes: a console mode, which allows for entering code and expressions, and an execution mode, which allows for directly running files.
 
-On the `TI_EZ80` platform, Neon files are AppVars containing the Neon source code as plain text. The names of these AppVars have no extensions. To launch a file in execution mode, put the file's name in the `Ans` or `Rép` variable. To do this, write the filename in quotes on the calculator's home screen and press ENTER. When launched, the NEON program will detect the filename in this variable and execute it.
+==== Direct Execution Mode
 
-To facilitate development in Neon, the interpreter is compatible with Python AppVars.
+The officially supported file extension for Neon programs is `.ne`. It is recommended to name all Neon programs using this extension. To launch a program in execution mode, simply pass the filename as an argument to the Neon interpreter. The filename may be followed by arguments intended for the Neon program itself.
 
-For the Python application to distinguish Python AppVars from regular AppVars, they always begin with the 4 letters `PYCD` followed by the byte `00` (written as `PYCD\x00`).
-When an AppVar starting with `PYCD\x00` is launched with the Neon interpreter, the latter will simply ignore the first 5 bytes.
+In practice, open a terminal and type the following command: `neon file.ne arg1 arg2 ... argn`
 
-In order to specifically identify Neon programs as distinct from Python programs or plain AppVars, it is also possible to start a Neon AppVar with the 4 letters `NEON` followed by the byte `00`.
+==== Interactive Console Mode
 
-Exactly as with `PYCD\x00`, the interpreter launches the file ignoring the first five bytes corresponding to `NEON\x00`.
+To launch the interactive console mode, start the Neon interpreter without any arguments.
 
-This Neon-specific header could be used to implement a Neon IDE that automatically encodes `NEON\x00` at the beginning of files, exactly as the Python application does with `PYCD\x00`.
+For more information on the console, see the "More on the Console" section.
 
-=== Launcher Mode
+=== The `TI_EZ80` Platform (TI-83 Premium CE / TI-84 Plus CE)
 
-This mode makes it possible to implement shells and graphical launcher interfaces in Neon for launching Neon programs on the `TI_EZ80` platform. This feature is present on all platforms, but is most useful on the `TI_EZ80` platform.
+This platform is unique because the provided hardware and operating system are very minimalist. Consequently, there are differences between this platform and standard platforms. However, this platform benefits from significantly more extensive software support than the others, as a full IDE is built directly into Neon. This IDE includes an editor, a console, a program explorer, and program management functions.
 
-On the `TI_EZ80` platform:\
-If the calculator contains an AppVar named `LAUNCHER` beginning with the characters `#NEON` or `NEON\x00`, the interpreter will automatically launch this program as a Neon program.
+== More on the Console
 
-On other platforms:\
-If the current directory contains a file named `__launcher__.ne`, it will be automatically executed when the interpreter starts.
+=== Overview
 
-Note that if `Ans` (or `Rép`) contains a filename, Neon will always prefer to launch that file directly rather than the launcher.
+When the console opens, a welcome message is displayed. This message shows the exact Neon version, the exact compilation date, the official website, and an invitation to join the official Neon Discord server. When the console is ready to accept an expression for evaluation, the cursor appears on a new line starting with two angle brackets (`>>`). If you enter an expression, it is evaluated, and both the result and the type are displayed on a new line.
 
-=== Console Mode
+The console allows for multi-line code entry, provided the interpreter detects that the input is incomplete (e.g., an unclosed parenthesis, a `do` keyword without a matching `end`, etc.).
 
-When the console is ready to receive an expression to evaluate, the cursor is on a new line starting with two chevrons `>>`. If an expression is entered, it will be evaluated, and its result along with its type will be displayed on a new line.
+The console offers standard features such as command history and the ability to edit the current line.
 
-To enter blocks of code, keep in mind that pressing ENTER will send the typed text to the interpreter. You must therefore either use the newline delimiter `;`, or ensure that the line begins with `..` indicating that pressing ENTER will not cause the text to be sent to the interpreter.
+Additionally, on certain platforms (such as Linux), text entered into the console and expression results feature automatic syntax highlighting. This improves readability and makes it easier to spot syntax errors.
 
-On the `TI_EZ80` platform, to enter console mode, the variable `Ans` or `Rép` must contain an empty string, or any other non-string data type.
+=== Errors
+
+When an error occurs, the console displays the following information in this order:
+- The error type (the `Exception` object that triggered the error)
+- The file being executed when the error occurred
+- An error message detailing the cause of the error
+- An exact reference for the error message
+
+This reference takes the form of three numbers separated by `#`: `ERRCODE#SOURCEID#LINENO`.
+- `ERRCODE` is the ID number of the triggered error. Each error ID corresponds to a parameterized error message. For instance, error code 15 corresponds to the parameterized message `"Trying to index <> whereas it is not indexable."`, which can be triggered by evaluating `print[42]`.
+- `SOURCEID` is the identifier for the Neon source file where the error occurred. The identifier for each file can be found on the first line of the corresponding `.c` source file within the `NEON_SOURCE_ID` definition. The `main.c` source file also contains a lookup table mapping source files to their identifiers.
+- `LINENO` corresponds to the line in the source code where the error was triggered. Together, `SOURCEID` and `LINENO` make it possible to pinpoint the exact cause of an error triggered by the Neon interpreter.
+
+=== Interrupting a running program
+
+A running Neon program can be interrupted at any time. To do so, press `CTRL+C` (on standard platforms) or the `[ON]` key (on the TI-83 Premium CE/TI-84 Plus CE).
+
+When a Neon program is interrupted, a prompt asks you to choose between two options:
+- Stop currently running program
+- Open interactive console on current environment
+
+The first option stops the program completely and displays a `KeyboardInterrupt` error. The second option launches an interactive console where you can execute code, evaluate expressions, modify variables, etc. Upon exiting this console, the paused program will resume from where it left off, but incorporating all the changes made within the console.
 
 #outline(title: "Table of Contents")
 
@@ -1122,9 +1140,9 @@ The `loadNamespace` function takes a string corresponding to a module name as an
 
 However, it is important to understand that `loadNamespace` only acts on elements already defined at the time it is called.
 
-== 4.6.3 - Operator Overloading and Display Overloading
+== 4.6.3 - Functionality Overloading
 
-Neon provides the ability to overload certain operators as well as display functions on certain container types. It is possible to configure Neon so that using certain operators on certain container types executes a user-defined Neon function rather than the original operator.
+Neon allows for the overloading of certain operators, function calls, and display functions for specific container types. Neon can be configured so that using certain operators on specific container types executes a user-defined Neon function instead of the original operator.
 
 The overloadable operators are:\
 ```
@@ -1142,6 +1160,8 @@ in : in
 To overload an operator on a certain container type `MyContainer`, look up the name the operator carries in the list above, and define the function `MyContainer~name`, where `name` is the operator's name in the list above. This function will define the action performed by the operator on these objects.
 
 In addition to operators, the `str` function can be overloaded by defining `MyContainer~str`, and the display (`print`, `output`, and the console display) can be overloaded by defining `MyContainer~repr`.
+
+It is also possible to overload function calls for containers. To do this, you must define the `MyContainer~call` function, which takes two arguments: the object being called and the list of arguments for the call. Containers that implement function call overloading can be called just like any other function, except that all arguments are positional (there is no way to specify arguments by name).
 
 If at least one of the arguments of an operator is a container of a type for which that operator is overloaded, the overload function will be called.
 

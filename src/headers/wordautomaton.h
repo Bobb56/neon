@@ -238,10 +238,17 @@
 #define WA_S227 228
 #define WA_S228 229
 #define WA_S229 230
+#define WA_S230 231
+#define WA_S231 232
+#define WA_S232 233
+#define WA_S233 234
+#define WA_S234 235
+#define WA_S235 236
+#define WA_S236 237
 
-#define WA_CONSTANT 1
-#define WA_OPERATOR 2
-#define WA_KEYWORD 3
+#define WA_KEYWORD 1
+#define WA_CONSTANT 2
+#define WA_OPERATOR 3
 
 uint8_t jump_start(char c);
 uint8_t jump_none(char c);
@@ -474,6 +481,13 @@ uint8_t jump_s226(char c);
 uint8_t jump_s227(char c);
 uint8_t jump_s228(char c);
 uint8_t jump_s229(char c);
+uint8_t jump_s230(char c);
+uint8_t jump_s231(char c);
+uint8_t jump_s232(char c);
+uint8_t jump_s233(char c);
+uint8_t jump_s234(char c);
+uint8_t jump_s235(char c);
+uint8_t jump_s236(char c);
 
 uint8_t wa_next_state(uint8_t state, char c);
 uint8_t wa_get_final(uint8_t state);

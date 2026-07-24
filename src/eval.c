@@ -242,6 +242,19 @@ NeObj eval_FunctionCall(TreeBuffer* tb, TreeBufferIndex tree)
             }
 
             treeToList(args, tb, tree_fun_call->args);
+
+            if_error {
+                // Change the error code if := detected
+                if (global_env->CODE_ERROR == 95) {
+                    neon_reset_error();
+                    neon_fail(8, neo_copy(function));
+                }
+
+                neon_free(args);
+                neobject_destroy(function);
+                return NEO_VOID;
+            }
+
             NeObj neo_args = neo_list_convert(args);
 
             NeObj result = callBinaryUserFunc(overloaded_fun, function, neo_args);
@@ -401,6 +414,7 @@ NeObj eval_ListIndex(TreeBuffer* tb, TreeBufferIndex tree)
     if (NEO_TYPE(obj) != TYPE_LIST && NEO_TYPE(obj) != TYPE_STRING)
     {
         neon_fail(15, neo_copy(obj));
+        neobject_destroy(obj);
         return NEO_VOID;
     }
 

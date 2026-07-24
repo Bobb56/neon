@@ -1778,8 +1778,7 @@ char* neobject_str(NeObj neo, bool overloaded)
         else if (NEO_TYPE(neo) == TYPE_BUILTINFUNC)
         {
             Function* f = neo_to_function(neo);
-            ret = addStr("<built-in function ", (char*)get_function_name(f->id, f->module));
-            ret = addStr2(ret, ">");
+            ret = neon_strdup((char*)get_function_name(f->id, f->module));
         }
 
         else if (NEO_TYPE(neo) == TYPE_USERFUNC) {
