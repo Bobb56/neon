@@ -263,9 +263,9 @@ Certain special characters can be defined in strings using the `\` character. He
 
 The length of a string can be obtained with the `len` function, and character number i can be accessed using the syntax `string[i]`. This syntax is the same as for indexing lists.
 
-=== 1.2.6 - The `NoneType` Type
+=== 1.2.6 - The `None` Type
 
-The `NoneType` type designates one and only one object: the constant `None`. It is the only object of type `NoneType`. This constant can be obtained by writing None in a program, or received as the return value of certain functions and operators. This value is a default value often used to indicate that something contains nothing, serves no purpose, or is empty.
+The `None` type refers to a single, unique object: the constant `None`. It is a special object: it is the only object of this type, and it is also equal to its own type. This constant can be obtained by writing `None` in a program, or retrieved as the return value of certain functions and operators. It serves as a default value often used to indicate that something contains nothing, serves no purpose, or is empty.
 
 === 1.2.7 - The `Exception` Type
 
@@ -289,7 +289,7 @@ Here is the list of built-in exceptions:\
 *`KeyboardInterrupt`*: Triggered by Ctrl-C in the terminal. On the `TI_EZ80` platform, this error is triggered by pressing the `ON` key\
 *`NotImplemented`*: Triggered when calling an unimplemented feature. This can occur when importing modules not available on certain platforms, such as `Graphics` (see the graphics section).\
 
-=== 1.2.8 - The `Built-in function` Type
+=== 1.2.8 - The `BuiltInFunction` Type
 
 This type groups all functions present in memory when the interpreter loads.
 
@@ -494,12 +494,14 @@ This function takes a filename as an argument (no extension is required; Neon au
 *`setAtomicTime(Integer)` #sym.arrow.r `None`:*\
 This function changes the process-switching period with the given integer.
 
-*`setColor(String)` #sym.arrow.r `None`:*\
-This function changes the color of text displayed in the terminal after its call. Available colors are: `"blue"`, `"red"`, `"green"`, `"default"`.
+*`setColor(Const)` #sym.arrow.r `None`:*\
+This function changes the color of the text displayed in the terminal after it is called. The available colors are: `Blue`, `Red`, `Green`, `Purple`, `Orange`, `Grey`, `Default`.
 
-The `default` color is either white in white-on-black mode, or black in black-on-white mode.
+Note that the arguments for the `setColor` function are symbolic constants. These constants are predefined when the Neon interpreter loads.
 
-On terminals where it is available, red and blue are displayed in bold.
+The `Default` color is either white (in white-on-black mode) or black (in black-on-white mode).
+
+On terminals where supported, red, blue, and purple are displayed in bold.
 
 *`setFunctionDoc(Function | Method)` #sym.arrow.r `None`:*\
 This function takes a user-defined function and a string as arguments, and sets this string as the help message for the function. This help message is displayed when the `help` function is called with this function.
@@ -528,23 +530,19 @@ Computes the tangent of an angle in radians.
 *`time()` #sym.arrow.r `Integer`:*\
 This function returns the number of seconds elapsed since a certain date depending on the system on which the program is running.
 
-*`type(Any)` #sym.arrow.r `String`:*\
-This function takes an object as an argument and returns its type. Object types are represented as strings. Here are the types returned by the `type` function:\
-`"Bool"` #sym.arrow.r.long boolean\
-`"String"` #sym.arrow.r.long string\
-`"Integer"` #sym.arrow.r.long integer\
-`"Real"` #sym.arrow.r.long decimal number\
-`"Built-in function"` #sym.arrow.r.long built-in function\
-`"List"` #sym.arrow.r.long list\
-`"Function"` #sym.arrow.r.long user-defined function\
-`"Method"` #sym.arrow.r.long user-defined method\
-`"Exception"` #sym.arrow.r.long exception\
-`"Promise"` #sym.arrow.r.long promise\
-`"unspecified type"` #sym.arrow.r.long corresponds to type -1. No object has this type; it is a special value used to describe function signatures. In general, an argument of type `unspecified type` can be of multiple types, which are specified in the function's help string\
-`"Undefined"` #sym.arrow.r.long returned for an undefined object (of `TYPE_EMPTY`)\
+This function takes an object as an argument and returns its type. Object types are represented by symbolic constants. Here are the types returned by the `type` function:\
+`Bool` #sym.arrow.r.long boolean\
+`String` #sym.arrow.r.long string\
+`Integer` #sym.arrow.r.long integer\
+`Real` #sym.arrow.r.long decimal number\
+`BuiltInFunction` #sym.arrow.r.long built-in function\
+`List` #sym.arrow.r.long list\
+`Function` #sym.arrow.r.long user-defined function\
+`Method` #sym.arrow.r.long user-defined method\
+`Exception` #sym.arrow.r.long exception\
+`Promise` #sym.arrow.r.long promise\
 
-The type function never returns the type `"Container"` because it directly returns the container's name.
-
+The type function never returns the type `Container` because it directly returns the container's name.
 
 *`writeFile(String, String)` #sym.arrow.r `None`:*\
 This function takes a filename and a string as arguments, and writes that string to the file with the given name. If the file already exists, its content is replaced. On the TI_EZ80 platform, files can only be AppVars.
@@ -589,6 +587,16 @@ When a function is launched in parallel with `parallel function(arg1, arg2, args
 
 The way to manage processes will be detailed in the dedicated section.
 
+=== 1.2.13 - The `Const` type
+
+The `Const` type corresponds to symbolic constants. Objects of this type are values defined solely by their name. `Const` values are used, for example, for object types and colors. Object types and colors are `Const` objects predefined in the Neon interpreter.
+
+To create symbolic constants, the `define` instruction is used. This instruction takes a list of any number of identifiers as an argument and defines a variable with the same name for each of them. The value of each variable is the symbolic constant of the same name.
+
+Example:
+```
+define(true, false, dontknow) # These words can now be used as symbolic constants
+```
 
 = *Part 2: Expressions*
 

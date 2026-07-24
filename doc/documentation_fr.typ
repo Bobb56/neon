@@ -267,9 +267,9 @@ On peut définir certains caractères spéciaux dans les chaînes de caractères
 
 On peut notamment obtenir leur taille grâce à la fonction `len`, et accéder au caractère n°i grâce à la syntaxe `string[i]`. Cette syntaxe est la même que pour indexer des listes.
 
-=== 1.2.6 - Le type `NoneType`
+=== 1.2.6 - Le type `None`
 
-Le type `NoneType` désigne un seul et unique objet : la constante `None`. C'est le seul objet de type `NoneType`. Cette constante peut être obtenue en écrivant None dans un programme, ou récupérée comme retour de certaines fonctions et de certains opérateurs. Cette valeur est une valeur par défaut qui sert souvent à indiquer que quelque chose ne contient rien ou que quelque chose ne sert à rien, ou est vide.
+Le type `None` désigne un seul et unique objet : la constante `None`. C'est un objet particulier : c'est le seul objet de ce type, et il est également égal à son propre type. Cette constante peut être obtenue en écrivant None dans un programme, ou récupérée comme retour de certaines fonctions et de certains opérateurs. Cette valeur est une valeur par défaut qui sert souvent à indiquer que quelque chose ne contient rien ou que quelque chose ne sert à rien, ou est vide.
 
 === 1.2.7 - Le type `Exception`
 
@@ -293,7 +293,7 @@ Voici la liste des exceptions built-in :\
 *`KeyboardInterrupt`* : Déclenchée par un Ctrl-C dans le terminal. Sur plateforme `TI_EZ80`, cette erreur est déclenchée en appuyant sur la touche `ON`\
 *`NotImplemented`* : Déclenchée lors de l'appel à une fonctionnalité non implementée. Peut se produire lors de l'importation de modules non disponibles sur certaines plateformes comme le module `Graphics` (voir la section sur les graphiques).\
 
-=== 1.2.8 - Le type `Built-in function`
+=== 1.2.8 - Le type `BuiltInFunction`
 
 Ce type regroupe toutes les fonctions présentes au chargement de l'interpréteur en mémoire.
 
@@ -505,12 +505,14 @@ Cette fonction prend en argument un nom de fichier (aucune extension n'est néce
 *`setAtomicTime(Integer)` #sym.arrow.r `None`:*\
 Cette fonction change la période de changement de processus avec l'entier donné en argument.
 
-*`setColor(String)` #sym.arrow.r `None`:*\
-Cette fonction change la couleur du texte affiché dans le terminal après son appel. Les couleurs disponibles sont : `"blue"`, `"red"`, `"green"`, `"default"`.
+*`setColor(Const)` #sym.arrow.r `None`:*\
+Cette fonction change la couleur du texte affiché dans le terminal après son appel. Les couleurs disponibles sont : `Blue`, `Red`, `Green`, `Purple`, `Orange`, `Grey`, `Default`.
 
-La couleur `default` est soit le blanc en mode blanc sur fond noir, soit le noir en mode noir sur fond blanc.
+Notez que les arguments à la fonction `setColor` sont des constantes symboliques. Ces constantes sont prédéfinies au chargement de l'interpréteur Neon.
 
-Sur les terminaux où c'est disponible, le rouge et le bleu sont affichés en gras.
+La couleur `Default` est soit le blanc en mode blanc sur fond noir, soit le noir en mode noir sur fond blanc.
+
+Sur les terminaux où c'est disponible, le rouge, le bleu et le violet sont affichés en gras.
 
 *`setFunctionDoc(Function | Method)` #sym.arrow.r `None`:*\
 Cette fonction prend en argument une fonction utilisateur, et une chaîne de caractères, et définit cette chaîne de caractères comme message d'aide pour cette fonction. Ce message d'aide est affiché lorsque la fonction help est appelée avec cette fonction.
@@ -543,21 +545,19 @@ Calcule la tangente d'un angle en radians.
 Cette fonction renvoie le nombre de secondes écoulées depuis une certaine date dépendant du système sur lequel s'exécute le programme.
 
 *`type(Any)` #sym.arrow.r `String`:*\
-Cette fonction prend en argument un objet et renvoie son type. Les types d'objet sont représentés par des chaînes de caractères. Voici les types renvoyés par la fonction `type` :\
-`"Bool"` #sym.arrow.r.long booléen\
-`"String"` #sym.arrow.r.long chaîne de caractères\
-`"Integer"` #sym.arrow.r.long entier\
-`"Real"` #sym.arrow.r.long nombre décimal\
-`"Built-in function"` #sym.arrow.r.long fonction built-in\
-`"List"` #sym.arrow.r.long liste\
-`"Function"` #sym.arrow.r.long fonction utilisateur\
-`"Method"` #sym.arrow.r.long méthode utilisateur\
-`"Exception"` #sym.arrow.r.long exception\
-`"Promise"` #sym.arrow.r.long promesse\
-`"unspecified type"` #sym.arrow.r.long correspond au type -1. Aucun objet n'a ce type, c'est une valeur spéciale servant à décrire la signature des fonctions. En général, un argument de type `unspecified type` peut être de plusieurs types, et ceux-ci sont spécifiés dans la chaîne d'aide de la fonction\
-`"Undefined"` #sym.arrow.r.long renvoyé sur un objet non défini (de `TYPE_EMPTY`)\
+Cette fonction prend en argument un objet et renvoie son type. Les types d'objet sont représentés par des constantes symboliques. Voici les types renvoyés par la fonction `type` :\
+`Bool` #sym.arrow.r.long booléen\
+`String` #sym.arrow.r.long chaîne de caractères\
+`Integer` #sym.arrow.r.long entier\
+`Real` #sym.arrow.r.long nombre décimal\
+`BuiltInFunction` #sym.arrow.r.long fonction built-in\
+`List` #sym.arrow.r.long liste\
+`Function` #sym.arrow.r.long fonction utilisateur\
+`Method` #sym.arrow.r.long méthode utilisateur\
+`Exception` #sym.arrow.r.long exception\
+`Promise` #sym.arrow.r.long promesse\
 
-La fonction type ne renvoie jamais de type `"Container"` car elle renvoie directement le nom du container.
+La fonction type ne renvoie jamais de type `Container` car elle renvoie directement le nom du container.
 
 
 *`writeFile(String, String)` #sym.arrow.r `None`:*\
@@ -601,6 +601,16 @@ Quand on lance une fonction en parallèle avec `parallel fonction(arg1, arg2, ar
 
 La manière de gérer les processus sera détaillée dans la section dédiée.
 
+=== 1.2.13 - Le type `Const`
+
+Le type `Const` correspond à des constantes symboliques. Les objets de ce type sont des valeurs uniquement définies par leur nom. Les valeurs de type `Const` sont par exemple utilisées pour les types des objets et les couleurs. Les types des objets et les couleurs sont des objets de type `Const` pré-définis dans l'interpréteur Neon.
+
+Pour créer des constantes symboliques, il faut utiliser l'instruction `define`. Cette instruction prend en argument une liste d'un nombre quelconque d'identifiants, et définit pour chacun de ces identifiants une variable portant le même nom. Chaque variable a pour valeur la constante symbolique du même nom.
+
+Exemple :\
+```
+define(Vrai, Faux, JeSaisPas) # Ces mots sont désormais utilisables comme des constantes symboliques
+```
 
 = *Partie 2 : Les expressions*
 
