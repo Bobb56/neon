@@ -994,22 +994,24 @@ To define a method, simply use the keyword `method` instead of the keyword `func
 
 The classic way to pass arguments to functions is to separate the argument expressions by commas: `function(exp1, exp2, exp3)`. In reality there are much more advanced features.
 
-=== 4.5.1 - Passing Arguments Out of Order
+=== 4.5.1 - Passing Named Arguments
 
 Sometimes certain functions take many arguments as input, and it is difficult to remember the exact order in which to specify them. Moreover, calling such functions can be quite complex to read: consider the hypothetical example of the following function: `function drawFilledRect(x, y, width, height, fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a)`.
 
-To specify arguments out of order, simply indicate the name of the argument being specified, followed by `:=` and then its value.
+This is why the Neon interpreter allows specifying function arguments in a different order than the one in the definition of the function, by directly naming the arguments while giving them to the function.
 
-Note: It is not mandatory to actually give the arguments in a different order; this is just a possibility and the main use case.
+To specify arguments this way, simply follow the argument name with `:=`, then with the expression that will evaluate to the default value.
 
-When some arguments are given with their name as shown above, it is not necessary to do so for all other arguments. The arguments with specified names are assigned first, and the remaining unnamed values are distributed in order to the remaining arguments.
+There is however a restriction: named arguments must always follow all positional arguments.
 
-Example with the following function: `function f(a, b, c)`
+Example with the following function : `function f(a, b, c)`
 
-All of the following calls to function `f` correspond to the classic call `f(1,2,3)`:\
-f(a := 1, c := 3, b := 2)\
-f(c := 3, 1, 2)\
-f(1, c := 3, 2)\
+All calls to the `f` function are the same than the regular call `f(1,2,3)` :\
+```
+f(a := 1, c := 3, b := 2)
+f(1, 2, c := 3)
+f(1, b := 2, 3) # Incorrect call because argument `3` was given after the named argument `2`.
+```
 
 === 4.5.2 - Optional Arguments
 
@@ -1019,7 +1021,9 @@ When defining a function expecting classic arguments, simply write: `function my
 
 To define an optional argument, simply follow the argument name with `:=`, then with the expression that will evaluate to the default value.
 
-Example: `function myFunction(required1, optional1 := expression, required2...)`
+Exemple : `function myFonction(mandatory1, mandatory2, optional1 := expression...)`
+
+There is also a restriction here: optional arguments need to be defined after all positional arguments.
 
 === 4.5.3 - Unlimited Number of Arguments
 
@@ -1029,9 +1033,9 @@ Example: `function myFunction(normal arguments, ...)`
 
 This time, the `...` must literally be written as-is and is not a shorthand notation in this document.
 
-When a function can receive an unlimited number of arguments, only the values that could not be assigned to normal arguments are counted as extra arguments. Indeed, arguments specified by name and optional arguments are assigned to their variables first, then unnamed values are assigned in order to the remaining arguments. Only the values that could not be assigned during the preceding phases will be counted among the extra arguments.
+When a function can receive an unlimited number of arguments, only the values that could not be assigned to normal arguments are counted as extra arguments.
 
-When calling a function with an unlimited number of arguments, a special local variable is created. This variable is a list containing all values that could not be assigned to normal arguments (i.e., the values counted in `...`), and is accessible under the name `_local_args_`.
+When calling a function with an unlimited number of arguments, a special local variable is created. This variable is a list containing all values that could not be assigned to normal arguments (i.e., the values counted in `...`), and is accessible under the name `__local_args__`.
 
 === 4.5.4 - Truly Optional Arguments
 

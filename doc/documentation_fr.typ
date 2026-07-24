@@ -1003,32 +1003,36 @@ Pour définir une méthode, il suffit d'utiliser le mot-clé `method` au lieu du
 
 La manière classique d'envoyer des arguments à des fonctions est de séparer les expressions des arguments par des virgules : `fonction(exp1, exp2, exp3)`. En réalité il existe des fonctionnalités bien plus avancées.
 
-=== 4.5.1 - Passage d'arguments dans le désordre
+=== 4.5.1 - Passage d'arguments nommés
 
 Parfois, certaines fonctions prennent en entrée beaucoup d'arguments, et il est difficile de se souvenir de l'ordre exact dans lequel spécifier les arguments. De plus, l'appel à de telles fonctions peut être assez complexe à relire : prenons l'exemple hypothétique de la fonction suivante : `function drawFilledRect(x, y, width, height, fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a)`.
 
-Pour spécifier des arguments dans le désordre, il suffit d'indiquer le nom de l'argument que l'on spécifie, de le suivre par `:=` puis par sa valeur.
+C'est pour cela que l'interpréteur Neon fournit la possibilité de spécifier des arguments de fonction dans un ordre ne respectant pas celui de la définition de la fonction, en nommant directement les arguments que l'on spécifie.
 
-Remarque : Il n'est pas obligatoire de donner les arguments réellement dans le désordre, il s'agit juste d'une possibilité et de la principale utilité.
+Pour spécifier des arguments de cette manière, il suffit d'indiquer le nom de l'argument que l'on spécifie, de le suivre par `:=` puis par sa valeur.
 
-Lorsque certains arguments sont donnés avec leur nom comme montré plus haut, il n'est pas nécessaire de le faire pour tous les autres arguments. Ainsi, les arguments dont le nom est spécifié directement sont affectés en premier, et les valeurs restantes, spécifiées normalement sont distribuées dans l'ordre aux arguments restants.
+Il y a une restriction néanmoins : les arguments nommés doivent obligatoirement être situés après tous les arguments positionnels.
 
 Exemple avec la fonction suivante : `function f(a, b, c)`
 
 Tous les appels suivants à la fonction `f` correspondent à l'appel classique `f(1,2,3)` :\
-f(a := 1, c := 3, b := 2)\
-f(c := 3, 1, 2)\
-f(1, c := 3, 2)\
+```
+f(a := 1, c := 3, b := 2)
+f(1, 2, c := 3)
+f(1, b := 2, 3) # Appel incorrect car l'argument `3` est donné après l'argument nommé `2`.
+```
 
 === 4.5.2 - Arguments optionnels
 
-Les arguments optionnels permettent de définir des fonctions dont il n'est pas nécessaire de spécifier tous les arguments lorsqu'on les appelle. Lorsque l'on définit un argument optionnel, on donne au moment de la définition de la fonction une valeur par défaut, à donner à cet argument dans le cas où l'appel à la fonction n'a pas donnée de valeur à l'argument.
+Les arguments optionnels permettent de définir des fonctions dont il n'est pas nécessaire de spécifier tous les arguments lorsqu'on les appelle. Lorsque l'on définit un argument optionnel, on donne au moment de la définition de la fonction une valeur par défaut, à donner à cet argument dans le cas où l'appel à la fonction n'a pas donné de valeur à l'argument.
 
 Lorsque l'on définit une fonction attendant des arguments classiques, on se contente d'écrire : `function maFonction(arg1, arg2, arg3)` en séparant par des virgules les noms des arguments.
 
 Pour définir un argument optionnel, il suffit de suivre le nom de l'argument par `:=`, puis par l'expression qui s'évaluera en la valeur par défaut.
 
-Exemple : `function maFonction(obligatoire1, optionnel1 := expression, obligatoire2...)`
+Exemple : `function maFonction(obligatoire1, obligatoire2, optionnel1 := expression...)`
+
+Il y a ici également une restriction : les arguments optionnels doivent être tous définis après les arguments obligatoires.
 
 === 4.5.3 - Nombre illimité d'arguments
 
@@ -1038,9 +1042,9 @@ Exemple : `function maFonction(arguments normaux, ...)`
 
 Cette fois-ci, les `...` doivent réellement être écrits tels quels et ne sont par un raccourci d'écriture de ce document.
 
-Lorsqu'une fonction peut recevoir un nombre illimité d'arguments, seules les valeurs n'ayant pas pu être affectées à des arguments normaux sont comptés dans les arguments supplémentaires. En effet, dans un premier temps les arguments spécifiés dans le désordre et les arguments optionnels sont affectés aux bonnes variables, puis les valeurs seules sont d'abord affectées dans l'ordre aux arguments restants. Seules les valeurs n'ayant pas pu être affectées lors des phases précédentes seront comptabilisées dans les arguments supplémentaires.
+Lorsqu'une fonction peut recevoir un nombre illimité d'arguments, seules les valeurs n'ayant pas pu être affectées à des arguments normaux sont comptées dans les arguments supplémentaires.
 
-Lors de l'appel à une fonction au nombre d'arguments illimité, une variable locale spéciale est créée. Cette variable est une liste contenant toutes les valeurs n'ayant pas pu être affectées à des arguments normaux (donc les valeurs comptabilisées dans le `...`), et est accessible sous le nom `_local_args_`.
+Lors de l'appel à une fonction au nombre d'arguments illimité, une variable locale spéciale est créée. Cette variable est une liste contenant toutes les valeurs n'ayant pas pu être affectées à des arguments normaux (donc les valeurs comptabilisées dans le `...`), et est accessible sous le nom `__local_args__`.
 
 === 4.5.4 - Arguments vraiment optionnels
 
