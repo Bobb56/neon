@@ -1,8 +1,5 @@
 # TODO before next update
 - Finish the automated deploy script
-- Add changes page on the website
-- Add list for downloading any previous version in one package
-
 
 # Update checklist
 
