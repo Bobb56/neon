@@ -257,10 +257,14 @@ int compteAcc(char* str) // compte le nombre d'accolades ouvrantes non complÃ©tÃ
 char* inputCode()
 {
     enable_syntax_hightlighting();
+    #ifdef LINUX
     sh_reset_initial_state();
+    #endif
     
     char* str = input(SEQUENCE_ENTREE);
+    #ifdef LINUX
     sh_update_initial_state();
+    #endif
 
     if (global_env->CODE_ERROR != 0 || str == NULL) {
         str = NULL;
@@ -283,7 +287,9 @@ char* inputCode()
             text = addStr2(text, "  ");
         
         char* newStr = input(text);
+        #ifdef LINUX
         sh_update_initial_state();
+        #endif
 
         neon_free(text);
 
@@ -292,7 +298,7 @@ char* inputCode()
             str = NULL;
             goto function_end;
         }
-            
+        
         char* temp = addStr("\n", newStr);
         char* temp2 = addStr(str, temp);
         neon_free(str);
@@ -302,7 +308,9 @@ char* inputCode()
     }
 function_end:
     disable_syntax_highlithting();
+    #ifdef LINUX
     sh_reset_initial_state();
+    #endif
     return str;
 }
 

@@ -199,10 +199,7 @@ static void init_deadline(void)
         };
 
         sigaction(SIGWINCH, &sigact, NULL);
-
-
         tcgetattr(STDIN_FILENO, &old_set);
-
 
         // Put term into raw mode
         new_set = old_set;  /* modify the original mode */

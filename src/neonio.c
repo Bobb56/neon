@@ -332,9 +332,8 @@
                 int c = getchar();
 
                 if (c == EOF) {
-                    putchar('\n');
                     neon_free(buffer);
-                    neon_fail(1, NO_ARGS);
+                    neon_fail(104, NO_ARGS);
                     return "\0";
                 }
                 else if (c == '\n') {

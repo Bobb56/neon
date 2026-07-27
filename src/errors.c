@@ -305,6 +305,7 @@ void get_error_info_and_reset(int* code, int* source_id, int* line_number, NeLis
     global_env->CODE_ERROR = 0;
     global_env->ERROR_NEON_LINE_NUMBER = 0;
     global_env->ERROR_NEON_SOURCE_ID = 0;
+    global_env->INTERRUPT = false;
     global_env->ERROR_MESSAGE_ARGUMENTS = NULL;
 }
 
@@ -312,6 +313,7 @@ void neon_reset_error(void) {
     global_env->CODE_ERROR = 0;
     global_env->ERROR_NEON_LINE_NUMBER = 0;
     global_env->ERROR_NEON_SOURCE_ID = 0;
+    global_env->INTERRUPT = false;
 
     if (global_env->ERROR_MESSAGE_ARGUMENTS != NULL) {
         nelist_destroy(global_env->ERROR_MESSAGE_ARGUMENTS);

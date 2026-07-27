@@ -4,6 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdint.h>
+#include <signal.h>
 
 #include "headers/constants.h"
 #include "headers/neonio.h"
@@ -32,29 +33,6 @@
 NeonEnv* global_env = NULL;
 
 
-#ifdef LINUX
-    #include <signal.h>
-
-    void handle_signal(int sig) {
-        if (sig == SIGINT || sig == SIGTERM) {
-            global_env->INTERRUPT = true;
-        }
-    }
-#endif
-
-
-#ifdef WINDOWS_AMD64
-    #include <windows.h>
-
-    // Fonction de gestion du signal
-    BOOL WINAPI ctrlHandler(DWORD signal) {
-        if (signal == CTRL_C_EVENT) {
-            global_env->INTERRUPT = true;
-            return TRUE;  // Renvoyer TRUE pour indiquer que l'événement a été traité
-        }
-        return FALSE;
-    }
-#endif
 
 
 
@@ -232,18 +210,23 @@ void NeonEnv_destroy(NeonEnv* env) {
 
 
 
+void handle_signal(int sig) {
+    if (sig == SIGINT || sig == SIGTERM) {
+        global_env->INTERRUPT = true;
+
+        signal(SIGINT, handle_signal);
+        signal(SIGTERM, handle_signal);
+    }
+}
+
+
+
 int neonInit(void)
 {
     srand(time(NULL));
 
-    #ifdef LINUX
-        signal(SIGINT, handle_signal);
-        signal(SIGTERM, handle_signal);
-    #endif
-    
-    #ifdef WINDOWS
-        SetConsoleCtrlHandler(ctrlHandler, TRUE);
-    #endif
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
 
     // Initialisation de l'allocateur secondaire
     side_memory_init();
