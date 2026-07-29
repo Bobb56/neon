@@ -9,7 +9,7 @@ fi
 VERSION=$1
 DEPLOY=$(pwd)
 ROOT=$DEPLOY/..
-BUILD_DIR=$DEPLOY/Neon$VERSION
+BUILD_DIR=$DEPLOY/Neon_$VERSION
 
 function init_project {
     echo "Creating build dir..."

@@ -4,7 +4,6 @@
 #include <string.h>
 #include <time.h>
 #include <stdint.h>
-#include <signal.h>
 
 #include "headers/constants.h"
 #include "headers/neonio.h"
@@ -209,7 +208,8 @@ void NeonEnv_destroy(NeonEnv* env) {
 
 
 
-
+#ifndef TI_EZ80
+#include <signal.h>
 void handle_signal(int sig) {
     if (sig == SIGINT || sig == SIGTERM) {
         global_env->INTERRUPT = true;
@@ -218,15 +218,17 @@ void handle_signal(int sig) {
         signal(SIGTERM, handle_signal);
     }
 }
-
+#endif
 
 
 int neonInit(void)
 {
     srand(time(NULL));
 
+    #ifndef TI_EZ80
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
+    #endif
 
     // Initialisation de l'allocateur secondaire
     side_memory_init();
