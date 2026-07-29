@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Neon"
-#define MyAppVersion "4.0"
+#define MyAppVersion "4.5"
 #define MyAppPublisher "Raphaël Le Puillandre"
 #define MyAppURL "https://langage-neon.raphaael.fr"
 #define MyAppExeName "Neon.exe"
@@ -27,8 +27,8 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=.
-OutputBaseFilename=neon_4.1_windows_amd64_setup      
-SetupIconFile=neon.ico
+OutputBaseFilename=neon_{#MyAppVersion}_windows_amd64_setup      
+SetupIconFile=..\..\icons\neon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -41,7 +41,7 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "../../bin/{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
