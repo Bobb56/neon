@@ -40,7 +40,7 @@ ObfNeStream NeStream_obf_create(char* name) {
     }
 
     // Open the file
-    stream.fd = NeStream_open(name, "w");
+    stream.fd = NeStream_open(name, "wb");
 
     // Write the obfuscated constant
     NeStream_write(stream.fd, stream.obf_const, OBF_CONST_SIZE);
@@ -68,7 +68,7 @@ ObfNeStream NeStream_obf_open(char* name) {
     ObfNeStream stream;
 
     // Open the file
-    stream.fd = NeStream_open(name, "r");
+    stream.fd = NeStream_open(name, "rb");
     return_on_error((ObfNeStream){0});
 
     // Read the obfuscated constant
@@ -1073,7 +1073,7 @@ void read_all_pointers(ObfNeStream* stream, intptrlist* ptrTable, intlist* types
                     return;
                 }
 
-                
+
                 // Lecture des données (size octets)
                 void* pointer = neon_malloc((size_t)n_blocks * (size_t)block_size);
                 if (pointer == NULL) {
@@ -1087,7 +1087,7 @@ void read_all_pointers(ObfNeStream* stream, intptrlist* ptrTable, intlist* types
                     return;
                 }
 
-                
+
                 TreeBuffer* tb = neon_malloc(sizeof(TreeBuffer));
 
                 if (tb == NULL) {
