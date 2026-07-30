@@ -401,7 +401,7 @@ La représentation interne des entiers étant différente d'une plateforme à l'
 Cette fonction affiche de l'aide liée à certains objets ou certains types d'objets. Voici les arguments possibles à la fonction `help` :\
 `help("modules")` #sym.arrow.r.long affiche tous les noms de modules présents dans la mémoire\
 `help("variables")` #sym.arrow.r.long affiche toutes les variables définies présentes dans la mémoire ainsi que leur type\
-`help("MonModule")` #sym.arrow.r.long affiche tous les objets liés au module MonModule présents dans la mémoire
+`help("MonModule")` #sym.arrow.r.long affiche tous les objets liés au module MonModule présents dans la mémoire\
 `help(mon_objet)` #sym.arrow.r.long affiche mon_objet et son type
 
 Dans le cas d'une fonction built-in, la fonction `help` affiche aussi le type des arguments attendus, le type de retour et une chaîne de caractères expliquant comment utiliser la fonction.
@@ -1297,10 +1297,7 @@ end
 
 == 5.7 - Fonctions du système d'entrelacement
 
-Le passage d'un processus à l'autre par l'interpréteur Neon n'est pas effectué à n'importe quel moment. Il est effectué par une fonction nommée `neon_interp_yield`. Cette fonction est appelée uniquement à deux endroits : lors d'un appel à la fonction d'évaluation de Neon et lors d'un appel à la fonction d'exécution d'un bloc de code Neon.
-
-À chaque fois que `neon_interp_yield` est appelée, un compteur est décrémenté. Tant que ce compteur n'atteint pas zéro, la fonction ne fait rien d'autre, mais lorsqu'il devient nul, `neon_interp_yield` va mettre en pause le processus actuel et relancer un autre processus.
-
+Le passage d'un processus à l'autre par l'interpréteur Neon n'est pas effectué à n'importe quel moment. Il est effectué par une fonction nommée `neon_interp_yield`. À chaque fois qu'un bloc de code est exécuté, un compteur est décrémenté, et lorsque ce compteur atteint zéro, la fonction `neon_interp_yield` est appelée, met en pause le processus actuel et reprent l'exécution d'un autre processus.
 
 === 5.7.1 - La fonction `setAtomicTime`
 

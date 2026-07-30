@@ -1,4 +1,4 @@
-# This python script generates a C finite state automaton for determining which type of keyword a word is
+# This python script generates src/wordautomaton.c and src/headers/wordautomaton.h
 
 operators = ["and","or","xor","not", "del", "EE", "in", "parallel", "is"]
 

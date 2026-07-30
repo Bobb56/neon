@@ -388,7 +388,7 @@ Because the internal integer representation is not the same on all platforms, th
 This function displays help related to certain objects or types of objects. Here are the possible arguments to the `help` function:\
 `help("modules")` #sym.arrow.r.long displays all module names present in memory\
 `help("variables")` #sym.arrow.r.long displays all defined variables present in memory along with their type\
-`help("MyModule")` #sym.arrow.r.long displays all objects linked to module MyModule present in memory
+`help("MyModule")` #sym.arrow.r.long displays all objects linked to module MyModule present in memory\
 `help(my_object)` #sym.arrow.r.long displays my_object and its type
 
 For a built-in function, the `help` function also displays the expected argument types, the return type, and a help string explaining how to use the function.
@@ -1278,10 +1278,7 @@ end
 
 == 5.7 - Interleaving System Functions
 
-The switching from one process to another by the Neon interpreter does not occur at arbitrary moments. It is performed by a function called `neon_interp_yield`. This function is called in only two places: during a call to Neon's evaluation function and during a call to the execution function of a Neon code block.
-
-Each time `neon_interp_yield` is called, a counter is decremented. As long as this counter does not reach zero, the function does nothing else, but when it reaches zero, `neon_interp_yield` pauses the current process and resumes another one.
-
+The Neon interpreter does not switch between processes at arbitrary times. This switch is performed by a function named `neon_interp_yield`. Each time a block of code is executed, a counter is decremented; when the counter reaches zero, the `neon_interp_yield` function is called, pausing the current process and resuming execution of another process.
 
 === 5.7.1 - The `setAtomicTime` Function
 
