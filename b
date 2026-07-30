@@ -38,4 +38,7 @@ elif [[ $2 = "run" ]]; then
     fi
 else
     make -f Makefile.$platform -j 8
+    if [[ $platform = "ez80" ]]; then
+        convbin --iformat 8ek --input bin/Neon.8ek --oformat 8xv-split --maxvarsize 65200 --output bin/Neon.8xv --name Neon
+    fi
 fi

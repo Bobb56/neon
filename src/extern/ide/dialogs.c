@@ -1201,6 +1201,7 @@ Makes the state consistent for coloring a string inside a bigger string by
 processing the previous part of the string
 */
 void update_state_from_beginning(struct estate* state) {
+    const int24_t cache_distance = 1000;
     static size_t last_scr_offset = (size_t)-1;
 
     if (state->scr_offset == last_scr_offset)
@@ -1219,17 +1220,38 @@ void update_state_from_beginning(struct estate* state) {
             preprocessing_update_state(sh_get_state_ptr(), state->text[i]);
             i++;
         }
-        last_scr_offset = state->scr_offset;
 
-        // Set initial state to current state
-        sh_update_initial_state();
+        // Update the checkpoint if we are far enough from current checkpoint
+        if (state->scr_offset - last_scr_offset > cache_distance) {
+            last_scr_offset = state->scr_offset;
+            // Set initial state to current state
+            sh_update_initial_state();
+        }
     }
     else {
         // We need to process the whole beginning of the buffer
         sh_reset_initial_state(); // Set initial state to nothing
         sh_set_to_initial(); // Set actual state to nothing
 
+        // Compute a new checkpoint a little bit before the screen offset so that the checkpoint could be reused even when going upwards in the editor
+        int24_t new_checkpoint = state->scr_offset - cache_distance;
+        if (new_checkpoint < 0)
+            new_checkpoint = 0;
+
         int i=0;
+        while (i < new_checkpoint) {
+            if (i == state->c1) {
+                i = state->c2 + 1;
+            }
+            preprocessing_update_state(sh_get_state_ptr(), state->text[i]);
+            i++;
+        }
+        last_scr_offset = new_checkpoint;
+
+        // Set initial state to current state
+        sh_update_initial_state();
+
+        // Finish the processing to the screen
         while (i < state->scr_offset) {
             if (i == state->c1) {
                 i = state->c2 + 1;
@@ -1237,10 +1259,6 @@ void update_state_from_beginning(struct estate* state) {
             preprocessing_update_state(sh_get_state_ptr(), state->text[i]);
             i++;
         }
-        last_scr_offset = state->scr_offset;
-
-        // Set initial state to current state
-        sh_update_initial_state();
     }
 }
 
