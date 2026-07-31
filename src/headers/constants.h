@@ -42,6 +42,8 @@ Ajout d'un type de données NeObject : +0.0.1
             #ifdef __riscv_f
                 #define RISCV_FLOATING_POINT_EXTENSION
             #endif
+        #elif defined(__arm64__)
+            #define LINUX_ARM64
         #endif
     #elif defined(_WIN64)
             #define WINDOWS
@@ -53,11 +55,13 @@ Ajout d'un type de données NeObject : +0.0.1
     #elif defined(_EZ80) && defined(__TICE__)
         #define TI_EZ80
     #else
-        #define MINIMAL_LIBC                            // This platform must be compatible with the Linux ASM call conventions
+        #define MINIMAL_LIBC // This platform must be compatible with the Linux ASM call conventions
         #if defined(__x86_64__)
             #define MINIMAL_LIBC_AMD64
         #elif defined(__riscv) && __riscv_xlen == 64
             #define MINIMAL_LIBC_RISCV64
+        #elif defined(__arm64__)
+            #define MINIMAL_LIBC_ARM64
         #endif
     #endif
 #endif
@@ -72,6 +76,9 @@ Ajout d'un type de données NeObject : +0.0.1
 
 #ifdef LINUX_AMD64
     #define PLATFORM        "LINUX_AMD64"
+#endif
+#ifdef LINUX_ARM64
+    #define PLATFORM        "LINUX_ARM64"
 #endif
 #ifdef LINUX_RISCV64
     #define PLATFORM        "LINUX_RISCV64"
@@ -129,6 +136,8 @@ Ajout d'un type de données NeObject : +0.0.1
     #define REG_BUFFER_SIZE 56 // taille de la zone de sauvegarde de registres dans les processus
 #elif defined(LINUX_RISCV64)
     #define REG_BUFFER_SIZE 200
+#elif defined(LINUX_ARM64)
+    #define REG_BUFFER_SIZE 160
 #elif defined(WINDOWS_AMD64)
     #define REG_BUFFER_SIZE 232
 #elif defined(TI_EZ80)

@@ -42,6 +42,7 @@ Table des fichiers source :
 26 | interpcontext.c
 27 | eval.c
 28 | exec.c
+29 | linux_arm64.S
 
 100 | ide/console.c
 
@@ -69,6 +70,9 @@ Si il y a un bug bizarre sur TI_EZ80, penser aux optimisations du compilateurs
 
 Avancement et choses à faire :
 ------------------------------
+--> Install ARM64 cross compiler
+--> Look into runtime.s compiled file for the size of launch_process's context
+--> Makefile for linux_arm64
 --> Remove launcher features
 --> Ajouter un type de donnée bitmap/nombres scalaires à Neon
 --> Ajouter un objet graphique Sprite qui est un tableau de nombres à deux dimensions. Chaque nombre n'est pas forcément un pixel mais est un rectangle, et les dimensions de chaque unité sont également précisées dans l'objet

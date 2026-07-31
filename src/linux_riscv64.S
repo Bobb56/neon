@@ -15,7 +15,7 @@
 # ce code utilise 4 registres de travail de la taille d'un pointeur : a0, a1, t0, t1
 
 
-# empile les registres sur la pile, en utilisant rdx comme registre de pile
+# empile les registres sur la pile, en utilisant t1 comme registre de pile
 #define PUSH_REGISTERS()        \
     addi    t1,  t1, -200;      \
     sd      sp,  0(t1);         \
