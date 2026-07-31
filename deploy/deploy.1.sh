@@ -104,4 +104,4 @@ produce_neon_setup_linux
 produce_ti_ez80_archive
 produce_vscode_extension
 
-echo "Now please restart on windows and run deploy.2.bat"
+echo "Now please commit and push the changes and then restart on windows and run deploy.2.bat"
