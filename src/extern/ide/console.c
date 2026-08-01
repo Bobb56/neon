@@ -258,6 +258,8 @@ void draw_console(struct estate *state)
     gfx_HorizLine_NoClip(0, 12, 320);
 
     //Draw top text
+    fontlib_SetForegroundColor(state->statusbar_text_color);
+    fontlib_SetBackgroundColor(state->text_highlight_color);
     fontlib_SetCursorPosition(1, 0);
     fontlib_DrawString("Neon");
     
